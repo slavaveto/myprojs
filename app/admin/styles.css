@@ -1,0 +1,18 @@
+@reference "../globals.css";
+
+.tab-title {
+   @apply pl-1 text-2xl font-semibold whitespace-nowrap;
+}
+
+@keyframes checkPopInOut {
+    0% { transform: scale(0); opacity: 0; }
+    25% { transform: scale(1.2); opacity: 1; }
+    33% { transform: scale(1); opacity: 1; }
+    66% { transform: scale(1); opacity: 1; }
+    75% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(0); opacity: 0; }
+}
+
+.check-pop-in-out {
+    animation: checkPopInOut 2s ease-in-out forwards;
+}

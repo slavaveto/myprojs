@@ -1,0 +1,137 @@
+'use client';
+
+import React from 'react';
+import { 
+  Popover, 
+  PopoverTrigger, 
+  PopoverContent, 
+  Button, 
+  Avatar, 
+  User 
+} from '@heroui/react';
+import { LogOut, User as IconUser } from 'lucide-react';
+import { useUser, useClerk } from '@clerk/nextjs';
+import { useSupabase } from '@/utils/supabase/useSupabase';
+import { useAdminLoader } from '@/app/admin/AdminLoader';
+import { createLogger } from '@/utils/logger/Logger';
+
+const logger = createLogger('AdminUserMenu');
+
+// Создаем глобальный EventTarget для синхронизации аватара и имени
+export const profileUpdateEvent = new EventTarget();
+
+export const triggerProfileUpdate = () => {
+   profileUpdateEvent.dispatchEvent(new Event('profileUpdated'));
+};
+
+// Alias for compatibility
+export const triggerAvatarUpdate = triggerProfileUpdate;
+
+export const AdminUserMenu = ({ showSeparator = true }: { showSeparator?: boolean }) => {
+   const { user, isLoaded } = useUser();
+   const { signOut } = useClerk();
+   const { supabase } = useSupabase();
+   const { setLoading: setGlobalLoading } = useAdminLoader();
+   
+   const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null);
+   const [fullName, setFullName] = React.useState<string>(user?.fullName || 'Admin User');
+
+   const fetchProfile = React.useCallback(async () => {
+      if (!user) return;
+      try {
+         const { data, error } = await supabase
+            .from('profiles')
+            .select('avatar_url, full_name')
+            .eq('user_id', user.id)
+            .single();
+            
+         // Даже если data.avatar_url null, мы должны обновить стейт, чтобы убрать старую картинку
+         setAvatarUrl(data?.avatar_url || null);
+         if (data?.full_name) {
+            setFullName(data.full_name);
+         }
+      } catch (err) {
+         logger.error('Failed to fetch user profile', err);
+      }
+   }, [user, supabase]);
+
+   React.useEffect(() => {
+      fetchProfile();
+
+      // Слушаем локальное событие обновления
+      const handleUpdate = () => {
+         fetchProfile();
+      };
+
+      profileUpdateEvent.addEventListener('profileUpdated', handleUpdate);
+      return () => {
+         profileUpdateEvent.removeEventListener('profileUpdated', handleUpdate);
+      };
+   }, [fetchProfile]);
+
+   const handleSignOut = async () => {
+      setGlobalLoading(true);
+      await new Promise((r) => setTimeout(r, 200));
+      await signOut({ redirectUrl: '/admin' });
+   };
+
+   if (!isLoaded || !user) return null;
+
+   const userEmail = user.primaryEmailAddress?.emailAddress;
+
+   return (
+      <div className="flex items-center">
+         {showSeparator && <div className="h-6 w-[1px] bg-default-300 mx-1 mr-3"></div>}
+         <Popover placement="bottom-end" showArrow offset={10}>
+         <PopoverTrigger>
+            <div className="cursor-pointer transition-opacity hover:opacity-80 min-w-[40px] min-h-[40px]">
+               {avatarUrl ? (
+                   <img 
+                       src={avatarUrl} 
+                       alt={fullName}
+                       className="w-[40px] h-[40px] rounded-full object-cover border border-default-200 block"
+                   />
+               ) : (
+                   <div className="w-[40px] h-[40px] rounded-full bg-default-100 flex items-center justify-center border border-default-200">
+                       <IconUser size={20} className="text-default-500" />
+                   </div>
+               )}
+            </div>
+         </PopoverTrigger>
+         <PopoverContent className="p-1">
+            <div className="w-full max-w-[240px] px-2 py-2">
+               <div className="flex items-center gap-3 pb-2 mb-2 border-b border-default-200">
+                  {avatarUrl ? (
+                      <img 
+                          src={avatarUrl} 
+                          alt={fullName}
+                          className="w-8 h-8 rounded-full object-cover border border-default-200"
+                      />
+                  ) : (
+                      <div className="w-8 h-8 rounded-full bg-default-100 flex items-center justify-center border border-default-200">
+                          <IconUser size={18} className="text-default-500" />
+                      </div>
+                  )}
+                  <div className="flex flex-col overflow-hidden">
+                     <span className="text-small font-bold truncate">{fullName}</span>
+                     <span className="text-tiny text-default-500 truncate">{userEmail}</span>
+                  </div>
+               </div>
+               
+               <Button 
+                  fullWidth
+                  variant="flat" 
+                  color="danger" 
+                  size="sm"
+                  startContent={<LogOut size={16} />}
+                  onPress={handleSignOut}
+                  className="justify-start"
+               >
+                  Sign Out
+               </Button>
+            </div>
+         </PopoverContent>
+      </Popover>
+      </div>
+   );
+};

@@ -1,0 +1,76 @@
+{
+   "files.exclude": {
+      ".idea": true,
+      ".next": true,
+      "node_modules": true,
+      ".prettierrc": true,
+      "hero.ts": true,
+      "next-env.d.ts": true,
+      "next.config.ts": true,
+      "package-lock.json": true,
+      "postcss.config.mjs": true,
+      ".cursorignore": true,
+      "tsconfig.json": true,
+      ".eslintignore": true,
+      "eslint.config.mjs": true,
+      "tsconfig.tsbuildinfo": true,
+      ".cursor": true,
+      ".certificates": true,
+      "wakelock.d.ts": true,
+      ".gitignore": true,
+      ".vercelignore": true
+   },
+   "css.validate": false,
+   "less.validate": false,
+   "scss.validate": false,
+   "window.title": "${activeEditorShort}${separator}${rootName}${separator}${profileName}",
+   
+
+   "typescript.preferences.excludePackageJsonAutoImports": "off",
+   "typescript.tsserver.experimental.enableProjectDiagnostics": true,
+   "typescript.validate.enable": true,
+   "problems.showCurrentInStatus": true,
+
+
+   "workbench.colorCustomizations": {
+      "titleBar.inactiveBackground": "#de1f1f44",
+      "titleBar.activeBackground": "#de1f1f44",
+      "sideBarSectionHeader.background": "#de1f1f44",
+      "tab.activeBackground": "#de1f1f44",
+      "statusBar.background": "#de1f1f44",
+      
+
+      "folderPathColor.custom1": "#FF7A00",
+      "folderPathColor.custom2": "#15B000",
+      "folderPathColor.custom3": "#015585",
+   },
+
+   // Predefined color names: blue, magenta, red, cyan, green, yellow.
+   "folder-path-color.folders": [
+   
+      {
+         "path": "app/admin",
+         "color": "red"
+      },
+      {
+         "path": "utils",
+         "color": "magenta"
+      },
+      
+   
+      {
+         "path": "app/api",
+         "color": "yellow"
+      },
+
+      {
+         "path": "app",
+         "color": "blue"
+      },
+
+  
+
+
+   ],
+
+}

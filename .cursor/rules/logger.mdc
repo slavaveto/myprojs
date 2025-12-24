@@ -1,0 +1,19 @@
+---
+alwaysApply: true
+---
+Всегда используй logger вместо console.log:
+Формат: logger(сообщение, данные)
+
+// Импорт
+import { createLogger } from '@/utils/logger/Logger';
+const logger = createLogger('ComponentName');
+
+// Использование
+logger.info('сообщение', данные);
+logger.error('ошибка', данные);
+logger.success('успех', данные);
+logger.warning('предупреждение', данные);
+logger.start('начало', данные);
+logger.end('конец', данные);
+
+Данные - опционально, любой объект/переменная для отладки

@@ -1,0 +1,77 @@
+@import "tailwindcss";
+@plugin '../hero.ts';
+/* Note: You may need to change the path to fit your project structure */
+@source '../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}';
+@custom-variant dark (&:is(.dark *));
+
+@layer base {
+    html {
+        font-size: 16px; /* Размер шрифта по умолчанию */
+        line-height: 1.15; /* Высота строки по умолчанию */
+        /*font-family: 'Inter', Arial, sans-serif; !* Шрифт по умолчанию *!*/
+    }
+}
+
+@theme {
+    --text-xs: 18px;
+    --text-small: 16px;
+    --breakpoint-xs375: 375px;
+    --breakpoint-xs390: 390px;
+    --breakpoint-xs500: 500px;
+}
+
+/* Отключаем стандартное контекстное меню */
+/* {
+  /*-webkit-touch-callout: none;*/
+  /*-webkit-user-select: none;*/
+  /*-khtml-user-select: none;*/
+  /*-moz-user-select: none;*/
+  /*-ms-user-select: none;*/
+  /*user-select: none;*/
+/* } */
+
+/* Отключаем контекстное меню для всей страницы */
+/* body {
+  -webkit-context-menu: none;
+} */
+
+/* Разрешаем выделение текста в инпутах */
+input, textarea, [contenteditable="true"] {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+
+
+
+/* TEXT */
+@source inline("text-{red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose,stone,neutral,zinc,gray,slate}-{50,100,200,300,400,500,600,700,800,900,950}");
+@source inline("hover:text-{red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose,stone,neutral,zinc,gray,slate}-{50,100,200,300,400,500,600,700,800,900,950}");
+@source inline("dark:text-{red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose,stone,neutral,zinc,gray,slate}-{50,100,200,300,400,500,600,700,800,900,950}");
+@source inline("dark:hover:text-{red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose,stone,neutral,zinc,gray,slate}-{50,100,200,300,400,500,600,700,800,900,950}");
+
+/* BG */
+@source inline("bg-{red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose,stone,neutral,zinc,gray,slate}-{50,100,200,300,400,500,600,700,800,900,950}");
+@source inline("hover:bg-{red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose,stone,neutral,zinc,gray,slate}-{50,100,200,300,400,500,600,700,800,900,950}");
+@source inline("dark:bg-{red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose,stone,neutral,zinc,gray,slate}-{50,100,200,300,400,500,600,700,800,900,950}");
+@source inline("dark:hover:bg-{red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose,stone,neutral,zinc,gray,slate}-{50,100,200,300,400,500,600,700,800,900,950}");
+@source inline("!bg-{red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose,stone,neutral,zinc,gray,slate}-{50,100,200,300,400,500,600,700,800,900,950}");
+@source inline("hover:!bg-{red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose,stone,neutral,zinc,gray,slate}-{50,100,200,300,400,500,600,700,800,900,950}");
+@source inline("dark:!bg-{red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose,stone,neutral,zinc,gray,slate}-{50,100,200,300,400,500,600,700,800,900,950}");
+@source inline("dark:hover:!bg-{red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose,stone,neutral,zinc,gray,slate}-{50,100,200,300,400,500,600,700,800,900,950}");
+
+/* BORDER */
+@source inline("border-{red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose,stone,neutral,zinc,gray,slate}-{50,100,200,300,400,500,600,700,800,900,950}");
+@source inline("hover:border-{red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose,stone,neutral,zinc,gray,slate}-{50,100,200,300,400,500,600,700,800,900,950}");
+@source inline("dark:border-{red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose,stone,neutral,zinc,gray,slate}-{50,100,200,300,400,500,600,700,800,900,950}");
+@source inline("dark:hover:border-{red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose,stone,neutral,zinc,gray,slate}-{50,100,200,300,400,500,600,700,800,900,950}");
+@source inline("!border-{red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose,stone,neutral,zinc,gray,slate}-{50,100,200,300,400,500,600,700,800,900,950}");
+@source inline("hover:!border-{red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose,stone,neutral,zinc,gray,slate}-{50,100,200,300,400,500,600,700,800,900,950}");
+@source inline("dark:!border-{red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose,stone,neutral,zinc,gray,slate}-{50,100,200,300,400,500,600,700,800,900,950}");
+@source inline("dark:hover:!border-{red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose,stone,neutral,zinc,gray,slate}-{50,100,200,300,400,500,600,700,800,900,950}");
+
+
+
+
