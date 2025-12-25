@@ -66,7 +66,7 @@ export function checkPermission(permission: Permission, user: UserAccessContext)
       case PERMISSIONS.SHOW_ADMIN_DEV_INFO:
          // Супер-Админ + ОБЯЗАТЕЛЬНО Local environment
          // return user.isSuperAdmin; // Только Супер-Админ (везде)
-         return user.isSuperAdmin && user.isLocal;
+         return user.isLocal;
 
       default:
          return user.isSuperAdmin; // По умолчанию супер-админ может всё, если не указано иное

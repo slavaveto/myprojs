@@ -4,12 +4,12 @@ import React, { useEffect, useState } from 'react';
 import { createLogger } from '@/utils/logger/Logger';
 import { supabase } from '@/utils/supabase/supabaseClient';
 import { Project } from '@/app/types';
-import { Link } from '@heroui/link';
 import { clsx } from 'clsx';
 import { Button, Spinner } from '@heroui/react';
 import { Plus, LayoutGrid } from 'lucide-react';
 import { AppLoaderProvider, useAppLoader } from '@/app/AppLoader';
 import { ProjectScreen } from '@/app/components/ProjectScreen';
+import { globalStorage } from '@/utils/storage';
 
 const logger = createLogger('AppManager');
 
@@ -36,12 +36,12 @@ function AppContent() {
             const projectsData = data || [];
             setProjects(projectsData);
             
-            // Если есть проекты, выбираем первый по умолчанию
-            // Можно добавить чтение из URL/localStorage, чтобы восстанавливать состояние
+            // Если есть проекты, выбираем сохраненный или первый
             if (projectsData.length > 0) {
-                // Попробуем восстановить из URL hash или query? 
-                // Для простоты пока берем первый
-                setActiveProjectId(projectsData[0].id);
+                const savedId = globalStorage.getItem('active_project_id');
+                const projectExists = savedId ? projectsData.find(p => p.id === savedId) : null;
+                
+                setActiveProjectId(projectExists ? savedId : projectsData[0].id);
             }
             
             setIsInit(true);
@@ -84,7 +84,10 @@ function AppContent() {
                   return (
                      <button
                         key={project.id}
-                        onClick={() => setActiveProjectId(project.id)}
+                        onClick={() => {
+                           setActiveProjectId(project.id);
+                           globalStorage.setItem('active_project_id', project.id);
+                        }}
                         className={clsx(
                            'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors w-full text-left',
                            'text-foreground',

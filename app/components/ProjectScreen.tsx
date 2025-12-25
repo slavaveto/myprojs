@@ -5,6 +5,7 @@ import { useAppLoader } from '@/app/AppLoader';
 import { createLogger } from '@/utils/logger/Logger';
 import { supabase } from '@/utils/supabase/supabaseClient';
 import { Folder, Task, Project } from '@/app/types';
+import { globalStorage } from '@/utils/storage';
 import {
    DndContext,
    DragEndEvent,
@@ -85,16 +86,20 @@ export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps
        const load = async () => {
            loadStartedRef.current = true;
            
-           // Включаем глобальный лоадер ТОЛЬКО если это активный экран
            if (isActive) {
+               logger.start(`Loading active project: ${project.title}`);
                setLoading(true);
+           } else {
+               logger.info(`Starting background load: ${project.title}`);
            }
            
            await loadData();
            
-           // Выключаем лоадер ТОЛЬКО если это был активный экран
            if (isActive) {
+               logger.success(`Active project loaded: ${project.title}`);
                setLoading(false);
+           } else {
+               logger.success(`Background project loaded: ${project.title}`);
            }
            
            onReady(); 
@@ -106,6 +111,7 @@ export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps
            // Фоновая загрузка с задержкой
            const timer = setTimeout(() => {
                if (!loadStartedRef.current) {
+                   logger.info(`Triggering background timer for: ${project.title}`);
                    load();
                }
            }, 2000); 
@@ -127,7 +133,11 @@ export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps
          setFolders(foldersData || []);
 
          if (foldersData && foldersData.length > 0) {
-            setSelectedFolderId(foldersData[0].id);
+            // Restore active folder from storage
+            const savedFolderId = globalStorage.getItem(`active_folder_${projectId}`);
+            const folderExists = savedFolderId ? foldersData.find((f: any) => f.id === savedFolderId) : null;
+            
+            setSelectedFolderId(folderExists ? savedFolderId! : foldersData[0].id);
          }
 
          const { data: tasksData, error: tasksError } = await supabase
@@ -304,6 +314,7 @@ export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps
              
              setTasks(prev => {
                  const otherTasks = prev.filter(t => t.folder_id !== selectedFolderId);
+                 // Need to handle type safety here more carefully if needed, but for now:
                  const updatedCurrentTasks = newSorted.map((t, idx) => ({ ...t, sort_order: idx }));
                  return [...otherTasks, ...updatedCurrentTasks];
              });
@@ -342,7 +353,7 @@ export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps
             <Button 
                 color="primary" 
                 startContent={<FolderPlus size={18} />}
-                variant="flat"
+                variant="ghost"
                 onPress={handleAddFolder}
             >
                 New Folder
@@ -357,7 +368,11 @@ export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps
          >
             <Tabs
                selectedKey={selectedFolderId}
-               onSelectionChange={(key) => setSelectedFolderId(key as string)}
+               onSelectionChange={(key) => {
+                   const newId = key as string;
+                   setSelectedFolderId(newId);
+                   globalStorage.setItem(`active_folder_${project.id}`, newId);
+               }}
                variant="underlined"
                color="primary"
                classNames={{
