@@ -3,7 +3,6 @@ import { supabase } from '@/utils/supabase/supabaseClient';
 export interface LogEntry {
     id: string;
     created_at: string;
-    user_id?: string;
     action: string;
     entity_table: string;
     entity_id: string;
@@ -17,9 +16,6 @@ export const logService = {
         entity_id: string,
         details?: any
     ) {
-        // In a real app, we might get user_id from auth context or pass it in
-        // const { data: { user } } = await supabase.auth.getUser();
-        
         const { error } = await supabase
             .from('logs')
             .insert({
@@ -31,7 +27,7 @@ export const logService = {
             });
             
         if (error) {
-            console.error('Failed to write log:', error);
+            console.error('Failed to write log:', JSON.stringify(error, null, 2));
         }
     },
 

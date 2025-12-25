@@ -2,29 +2,38 @@
 
 import React, { useEffect, useState } from 'react';
 import { logService, LogEntry } from '@/app/_services/logService';
-import { Spinner, Chip, Card, CardBody } from '@heroui/react';
+import { Spinner, Chip, Card, CardBody, Button } from '@heroui/react';
 import { createLogger } from '@/utils/logger/Logger';
 import { clsx } from 'clsx';
+import { RefreshCw } from 'lucide-react';
 
 const logger = createLogger('LogsScreen');
 
 export const LogsScreen = () => {
     const [logs, setLogs] = useState<LogEntry[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+
+    const fetchLogs = async (showSpinner = true) => {
+        if (showSpinner) setIsLoading(true);
+        else setIsRefreshing(true);
+        
+        try {
+            const [data] = await Promise.all([
+                logService.getLogs(50),
+                new Promise(resolve => setTimeout(resolve, 1000))
+            ]);
+            setLogs(data || []);
+        } catch (err) {
+            logger.error('Failed to load logs', err);
+        } finally {
+            setIsLoading(false);
+            setIsRefreshing(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchLogs = async () => {
-            try {
-                const data = await logService.getLogs(50);
-                setLogs(data || []);
-            } catch (err) {
-                logger.error('Failed to load logs', err);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchLogs();
+        fetchLogs(true);
     }, []);
 
     const getActionColor = (action: string) => {
@@ -47,7 +56,18 @@ export const LogsScreen = () => {
 
     return (
         <div className="h-full flex flex-col p-6 max-w-5xl mx-auto w-full">
-            <h1 className="text-2xl font-bold mb-6">Activity Logs</h1>
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-2xl font-bold">Activity Logs</h1>
+                <Button 
+                    isIconOnly 
+                    size="sm" 
+                    variant="light" 
+                    onPress={() => fetchLogs(false)}
+                    isLoading={isRefreshing}
+                >
+                    <RefreshCw size={20} />
+                </Button>
+            </div>
             
             <div className="flex-grow overflow-y-auto space-y-2 pb-10">
                 {logs.length === 0 && (

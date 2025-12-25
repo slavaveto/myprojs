@@ -284,11 +284,14 @@ function AppContent() {
          {/* Main Content */}
          <main className="flex-grow flex flex-col h-full overflow-hidden relative">
             {/* System Screens */}
-            {activeSystemTab === 'logs' && (
-                <div className="absolute inset-0 w-full h-full bg-background z-10 overflow-hidden">
-                    <LogsScreen />
-                </div>
-            )}
+            <div 
+               className={clsx(
+                  "absolute inset-0 w-full h-full bg-background transition-opacity duration-300",
+                  activeSystemTab === 'logs' ? "z-30 opacity-100 pointer-events-auto" : "z-0 opacity-0 pointer-events-none"
+               )}
+            >
+                <LogsScreen />
+            </div>
             
             {projects.map((project) => (
                <div
