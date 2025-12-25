@@ -127,7 +127,7 @@ interface FolderTabsProps {
     folders: Folder[];
     selectedFolderId: string;
     onSelect: (folderId: string) => void;
-    onAddFolder: (name: string) => Promise<void> | void;
+    onAddFolder: (name: string, color?: string) => Promise<void> | void;
     getTaskCount: (folderId: string) => number;
     projectId: string;
     hoveredFolderId?: string | null;

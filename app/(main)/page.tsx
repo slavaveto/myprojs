@@ -198,12 +198,11 @@ function AppContent() {
        setReadyProjects(prev => ({ ...prev, [projectId]: true }));
    };
 
-   const handleCreateProject = async (title: string) => {
+   const handleCreateProject = async (title: string, color?: string) => {
        try {
-           const colors = ['#006FEE', '#17C964', '#F5A524', '#F31260', '#7828C8', '#000000'];
-           const randomColor = colors[Math.floor(Math.random() * colors.length)];
+           const finalColor = color || '#006FEE'; // Default blue-500 if not provided
            
-           const newProject = await projectService.createProject(title, randomColor, projects.length);
+           const newProject = await projectService.createProject(title, finalColor, projects.length);
            setProjects(prev => [...prev, newProject]);
            
            // Mark as ready immediately to prevent global spinner for new empty project
@@ -259,6 +258,7 @@ function AppContent() {
                    inputPlaceholder="Project Name"
                    onCreate={handleCreateProject}
                    placement="right"
+                   withColorPicker={true}
                >
                    <Button isIconOnly size="sm" variant="flat" color="success">
                       <Plus size={20} />
