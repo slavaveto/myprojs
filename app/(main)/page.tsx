@@ -267,9 +267,8 @@ function AppContent() {
                 </DndContext>
             </div>
 
-            {/* System Tabs Bottom */}
-            <div className="p-2 border-t border-default-200">
-                <SidebarItem 
+            <div className="p-2">
+                 <SidebarItem 
                     icon={CheckCircle2} 
                     label="Done" 
                     isActive={activeSystemTab === 'done'}
