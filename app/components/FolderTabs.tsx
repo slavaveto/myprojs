@@ -166,7 +166,8 @@ export const FolderTabs = ({
                title="New Folder" 
                inputPlaceholder="Folder Name"
                onCreate={onAddFolder}
-               placement="bottom-end"
+               placement="top-end"
+               
            >
                <Button 
                    isIconOnly 

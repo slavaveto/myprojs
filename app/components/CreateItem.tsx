@@ -66,7 +66,7 @@ export const CreateItemPopover = ({
                 }
             }}
             placement={placement}
-            showArrow
+            showArrow ={false}
             offset={10}
             classNames={{
                 content: "p-0"
