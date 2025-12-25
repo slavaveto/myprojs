@@ -145,7 +145,7 @@ export const projectService = {
             .from('tasks')
             .select('*, folders!inner(project_id)')
             .eq('folders.project_id', projectId)
-            .or('is_deleted.eq.false,is_deleted.is.null') // Handle both false and null (legacy)
+            .or('is_deleted.eq.false,is_deleted.is.null') // Explicitly include false OR null
             .order('sort_order');
             
         if (error) throw error;
