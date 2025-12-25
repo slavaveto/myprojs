@@ -9,6 +9,7 @@ import { Button, Spinner } from '@heroui/react';
 import { Plus, LayoutGrid, GripVertical, Inbox, Calendar, CheckCircle2, FileText } from 'lucide-react';
 import { AppLoaderProvider, useAppLoader } from '@/app/AppLoader';
 import { ProjectScreen } from '@/app/components/ProjectScreen';
+import { CreateItemPopover } from '@/app/components/CreateItemPopover';
 import { LogsScreen } from '@/app/components/LogsScreen';
 import { SystemScreen } from '@/app/components/SystemScreen';
 import { globalStorage } from '@/utils/storage';
@@ -197,6 +198,26 @@ function AppContent() {
        setReadyProjects(prev => ({ ...prev, [projectId]: true }));
    };
 
+   const handleCreateProject = async (title: string) => {
+       try {
+           const colors = ['#006FEE', '#17C964', '#F5A524', '#F31260', '#7828C8', '#000000'];
+           const randomColor = colors[Math.floor(Math.random() * colors.length)];
+           
+           const newProject = await projectService.createProject(title, randomColor, projects.length);
+           setProjects(prev => [...prev, newProject]);
+           
+           // Mark as ready immediately to prevent global spinner for new empty project
+           setReadyProjects(prev => ({ ...prev, [newProject.id]: true }));
+           
+           // Switch to new project
+           setActiveProjectId(newProject.id);
+           setActiveSystemTab(null);
+           globalStorage.setItem('active_project_id', newProject.id);
+       } catch (err) {
+           logger.error('Failed to create project', err);
+       }
+   };
+
    // --- DnD Handlers ---
    const handleDragEnd = async (event: DragEndEvent) => {
        const { active, over } = event;
@@ -233,9 +254,16 @@ function AppContent() {
                   <span className="truncate">Projects</span>
                </div>
                
-               <Button isIconOnly size="sm" variant="flat" color="success">
-                  <Plus size={20} />
-               </Button>
+               <CreateItemPopover 
+                   title="New Project" 
+                   inputPlaceholder="Project Name"
+                   onCreate={handleCreateProject}
+                   placement="right"
+               >
+                   <Button isIconOnly size="sm" variant="flat" color="success">
+                      <Plus size={20} />
+                   </Button>
+               </CreateItemPopover>
             </div>
 
             <div className="flex-grow overflow-y-auto p-2">

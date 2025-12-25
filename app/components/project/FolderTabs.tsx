@@ -8,6 +8,7 @@ import { clsx } from 'clsx';
 import { motion } from 'framer-motion';
 import { useSortable, SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { CreateItemPopover } from '@/app/components/CreateItemPopover';
 
 // --- Single Tab Component ---
 interface FolderTabProps {
@@ -126,7 +127,7 @@ interface FolderTabsProps {
     folders: Folder[];
     selectedFolderId: string;
     onSelect: (folderId: string) => void;
-    onAddFolder: () => void;
+    onAddFolder: (name: string) => Promise<void> | void;
     getTaskCount: (folderId: string) => number;
     projectId: string;
     hoveredFolderId?: string | null;
@@ -161,16 +162,22 @@ export const FolderTabs = ({
                    ))}
                </SortableContext>
            </div>
-           <Button 
-               isIconOnly 
-               variant="flat" 
-               size="sm" 
-               color="success"
-               onPress={onAddFolder}
-               className="mb-1"
+           <CreateItemPopover 
+               title="New Folder" 
+               inputPlaceholder="Folder Name"
+               onCreate={onAddFolder}
+               placement="bottom-end"
            >
-               <Plus size={20} />
-           </Button>
+               <Button 
+                   isIconOnly 
+                   variant="flat" 
+                   size="sm" 
+                   color="success"
+                   className="mb-1"
+               >
+                   <Plus size={20} />
+               </Button>
+           </CreateItemPopover>
         </div>
     );
 };

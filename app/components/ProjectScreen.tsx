@@ -202,10 +202,7 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
       }
    };
 
-   const handleAddFolder = async () => {
-       const title = prompt('Folder Name:');
-       if (!title) return;
-
+   const handleAddFolder = async (title: string) => {
        const newOrder = folders.length > 0 
           ? Math.max(...folders.map(f => f.sort_order)) + 1 
           : 0;
@@ -525,9 +522,10 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
        return tasks.filter(t => t.folder_id === folderId).length;
    };
 
-   if (!isDataLoaded) {
-       return null;
-   }
+   // Removed early return to allow rendering empty state for new projects immediately
+   // if (!isDataLoaded) {
+   //    return null;
+   // }
 
    return (
       <div className={clsx(
