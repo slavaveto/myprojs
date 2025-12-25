@@ -43,12 +43,15 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true }: LogsScreen
 
     const fetchLogs = async (showSpinner = true) => {
         // If we shouldn't load, just return. 
-        // Note: Manual refresh (via button) should probably bypass this if explicitly called?
-        // But for initial load it matters.
         if (!canLoad && showSpinner) return;
 
-        if (showSpinner) setIsLoading(true);
-        else setIsRefreshing(true);
+        if (showSpinner) {
+            setIsLoading(true);
+            logger.start('Loading logs...');
+        } else {
+            setIsRefreshing(true);
+            logger.info('Refreshing logs...');
+        }
         
         try {
             const [data] = await Promise.all([
@@ -57,6 +60,7 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true }: LogsScreen
             ]);
             setLogs(data || []);
             setIsLoaded(true);
+            logger.success('Logs loaded');
         } catch (err) {
             logger.error('Failed to load logs', err);
         } finally {
@@ -68,6 +72,8 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true }: LogsScreen
     useEffect(() => {
         if (canLoad && !isLoaded) {
             fetchLogs(true);
+        } else if (!canLoad) {
+            logger.info('Waiting for background load permission...');
         }
     }, [canLoad, isLoaded]);
 
