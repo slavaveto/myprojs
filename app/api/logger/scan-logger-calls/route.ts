@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import { LoggerCallInfo, LoggerInfo } from '../types';
-import { shouldIgnoreDirectory } from '@/utils/logger/types';
+import { shouldIgnoreDirectory, shouldIgnoreFileForConsole } from '@/utils/logger/types';
 
 interface ScanResult {
     calls: LoggerCallInfo[];
@@ -24,6 +24,9 @@ function scanLoggerCalls(dir: string, result: ScanResult = { calls: [], definiti
             scanLoggerCalls(fullPath, result);
         } else if (file.endsWith('.tsx') || file.endsWith('.ts')) {
             // Обрабатываем все .ts/.tsx файлы (папка utils/logger уже исключена выше)
+            if (shouldIgnoreFileForConsole(fullPath)) {
+                continue;
+            }
             
             const content = fs.readFileSync(fullPath, 'utf-8');
             const lines = content.split('\n');
