@@ -265,7 +265,7 @@ export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps
    };
 
    const sensors = useSensors(
-      useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+      useSensor(PointerSensor),
       useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
    );
 
@@ -364,7 +364,7 @@ export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps
                variant="underlined"
                color="primary"
                classNames={{
-                  tabList: "gap-6 w-full relative rounded-none p-0 border-b border-divider",
+                  tabList: "gap-6 w-full relative rounded-none p-0 ",
                   cursor: "w-full bg-primary",
                   tab: "max-w-fit px-0 h-12",
                   tabContent: "group-data-[selected=true]:text-primary"
@@ -386,19 +386,6 @@ export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps
             <div className="mt-6 flex-grow flex flex-col min-h-0">
                 {selectedFolderId ? (
                    <>
-                      <div className="mb-4">
-                         <Button
-                            fullWidth
-                            variant="ghost"
-                            color="primary"
-                            startContent={<Plus size={20} />}
-                            onPress={handleAddTask}
-                            className="h-12 border-2 border-default-200 hover:border-primary/50 text-default-500 hover:text-primary"
-                         >
-                            Add Task
-                         </Button>
-                      </div>
-    
                       <div className="flex-grow overflow-y-auto pr-2 pb-10">
                          <SortableContext
                             items={filteredTasks.map(t => t.id)}

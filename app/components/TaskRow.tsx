@@ -37,50 +37,55 @@ export const TaskRow = ({ task, onUpdate, onDelete, isOverlay }: TaskRowProps) =
          ref={setNodeRef}
          style={style}
          className={clsx(
-            "group flex items-center gap-3 p-2 rounded-lg border border-default-200 bg-content1 transition-all",
-            isDragging && "z-50 shadow-xl ring-2 ring-primary opacity-50",
-            isOverlay && "shadow-xl ring-2 ring-primary cursor-grabbing"
+            "group grid grid-cols-[30px_1fr_40px] gap-1 items-center min-h-[32px] rounded-lg border border-default-300 bg-content1 transition-colors outline-none",
+            !isDragging && !isOverlay && "hover:bg-default-50",
+            (isDragging || isOverlay) && "z-50 bg-content1 shadow-lg border-primary/50"
          )}
       >
-         {/* Drag Handle */}
-         <div
-            {...attributes}
-            {...listeners}
-            className="cursor-grab active:cursor-grabbing text-default-400 hover:text-default-600 outline-none p-1 hover:bg-default-100 rounded transition-colors"
-         >
-            <GripVertical size={16} />
+         {/* Drag Handle + Checkbox Wrapper */}
+         <div className="flex items-center justify-center pl-1">
+             <div
+                {...attributes}
+                {...listeners}
+                className="cursor-grab active:cursor-grabbing text-default-400 hover:text-default-600 outline-none p-0.5 hover:bg-default-100 rounded mr-1"
+             >
+                <GripVertical size={14} />
+             </div>
          </div>
 
-         {/* Checkbox */}
-         <Checkbox
-            isSelected={task.is_completed}
-            onValueChange={(isSelected) => onUpdate(task.id, { is_completed: isSelected })}
-            classNames={{
-               wrapper: "after:bg-primary"
-            }}
-         />
-
          {/* Content */}
-         <div className="flex-grow min-w-0">
-            <EditableCell
-               value={task.content}
-               onSave={(val) => onUpdate(task.id, { content: val })}
-               isMultiline
-               className={clsx(
-                  "text-small font-medium",
-                  task.is_completed && "text-default-400 line-through"
-               )}
-            />
+         <div className="p-1 text-start relative whitespace-normal flex items-center pl-0">
+            <div className="flex items-center gap-2 w-full">
+                <Checkbox
+                    isSelected={task.is_completed}
+                    onValueChange={(isSelected) => onUpdate(task.id, { is_completed: isSelected })}
+                    classNames={{
+                        wrapper: "after:bg-primary"
+                    }}
+                    size="sm"
+                />
+                <EditableCell
+                   value={task.content}
+                   onSave={(val) => onUpdate(task.id, { content: val })}
+                   isMultiline
+                   className={clsx(
+                      "text-small font-medium w-full",
+                      task.is_completed && "text-default-400 line-through"
+                   )}
+                />
+            </div>
          </div>
 
          {/* Actions */}
-         <button
-            onClick={() => onDelete(task.id)}
-            className="opacity-0 group-hover:opacity-100 p-2 text-default-400 hover:text-danger hover:bg-danger/10 rounded-full transition-all"
-            aria-label="Delete task"
-         >
-            <Trash2 size={16} />
-         </button>
+         <div className="p-1 text-center relative flex justify-center">
+            <button
+               onClick={() => onDelete(task.id)}
+               className="opacity-0 group-hover:opacity-100 p-1 text-default-400 hover:text-danger hover:bg-danger/10 rounded transition-all"
+               aria-label="Delete task"
+            >
+               <Trash2 size={16} />
+            </button>
+         </div>
       </div>
    );
 };
