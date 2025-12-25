@@ -76,6 +76,20 @@ export const projectService = {
         return data as Folder;
     },
 
+    async updateFolderOrder(updates: { id: string; sort_order: number }[]) {
+        if (updates.length > 0) {
+             const batchId = crypto.randomUUID();
+             await logService.logAction('reorder', 'folders', batchId, { count: updates.length });
+        }
+        for (const u of updates) {
+            const { error } = await supabase.from('folders').update({
+                sort_order: u.sort_order,
+                updated_at: new Date().toISOString()
+            }).eq('id', u.id);
+            if (error) throw error;
+        }
+    },
+
     // --- Tasks ---
     async getTasks(projectId: string) {
         // Join folders to filter by project_id

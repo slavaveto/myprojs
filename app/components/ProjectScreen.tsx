@@ -24,7 +24,7 @@ import {
    sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable';
 import { TaskRow } from '@/app/components/TaskRow';
-import { FolderTabs } from '@/app/components/project/FolderTabs';
+import { FolderTabs, FolderTab } from '@/app/components/project/FolderTabs';
 import { TaskList } from '@/app/components/project/TaskList';
 import { projectService } from '@/app/_services/projectService';
 import { useAsyncAction, ActionStatus } from '@/utils/supabase/useAsyncAction';
@@ -225,7 +225,11 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
    };
 
    const sensors = useSensors(
-      useSensor(PointerSensor),
+      useSensor(PointerSensor, {
+          activationConstraint: {
+              distance: 5,
+          },
+      }),
       useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
    );
 
@@ -237,6 +241,30 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
       const { active, over } = event;
       setActiveId(null);
       if (!over) return;
+
+      // --- Folder Reordering ---
+      if (active.data.current?.type === 'folder' && over.data.current?.type === 'folder') {
+           if (active.id !== over.id) {
+               setFolders((items) => {
+                   const oldIndex = items.findIndex((i) => `folder-${i.id}` === active.id);
+                   const newIndex = items.findIndex((i) => `folder-${i.id}` === over.id);
+                   const newItems = arrayMove(items, oldIndex, newIndex);
+                   
+                   // Save to DB
+                   const updates = newItems.map((f, index) => ({ id: f.id, sort_order: index }));
+                   
+                   executeSave(async () => {
+                       await projectService.updateFolderOrder(updates);
+                   }).catch(err => {
+                       logger.error('Failed to reorder folders', err);
+                   });
+                   
+                   return newItems;
+               });
+           }
+           return;
+      }
+
       const activeTaskId = active.id as string;
       
       if (over.id.toString().startsWith('folder-')) {
@@ -352,12 +380,24 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
 
             <DragOverlay dropAnimation={dropAnimationConfig}>
                {activeId ? (
-                  <TaskRow
-                     task={tasks.find(t => t.id === activeId)!}
-                     onUpdate={() => {}}
-                     onDelete={() => {}}
-                     isOverlay
-                  />
+                   activeId.startsWith('folder-') ? (
+                       // Dragging a folder - Use visual component
+                       <FolderTab 
+                          folder={folders.find(f => `folder-${f.id}` === activeId)!}
+                          count={getFolderTaskCount(activeId.replace('folder-', ''))}
+                          isActive={true}
+                          layoutIdPrefix="overlay" 
+                          onClick={() => {}}
+                       />
+                   ) : (
+                       // Dragging a task
+                      <TaskRow
+                         task={tasks.find(t => t.id === activeId)!}
+                         onUpdate={() => {}}
+                         onDelete={() => {}}
+                         isOverlay
+                      />
+                   )
                ) : null}
             </DragOverlay>
          </DndContext>

@@ -6,6 +6,8 @@ import { Button, Chip } from '@heroui/react';
 import { Plus } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion } from 'framer-motion';
+import { useSortable, SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 // --- Single Tab Component ---
 interface FolderTabProps {
@@ -14,11 +16,32 @@ interface FolderTabProps {
     isActive: boolean;
     onClick: () => void;
     layoutIdPrefix: string;
+    // DnD props
+    attributes?: any;
+    listeners?: any;
+    setNodeRef?: (node: HTMLElement | null) => void;
+    style?: React.CSSProperties;
+    isDragging?: boolean;
 }
 
-export const FolderTab = ({ folder, count, isActive, onClick, layoutIdPrefix }: FolderTabProps) => {
+export const FolderTab = ({ 
+    folder, 
+    count, 
+    isActive, 
+    onClick, 
+    layoutIdPrefix,
+    attributes,
+    listeners,
+    setNodeRef,
+    style,
+    isDragging
+}: FolderTabProps) => {
     return (
        <div
+          ref={setNodeRef}
+          style={style}
+          {...attributes}
+          {...listeners}
           onClick={onClick}
           className={clsx(
              'group relative flex items-center gap-2 px-3 h-[40px] cursor-pointer select-none transition-colors min-w-fit outline-none',
@@ -38,7 +61,7 @@ export const FolderTab = ({ folder, count, isActive, onClick, layoutIdPrefix }: 
           </Chip>
           
           {/* Active Indicator (Underline) with Framer Motion */}
-          {isActive && (
+          {isActive && !isDragging && (
               <motion.div 
                   layoutId={`${layoutIdPrefix}-underline`}
                   className="absolute bottom-0 left-0 w-full h-[2px] bg-primary z-0"
@@ -47,6 +70,39 @@ export const FolderTab = ({ folder, count, isActive, onClick, layoutIdPrefix }: 
               />
           )}
        </div>
+    );
+};
+
+// --- Sortable Wrapper ---
+const SortableFolderTab = (props: FolderTabProps) => {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({
+        id: `folder-${props.folder.id}`,
+        data: { type: 'folder', folder: props.folder }
+    });
+
+    const style = {
+        transform: CSS.Translate.toString(transform),
+        transition,
+        opacity: isDragging ? 0.3 : 1,
+        zIndex: isDragging ? 10 : 1,
+    };
+
+    return (
+        <FolderTab 
+            {...props}
+            attributes={attributes}
+            listeners={listeners}
+            setNodeRef={setNodeRef}
+            style={style}
+            isDragging={isDragging}
+        />
     );
 };
 
@@ -71,16 +127,21 @@ export const FolderTabs = ({
     return (
         <div className="flex items-end gap-2 w-full ">
            <div className="flex-grow overflow-x-auto scrollbar-hide flex items-center gap-2">
-               {folders.map((folder) => (
-                     <FolderTab 
-                        key={folder.id}
-                        folder={folder}
-                        count={getTaskCount(folder.id)}
-                        isActive={selectedFolderId === folder.id}
-                        layoutIdPrefix={`project-${projectId}`}
-                        onClick={() => onSelect(folder.id)}
-                     />
-               ))}
+               <SortableContext 
+                    items={folders.map(f => `folder-${f.id}`)}
+                    strategy={horizontalListSortingStrategy}
+               >
+                   {folders.map((folder) => (
+                         <SortableFolderTab 
+                            key={folder.id}
+                            folder={folder}
+                            count={getTaskCount(folder.id)}
+                            isActive={selectedFolderId === folder.id}
+                            layoutIdPrefix={`project-${projectId}`}
+                            onClick={() => onSelect(folder.id)}
+                         />
+                   ))}
+               </SortableContext>
            </div>
            <Button 
                isIconOnly 
