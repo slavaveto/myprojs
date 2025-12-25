@@ -12,7 +12,6 @@ import { useSupabase } from '@/utils/supabase/useSupabase';
 import { useAuth } from '@clerk/nextjs';
 import { useIsSuperAdmin } from '@/utils/supabase/useIsSuperAdmin';
 import { usePermission } from '@/app/admin/_services/usePermission';
-import { useIsLocal } from '@/utils/useIsLocal';
 import { PERMISSIONS } from '@/app/admin/_services/acl';
 import { AdminUserMenu } from '@/app/admin/AdminUserMenu';
 
@@ -31,7 +30,6 @@ interface LoggerScreenProps {
 export function LoggerScreen({ onReady, isActive, texts, showToast = true }: LoggerScreenProps) {
    const { supabase } = useSupabase(); // Добавляем useSupabase
    const logger = createLogger('LoggerScreen');
-   const isLocal = useIsLocal();
    const { isSignedIn } = useAuth();
    const { isSuperAdmin, isLoading: isSuperAdminLoading } = useIsSuperAdmin();
    const { can } = usePermission();
