@@ -243,6 +243,9 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
    );
 
    const customCollisionDetection: CollisionDetection = (args) => {
+      const { active } = args;
+      const isDraggingFolder = active.id.toString().startsWith('folder-');
+
       // 1. Check folder tabs with pointerWithin
       const pointerCollisions = pointerWithin(args);
       const folderCollision = pointerCollisions.find(c => c.id.toString().startsWith('folder-'));
@@ -252,7 +255,7 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
           
           // Handle folder switch timer logic directly here because handleDragOver 
           // might not trigger if we return the same task collision
-          if (hoveredFolderIdRef.current !== folderId) {
+          if (!isDraggingFolder && hoveredFolderIdRef.current !== folderId) {
               hoveredFolderIdRef.current = folderId;
               
               if (hoverTimeoutRef.current) {
@@ -269,15 +272,16 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
               }
           }
 
-          // Force DndKit to think we are over the first task, so the placeholder stays at the top
-          if (filteredTasks.length > 0) {
+          // Force DndKit to think we are over the first task ONLY if dragging a TASK
+          if (!isDraggingFolder && filteredTasks.length > 0) {
               return [{ id: filteredTasks[0].id }];
           }
+          
           return [folderCollision];
       }
       
-      // Reset if left folder area
-      if (hoveredFolderIdRef.current) {
+      // Reset if left folder area (only relevant for task dragging)
+      if (!isDraggingFolder && hoveredFolderIdRef.current) {
           hoveredFolderIdRef.current = null;
           if (hoverTimeoutRef.current) {
               clearTimeout(hoverTimeoutRef.current);
