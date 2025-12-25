@@ -10,7 +10,10 @@ import { Plus, LayoutGrid, GripVertical, Inbox, Calendar, CheckCircle2, FileText
 import { AppLoaderProvider, useAppLoader } from '@/app/AppLoader';
 import { ProjectScreen } from '@/app/components/ProjectScreen';
 import { LogsScreen } from '@/app/components/LogsScreen';
+import { SystemScreen } from '@/app/components/SystemScreen';
 import { globalStorage } from '@/utils/storage';
+import { useAsyncAction } from '@/utils/supabase/useAsyncAction';
+import { StatusBadge } from '@/utils/supabase/StatusBadge';
 
 // DnD Imports
 import {
@@ -116,6 +119,13 @@ function AppContent() {
    // Флаг первичной инициализации списка проектов
    const [isInit, setIsInit] = useState(false);
 
+   // Status for sidebar actions (reordering)
+   const { execute: executeSidebarAction, status: sidebarStatus, error: sidebarError } = useAsyncAction({
+       useToast: false,
+       minDuration: 500,
+       successDuration: 1500,
+   });
+
    // DnD Sensors
    const sensors = useSensors(
       useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -182,7 +192,10 @@ function AppContent() {
                
                // Save to DB
                const updates = newItems.map((p, index) => ({ id: p.id, sort_order: index }));
-               projectService.updateProjectOrder(updates).catch(err => {
+               
+               executeSidebarAction(async () => {
+                   await projectService.updateProjectOrder(updates);
+               }).catch(err => {
                    logger.error('Failed to reorder projects', err);
                });
 
@@ -201,9 +214,17 @@ function AppContent() {
                   <LayoutGrid size={24} className="text-primary" />
                   <span>Projects</span>
                </div>
-               <Button isIconOnly size="sm" variant="flat" color="success">
-                  <Plus size={20} />
-               </Button>
+               <div className="flex items-center gap-1">
+                   <div className="scale-75 origin-right">
+                       <StatusBadge 
+                           status={sidebarStatus} 
+                           errorMessage={sidebarError?.message}
+                       />
+                   </div>
+                   <Button isIconOnly size="sm" variant="flat" color="success">
+                      <Plus size={20} />
+                   </Button>
+               </div>
             </div>
 
             <div className="flex-grow overflow-y-auto p-2">
@@ -291,6 +312,33 @@ function AppContent() {
                )}
             >
                 <LogsScreen />
+            </div>
+
+            <div 
+               className={clsx(
+                  "absolute inset-0 w-full h-full bg-background transition-opacity duration-300",
+                  activeSystemTab === 'inbox' ? "z-30 opacity-100 pointer-events-auto" : "z-0 opacity-0 pointer-events-none"
+               )}
+            >
+                <SystemScreen title="Inbox" />
+            </div>
+
+            <div 
+               className={clsx(
+                  "absolute inset-0 w-full h-full bg-background transition-opacity duration-300",
+                  activeSystemTab === 'today' ? "z-30 opacity-100 pointer-events-auto" : "z-0 opacity-0 pointer-events-none"
+               )}
+            >
+                <SystemScreen title="Today" />
+            </div>
+
+            <div 
+               className={clsx(
+                  "absolute inset-0 w-full h-full bg-background transition-opacity duration-300",
+                  activeSystemTab === 'done' ? "z-30 opacity-100 pointer-events-auto" : "z-0 opacity-0 pointer-events-none"
+               )}
+            >
+                <SystemScreen title="Done" />
             </div>
             
             {projects.map((project) => (

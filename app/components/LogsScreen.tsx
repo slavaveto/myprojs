@@ -9,6 +9,25 @@ import { RefreshCw } from 'lucide-react';
 
 const logger = createLogger('LogsScreen');
 
+const LogDetails = ({ details }: { details: any }) => {
+    if (!details || typeof details !== 'object' || Object.keys(details).length === 0) return null;
+
+    return (
+        <div className="mt-2 bg-default-50 rounded-lg p-2 border border-default-100">
+            <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+                {Object.entries(details).map(([key, value]) => (
+                    <React.Fragment key={key}>
+                        <span className="text-default-400 font-medium text-right select-none">{key}:</span>
+                        <span className="text-foreground font-mono break-all">
+                            {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                        </span>
+                    </React.Fragment>
+                ))}
+            </div>
+        </div>
+    );
+};
+
 export const LogsScreen = () => {
     const [logs, setLogs] = useState<LogEntry[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -56,17 +75,19 @@ export const LogsScreen = () => {
 
     return (
         <div className="h-full flex flex-col p-6 max-w-5xl mx-auto w-full">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex justify-between items-center mb-6 min-h-[40px]">
                 <h1 className="text-2xl font-bold">Activity Logs</h1>
-                <Button 
-                    isIconOnly 
-                    size="sm" 
-                    variant="light" 
-                    onPress={() => fetchLogs(false)}
-                    isLoading={isRefreshing}
-                >
-                    <RefreshCw size={20} />
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button 
+                        isIconOnly 
+                        size="sm" 
+                        variant="light" 
+                        onPress={() => fetchLogs(false)}
+                        isLoading={isRefreshing}
+                    >
+                        <RefreshCw size={20} />
+                    </Button>
+                </div>
             </div>
             
             <div className="flex-grow overflow-y-auto space-y-2 pb-10">
@@ -98,11 +119,7 @@ export const LogsScreen = () => {
                                 </div>
                             </div>
                             
-                            {log.details && (
-                                <pre className="bg-default-100 p-2 rounded text-[10px] overflow-x-auto font-mono text-default-600">
-                                    {JSON.stringify(log.details, null, 2)}
-                                </pre>
-                            )}
+                            {log.details && <LogDetails details={log.details} />}
                         </CardBody>
                     </Card>
                 ))}
