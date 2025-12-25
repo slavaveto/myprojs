@@ -16,7 +16,6 @@ import {
    PointerSensor,
    closestCorners,
    defaultDropAnimationSideEffects,
-   useDroppable,
    useSensor,
    useSensors,
 } from '@dnd-kit/core';
@@ -26,8 +25,8 @@ import {
    sortableKeyboardCoordinates,
    verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { Button, Tab, Tabs, Chip } from '@heroui/react';
-import { Plus, FolderPlus } from 'lucide-react';
+import { Button, Chip } from '@heroui/react';
+import { Plus } from 'lucide-react';
 import { TaskRow } from '@/app/components/TaskRow';
 import { clsx } from 'clsx';
 import { projectService } from '@/app/_services/projectService';
@@ -36,26 +35,41 @@ import { StatusBadge } from '@/utils/supabase/StatusBadge';
 
 const logger = createLogger('ProjectScreen');
 
-const DroppableTabTitle = ({ folder, count }: { folder: Folder; count: number }) => {
-   const { setNodeRef, isOver } = useDroppable({
-      id: `folder-${folder.id}`,
-      data: { type: 'folder', folder }
-   });
+// --- Custom Tab Component (Simple Version) ---
+interface FolderTabProps {
+    folder: Folder;
+    count: number;
+    isActive: boolean;
+    onClick: () => void;
+}
 
-   return (
-      <div
-         ref={setNodeRef}
-         className={clsx(
-            'flex items-center gap-2 px-2 py-1 rounded transition-colors',
-            isOver ? 'bg-primary-100 text-primary ring-2 ring-primary ring-inset' : ''
-         )}
-      >
-         {folder.title}
-         <Chip size="sm" variant="flat" className="h-5 min-w-5 px-1 text-[10px]">
-            {count}
-         </Chip>
-      </div>
-   );
+const FolderTab = ({ folder, count, isActive, onClick }: FolderTabProps) => {
+    return (
+       <div
+          onClick={onClick}
+          className={clsx(
+             'group relative flex items-center gap-2 px-3 h-[40px] cursor-pointer select-none transition-colors min-w-fit outline-none',
+             isActive ? 'text-primary font-medium' : 'text-default-500 hover:text-default-700'
+          )}
+       >
+          <span>{folder.title}</span>
+          <Chip 
+              size="sm" 
+              variant="flat" 
+              className={clsx(
+                  "h-5 min-w-5 px-1 text-[10px]",
+                  isActive ? "bg-primary/20 text-primary" : "bg-default-100 text-default-500"
+              )}
+          >
+             {count}
+          </Chip>
+          
+          {/* Active Indicator (Underline) */}
+          {isActive && (
+              <div className="absolute bottom-0 left-0 w-full h-[2px] bg-primary" />
+          )}
+       </div>
+    );
 };
 
 const dropAnimationConfig: DropAnimation = {
@@ -270,7 +284,12 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
          const task = tasks.find(t => t.id === activeTaskId);
          if (task && task.folder_id !== targetFolderId) {
             const updatedTask = { ...task, folder_id: targetFolderId, updated_at: new Date().toISOString() };
+            
+            // Move to new folder locally
             setTasks(prev => prev.map(t => t.id === activeTaskId ? updatedTask : t));
+            
+            // Switch to that folder so user sees the task (optional UX choice, usually good)
+            setSelectedFolderId(targetFolderId);
             
             try {
                 await executeSave(async () => {
@@ -345,35 +364,19 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
             onDragEnd={handleDragEnd}
          >
             <div className="flex items-end gap-2 w-full">
-               <div className="flex-grow overflow-x-auto scrollbar-hide">
-                   <Tabs
-                      selectedKey={selectedFolderId}
-                      onSelectionChange={(key) => {
-                          const newId = key as string;
-                          setSelectedFolderId(newId);
-                          globalStorage.setItem(`active_folder_${project.id}`, newId);
-                      }}
-                      variant="underlined"
-                      color="primary"
-                      classNames={{
-                         tabList: "gap-6 relative rounded-none p-0 border-b-0",
-                         cursor: "w-full bg-primary",
-                         tab: "max-w-fit px-0 h-12",
-                         tabContent: "group-data-[selected=true]:text-primary"
-                      }}
-                   >
-                      {folders.map((folder) => (
-                         <Tab
+               <div className="flex-grow overflow-x-auto scrollbar-hide flex items-center gap-2">
+                   {folders.map((folder) => (
+                         <FolderTab 
                             key={folder.id}
-                            title={
-                               <DroppableTabTitle 
-                                   folder={folder} 
-                                   count={getFolderTaskCount(folder.id)} 
-                               />
-                            }
+                            folder={folder}
+                            count={getFolderTaskCount(folder.id)}
+                            isActive={selectedFolderId === folder.id}
+                            onClick={() => {
+                                setSelectedFolderId(folder.id);
+                                globalStorage.setItem(`active_folder_${project.id}`, folder.id);
+                            }}
                          />
-                      ))}
-                   </Tabs>
+                   ))}
                </div>
                <Button 
                    isIconOnly 
@@ -381,6 +384,7 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
                    size="sm" 
                    color="success"
                    onPress={handleAddFolder}
+                   className="mb-1"
                >
                    <Plus size={20} />
                </Button>
