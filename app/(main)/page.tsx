@@ -131,7 +131,12 @@ function AppContent() {
 
    // DnD Sensors
    const sensors = useSensors(
-      useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+      useSensor(PointerSensor, {
+         activationConstraint: {
+             delay: 150,
+             tolerance: 5,
+         },
+     }),
       useSensor(KeyboardSensor, {
          coordinateGetter: sortableKeyboardCoordinates,
       })

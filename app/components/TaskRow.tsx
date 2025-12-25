@@ -39,7 +39,7 @@ export const TaskRow = ({ task, onUpdate, onDelete, isOverlay }: TaskRowProps) =
          className={clsx(
             "group grid grid-cols-[30px_1fr_40px] gap-1 items-center min-h-[32px] rounded-lg border border-default-300 bg-content1 transition-colors outline-none",
             !isDragging && !isOverlay && "hover:bg-default-50",
-            (isDragging || isOverlay) && "z-50 bg-content1 shadow-lg border-primary/50"
+            (isDragging || isOverlay) && "z-50 bg-content1 shadow-lg border-primary/50 pointer-events-none cursor-grabbing"
          )}
       >
          {/* Drag Handle + Checkbox Wrapper */}

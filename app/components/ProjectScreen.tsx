@@ -6,6 +6,8 @@ import { createLogger } from '@/utils/logger/Logger';
 import { Folder, Task, Project } from '@/app/types';
 import { globalStorage } from '@/utils/storage';
 import { toast } from 'react-hot-toast';
+import { clsx } from 'clsx';
+
 import {
    DndContext,
    DragEndEvent,
@@ -14,10 +16,13 @@ import {
    DropAnimation,
    KeyboardSensor,
    PointerSensor,
-   closestCorners,
+   closestCenter,
+   pointerWithin,
+   rectIntersection,
    defaultDropAnimationSideEffects,
    useSensor,
    useSensors,
+   CollisionDetection,
 } from '@dnd-kit/core';
 import {
    arrayMove,
@@ -57,6 +62,7 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
    const { setLoading } = useAppLoader();
    
    const loadStartedRef = useRef(false);
+   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
    // --- Status Management ---
    const { execute: executeSave, status: saveStatus, error: saveError } = useAsyncAction({
@@ -227,19 +233,82 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
    const sensors = useSensors(
       useSensor(PointerSensor, {
           activationConstraint: {
-              distance: 5,
+              delay: 150,
+              tolerance: 5,
           },
       }),
       useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
    );
 
+   const customCollisionDetection: CollisionDetection = (args) => {
+      // 1. Check folder tabs with pointerWithin (precise cursor detection)
+      const pointerCollisions = pointerWithin(args);
+      const folderCollision = pointerCollisions.find(c => c.id.toString().startsWith('folder-'));
+      
+      if (folderCollision) {
+          return [folderCollision];
+      }
+
+      // 2. For tasks list reordering use closestCenter (smoother)
+      return closestCenter(args);
+   };
+
    const handleDragStart = (event: DragStartEvent) => {
       setActiveId(event.active.id as string);
+   };
+
+   // --- Spring-Loaded Folders Logic ---
+   const handleDragOver = ({ active, over }: any) => {
+       // Clean up timer if we are not over anything valid
+       if (!over) {
+           if (hoverTimeoutRef.current) {
+               clearTimeout(hoverTimeoutRef.current);
+               hoverTimeoutRef.current = null;
+           }
+           return;
+       }
+
+       const isTaskDragging = !active.id.toString().startsWith('folder-');
+       const isOverFolder = over.id.toString().startsWith('folder-');
+
+       if (isTaskDragging && isOverFolder) {
+           const targetFolderId = over.id.toString().replace('folder-', '');
+           
+           // If hovering over a different folder -> start timer to switch
+           if (targetFolderId !== selectedFolderId) {
+               if (!hoverTimeoutRef.current) {
+                   hoverTimeoutRef.current = setTimeout(() => {
+                       setSelectedFolderId(targetFolderId);
+                       globalStorage.setItem(`active_folder_${project.id}`, targetFolderId);
+                       // We don't clear timeout here, useEffect or next hover will handle it
+                   }, 700);
+               }
+           } else {
+               // If hovering over CURRENT folder -> clear timer
+               if (hoverTimeoutRef.current) {
+                   clearTimeout(hoverTimeoutRef.current);
+                   hoverTimeoutRef.current = null;
+               }
+           }
+       } else {
+           // If dragging a folder OR not hovering a folder -> clear timer
+           if (hoverTimeoutRef.current) {
+               clearTimeout(hoverTimeoutRef.current);
+               hoverTimeoutRef.current = null;
+           }
+       }
    };
 
    const handleDragEnd = async (event: DragEndEvent) => {
       const { active, over } = event;
       setActiveId(null);
+      
+      // Clear timeout
+      if (hoverTimeoutRef.current) {
+          clearTimeout(hoverTimeoutRef.current);
+          hoverTimeoutRef.current = null;
+      }
+
       if (!over) return;
 
       // --- Folder Reordering ---
@@ -291,7 +360,47 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
       }
 
       if (active.id !== over.id) {
-         const currentFolderTasks = tasks.filter(t => t.folder_id === selectedFolderId);
+         // Sort current folder tasks to match visual order
+         const currentFolderTasks = tasks
+            .filter(t => t.folder_id === selectedFolderId)
+            .sort((a, b) => a.sort_order - b.sort_order);
+
+         const activeTask = tasks.find(t => t.id === activeTaskId);
+         
+         // Case: Task moved from another folder into the list
+         if (activeTask && activeTask.folder_id !== selectedFolderId) {
+             const newIndex = currentFolderTasks.findIndex(t => t.id === over.id);
+             
+             // Insert at new index
+             const updatedTask = { ...activeTask, folder_id: selectedFolderId, updated_at: new Date().toISOString() };
+             
+             // Create new list with inserted task
+             const newSorted = [...currentFolderTasks];
+             // Simple insertion at the index of the item we hovered over
+             newSorted.splice(newIndex, 0, updatedTask);
+             
+             const updates = newSorted.map((t, index) => ({ id: t.id, sort_order: index }));
+
+             setTasks(prev => {
+                 const otherTasks = prev.filter(t => t.folder_id !== selectedFolderId && t.id !== activeTaskId);
+                 const updatedCurrentTasks = newSorted.map((t, idx) => ({ ...t, sort_order: idx }));
+                 return [...otherTasks, ...updatedCurrentTasks];
+             });
+
+             try {
+                 await executeSave(async () => {
+                     // 1. Update folder
+                     await projectService.updateTask(activeTaskId, { folder_id: selectedFolderId });
+                     // 2. Update all orders
+                     await projectService.updateTaskOrder(updates);
+                 });
+             } catch(err) {
+                 logger.error('Failed to move task to folder list', err);
+             }
+             return;
+         }
+
+         // Case: Reordering within same folder
          const oldIndex = currentFolderTasks.findIndex(t => t.id === active.id);
          const newIndex = currentFolderTasks.findIndex(t => t.id === over.id);
 
@@ -317,10 +426,18 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
    };
 
    const filteredTasks = useMemo(() => {
-      return tasks
-         .filter(t => t.folder_id === selectedFolderId)
-         .sort((a, b) => (a.sort_order - b.sort_order));
-   }, [tasks, selectedFolderId]);
+      let tasksForFolder = tasks.filter(t => t.folder_id === selectedFolderId);
+
+      // If dragging a task into a new folder (spring-loaded), include it in the list temporarily
+      if (activeId && !activeId.toString().startsWith('folder-')) {
+          const activeTask = tasks.find(t => t.id === activeId);
+          if (activeTask && activeTask.folder_id !== selectedFolderId) {
+              tasksForFolder = [...tasksForFolder, activeTask];
+          }
+      }
+
+      return tasksForFolder.sort((a, b) => (a.sort_order - b.sort_order));
+   }, [tasks, selectedFolderId, activeId]);
 
    const getFolderTaskCount = (folderId: string) => {
        return tasks.filter(t => t.folder_id === folderId).length;
@@ -331,7 +448,10 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
    }
 
    return (
-      <div className="h-full flex flex-col p-6 max-w-5xl mx-auto w-full">
+      <div className={clsx(
+          "h-full flex flex-col p-6 max-w-5xl mx-auto w-full",
+          activeId ? "cursor-grabbing *:[cursor:grabbing]" : ""
+      )}>
          <div className="flex justify-between items-center mb-4 min-h-[40px]">
             <h1 className="text-2xl font-bold">{project.title}</h1>
             
@@ -347,8 +467,9 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
 
          <DndContext
             sensors={sensors}
-            collisionDetection={closestCorners}
+            collisionDetection={customCollisionDetection}
             onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
          >
             <FolderTabs 
