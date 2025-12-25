@@ -210,12 +210,13 @@ function AppContent() {
          {/* Sidebar */}
          <aside className="w-64 flex-shrink-0 border-r border-default-200 bg-content1 flex flex-col z-20">
             <div className="p-4 border-b border-default-200 flex items-center justify-between">
-               <div className="flex items-center gap-2 font-bold text-lg">
-                  <LayoutGrid size={24} className="text-primary" />
-                  <span>Projects</span>
+               <div className="flex items-center gap-2 font-bold text-lg min-w-0">
+                  <LayoutGrid size={24} className="text-primary flex-shrink-0" />
+                  <span className="truncate">Projects</span>
                </div>
-               <div className="flex items-center gap-1">
-                   <div className="scale-75 origin-right">
+               
+               <div className="flex items-center relative">
+                   <div className="absolute right-full mr-2 top-1/2 -translate-y-1/2 scale-75 origin-right pointer-events-none">
                        <StatusBadge 
                            status={sidebarStatus} 
                            errorMessage={sidebarError?.message}
