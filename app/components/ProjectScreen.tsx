@@ -59,10 +59,12 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
    const [selectedFolderId, setSelectedFolderId] = useState<string>('');
    const [isDataLoaded, setIsDataLoaded] = useState(false);
    const [activeId, setActiveId] = useState<string | null>(null);
+   const [isOverFolder, setIsOverFolder] = useState(false);
    const { setLoading } = useAppLoader();
    
    const loadStartedRef = useRef(false);
    const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+   const hoveredFolderIdRef = useRef<string | null>(null);
 
    // --- Status Management ---
    const { execute: executeSave, status: saveStatus, error: saveError } = useAsyncAction({
@@ -241,12 +243,46 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
    );
 
    const customCollisionDetection: CollisionDetection = (args) => {
-      // 1. Check folder tabs with pointerWithin (precise cursor detection)
+      // 1. Check folder tabs with pointerWithin
       const pointerCollisions = pointerWithin(args);
       const folderCollision = pointerCollisions.find(c => c.id.toString().startsWith('folder-'));
       
       if (folderCollision) {
+          const folderId = folderCollision.id.toString();
+          
+          // Handle folder switch timer logic directly here because handleDragOver 
+          // might not trigger if we return the same task collision
+          if (hoveredFolderIdRef.current !== folderId) {
+              hoveredFolderIdRef.current = folderId;
+              
+              if (hoverTimeoutRef.current) {
+                  clearTimeout(hoverTimeoutRef.current);
+                  hoverTimeoutRef.current = null;
+              }
+
+              const targetId = folderId.replace('folder-', '');
+              if (targetId !== selectedFolderId) {
+                  hoverTimeoutRef.current = setTimeout(() => {
+                      setSelectedFolderId(targetId);
+                      globalStorage.setItem(`active_folder_${project.id}`, targetId);
+                  }, 700);
+              }
+          }
+
+          // Force DndKit to think we are over the first task, so the placeholder stays at the top
+          if (filteredTasks.length > 0) {
+              return [{ id: filteredTasks[0].id }];
+          }
           return [folderCollision];
+      }
+      
+      // Reset if left folder area
+      if (hoveredFolderIdRef.current) {
+          hoveredFolderIdRef.current = null;
+          if (hoverTimeoutRef.current) {
+              clearTimeout(hoverTimeoutRef.current);
+              hoverTimeoutRef.current = null;
+          }
       }
 
       // 2. For tasks list reordering use closestCenter (smoother)
@@ -259,59 +295,71 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
 
    // --- Spring-Loaded Folders Logic ---
    const handleDragOver = ({ active, over }: any) => {
-       // Clean up timer if we are not over anything valid
-       if (!over) {
-           if (hoverTimeoutRef.current) {
-               clearTimeout(hoverTimeoutRef.current);
-               hoverTimeoutRef.current = null;
-           }
-           return;
-       }
+       const folderOverId = hoveredFolderIdRef.current;
+       const isOverFolderNode = !!folderOverId; 
 
-       const isTaskDragging = !active.id.toString().startsWith('folder-');
-       const isOverFolder = over.id.toString().startsWith('folder-');
-
-       if (isTaskDragging && isOverFolder) {
-           const targetFolderId = over.id.toString().replace('folder-', '');
-           
-           // If hovering over a different folder -> start timer to switch
-           if (targetFolderId !== selectedFolderId) {
-               if (!hoverTimeoutRef.current) {
-                   hoverTimeoutRef.current = setTimeout(() => {
-                       setSelectedFolderId(targetFolderId);
-                       globalStorage.setItem(`active_folder_${project.id}`, targetFolderId);
-                       // We don't clear timeout here, useEffect or next hover will handle it
-                   }, 700);
-               }
-           } else {
-               // If hovering over CURRENT folder -> clear timer
-               if (hoverTimeoutRef.current) {
-                   clearTimeout(hoverTimeoutRef.current);
-                   hoverTimeoutRef.current = null;
-               }
-           }
-       } else {
-           // If dragging a folder OR not hovering a folder -> clear timer
-           if (hoverTimeoutRef.current) {
-               clearTimeout(hoverTimeoutRef.current);
-               hoverTimeoutRef.current = null;
-           }
+       if (isOverFolder !== isOverFolderNode) {
+           setIsOverFolder(isOverFolderNode);
        }
+       
+       // Timer logic moved to customCollisionDetection to handle "stuck" over updates
    };
 
    const handleDragEnd = async (event: DragEndEvent) => {
       const { active, over } = event;
       setActiveId(null);
+      setIsOverFolder(false); 
       
+      const folderOverId = hoveredFolderIdRef.current;
+      hoveredFolderIdRef.current = null; // Reset ref
+
       // Clear timeout
       if (hoverTimeoutRef.current) {
           clearTimeout(hoverTimeoutRef.current);
           hoverTimeoutRef.current = null;
       }
+      
+      // If dropped over a folder (detected by custom collision)
+      if (folderOverId && active.id.toString() !== folderOverId) {
+          // Special handling for task dropped on folder tab
+          const activeTaskId = active.id as string;
+          const targetFolderId = folderOverId.replace('folder-', '');
+          const task = tasks.find(t => t.id === activeTaskId);
+          
+          if (task && !activeTaskId.startsWith('folder-')) {
+             // Calculate new sort order to be at the top
+            const targetFolderTasks = tasks.filter(t => t.folder_id === targetFolderId);
+            const minOrder = targetFolderTasks.length > 0 
+                ? Math.min(...targetFolderTasks.map(t => t.sort_order)) 
+                : 0;
+            const newSortOrder = minOrder - 1000;
+
+            const updatedTask = { 
+                ...task, 
+                folder_id: targetFolderId, 
+                sort_order: newSortOrder,
+                updated_at: new Date().toISOString() 
+            };
+            
+            setTasks(prev => prev.map(t => t.id === activeTaskId ? updatedTask : t));
+            setSelectedFolderId(targetFolderId);
+            
+            try {
+                await executeSave(async () => {
+                    await projectService.updateTask(activeTaskId, { 
+                        folder_id: targetFolderId,
+                        sort_order: newSortOrder
+                    });
+                });
+            } catch(err) {
+                logger.error('Failed to move task folder', err);
+            }
+            return;
+          }
+      }
 
       if (!over) return;
 
-      // --- Folder Reordering ---
       if (active.data.current?.type === 'folder' && over.data.current?.type === 'folder') {
            if (active.id !== over.id) {
                setFolders((items) => {
@@ -334,46 +382,14 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
            return;
       }
 
-      const activeTaskId = active.id as string;
-      
+      // Removed old folder drop logic as it is now handled via folderOverId
+      /* 
       if (over.id.toString().startsWith('folder-')) {
-         const targetFolderId = over.id.toString().replace('folder-', '');
-         const task = tasks.find(t => t.id === activeTaskId);
-         if (task && task.folder_id !== targetFolderId) {
-            // Calculate new sort order to be at the top
-            const targetFolderTasks = tasks.filter(t => t.folder_id === targetFolderId);
-            const minOrder = targetFolderTasks.length > 0 
-                ? Math.min(...targetFolderTasks.map(t => t.sort_order)) 
-                : 0;
-            const newSortOrder = minOrder - 1000;
+         ...
+      } 
+      */
 
-            const updatedTask = { 
-                ...task, 
-                folder_id: targetFolderId, 
-                sort_order: newSortOrder,
-                updated_at: new Date().toISOString() 
-            };
-            
-            // Move to new folder locally
-            setTasks(prev => prev.map(t => t.id === activeTaskId ? updatedTask : t));
-            
-            // Switch to that folder so user sees the task (optional UX choice, usually good)
-            setSelectedFolderId(targetFolderId);
-            
-            try {
-                await executeSave(async () => {
-                    await projectService.updateTask(activeTaskId, { 
-                        folder_id: targetFolderId,
-                        sort_order: newSortOrder
-                    });
-                });
-            } catch(err) {
-                logger.error('Failed to move task folder', err);
-            }
-         }
-         return;
-      }
-
+      const activeTaskId = active.id as string;
       if (active.id !== over.id) {
          // Sort current folder tasks to match visual order
          const currentFolderTasks = tasks
@@ -446,14 +462,24 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
       // If dragging a task into a new folder (spring-loaded), include it in the list temporarily
       if (activeId && !activeId.toString().startsWith('folder-')) {
           const activeTask = tasks.find(t => t.id === activeId);
-          if (activeTask && activeTask.folder_id !== selectedFolderId) {
+          
+          // Logic: If task is from another folder OR we are currently hovering over ANY folder tab
+          // we want to visualize it at the top of the current list
+          if (activeTask && (activeTask.folder_id !== selectedFolderId || isOverFolder)) {
               // Calculate temp sort order to show it at the top
               const minOrder = tasksForFolder.length > 0 
                   ? Math.min(...tasksForFolder.map(t => t.sort_order)) 
                   : 0;
               
               const tempTask = { ...activeTask, sort_order: minOrder - 1000 };
-              tasksForFolder = [...tasksForFolder, tempTask];
+              
+              // If it's already in the list (same folder), replace it with the temp version
+              if (activeTask.folder_id === selectedFolderId) {
+                  tasksForFolder = tasksForFolder.map(t => t.id === activeId ? tempTask : t);
+              } else {
+                  // If from another folder, add it
+                  tasksForFolder = [...tasksForFolder, tempTask];
+              }
           }
       }
 
