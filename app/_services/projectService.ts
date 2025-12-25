@@ -1,5 +1,6 @@
 import { supabase } from '@/utils/supabase/supabaseClient';
 import { Project, Folder, Task } from '@/app/types';
+import { logService } from './logService';
 
 export const projectService = {
     // --- Projects ---
@@ -12,17 +13,30 @@ export const projectService = {
         return data as Project[];
     },
 
-    async updateProjectOrder(updates: { id: string; sort_order: number }[]) {
-        const { error } = await Promise.all(
-            updates.map(u =>
-                supabase.from('projects').update({
-                    sort_order: u.sort_order,
-                    updated_at: new Date().toISOString()
-                }).eq('id', u.id)
-            )
-        ) as any; // Promise.all returns array of results, simplifying check
+    async createProject(title: string, color: string, sort_order: number) {
+        const { data, error } = await supabase
+            .from('projects')
+            .insert({
+                title,
+                color,
+                sort_order,
+                updated_at: new Date().toISOString(),
+                created_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+        if (error) throw error;
         
-        // Better check:
+        await logService.logAction('create', 'projects', data.id, { title, color });
+        return data as Project;
+    },
+
+    async updateProjectOrder(updates: { id: string; sort_order: number }[]) {
+        // Log the reorder action (batch)
+        if (updates.length > 0) {
+             await logService.logAction('reorder', 'projects', 'batch', { count: updates.length });
+        }
+
         for (const u of updates) {
            const { error } = await supabase.from('projects').update({
                sort_order: u.sort_order,
@@ -56,6 +70,8 @@ export const projectService = {
             .select()
             .single();
         if (error) throw error;
+        
+        await logService.logAction('create', 'folders', data.id, { title, project_id: projectId });
         return data as Folder;
     },
 
@@ -89,6 +105,8 @@ export const projectService = {
             .select()
             .single();
         if (error) throw error;
+        
+        await logService.logAction('create', 'tasks', data.id, { folder_id: folderId });
         return data as Task;
     },
 
@@ -101,6 +119,8 @@ export const projectService = {
             })
             .eq('id', id);
         if (error) throw error;
+        
+        await logService.logAction('update', 'tasks', id, updates);
     },
 
     async deleteTask(id: string) {
@@ -109,9 +129,14 @@ export const projectService = {
             .delete()
             .eq('id', id);
         if (error) throw error;
+        
+        await logService.logAction('delete', 'tasks', id);
     },
 
     async updateTaskOrder(updates: { id: string; sort_order: number }[]) {
+        if (updates.length > 0) {
+             await logService.logAction('reorder', 'tasks', 'batch', { count: updates.length });
+        }
         for (const u of updates) {
             const { error } = await supabase.from('tasks').update({
                 sort_order: u.sort_order,

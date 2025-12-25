@@ -6,9 +6,10 @@ import { projectService } from '@/app/_services/projectService';
 import { Project } from '@/app/types';
 import { clsx } from 'clsx';
 import { Button, Spinner } from '@heroui/react';
-import { Plus, LayoutGrid, GripVertical, Inbox, Calendar, CheckCircle2 } from 'lucide-react';
+import { Plus, LayoutGrid, GripVertical, Inbox, Calendar, CheckCircle2, FileText } from 'lucide-react';
 import { AppLoaderProvider, useAppLoader } from '@/app/AppLoader';
 import { ProjectScreen } from '@/app/components/ProjectScreen';
+import { LogsScreen } from '@/app/components/LogsScreen';
 import { globalStorage } from '@/utils/storage';
 
 // DnD Imports
@@ -239,7 +240,7 @@ function AppContent() {
                     modifiers={[restrictToVerticalAxis]}
                 >
                     <SortableContext 
-                        items={projects.map(p => p.id)} 
+                        items={projects.map((p: Project) => p.id)} 
                         strategy={verticalListSortingStrategy}
                     >
                        {projects.map((project) => (
@@ -260,6 +261,15 @@ function AppContent() {
 
             <div className="p-2">
                  <SidebarItem 
+                    icon={FileText} 
+                    label="Logs" 
+                    isActive={activeSystemTab === 'logs'}
+                    onClick={() => {
+                        setActiveSystemTab('logs');
+                        setActiveProjectId(null);
+                    }} 
+                />
+                 <SidebarItem 
                     icon={CheckCircle2} 
                     label="Done" 
                     isActive={activeSystemTab === 'done'}
@@ -273,6 +283,13 @@ function AppContent() {
 
          {/* Main Content */}
          <main className="flex-grow flex flex-col h-full overflow-hidden relative">
+            {/* System Screens */}
+            {activeSystemTab === 'logs' && (
+                <div className="absolute inset-0 w-full h-full bg-background z-10 overflow-hidden">
+                    <LogsScreen />
+                </div>
+            )}
+            
             {projects.map((project) => (
                <div
                   key={project.id}
