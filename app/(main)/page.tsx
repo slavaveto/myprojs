@@ -65,7 +65,8 @@ const SortableProjectItem = ({ project, isActive, onClick }: SortableProjectItem
                 {...listeners}
                 onClick={onClick}
                 className={clsx(
-                   'group flex items-center gap-3 px-3 py-2 rounded-lg transition-colors w-full text-left cursor-pointer active:cursor-grabbing select-none',
+                   'group flex items-center gap-3 px-3 py-2 rounded-lg transition-colors w-full text-left select-none',
+                   isDragging ? 'cursor-grabbing' : 'cursor-pointer',
                    'text-foreground',
                    isActive
                       ? 'bg-primary/10 text-primary font-medium'
