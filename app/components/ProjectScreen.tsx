@@ -20,64 +20,17 @@ import {
    useSensors,
 } from '@dnd-kit/core';
 import {
-   SortableContext,
    arrayMove,
    sortableKeyboardCoordinates,
-   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { Button, Chip } from '@heroui/react';
-import { Plus } from 'lucide-react';
 import { TaskRow } from '@/app/components/TaskRow';
-import { clsx } from 'clsx';
+import { FolderTabs } from '@/app/components/project/FolderTabs';
+import { TaskList } from '@/app/components/project/TaskList';
 import { projectService } from '@/app/_services/projectService';
 import { useAsyncAction, ActionStatus } from '@/utils/supabase/useAsyncAction';
 import { StatusBadge } from '@/utils/supabase/StatusBadge';
-import { motion } from 'framer-motion';
 
 const logger = createLogger('ProjectScreen');
-
-// --- Custom Tab Component (Simple Version) ---
-interface FolderTabProps {
-    folder: Folder;
-    count: number;
-    isActive: boolean;
-    onClick: () => void;
-    layoutIdPrefix: string;
-}
-
-const FolderTab = ({ folder, count, isActive, onClick, layoutIdPrefix }: FolderTabProps) => {
-    return (
-       <div
-          onClick={onClick}
-          className={clsx(
-             'group relative flex items-center gap-2 px-3 h-[40px] cursor-pointer select-none transition-colors min-w-fit outline-none',
-             isActive ? 'text-primary font-medium' : 'text-default-500 hover:text-default-700'
-          )}
-       >
-          <span className="relative z-10">{folder.title}</span>
-          <Chip 
-              size="sm" 
-              variant="flat" 
-              className={clsx(
-                  "h-5 min-w-5 px-1 text-[10px] relative z-10",
-                  isActive ? "bg-primary/20 text-primary" : "bg-default-100 text-default-500"
-              )}
-          >
-             {count}
-          </Chip>
-          
-          {/* Active Indicator (Underline) with Framer Motion */}
-          {isActive && (
-              <motion.div 
-                  layoutId={`${layoutIdPrefix}-underline`}
-                  className="absolute bottom-0 left-0 w-full h-[2px] bg-primary z-0"
-                  initial={false}
-                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
-              />
-          )}
-       </div>
-    );
-};
 
 const dropAnimationConfig: DropAnimation = {
    sideEffects: defaultDropAnimationSideEffects({
@@ -370,60 +323,26 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
          >
-            <div className="flex items-end gap-2 w-full">
-               <div className="flex-grow overflow-x-auto scrollbar-hide flex items-center gap-2">
-                   {folders.map((folder) => (
-                         <FolderTab 
-                            key={folder.id}
-                            folder={folder}
-                            count={getFolderTaskCount(folder.id)}
-                            isActive={selectedFolderId === folder.id}
-                            layoutIdPrefix={`project-${project.id}`}
-                            onClick={() => {
-                                setSelectedFolderId(folder.id);
-                                globalStorage.setItem(`active_folder_${project.id}`, folder.id);
-                            }}
-                         />
-                   ))}
-               </div>
-               <Button 
-                   isIconOnly 
-                   variant="flat" 
-                   size="sm" 
-                   color="success"
-                   onPress={handleAddFolder}
-                   className="mb-1"
-               >
-                   <Plus size={20} />
-               </Button>
-            </div>
+            <FolderTabs 
+                folders={folders}
+                selectedFolderId={selectedFolderId}
+                onSelect={(id) => {
+                    setSelectedFolderId(id);
+                    globalStorage.setItem(`active_folder_${project.id}`, id);
+                }}
+                onAddFolder={handleAddFolder}
+                getTaskCount={getFolderTaskCount}
+                projectId={project.id}
+            />
 
             <div className="mt-6 flex-grow flex flex-col min-h-0">
                 {selectedFolderId ? (
-                   <>
-                      <div className="flex-grow overflow-y-auto pr-0 pb-10">
-                         <SortableContext
-                            items={filteredTasks.map(t => t.id)}
-                            strategy={verticalListSortingStrategy}
-                         >
-                            <div className="flex flex-col gap-2">
-                               {filteredTasks.map((task) => (
-                                  <TaskRow
-                                     key={task.id}
-                                     task={task}
-                                     onUpdate={handleUpdateTask}
-                                     onDelete={handleDeleteTask}
-                                  />
-                               ))}
-                               {filteredTasks.length === 0 && (
-                                   <div className="text-center py-10 text-default-400">
-                                       No tasks in this folder.
-                                   </div>
-                               )}
-                            </div>
-                         </SortableContext>
-                      </div>
-                   </>
+                   <TaskList 
+                        tasks={filteredTasks}
+                        onUpdateTask={handleUpdateTask}
+                        onDeleteTask={handleDeleteTask}
+                        isEmpty={filteredTasks.length === 0}
+                   />
                 ) : (
                     <div className="text-center py-20 text-default-400">
                         Create a folder to start adding tasks.
