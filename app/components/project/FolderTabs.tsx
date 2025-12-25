@@ -73,7 +73,7 @@ export const FolderTab = ({
           </Chip>
           
           {/* Active Indicator (Underline) with Framer Motion */}
-          {isActive && (
+          {isActive && !isDragging && (
               <motion.div 
                   layoutId={`${layoutIdPrefix}-underline`}
                   className="absolute bottom-0 left-0 w-full h-[2px] bg-primary z-0"
