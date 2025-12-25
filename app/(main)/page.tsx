@@ -13,16 +13,18 @@ import { globalStorage } from '@/utils/storage';
 
 const logger = createLogger('AppManager');
 
-// Компонент, управляющий загрузкой приложения
 function AppContent() {
    const [projects, setProjects] = useState<Project[]>([]);
    const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
    const { setLoading: setGlobalLoading } = useAppLoader();
    
-   // Флаг первичной инициализации
+   // Словарик готовности проектов: { [projectId]: true }
+   const [readyProjects, setReadyProjects] = useState<Record<string, boolean>>({});
+   
+   // Флаг первичной инициализации списка проектов
    const [isInit, setIsInit] = useState(false);
 
-   // Загрузка проектов (один раз)
+   // 1. Загрузка списка проектов
    useEffect(() => {
       const init = async () => {
          try {
@@ -36,36 +38,43 @@ function AppContent() {
             const projectsData = data || [];
             setProjects(projectsData);
             
-            // Если есть проекты, выбираем сохраненный или первый
+            // Восстановление активного проекта
             if (projectsData.length > 0) {
                 const savedId = globalStorage.getItem('active_project_id');
                 const projectExists = savedId ? projectsData.find(p => p.id === savedId) : null;
-                
                 setActiveProjectId(projectExists ? savedId : projectsData[0].id);
             }
             
             setIsInit(true);
          } catch (err) {
             logger.error('Failed to load projects', err);
-            setGlobalLoading(false); // Выключаем лоадер даже при ошибке, чтобы показать UI
+            setGlobalLoading(false);
          }
       };
 
       init();
-   }, [setGlobalLoading]);
+   }, []); // setGlobalLoading стабилен
 
-   // Управление глобальным лоадером при переключении
-   // В нашей схеме "мгновенного переключения" лоадер нужен только при самом старте
-   // Но ProjectScreen сам может показать локальный лоадер, если данные не готовы.
-   
-   // Флаг, что первый (активный) проект полностью загрузился
-   const [isFirstProjectLoaded, setIsFirstProjectLoaded] = useState(false);
-   
-   const handleProjectReady = () => {
-       // Первый активный проект загрузился - можно убирать глобальную заставку
-       // И разрешать загрузку остальных
-       setGlobalLoading(false);
-       setIsFirstProjectLoaded(true);
+   // 2. Управление глобальным лоадером
+   // Лоадер показываем, пока АКТИВНЫЙ проект не готов.
+   useEffect(() => {
+       if (!isInit) return; // Еще список не загрузился
+       if (!activeProjectId) {
+           setGlobalLoading(false); // Нет проектов - нет загрузки
+           return;
+       }
+
+       const isActiveReady = readyProjects[activeProjectId];
+       
+       if (isActiveReady) {
+           setGlobalLoading(false);
+       } else {
+           setGlobalLoading(true);
+       }
+   }, [isInit, activeProjectId, readyProjects, setGlobalLoading]);
+
+   const handleProjectReady = (projectId: string) => {
+       setReadyProjects(prev => ({ ...prev, [projectId]: true }));
    };
 
    return (
@@ -112,11 +121,11 @@ function AppContent() {
             </div>
 
             <div className="p-4 border-t border-default-200 text-xs text-default-400 text-center">
-               Task Manager v2.0 (SPA Mode)
+               Task Manager v2.0
             </div>
          </aside>
 
-         {/* Main Content Area - Renders ALL projects but hides inactive */}
+         {/* Main Content */}
          <main className="flex-grow flex flex-col h-full overflow-hidden relative">
             {projects.map((project) => (
                <div
@@ -131,8 +140,7 @@ function AppContent() {
                   <ProjectScreen 
                       project={project} 
                       isActive={activeProjectId === project.id}
-                      canLoadBackground={isFirstProjectLoaded}
-                      onReady={activeProjectId === project.id ? handleProjectReady : () => {}}
+                      onReady={() => handleProjectReady(project.id)}
                   />
                </div>
             ))}

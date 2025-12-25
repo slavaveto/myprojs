@@ -1,11 +1,10 @@
-'use client';
-
 import React, { useEffect, useMemo, useState, useRef } from 'react';
+
 import { useAppLoader } from '@/app/AppLoader';
-import { createLogger } from '@/utils/logger/Logger';
-import { supabase } from '@/utils/supabase/supabaseClient';
 import { Folder, Task, Project } from '@/app/types';
 import { globalStorage } from '@/utils/storage';
+import { toast } from 'react-hot-toast';
+import { supabase } from '@/utils/supabase/supabaseClient';
 import {
    DndContext,
    DragEndEvent,
@@ -66,17 +65,15 @@ const dropAnimationConfig: DropAnimation = {
 interface ProjectScreenProps {
     project: Project;
     isActive: boolean;
-    canLoadBackground: boolean; // Разрешение на фоновую загрузку
     onReady: () => void;
 }
 
-export const ProjectScreen = ({ project, isActive, canLoadBackground, onReady }: ProjectScreenProps) => {
+export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps) => {
    const [folders, setFolders] = useState<Folder[]>([]);
    const [tasks, setTasks] = useState<Task[]>([]);
    const [selectedFolderId, setSelectedFolderId] = useState<string>('');
    const [isDataLoaded, setIsDataLoaded] = useState(false);
    const [activeId, setActiveId] = useState<string | null>(null);
-   const { setLoading } = useAppLoader();
    
    // Флаг, что мы начали загрузку (чтобы не грузить дважды)
    const loadStartedRef = useRef(false);
@@ -84,41 +81,32 @@ export const ProjectScreen = ({ project, isActive, canLoadBackground, onReady }:
    useEffect(() => {
        if (isDataLoaded || loadStartedRef.current) return;
 
-       // Грузим если:
-       // 1. Мы активны (приоритет)
-       // 2. ИЛИ нам разрешили грузиться в фоне (canLoadBackground)
-       
-       const shouldLoad = isActive || canLoadBackground;
+       const load = async () => {
+           loadStartedRef.current = true;
+           
+           if (isActive) {
+               logger.start(`Loading active project: ${project.title}`);
+           } else {
+               logger.info(`Starting background load: ${project.title}`);
+           }
+           
+           await loadData();
+           
+           if (isActive) {
+               logger.success(`Active project loaded: ${project.title}`);
+               toast.success(`${project.title} loaded`, {
+                   id: 'project-loaded', 
+                   position: 'bottom-right'
+               });
+           } else {
+               logger.success(`Background project loaded: ${project.title}`);
+           }
+           
+           onReady(); 
+       };
 
-       if (shouldLoad) {
-           const load = async () => {
-               loadStartedRef.current = true;
-               
-               if (isActive) {
-                   logger.start(`Loading active project: ${project.title}`);
-                   setLoading(true);
-               } else {
-                   logger.info(`Starting background load: ${project.title}`);
-               }
-               
-               await loadData();
-               
-               if (isActive) {
-                   logger.success(`Active project loaded: ${project.title}`);
-                   setLoading(false);
-               } else {
-                   logger.success(`Background project loaded: ${project.title}`);
-               }
-               
-               // Если мы загрузились будучи активными - сообщаем об этом наверх
-               if (isActive) {
-                   onReady(); 
-               }
-           };
-
-           load();
-       }
-   }, [isActive, canLoadBackground, project.id, isDataLoaded, setLoading]);
+       load();
+   }, [isActive, project.id, isDataLoaded]);
 
    const loadData = async () => {
       try {
@@ -315,7 +303,6 @@ export const ProjectScreen = ({ project, isActive, canLoadBackground, onReady }:
              
              setTasks(prev => {
                  const otherTasks = prev.filter(t => t.folder_id !== selectedFolderId);
-                 // Need to handle type safety here more carefully if needed, but for now:
                  const updatedCurrentTasks = newSorted.map((t, idx) => ({ ...t, sort_order: idx }));
                  return [...otherTasks, ...updatedCurrentTasks];
              });
