@@ -58,9 +58,14 @@ function AppContent() {
    // В нашей схеме "мгновенного переключения" лоадер нужен только при самом старте
    // Но ProjectScreen сам может показать локальный лоадер, если данные не готовы.
    
+   // Флаг, что первый (активный) проект полностью загрузился
+   const [isFirstProjectLoaded, setIsFirstProjectLoaded] = useState(false);
+   
    const handleProjectReady = () => {
        // Первый активный проект загрузился - можно убирать глобальную заставку
+       // И разрешать загрузку остальных
        setGlobalLoading(false);
+       setIsFirstProjectLoaded(true);
    };
 
    return (
@@ -126,6 +131,7 @@ function AppContent() {
                   <ProjectScreen 
                       project={project} 
                       isActive={activeProjectId === project.id}
+                      canLoadBackground={isFirstProjectLoaded}
                       onReady={activeProjectId === project.id ? handleProjectReady : () => {}}
                   />
                </div>

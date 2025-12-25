@@ -66,10 +66,11 @@ const dropAnimationConfig: DropAnimation = {
 interface ProjectScreenProps {
     project: Project;
     isActive: boolean;
+    canLoadBackground: boolean; // Разрешение на фоновую загрузку
     onReady: () => void;
 }
 
-export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps) => {
+export const ProjectScreen = ({ project, isActive, canLoadBackground, onReady }: ProjectScreenProps) => {
    const [folders, setFolders] = useState<Folder[]>([]);
    const [tasks, setTasks] = useState<Task[]>([]);
    const [selectedFolderId, setSelectedFolderId] = useState<string>('');
@@ -81,43 +82,43 @@ export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps
    const loadStartedRef = useRef(false);
 
    useEffect(() => {
-       if (isDataLoaded) return;
+       if (isDataLoaded || loadStartedRef.current) return;
 
-       const load = async () => {
-           loadStartedRef.current = true;
-           
-           if (isActive) {
-               logger.start(`Loading active project: ${project.title}`);
-               setLoading(true);
-           } else {
-               logger.info(`Starting background load: ${project.title}`);
-           }
-           
-           await loadData();
-           
-           if (isActive) {
-               logger.success(`Active project loaded: ${project.title}`);
-               setLoading(false);
-           } else {
-               logger.success(`Background project loaded: ${project.title}`);
-           }
-           
-           onReady(); 
-       };
+       // Грузим если:
+       // 1. Мы активны (приоритет)
+       // 2. ИЛИ нам разрешили грузиться в фоне (canLoadBackground)
+       
+       const shouldLoad = isActive || canLoadBackground;
 
-       if (isActive) {
-           load();
-       } else {
-           // Фоновая загрузка с задержкой
-           const timer = setTimeout(() => {
-               if (!loadStartedRef.current) {
-                   logger.info(`Triggering background timer for: ${project.title}`);
-                   load();
+       if (shouldLoad) {
+           const load = async () => {
+               loadStartedRef.current = true;
+               
+               if (isActive) {
+                   logger.start(`Loading active project: ${project.title}`);
+                   setLoading(true);
+               } else {
+                   logger.info(`Starting background load: ${project.title}`);
                }
-           }, 2000); 
-           return () => clearTimeout(timer);
+               
+               await loadData();
+               
+               if (isActive) {
+                   logger.success(`Active project loaded: ${project.title}`);
+                   setLoading(false);
+               } else {
+                   logger.success(`Background project loaded: ${project.title}`);
+               }
+               
+               // Если мы загрузились будучи активными - сообщаем об этом наверх
+               if (isActive) {
+                   onReady(); 
+               }
+           };
+
+           load();
        }
-   }, [isActive, project.id, setLoading]);
+   }, [isActive, canLoadBackground, project.id, isDataLoaded, setLoading]);
 
    const loadData = async () => {
       try {
