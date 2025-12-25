@@ -8,7 +8,7 @@ import { clsx } from 'clsx';
 import { motion } from 'framer-motion';
 import { useSortable, SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { CreateItemPopover } from '@/app/components/CreateItemPopover';
+import { CreateItemPopover } from '@/app/components/CreateItem';
 
 // --- Single Tab Component ---
 interface FolderTabProps {

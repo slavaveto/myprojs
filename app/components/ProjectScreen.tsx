@@ -36,7 +36,7 @@ import { TaskList } from '@/app/components/project/TaskList';
 import { projectService } from '@/app/_services/projectService';
 import { useAsyncAction, ActionStatus } from '@/utils/supabase/useAsyncAction';
 import { StatusBadge } from '@/utils/supabase/StatusBadge';
-import { EditProjectPopover } from '@/app/components/EditProjectPopover';
+import { EditProjectPopover } from '@/app/components/EditProject';
 
 const logger = createLogger('ProjectScreen');
 

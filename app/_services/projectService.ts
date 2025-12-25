@@ -155,6 +155,29 @@ export const projectService = {
         });
     },
 
+    async getDoneTasks() {
+        const { data, error } = await supabase
+            .from('tasks')
+            .select(`
+                *,
+                folders (
+                    id,
+                    title,
+                    projects (
+                        id,
+                        title,
+                        color
+                    )
+                )
+            `)
+            .or('is_completed.eq.true,is_deleted.eq.true')
+            .order('updated_at', { ascending: false })
+            .limit(100);
+
+        if (error) throw error;
+        return data;
+    },
+
     async createTask(folderId: string, content: string, sort_order: number) {
         const { data, error } = await supabase
             .from('tasks')

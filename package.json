@@ -27,6 +27,7 @@
     "agora-rtc-sdk-ng": "^4.24.0",
     "classnames": "^2.5.1",
     "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "filepond": "^4.32.9",
     "filepond-plugin-image-crop": "^2.0.6",
     "filepond-plugin-image-edit": "^1.6.3",

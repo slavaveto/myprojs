@@ -9,8 +9,9 @@ import { Button, Spinner } from '@heroui/react';
 import { Plus, LayoutGrid, GripVertical, Inbox, Calendar, CheckCircle2, FileText } from 'lucide-react';
 import { AppLoaderProvider, useAppLoader } from '@/app/AppLoader';
 import { ProjectScreen } from '@/app/components/ProjectScreen';
-import { CreateItemPopover } from '@/app/components/CreateItemPopover';
+import { CreateItemPopover } from '@/app/components/CreateItem';
 import { LogsScreen } from '@/app/components/LogsScreen';
+import { DoneScreen } from '@/app/components/DoneScreen';
 import { SystemScreen } from '@/app/components/SystemScreen';
 import { globalStorage } from '@/utils/storage';
 import { useAsyncAction } from '@/utils/supabase/useAsyncAction';
@@ -378,7 +379,7 @@ function AppContent() {
                   activeSystemTab === 'done' ? "z-30 opacity-100 pointer-events-auto" : "z-0 opacity-0 pointer-events-none"
                )}
             >
-                <SystemScreen title="Done" globalStatus={sidebarStatus} canLoad={canLoadBackground || activeSystemTab === 'done'} />
+                <DoneScreen globalStatus={sidebarStatus} canLoad={canLoadBackground || activeSystemTab === 'done'} />
             </div>
             
             {projects.map((project) => (
