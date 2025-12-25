@@ -325,7 +325,7 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
 
    return (
       <div className="h-full flex flex-col p-6 max-w-5xl mx-auto w-full">
-         <div className="flex justify-between items-center mb-6 min-h-[40px]">
+         <div className="flex justify-between items-center mb-4 min-h-[40px]">
             <h1 className="text-2xl font-bold">{project.title}</h1>
             
             <div className="flex items-center gap-2">
