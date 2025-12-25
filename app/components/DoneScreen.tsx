@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { createLogger } from '@/utils/logger/Logger';
 import { projectService } from '@/app/_services/projectService';
 import { clsx } from 'clsx';
-import { CheckCircle2, Trash2, Folder as FolderIcon } from 'lucide-react';
+import { CheckCircle2, Trash2, Folder as FolderIcon, RefreshCw } from 'lucide-react';
 import { Spinner, Chip, Button } from '@heroui/react';
 import { format } from 'date-fns';
 
@@ -43,20 +43,21 @@ export const DoneScreen = ({ globalStatus = 'idle', canLoad = true }: DoneScreen
 
     return (
         <div className="h-full flex flex-col p-6 max-w-5xl mx-auto w-full">
-            <div className="flex justify-between items-center mb-6 min-h-[40px]">
+            <div className="flex justify-between items-center mb-4 min-h-[40px]">
                 <h1 className="text-2xl font-bold flex items-center gap-2">
                     <CheckCircle2 className="text-success" />
                     Done & Deleted
                 </h1>
                 
                 <Button 
+                    isIconOnly
                     size="sm" 
                     variant="flat" 
-                    color="primary" 
+                    color="success" 
                     onPress={fetchTasks}
                     isLoading={isLoading}
                 >
-                    Refresh
+                    <RefreshCw size={18} className={clsx(isLoading && "animate-spin")} />
                 </Button>
             </div>
 
