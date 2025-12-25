@@ -352,6 +352,7 @@ function AppContent() {
                   <ProjectScreen 
                       project={project} 
                       isActive={activeProjectId === project.id}
+                      canLoad={activeProjectId === project.id || canLoadBackground}
                       onReady={() => handleProjectReady(project.id)}
                       globalStatus={sidebarStatus}
                   />

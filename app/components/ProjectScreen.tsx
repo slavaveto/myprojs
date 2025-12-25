@@ -71,9 +71,10 @@ interface ProjectScreenProps {
     isActive: boolean;
     onReady: () => void;
     globalStatus?: ActionStatus;
+    canLoad?: boolean;
 }
 
-export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle' }: ProjectScreenProps) => {
+export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle', canLoad = true }: ProjectScreenProps) => {
    const [folders, setFolders] = useState<Folder[]>([]);
    const [tasks, setTasks] = useState<Task[]>([]);
    const [selectedFolderId, setSelectedFolderId] = useState<string>('');
@@ -96,7 +97,10 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
    const displayStatus = globalStatus !== 'idle' ? globalStatus : saveStatus;
 
    useEffect(() => {
+       // If already loaded or load initiated, do nothing
        if (isDataLoaded || loadStartedRef.current) return;
+       // If not allowed to load (e.g. background project waiting for active one), do nothing
+       if (!canLoad) return;
 
        const load = async () => {
            loadStartedRef.current = true;
@@ -104,7 +108,7 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
            if (isActive) {
                logger.start(`Loading active project: ${project.title}`);
            } else {
-               logger.info(`Starting background load: ${project.title}`);
+               logger.start(`Starting background load: ${project.title}`);
            }
            
            try {
@@ -127,7 +131,7 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
        };
 
        load();
-   }, [isActive, project.id, isDataLoaded]);
+   }, [isActive, project.id, isDataLoaded, canLoad]);
 
    const loadData = async () => {
       // Parallel loading
