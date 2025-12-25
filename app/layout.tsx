@@ -62,7 +62,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
    // Простая логика как раньше
    const data = domainData[normalizedHost] || {
-      title: 'PsyHelp',
+      title: 'MyProjs',
       description: '',
       favicon: '/favicons/local.png?v=1',
    };
@@ -127,7 +127,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                                     'fixed inset-0 z-[9999] pointer-events-none',
                                     // 'border-4 border-[rgb(255,224,165)]',
                                     // 'border-4 border-orange-200',
-                                    'border-4 border-blue-400',
+                                    'border-4 border-red-400',
                                     // 'dark:border-orange-400/50'
                                  )}
                               />
