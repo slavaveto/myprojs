@@ -5,9 +5,12 @@ import { ActionStatus } from '@/utils/supabase/useAsyncAction';
 interface SystemScreenProps {
     title: string;
     globalStatus?: ActionStatus;
+    canLoad?: boolean;
 }
 
-export const SystemScreen = ({ title, globalStatus = 'idle' }: SystemScreenProps) => {
+export const SystemScreen = ({ title, globalStatus = 'idle', canLoad = true }: SystemScreenProps) => {
+   // Here you would add useEffect to load data if canLoad is true
+   
    return (
       <div className="h-full flex flex-col p-6 max-w-5xl mx-auto w-full">
          <div className="flex justify-between items-center mb-6 min-h-[40px]">

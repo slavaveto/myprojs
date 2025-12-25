@@ -32,14 +32,21 @@ const LogDetails = ({ details }: { details: any }) => {
 
 interface LogsScreenProps {
     globalStatus?: ActionStatus;
+    canLoad?: boolean;
 }
 
-export const LogsScreen = ({ globalStatus = 'idle' }: LogsScreenProps) => {
+export const LogsScreen = ({ globalStatus = 'idle', canLoad = true }: LogsScreenProps) => {
     const [logs, setLogs] = useState<LogEntry[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [isLoaded, setIsLoaded] = useState(false);
 
     const fetchLogs = async (showSpinner = true) => {
+        // If we shouldn't load, just return. 
+        // Note: Manual refresh (via button) should probably bypass this if explicitly called?
+        // But for initial load it matters.
+        if (!canLoad && showSpinner) return;
+
         if (showSpinner) setIsLoading(true);
         else setIsRefreshing(true);
         
@@ -49,6 +56,7 @@ export const LogsScreen = ({ globalStatus = 'idle' }: LogsScreenProps) => {
                 new Promise(resolve => setTimeout(resolve, 1000))
             ]);
             setLogs(data || []);
+            setIsLoaded(true);
         } catch (err) {
             logger.error('Failed to load logs', err);
         } finally {
@@ -58,8 +66,10 @@ export const LogsScreen = ({ globalStatus = 'idle' }: LogsScreenProps) => {
     };
 
     useEffect(() => {
-        fetchLogs(true);
-    }, []);
+        if (canLoad && !isLoaded) {
+            fetchLogs(true);
+        }
+    }, [canLoad, isLoaded]);
 
     const getActionColor = (action: string) => {
         switch (action) {
@@ -93,6 +103,7 @@ export const LogsScreen = ({ globalStatus = 'idle' }: LogsScreenProps) => {
                         isIconOnly 
                         size="sm" 
                         variant="flat" 
+                        color="success"
                         onPress={() => fetchLogs(false)}
                         isLoading={isRefreshing}
                     >

@@ -118,6 +118,9 @@ function AppContent() {
    
    // Флаг первичной инициализации списка проектов
    const [isInit, setIsInit] = useState(false);
+   
+   // Флаг, разрешающий фоновую загрузку (когда активный проект готов)
+   const [canLoadBackground, setCanLoadBackground] = useState(false);
 
    // Status for sidebar actions (reordering)
    const { execute: executeSidebarAction, status: sidebarStatus, error: sidebarError } = useAsyncAction({
@@ -170,6 +173,7 @@ function AppContent() {
        
        if (isActiveReady) {
            setGlobalLoading(false);
+           setCanLoadBackground(true);
        } else {
            setGlobalLoading(true);
        }
@@ -305,7 +309,7 @@ function AppContent() {
                )}
             >
                 {/* System Screen: Logs */}
-                <LogsScreen globalStatus={sidebarStatus} />
+                <LogsScreen globalStatus={sidebarStatus} canLoad={canLoadBackground || activeSystemTab === 'logs'} />
             </div>
 
             <div 
@@ -314,7 +318,7 @@ function AppContent() {
                   activeSystemTab === 'inbox' ? "z-30 opacity-100 pointer-events-auto" : "z-0 opacity-0 pointer-events-none"
                )}
             >
-                <SystemScreen title="Inbox" globalStatus={sidebarStatus} />
+                <SystemScreen title="Inbox" globalStatus={sidebarStatus} canLoad={canLoadBackground || activeSystemTab === 'inbox'} />
             </div>
 
             <div 
@@ -323,7 +327,7 @@ function AppContent() {
                   activeSystemTab === 'today' ? "z-30 opacity-100 pointer-events-auto" : "z-0 opacity-0 pointer-events-none"
                )}
             >
-                <SystemScreen title="Today" globalStatus={sidebarStatus} />
+                <SystemScreen title="Today" globalStatus={sidebarStatus} canLoad={canLoadBackground || activeSystemTab === 'today'} />
             </div>
 
             <div 
@@ -332,7 +336,7 @@ function AppContent() {
                   activeSystemTab === 'done' ? "z-30 opacity-100 pointer-events-auto" : "z-0 opacity-0 pointer-events-none"
                )}
             >
-                <SystemScreen title="Done" globalStatus={sidebarStatus} />
+                <SystemScreen title="Done" globalStatus={sidebarStatus} canLoad={canLoadBackground || activeSystemTab === 'done'} />
             </div>
             
             {projects.map((project) => (
