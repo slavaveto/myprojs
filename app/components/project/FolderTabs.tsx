@@ -44,7 +44,8 @@ export const FolderTab = ({
           {...listeners}
           onClick={onClick}
           className={clsx(
-             'group relative flex items-center gap-2 px-3 h-[40px] cursor-pointer select-none transition-colors min-w-fit outline-none',
+             'group relative flex items-center gap-2 px-3 h-[40px] select-none transition-colors min-w-fit outline-none',
+             isDragging ? 'cursor-grabbing' : 'cursor-pointer',
              isActive ? 'text-primary font-medium' : 'text-default-500 hover:text-default-700'
           )}
        >

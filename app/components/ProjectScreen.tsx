@@ -386,6 +386,7 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
                           folder={folders.find(f => `folder-${f.id}` === activeId)!}
                           count={getFolderTaskCount(activeId.replace('folder-', ''))}
                           isActive={selectedFolderId === activeId.replace('folder-', '')}
+                          isDragging={true}
                           layoutIdPrefix="overlay" 
                           onClick={() => {}}
                        />
