@@ -427,7 +427,15 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
          
          // Case: Task moved from another folder into the list
          if (activeTask && activeTask.folder_id !== selectedFolderId) {
-             const newIndex = currentFolderTasks.findIndex(t => t.id === over.id);
+             const overIndex = currentFolderTasks.findIndex(t => t.id === over.id);
+             
+             // Fix off-by-one error when dropping items from another list.
+             // If we drop over an item that is NOT the first one, we usually want to insert AFTER it
+             // because dragging downwards typically means "append". 
+             // Exception: Dragging to the very top (index 0).
+             const modifier = overIndex === 0 ? 0 : 1;
+             
+             const newIndex = overIndex >= 0 ? overIndex + modifier : currentFolderTasks.length;
              
              // Insert at new index
              const updatedTask = { ...activeTask, folder_id: selectedFolderId, updated_at: new Date().toISOString() };
