@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { createLogger } from '@/utils/logger/Logger';
-import { supabase } from '@/utils/supabase/supabaseClient';
+import { projectService } from '@/app/_services/projectService';
 import { Project } from '@/app/types';
 import { clsx } from 'clsx';
 import { Button, Spinner } from '@heroui/react';
@@ -127,14 +127,7 @@ function AppContent() {
    useEffect(() => {
       const init = async () => {
          try {
-            const { data, error } = await supabase
-               .from('projects')
-               .select('*')
-               .order('sort_order', { ascending: true });
-
-            if (error) throw error;
-            
-            const projectsData = data || [];
+            const projectsData = await projectService.getProjects();
             setProjects(projectsData);
             
             // Восстановление активного проекта
@@ -188,9 +181,7 @@ function AppContent() {
                
                // Save to DB
                const updates = newItems.map((p, index) => ({ id: p.id, sort_order: index }));
-               Promise.all(updates.map(u => 
-                   supabase.from('projects').update({ sort_order: u.sort_order }).eq('id', u.id)
-               )).catch(err => {
+               projectService.updateProjectOrder(updates).catch(err => {
                    logger.error('Failed to reorder projects', err);
                });
 

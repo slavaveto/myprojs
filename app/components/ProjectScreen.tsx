@@ -3,7 +3,6 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useAppLoader } from '@/app/AppLoader';
 import { createLogger } from '@/utils/logger/Logger';
-import { supabase } from '@/utils/supabase/supabaseClient';
 import { Folder, Task, Project } from '@/app/types';
 import { globalStorage } from '@/utils/storage';
 import { toast } from 'react-hot-toast';
@@ -31,6 +30,9 @@ import { Button, Tab, Tabs, Chip } from '@heroui/react';
 import { Plus, FolderPlus } from 'lucide-react';
 import { TaskRow } from '@/app/components/TaskRow';
 import { clsx } from 'clsx';
+import { projectService } from '@/app/_services/projectService';
+import { useAsyncAction } from '@/utils/supabase/useAsyncAction';
+import { StatusBadge } from '@/utils/supabase/StatusBadge';
 
 const logger = createLogger('ProjectScreen');
 
@@ -80,6 +82,16 @@ export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps
    
    const loadStartedRef = useRef(false);
 
+   // --- Status Management ---
+   const { execute: executeSave, status: saveStatus, error: saveError } = useAsyncAction({
+       useToast: false, // StatusBadge handles UI
+       minDuration: 800,
+       successDuration: 2000,
+       loadingMessage: 'Saving...',
+       successMessage: 'Saved',
+       errorMessage: 'Failed to save'
+   });
+
    useEffect(() => {
        if (isDataLoaded || loadStartedRef.current) return;
 
@@ -92,16 +104,20 @@ export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps
                logger.info(`Starting background load: ${project.title}`);
            }
            
-           await loadData();
-           
-           if (isActive) {
-               logger.success(`Active project loaded: ${project.title}`);
-               toast.success(`Данные загружены!`, {
-                   id: 'project-loaded', 
-                   position: 'bottom-center'
-               });
-           } else {
-               logger.success(`Background project loaded: ${project.title}`);
+           try {
+               await loadData();
+               
+               if (isActive) {
+                   logger.success(`Active project loaded: ${project.title}`);
+                   toast.success(`Данные загружены!`, {
+                       id: 'project-loaded', 
+                       position: 'bottom-center'
+                   });
+               } else {
+                   logger.success(`Background project loaded: ${project.title}`);
+               }
+           } catch (err) {
+               logger.error(`Failed to load project: ${project.title}`, err);
            }
            
            onReady(); 
@@ -111,44 +127,23 @@ export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps
    }, [isActive, project.id, isDataLoaded]);
 
    const loadData = async () => {
-      try {
-         const projectId = project.id;
+      // Parallel loading
+      const [foldersData, tasksData] = await Promise.all([
+          projectService.getFolders(project.id),
+          projectService.getTasks(project.id)
+      ]);
+
+      setFolders(foldersData);
+
+      if (foldersData.length > 0) {
+         const savedFolderId = globalStorage.getItem(`active_folder_${project.id}`);
+         const folderExists = savedFolderId ? foldersData.find((f: any) => f.id === savedFolderId) : null;
          
-         const { data: foldersData, error: foldersError } = await supabase
-            .from('folders')
-            .select('*')
-            .eq('project_id', projectId)
-            .order('sort_order');
-
-         if (foldersError) throw foldersError;
-         setFolders(foldersData || []);
-
-         if (foldersData && foldersData.length > 0) {
-            const savedFolderId = globalStorage.getItem(`active_folder_${projectId}`);
-            const folderExists = savedFolderId ? foldersData.find((f: any) => f.id === savedFolderId) : null;
-            
-            setSelectedFolderId(folderExists ? savedFolderId! : foldersData[0].id);
-         }
-
-         const { data: tasksData, error: tasksError } = await supabase
-            .from('tasks')
-            .select('*, folders!inner(project_id)')
-            .eq('folders.project_id', projectId)
-            .order('sort_order');
-
-         if (tasksError) throw tasksError;
-         
-         const cleanTasks = (tasksData || []).map((t: any) => {
-             const { folders, ...task } = t;
-             return task as Task;
-         });
-         
-         setTasks(cleanTasks);
-         setIsDataLoaded(true);
-
-      } catch (err) {
-         logger.error(`Failed to load data for project ${project.title}`, err);
+         setSelectedFolderId(folderExists ? savedFolderId! : foldersData[0].id);
       }
+
+      setTasks(tasksData);
+      setIsDataLoaded(true);
    };
 
    // --- Actions ---
@@ -175,18 +170,10 @@ export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps
       setTasks(prev => [newTask, ...prev]);
 
       try {
-         const { data, error } = await supabase
-            .from('tasks')
-            .insert({
-               folder_id: selectedFolderId,
-               content: '',
-               sort_order: newOrder
-            })
-            .select()
-            .single();
-
-         if (error) throw error;
-         setTasks(prev => prev.map(t => t.id === tempId ? data : t));
+         await executeSave(async () => {
+             const data = await projectService.createTask(selectedFolderId, '', newOrder);
+             setTasks(prev => prev.map(t => t.id === tempId ? data : t));
+         });
       } catch (err) {
          logger.error('Failed to create task', err);
          setTasks(prev => prev.filter(t => t.id !== tempId));
@@ -194,18 +181,20 @@ export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps
    };
 
    const handleUpdateTask = async (id: string, updates: Partial<Task>) => {
-      setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+      // Optimistic Update
+      const updatesWithTimestamp = { ...updates, updated_at: new Date().toISOString() };
+      setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updatesWithTimestamp } : t));
+      
       const task = tasks.find(t => t.id === id);
-      if (task?.isNew) return;
+      if (task?.isNew) return; // Wait for creation
 
       try {
-         const { error } = await supabase
-            .from('tasks')
-            .update(updates)
-            .eq('id', id);
-         if (error) throw error;
+         await executeSave(async () => {
+             await projectService.updateTask(id, updates);
+         });
       } catch (err) {
          logger.error('Failed to update task', err);
+         // Optional: rollback logic here
       }
    };
 
@@ -213,11 +202,9 @@ export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps
       const oldTasks = [...tasks];
       setTasks(prev => prev.filter(t => t.id !== id));
       try {
-         const { error } = await supabase
-            .from('tasks')
-            .delete()
-            .eq('id', id);
-         if (error) throw error;
+         await executeSave(async () => {
+             await projectService.deleteTask(id);
+         });
       } catch (err) {
          logger.error('Failed to delete task', err);
          setTasks(oldTasks);
@@ -245,18 +232,11 @@ export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps
        setFolders(prev => [...prev, newFolder]);
        
        try {
-           const { data, error } = await supabase
-            .from('folders')
-            .insert({
-                project_id: project.id,
-                title,
-                sort_order: newOrder
-            })
-            .select()
-            .single();
-            if (error) throw error;
-            setFolders(prev => prev.map(f => f.id === tempId ? data : f));
-            setSelectedFolderId(data.id);
+           await executeSave(async () => {
+               const data = await projectService.createFolder(project.id, title, newOrder);
+               setFolders(prev => prev.map(f => f.id === tempId ? data : f));
+               setSelectedFolderId(data.id);
+           });
        } catch (err) {
            logger.error('Failed to create folder', err);
            setFolders(prev => prev.filter(f => f.id !== tempId));
@@ -282,10 +262,13 @@ export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps
          const targetFolderId = over.id.toString().replace('folder-', '');
          const task = tasks.find(t => t.id === activeTaskId);
          if (task && task.folder_id !== targetFolderId) {
-            const updatedTask = { ...task, folder_id: targetFolderId };
+            const updatedTask = { ...task, folder_id: targetFolderId, updated_at: new Date().toISOString() };
             setTasks(prev => prev.map(t => t.id === activeTaskId ? updatedTask : t));
+            
             try {
-                await supabase.from('tasks').update({ folder_id: targetFolderId }).eq('id', activeTaskId);
+                await executeSave(async () => {
+                    await projectService.updateTask(activeTaskId, { folder_id: targetFolderId });
+                });
             } catch(err) {
                 logger.error('Failed to move task folder', err);
             }
@@ -309,9 +292,9 @@ export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps
              });
 
              try {
-                 await Promise.all(updates.map(u => 
-                     supabase.from('tasks').update({ sort_order: u.sort_order }).eq('id', u.id)
-                 ));
+                 await executeSave(async () => {
+                     await projectService.updateTaskOrder(updates);
+                 });
              } catch(err) {
                  logger.error('Failed to reorder tasks', err);
              }
@@ -335,8 +318,17 @@ export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps
 
    return (
       <div className="h-full flex flex-col p-6 max-w-5xl mx-auto w-full">
-         <div className="flex justify-between items-center mb-4">
+         <div className="flex justify-between items-center mb-6 min-h-[40px]">
             <h1 className="text-2xl font-bold">{project.title}</h1>
+            
+            <div className="flex items-center gap-2">
+                <StatusBadge 
+                    status={saveStatus}
+                    loadingText="Saving..."
+                    successText="Saved"
+                    errorMessage={saveError?.message}
+                />
+            </div>
          </div>
 
          <DndContext
@@ -387,7 +379,7 @@ export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps
                </Button>
             </div>
 
-            <div className="mt-4 flex-grow flex flex-col min-h-0">
+            <div className="mt-6 flex-grow flex flex-col min-h-0">
                 {selectedFolderId ? (
                    <>
                       <div className="flex-grow overflow-y-auto pr-0 pb-10">
