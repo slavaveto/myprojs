@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'next/navigation';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
+import { useAppLoader } from '@/app/AppLoader';
 import { createLogger } from '@/utils/logger/Logger';
 import { supabase } from '@/utils/supabase/supabaseClient';
-import { Folder, Task } from '@/app/types';
+import { Folder, Task, Project } from '@/app/types';
 import {
    DndContext,
    DragEndEvent,
@@ -15,7 +15,6 @@ import {
    PointerSensor,
    closestCorners,
    defaultDropAnimationSideEffects,
-   pointerWithin,
    useDroppable,
    useSensor,
    useSensors,
@@ -26,11 +25,10 @@ import {
    sortableKeyboardCoordinates,
    verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { Button, Tab, Tabs, Chip, Spinner, Input } from '@heroui/react';
+import { Button, Tab, Tabs, Chip } from '@heroui/react';
 import { Plus, FolderPlus } from 'lucide-react';
 import { TaskRow } from '@/app/components/TaskRow';
 import { clsx } from 'clsx';
-import { useAppLoader } from '@/app/AppLoader';
 
 const logger = createLogger('ProjectScreen');
 
@@ -64,31 +62,61 @@ const dropAnimationConfig: DropAnimation = {
    }),
 };
 
-export default function ProjectPage() {
-   const { projectId } = useParams();
-   const { setLoading: setGlobalLoading } = useAppLoader();
-   
+interface ProjectScreenProps {
+    project: Project;
+    isActive: boolean;
+    onReady: () => void;
+}
+
+export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps) => {
    const [folders, setFolders] = useState<Folder[]>([]);
    const [tasks, setTasks] = useState<Task[]>([]);
    const [selectedFolderId, setSelectedFolderId] = useState<string>('');
    const [isDataLoaded, setIsDataLoaded] = useState(false);
-   
    const [activeId, setActiveId] = useState<string | null>(null);
+   const { setLoading } = useAppLoader();
+   
+   // Флаг, что мы начали загрузку (чтобы не грузить дважды)
+   const loadStartedRef = useRef(false);
 
    useEffect(() => {
-      setGlobalLoading(true);
-      setIsDataLoaded(false);
-   }, [projectId, setGlobalLoading]);
+       if (isDataLoaded) return;
 
-   useEffect(() => {
-      if (projectId) {
-         loadData();
-      }
-   }, [projectId]);
+       const load = async () => {
+           loadStartedRef.current = true;
+           
+           // Включаем глобальный лоадер ТОЛЬКО если это активный экран
+           if (isActive) {
+               setLoading(true);
+           }
+           
+           await loadData();
+           
+           // Выключаем лоадер ТОЛЬКО если это был активный экран
+           if (isActive) {
+               setLoading(false);
+           }
+           
+           onReady(); 
+       };
+
+       if (isActive) {
+           load();
+       } else {
+           // Фоновая загрузка с задержкой
+           const timer = setTimeout(() => {
+               if (!loadStartedRef.current) {
+                   load();
+               }
+           }, 2000); 
+           return () => clearTimeout(timer);
+       }
+   }, [isActive, project.id, setLoading]);
 
    const loadData = async () => {
-      // Don't set loading true here again to avoid flicker, relying on the useEffect above
       try {
+         const projectId = project.id;
+         
          const { data: foldersData, error: foldersError } = await supabase
             .from('folders')
             .select('*')
@@ -116,18 +144,14 @@ export default function ProjectPage() {
          });
          
          setTasks(cleanTasks);
-         
          setIsDataLoaded(true);
 
       } catch (err) {
-         logger.error('Failed to load project data', err);
-      } finally {
-         // Stop the global spinner
-         setGlobalLoading(false);
+         logger.error(`Failed to load data for project ${project.title}`, err);
       }
    };
 
-   // --- Actions (Same as before) ---
+   // --- Actions ---
    const handleAddTask = async () => {
       if (!selectedFolderId) return;
 
@@ -211,7 +235,7 @@ export default function ProjectPage() {
        const tempId = crypto.randomUUID();
        const newFolder = {
            id: tempId,
-           project_id: projectId as string,
+           project_id: project.id,
            title,
            sort_order: newOrder,
            created_at: new Date().toISOString(),
@@ -224,7 +248,7 @@ export default function ProjectPage() {
            const { data, error } = await supabase
             .from('folders')
             .insert({
-                project_id: projectId,
+                project_id: project.id,
                 title,
                 sort_order: newOrder
             })
@@ -306,13 +330,15 @@ export default function ProjectPage() {
    };
 
    // UI
+   // Если данные еще не загружены - ничего не рендерим (лоадер управляется глобально)
+   if (!isDataLoaded) {
+       return null;
+   }
+
    return (
-      <div className={clsx(
-          "h-full flex flex-col p-6 max-w-5xl mx-auto w-full transition-opacity duration-300",
-          isDataLoaded ? "opacity-100" : "opacity-0"
-      )}>
+      <div className="h-full flex flex-col p-6 max-w-5xl mx-auto w-full">
          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold">Project Board</h1>
+            <h1 className="text-2xl font-bold">{project.title}</h1>
             <Button 
                 color="primary" 
                 startContent={<FolderPlus size={18} />}
@@ -360,6 +386,7 @@ export default function ProjectPage() {
                       <div className="mb-4">
                          <Button
                             fullWidth
+                            variant="ghost"
                             color="primary"
                             startContent={<Plus size={20} />}
                             onPress={handleAddTask}
@@ -412,5 +439,4 @@ export default function ProjectPage() {
          </DndContext>
       </div>
    );
-}
-
+};
