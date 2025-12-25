@@ -28,7 +28,7 @@ interface LogParams {
 export function useAudit() {
   const { supabase } = useSupabase();
   // REMOVED: const { user } = useUser();
-  const userId = 'guest-admin'; // Hardcoded for public admin
+  const userId = 'guest-user'; // Hardcoded for public app
 
   const log = async (params: LogParams) => {
     // REMOVED: User check

@@ -1,17 +1,15 @@
 import React from 'react';
 import { Button } from '@heroui/react';
-import { LogOut, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { clsx } from 'clsx';
-import { AdminTabConfig, TabId } from './types';
+import { AppTabConfig, TabId } from './types';
 
 interface DesktopLayoutProps {
-   visibleTabs: AdminTabConfig[];
+   visibleTabs: AppTabConfig[];
    activeTab: TabId;
    onTabChange: (id: TabId) => void;
    isSidebarCollapsed: boolean;
    setIsSidebarCollapsed: (v: boolean) => void;
-   userEmail?: string;
-   onSignOut: () => void;
    children: React.ReactNode;
    fadeInContent: boolean;
 }
@@ -22,8 +20,6 @@ export const DesktopLayout = ({
    onTabChange,
    isSidebarCollapsed,
    setIsSidebarCollapsed,
-   userEmail,
-   onSignOut,
    children,
    fadeInContent
 }: DesktopLayoutProps) => {
@@ -91,4 +87,3 @@ export const DesktopLayout = ({
       </div>
    );
 };
-

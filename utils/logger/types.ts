@@ -18,7 +18,7 @@ export interface RootTab {
 // Hardcoded табы (папки второго уровня)
 export const ROOT_TABS: RootTab[] = [
     { id: 'app', label: 'App', path: 'app', exclude: ['app/admin', 'app/api'] },
-    { id: 'admin', label: 'Admin', path: 'app/admin' },
+    // { id: 'admin', label: 'Admin', path: 'app/admin' },
     { id: 'utils', label: 'Utils', path: 'utils' },
 ];
 
@@ -31,6 +31,8 @@ export function shouldIgnoreDirectory(dirName: string): boolean {
 export function shouldIgnoreFileForConsole(filePath: string): boolean {
     // Игнорируем только utils/logger/ (НЕ app/admin/logger/!)
     if (filePath.includes('/utils/logger/')) return true;
+
+    if (filePath.includes('/admin/')) return true;
     
     // Игнорируем utils/storage.ts (использует consolee.error для избежания циклических зависимостей)
     if (filePath.includes('/utils/storage.ts')) return true;

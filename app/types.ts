@@ -1,17 +1,15 @@
 import React from 'react';
-import { Permission } from '@/app/admin/_services/acl';
 
 export type TabId = 'rooms' | 'localization' | 'users' | 'logs' | 'logger' | 'profile';
 
-export interface AdminTabConfig {
+export interface AppTabConfig {
    id: TabId;
    label: string;
    icon: React.ElementType;
    component: React.ComponentType<any>;
-   isVisible?: (can: (permission: Permission) => boolean) => boolean;
 }
 
-export interface AdminTabStaticConfig {
+export interface AppTabStaticConfig {
    label: string;
    texts: {
       saveLoading: string;

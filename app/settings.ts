@@ -1,10 +1,10 @@
-import { TabId, AdminTabStaticConfig } from './types';
+import { TabId, AppTabStaticConfig } from './types';
 
-export const ADMIN_SETTINGS = {
+export const APP_SETTINGS = {
    showToast: false
 };
 
-export const ADMIN_TABS_DATA: Record<TabId, AdminTabStaticConfig> = {
+export const APP_TABS_DATA: Record<TabId, AppTabStaticConfig> = {
    profile: {
       label: 'My Profile',
       texts: {

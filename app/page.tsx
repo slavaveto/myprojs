@@ -12,21 +12,21 @@ import { createLogger } from '@/utils/logger/Logger';
 import { MobileLayout } from '@/app/MobileLayout'; // LOCAL
 import { DesktopLayout } from '@/app/DesktopLayout'; // LOCAL
 import { globalStorage } from '@/utils/storage';
-import { TabId, AdminTabConfig } from '@/app/types'; // LOCAL
+import { TabId, AppTabConfig } from '@/app/types'; // LOCAL
 import { Spinner } from "@heroui/react";
 import clsx from "clsx";
-import { AdminLoaderProvider, useAdminLoader } from '@/app/AdminLoader'; // LOCAL
-import { ADMIN_TABS_DATA, ADMIN_SETTINGS } from '@/app/settings'; // LOCAL SETTINGS
+import { AppLoaderProvider, useAppLoader } from '@/app/AppLoader'; // LOCAL
+import { APP_TABS_DATA, APP_SETTINGS } from '@/app/settings'; // LOCAL SETTINGS
 
 // Создаем упрощенный тип конфига
-type PublicTabConfig = Omit<AdminTabConfig, 'isVisible'>;
+type PublicTabConfig = AppTabConfig;
 
 function PageContent() {
    const logger = createLogger('MainPage');
    const { isMobile } = useDevice();
    
    // Используем контекст лоадера, как в админке
-   const { setLoading: setGlobalLoading } = useAdminLoader();
+   const { setLoading: setGlobalLoading } = useAppLoader();
 
    const [fadeInContent, setFadeInContent] = useState(false);
    
@@ -54,19 +54,19 @@ function PageContent() {
             id: 'users',
             label: 'Users',
             icon: Users,
-            component: (props: any) => <UsersScreen {...props} texts={ADMIN_TABS_DATA.users.texts} showToast={ADMIN_SETTINGS.showToast} />,
+            component: (props: any) => <UsersScreen {...props} texts={APP_TABS_DATA.users.texts} showToast={APP_SETTINGS.showToast} />,
          },
          {
             id: 'localization',
             label: 'Localization',
             icon: Languages,
-            component: (props: any) => <LocalizScreen {...props} texts={ADMIN_TABS_DATA.localization.texts} showToast={ADMIN_SETTINGS.showToast} />,
+            component: (props: any) => <LocalizScreen {...props} texts={APP_TABS_DATA.localization.texts} showToast={APP_SETTINGS.showToast} />,
          },
          {
             id: 'logs',
             label: 'Logs',
             icon: FileText,
-            component: (props: any) => <LogsScreen {...props} texts={ADMIN_TABS_DATA.logs.texts} showToast={ADMIN_SETTINGS.showToast} />,
+            component: (props: any) => <LogsScreen {...props} texts={APP_TABS_DATA.logs.texts} showToast={APP_SETTINGS.showToast} />,
          },
       ],
       []
@@ -139,7 +139,6 @@ function PageContent() {
          onTabChange={handleTabChange}
          isSidebarCollapsed={isSidebarCollapsed}
          setIsSidebarCollapsed={setIsSidebarCollapsed}
-         onSignOut={() => console.log('Guest cannot sign out')}
          fadeInContent={fadeInContent}
       >
          {content}
@@ -147,9 +146,9 @@ function PageContent() {
    );
 }
 
-// Компонент-обертка, который держит провайдер и сам спиннер (аналог AdminLayoutClient)
+// Компонент-обертка, который держит провайдер и сам спиннер (аналог AppLayoutClient)
 function PageLayoutWrapper({ children }: { children: React.ReactNode }) {
-   const { isLoading } = useAdminLoader();
+   const { isLoading } = useAppLoader();
    
    return (
       <>
@@ -168,10 +167,10 @@ function PageLayoutWrapper({ children }: { children: React.ReactNode }) {
 
 export default function Page() {
    return (
-      <AdminLoaderProvider>
+      <AppLoaderProvider>
          <PageLayoutWrapper>
             <PageContent />
          </PageLayoutWrapper>
-      </AdminLoaderProvider>
+      </AppLoaderProvider>
    );
 }

@@ -1,13 +1,11 @@
 import React from 'react';
-import { LogOut } from 'lucide-react';
 import { clsx } from 'clsx';
-import { AdminTabConfig, TabId } from './types';
+import { AppTabConfig, TabId } from './types';
 
 interface MobileLayoutProps {
-   visibleTabs: AdminTabConfig[];
+   visibleTabs: AppTabConfig[];
    activeTab: TabId;
    onTabChange: (id: TabId) => void;
-   onSignOut: () => void;
    children: React.ReactNode;
    fadeInContent: boolean;
 }
@@ -16,7 +14,6 @@ export const MobileLayout = ({
    visibleTabs,
    activeTab,
    onTabChange,
-   onSignOut,
    children,
    fadeInContent
 }: MobileLayoutProps) => {
@@ -59,16 +56,8 @@ export const MobileLayout = ({
                      <span className="text-[10px] mt-1">{tab.label}</span>
                   </button>
                ))}
-               <button
-                  onClick={onSignOut}
-                  className="flex flex-col items-center justify-center p-2 rounded-lg text-danger"
-               >
-                  <LogOut size={24} />
-                  <span className="text-[10px] mt-1">Exit</span>
-               </button>
             </div>
          </div>
       </div>
    );
 };
-

@@ -1,5 +1,5 @@
 import { useSupabase } from '@/utils/supabase/useSupabase';
-import { useAudit } from '@/app/admin/_services/useAudit';
+import { useAudit } from '@/app/tabs/services/useAudit';
 import { useAsyncAction } from '@/utils/supabase/useAsyncAction';
 import { createLogger } from '@/utils/logger/Logger';
 

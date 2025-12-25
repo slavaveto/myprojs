@@ -39,7 +39,7 @@ import {
    verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 
-const logger = createLogger('AdminLocalization');
+const logger = createLogger('Localization');
 
 const TABLE_NAME = 'ui';
 
