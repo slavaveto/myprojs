@@ -203,6 +203,7 @@ export function DebugConsole({ isLocal = false }: { isLocal?: boolean }) {
 
 
    if (!isMounted) return null;
+   
    if (!showDebugPanel) return null;
 
    return (
