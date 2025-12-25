@@ -57,7 +57,7 @@ const SortableProjectItem = ({ project, isActive, onClick }: SortableProjectItem
     const style = {
         transform: CSS.Translate.toString(transform),
         transition,
-        opacity: isDragging ? 0.5 : 1,
+        opacity: 1, // Keep full opacity
         zIndex: isDragging ? 10 : 1,
         position: 'relative' as const,
     };
@@ -70,11 +70,20 @@ const SortableProjectItem = ({ project, isActive, onClick }: SortableProjectItem
                 onClick={onClick}
                 className={clsx(
                    'group flex items-center gap-3 px-3 py-2 rounded-lg transition-colors w-full text-left select-none',
-                   isDragging ? 'cursor-grabbing' : 'cursor-pointer',
-                   'text-foreground',
-                   isActive
-                      ? 'bg-primary/10 text-primary font-medium'
-                      : 'hover:bg-default-100'
+                   
+                   // Dragging state (cursor, z-index, ring)
+                   isDragging && 'cursor-grabbing z-20 ring-1 ring-primary/30',
+                   
+                   // Hover state (only if not dragging and not active)
+                   !isDragging && !isActive && 'cursor-pointer hover:bg-default-100',
+                   !isDragging && isActive && 'cursor-pointer',
+
+                   // Colors and Backgrounds
+                   isDragging 
+                       ? clsx('bg-default-100', isActive ? 'text-primary font-medium' : 'text-foreground')
+                       : isActive 
+                           ? 'bg-primary/10 text-primary font-medium'
+                           : 'text-foreground hover:bg-default-100'
                 )}
              >
                 <div
