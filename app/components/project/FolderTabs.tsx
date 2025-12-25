@@ -94,7 +94,8 @@ const SortableFolderTab = (props: FolderTabProps) => {
         transform,
         transition,
         isDragging,
-        isOver
+        // isOver - we don't use DndKit's native isOver because it triggers when dragging folders too.
+        // We rely solely on props.isOver which is controlled by ProjectScreen for tasks only.
     } = useSortable({
         id: `folder-${props.folder.id}`,
         data: { type: 'folder', folder: props.folder }
@@ -115,7 +116,7 @@ const SortableFolderTab = (props: FolderTabProps) => {
             setNodeRef={setNodeRef}
             style={style}
             isDragging={isDragging}
-            isOver={isOver || props.isOver} // Combine DndKit's isOver with our custom one
+            isOver={props.isOver} 
         />
     );
 };
