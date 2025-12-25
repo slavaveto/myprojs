@@ -238,7 +238,7 @@ export const LocalizScreen = ({ onReady, isActive, texts, showToast = true }: Lo
    );
 
    useEffect(() => {
-      const savedTab = globalStorage.getItem('admin_loc_tab');
+      const savedTab = globalStorage.getItem('loc_tab');
       if (savedTab && TABS.find((t) => t.id === savedTab)) {
          setSelectedTab(savedTab);
       }
@@ -246,7 +246,7 @@ export const LocalizScreen = ({ onReady, isActive, texts, showToast = true }: Lo
 
    const handleTabChange = (key: string) => {
       setSelectedTab(key);
-      globalStorage.setItem('admin_loc_tab', key);
+      globalStorage.setItem('loc_tab', key);
    };
 
    const loadData = async (isManualRefresh = false) => {

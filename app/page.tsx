@@ -11,11 +11,12 @@ import { Languages, Users, FileText } from 'lucide-react';
 import { createLogger } from '@/utils/logger/Logger';
 import { MobileLayout } from '@/app/MobileLayout'; // LOCAL
 import { DesktopLayout } from '@/app/DesktopLayout'; // LOCAL
-import { ADMIN_TABS_DATA, ADMIN_SETTINGS } from '@/app/admin/settings';
+import { globalStorage } from '@/utils/storage';
 import { TabId, AdminTabConfig } from '@/app/types'; // LOCAL
 import { Spinner } from "@heroui/react";
 import clsx from "clsx";
 import { AdminLoaderProvider, useAdminLoader } from '@/app/AdminLoader'; // LOCAL
+import { ADMIN_TABS_DATA, ADMIN_SETTINGS } from '@/app/settings'; // LOCAL SETTINGS
 
 // Создаем упрощенный тип конфига
 type PublicTabConfig = Omit<AdminTabConfig, 'isVisible'>;
@@ -35,6 +36,13 @@ function PageContent() {
    
    // Словарь готовности табов
    const [readyTabs, setReadyTabs] = useState<{ [key in TabId]?: boolean }>({});
+
+   useEffect(() => {
+      const savedTab = globalStorage.getItem('main_active_tab') as TabId;
+      if (savedTab && ['users', 'localization', 'logs'].includes(savedTab)) {
+         setActiveTab(savedTab);
+      }
+   }, []);
 
    useLayoutEffect(() => {
       setGlobalLoading(true);
@@ -66,6 +74,7 @@ function PageContent() {
 
    const handleTabChange = (id: TabId) => {
       setActiveTab(id);
+      globalStorage.setItem('main_active_tab', id);
    };
 
    // Колбэк от таба, что он загрузил данные

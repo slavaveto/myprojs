@@ -8,7 +8,7 @@ import { GripVertical, Trash2 as IconTrash, Edit as IconEdit, FolderInput as Ico
 import { UIElement } from '@/utils/providers/localization/types';
 import { EditableCell } from './EditableCell';
 import { clsx } from 'clsx';
-import { translateText } from '@/app/admin/tabs/components/actions';
+import { translateText } from './actions'; // LOCAL IMPORT
 
 interface SortableRowProps {
    item: UIElement;
