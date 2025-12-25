@@ -22,6 +22,7 @@ interface FolderTabProps {
     setNodeRef?: (node: HTMLElement | null) => void;
     style?: React.CSSProperties;
     isDragging?: boolean;
+    isOver?: boolean;
 }
 
 export const FolderTab = ({ 
@@ -34,7 +35,8 @@ export const FolderTab = ({
     listeners,
     setNodeRef,
     style,
-    isDragging
+    isDragging,
+    isOver
 }: FolderTabProps) => {
     return (
        <div
@@ -44,9 +46,18 @@ export const FolderTab = ({
           {...listeners}
           onClick={onClick}
           className={clsx(
-             'group relative flex items-center gap-2 px-3 h-[40px] select-none transition-colors min-w-fit outline-none rounded-lg',
-             isDragging ? 'cursor-grabbing bg-default-100  ' : 'cursor-pointer',
-             isActive ? 'text-primary font-medium' : 'text-default-500 hover:text-default-700'
+             'group relative flex items-center gap-2 px-3 h-[40px] select-none transition-colors min-w-fit outline-none rounded-lg border-2 border-transparent',
+             // 1. Dragging state (highest priority for cursor/bg)
+             isDragging && 'cursor-grabbing bg-default-100',
+             
+             // 2. Hover/Drop state (when dragging a task over)
+             !isDragging && isOver && 'bg-primary/10 text-primary cursor-pointer border-dashed border-primary',
+             
+             // 3. Active state (only if not dragging/hovering-over logic didn't override)
+             !isDragging && !isOver && isActive && 'text-primary font-medium cursor-pointer',
+             
+             // 4. Default state
+             !isDragging && !isOver && !isActive && 'text-default-500 hover:text-default-700 cursor-pointer'
           )}
        >
           <span className="relative z-10">{folder.title}</span>
@@ -83,6 +94,7 @@ const SortableFolderTab = (props: FolderTabProps) => {
         transform,
         transition,
         isDragging,
+        isOver
     } = useSortable({
         id: `folder-${props.folder.id}`,
         data: { type: 'folder', folder: props.folder }
@@ -103,6 +115,7 @@ const SortableFolderTab = (props: FolderTabProps) => {
             setNodeRef={setNodeRef}
             style={style}
             isDragging={isDragging}
+            isOver={isOver || props.isOver} // Combine DndKit's isOver with our custom one
         />
     );
 };
@@ -115,6 +128,7 @@ interface FolderTabsProps {
     onAddFolder: () => void;
     getTaskCount: (folderId: string) => number;
     projectId: string;
+    hoveredFolderId?: string | null;
 }
 
 export const FolderTabs = ({ 
@@ -123,7 +137,8 @@ export const FolderTabs = ({
     onSelect, 
     onAddFolder, 
     getTaskCount,
-    projectId
+    projectId,
+    hoveredFolderId
 }: FolderTabsProps) => {
     return (
         <div className="flex items-end gap-2 w-full ">
@@ -140,6 +155,7 @@ export const FolderTabs = ({
                             isActive={selectedFolderId === folder.id}
                             layoutIdPrefix={`project-${projectId}`}
                             onClick={() => onSelect(folder.id)}
+                            isOver={hoveredFolderId === `folder-${folder.id}`}
                          />
                    ))}
                </SortableContext>
@@ -157,4 +173,3 @@ export const FolderTabs = ({
         </div>
     );
 };
-

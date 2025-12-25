@@ -60,6 +60,7 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
    const [isDataLoaded, setIsDataLoaded] = useState(false);
    const [activeId, setActiveId] = useState<string | null>(null);
    const [isOverFolder, setIsOverFolder] = useState(false);
+   const [hoveredFolderId, setHoveredFolderId] = useState<string | null>(null);
    const { setLoading } = useAppLoader();
    
    const loadStartedRef = useRef(false);
@@ -258,6 +259,11 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
           if (!isDraggingFolder && hoveredFolderIdRef.current !== folderId) {
               hoveredFolderIdRef.current = folderId;
               
+              // Update state for UI highlighting (safely via timeout to avoid render-cycle issues)
+              setTimeout(() => {
+                  setHoveredFolderId(folderId);
+              }, 0);
+              
               if (hoverTimeoutRef.current) {
                   clearTimeout(hoverTimeoutRef.current);
                   hoverTimeoutRef.current = null;
@@ -282,10 +288,20 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
       
       // Reset if left folder area (only relevant for task dragging)
       if (!isDraggingFolder && hoveredFolderIdRef.current) {
-          hoveredFolderIdRef.current = null;
-          if (hoverTimeoutRef.current) {
-              clearTimeout(hoverTimeoutRef.current);
-              hoverTimeoutRef.current = null;
+          // If we detect no folder collision but ref is set -> we left the folder area
+          // Double check if we are really not over a folder (sometimes collisions fluctuate)
+          const stillOverFolder = pointerCollisions.some(c => c.id.toString().startsWith('folder-'));
+          
+          if (!stillOverFolder) {
+              hoveredFolderIdRef.current = null;
+              setTimeout(() => {
+                  setHoveredFolderId(null);
+              }, 0);
+
+              if (hoverTimeoutRef.current) {
+                  clearTimeout(hoverTimeoutRef.current);
+                  hoverTimeoutRef.current = null;
+              }
           }
       }
 
@@ -533,6 +549,7 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
                 onAddFolder={handleAddFolder}
                 getTaskCount={getFolderTaskCount}
                 projectId={project.id}
+                hoveredFolderId={hoveredFolderId}
             />
 
             <div className="mt-6 flex-grow flex flex-col min-h-0">
