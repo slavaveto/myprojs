@@ -6,7 +6,7 @@ import { supabase } from '@/utils/supabase/supabaseClient';
 import { Project } from '@/app/types';
 import { clsx } from 'clsx';
 import { Button, Spinner } from '@heroui/react';
-import { Plus, LayoutGrid, GripVertical } from 'lucide-react';
+import { Plus, LayoutGrid, GripVertical, Inbox, Calendar, CheckCircle2 } from 'lucide-react';
 import { AppLoaderProvider, useAppLoader } from '@/app/AppLoader';
 import { ProjectScreen } from '@/app/components/ProjectScreen';
 import { globalStorage } from '@/utils/storage';
@@ -83,9 +83,30 @@ const SortableProjectItem = ({ project, isActive, onClick }: SortableProjectItem
     );
 };
 
+// --- Helper for System Tabs ---
+const SidebarItem = ({ icon: Icon, label, onClick, isActive }: { icon: any, label: string, onClick?: () => void, isActive?: boolean }) => (
+    <button
+        onClick={onClick}
+        className={clsx(
+            'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors w-full text-left cursor-pointer select-none mb-1',
+            'text-foreground',
+            isActive ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-default-100'
+        )}
+    >
+        <Icon size={20} className={isActive ? "text-primary" : "text-default-500"} />
+        <span className="truncate flex-grow">{label}</span>
+    </button>
+);
+
 function AppContent() {
    const [projects, setProjects] = useState<Project[]>([]);
    const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+   // System tabs: 'inbox', 'today', 'done' or null (if project selected)
+   // We reuse activeProjectId for this? Or separate state?
+   // Let's assume system tabs are handled by 'activeProjectId' being a special string like 'sys_inbox', 'sys_today', 'sys_done'
+   // But we need to make sure it doesn't conflict with UUIDs. UUIDs are long, these are short.
+   
+   const [activeSystemTab, setActiveSystemTab] = useState<string | null>(null); // 'inbox' | 'today' | 'done' | null
    const { setLoading: setGlobalLoading } = useAppLoader();
    
    // Словарик готовности проектов: { [projectId]: true }
@@ -194,6 +215,32 @@ function AppContent() {
             </div>
 
             <div className="flex-grow overflow-y-auto p-2">
+                {/* System Tabs Top */}
+                <div className="mb-4">
+                    <SidebarItem 
+                        icon={Inbox} 
+                        label="Inbox" 
+                        isActive={activeSystemTab === 'inbox'}
+                        onClick={() => {
+                            setActiveSystemTab('inbox');
+                            setActiveProjectId(null);
+                        }} 
+                    />
+                    <SidebarItem 
+                        icon={Calendar} 
+                        label="Today" 
+                        isActive={activeSystemTab === 'today'}
+                        onClick={() => {
+                            setActiveSystemTab('today');
+                            setActiveProjectId(null);
+                        }} 
+                    />
+                </div>
+
+                <div className="px-3 pb-2 text-xs font-semibold text-default-400 uppercase tracking-wider">
+                    My Projects
+                </div>
+
                 <DndContext 
                     sensors={sensors} 
                     collisionDetection={closestCenter} 
@@ -211,6 +258,7 @@ function AppContent() {
                               isActive={activeProjectId === project.id}
                               onClick={() => {
                                  setActiveProjectId(project.id);
+                                 setActiveSystemTab(null);
                                  globalStorage.setItem('active_project_id', project.id);
                               }}
                           />
@@ -219,8 +267,17 @@ function AppContent() {
                 </DndContext>
             </div>
 
-            <div className="p-4 border-t border-default-200 text-xs text-default-400 text-center">
-               Task Manager v2.0
+            {/* System Tabs Bottom */}
+            <div className="p-2 border-t border-default-200">
+                <SidebarItem 
+                    icon={CheckCircle2} 
+                    label="Done" 
+                    isActive={activeSystemTab === 'done'}
+                    onClick={() => {
+                        setActiveSystemTab('done');
+                        setActiveProjectId(null);
+                    }} 
+                />
             </div>
          </aside>
 
