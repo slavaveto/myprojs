@@ -32,6 +32,7 @@ import { clsx } from 'clsx';
 import { projectService } from '@/app/_services/projectService';
 import { useAsyncAction, ActionStatus } from '@/utils/supabase/useAsyncAction';
 import { StatusBadge } from '@/utils/supabase/StatusBadge';
+import { motion } from 'framer-motion';
 
 const logger = createLogger('ProjectScreen');
 
@@ -41,9 +42,10 @@ interface FolderTabProps {
     count: number;
     isActive: boolean;
     onClick: () => void;
+    layoutIdPrefix: string;
 }
 
-const FolderTab = ({ folder, count, isActive, onClick }: FolderTabProps) => {
+const FolderTab = ({ folder, count, isActive, onClick, layoutIdPrefix }: FolderTabProps) => {
     return (
        <div
           onClick={onClick}
@@ -52,21 +54,26 @@ const FolderTab = ({ folder, count, isActive, onClick }: FolderTabProps) => {
              isActive ? 'text-primary font-medium' : 'text-default-500 hover:text-default-700'
           )}
        >
-          <span>{folder.title}</span>
+          <span className="relative z-10">{folder.title}</span>
           <Chip 
               size="sm" 
               variant="flat" 
               className={clsx(
-                  "h-5 min-w-5 px-1 text-[10px]",
+                  "h-5 min-w-5 px-1 text-[10px] relative z-10",
                   isActive ? "bg-primary/20 text-primary" : "bg-default-100 text-default-500"
               )}
           >
              {count}
           </Chip>
           
-          {/* Active Indicator (Underline) */}
+          {/* Active Indicator (Underline) with Framer Motion */}
           {isActive && (
-              <div className="absolute bottom-0 left-0 w-full h-[2px] bg-primary" />
+              <motion.div 
+                  layoutId={`${layoutIdPrefix}-underline`}
+                  className="absolute bottom-0 left-0 w-full h-[2px] bg-primary z-0"
+                  initial={false}
+                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
+              />
           )}
        </div>
     );
@@ -371,6 +378,7 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
                             folder={folder}
                             count={getFolderTaskCount(folder.id)}
                             isActive={selectedFolderId === folder.id}
+                            layoutIdPrefix={`project-${project.id}`}
                             onClick={() => {
                                 setSelectedFolderId(folder.id);
                                 globalStorage.setItem(`active_folder_${project.id}`, folder.id);
