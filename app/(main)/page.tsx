@@ -215,17 +215,9 @@ function AppContent() {
                   <span className="truncate">Projects</span>
                </div>
                
-               <div className="flex items-center relative">
-                   <div className="absolute right-full mr-2 top-1/2 -translate-y-1/2 scale-75 origin-right pointer-events-none">
-                       <StatusBadge 
-                           status={sidebarStatus} 
-                           errorMessage={sidebarError?.message}
-                       />
-                   </div>
-                   <Button isIconOnly size="sm" variant="flat" color="success">
-                      <Plus size={20} />
-                   </Button>
-               </div>
+               <Button isIconOnly size="sm" variant="flat" color="success">
+                  <Plus size={20} />
+               </Button>
             </div>
 
             <div className="flex-grow overflow-y-auto p-2">
@@ -312,7 +304,8 @@ function AppContent() {
                   activeSystemTab === 'logs' ? "z-30 opacity-100 pointer-events-auto" : "z-0 opacity-0 pointer-events-none"
                )}
             >
-                <LogsScreen />
+                {/* System Screen: Logs */}
+                <LogsScreen globalStatus={sidebarStatus} />
             </div>
 
             <div 
@@ -321,7 +314,7 @@ function AppContent() {
                   activeSystemTab === 'inbox' ? "z-30 opacity-100 pointer-events-auto" : "z-0 opacity-0 pointer-events-none"
                )}
             >
-                <SystemScreen title="Inbox" />
+                <SystemScreen title="Inbox" globalStatus={sidebarStatus} />
             </div>
 
             <div 
@@ -330,7 +323,7 @@ function AppContent() {
                   activeSystemTab === 'today' ? "z-30 opacity-100 pointer-events-auto" : "z-0 opacity-0 pointer-events-none"
                )}
             >
-                <SystemScreen title="Today" />
+                <SystemScreen title="Today" globalStatus={sidebarStatus} />
             </div>
 
             <div 
@@ -339,7 +332,7 @@ function AppContent() {
                   activeSystemTab === 'done' ? "z-30 opacity-100 pointer-events-auto" : "z-0 opacity-0 pointer-events-none"
                )}
             >
-                <SystemScreen title="Done" />
+                <SystemScreen title="Done" globalStatus={sidebarStatus} />
             </div>
             
             {projects.map((project) => (
@@ -356,6 +349,7 @@ function AppContent() {
                       project={project} 
                       isActive={activeProjectId === project.id}
                       onReady={() => handleProjectReady(project.id)}
+                      globalStatus={sidebarStatus}
                   />
                </div>
             ))}

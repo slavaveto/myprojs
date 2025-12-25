@@ -6,6 +6,8 @@ import { Spinner, Chip, Card, CardBody, Button } from '@heroui/react';
 import { createLogger } from '@/utils/logger/Logger';
 import { clsx } from 'clsx';
 import { RefreshCw } from 'lucide-react';
+import { StatusBadge } from '@/utils/supabase/StatusBadge';
+import { ActionStatus } from '@/utils/supabase/useAsyncAction';
 
 const logger = createLogger('LogsScreen');
 
@@ -28,7 +30,11 @@ const LogDetails = ({ details }: { details: any }) => {
     );
 };
 
-export const LogsScreen = () => {
+interface LogsScreenProps {
+    globalStatus?: ActionStatus;
+}
+
+export const LogsScreen = ({ globalStatus = 'idle' }: LogsScreenProps) => {
     const [logs, setLogs] = useState<LogEntry[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -78,14 +84,19 @@ export const LogsScreen = () => {
             <div className="flex justify-between items-center mb-6 min-h-[40px]">
                 <h1 className="text-2xl font-bold">Activity Logs</h1>
                 <div className="flex items-center gap-2">
+                    <StatusBadge 
+                        status={globalStatus}
+                        loadingText="Saving..."
+                        successText="Saved"
+                    />
                     <Button 
                         isIconOnly 
                         size="sm" 
-                        variant="light" 
+                        variant="flat" 
                         onPress={() => fetchLogs(false)}
                         isLoading={isRefreshing}
                     >
-                        <RefreshCw size={20} />
+                        <RefreshCw size={18} />
                     </Button>
                 </div>
             </div>

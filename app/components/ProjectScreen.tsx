@@ -31,7 +31,7 @@ import { Plus, FolderPlus } from 'lucide-react';
 import { TaskRow } from '@/app/components/TaskRow';
 import { clsx } from 'clsx';
 import { projectService } from '@/app/_services/projectService';
-import { useAsyncAction } from '@/utils/supabase/useAsyncAction';
+import { useAsyncAction, ActionStatus } from '@/utils/supabase/useAsyncAction';
 import { StatusBadge } from '@/utils/supabase/StatusBadge';
 
 const logger = createLogger('ProjectScreen');
@@ -70,9 +70,10 @@ interface ProjectScreenProps {
     project: Project;
     isActive: boolean;
     onReady: () => void;
+    globalStatus?: ActionStatus;
 }
 
-export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps) => {
+export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle' }: ProjectScreenProps) => {
    const [folders, setFolders] = useState<Folder[]>([]);
    const [tasks, setTasks] = useState<Task[]>([]);
    const [selectedFolderId, setSelectedFolderId] = useState<string>('');
@@ -91,6 +92,8 @@ export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps
        successMessage: 'Saved',
        errorMessage: 'Failed to save'
    });
+
+   const displayStatus = globalStatus !== 'idle' ? globalStatus : saveStatus;
 
    useEffect(() => {
        if (isDataLoaded || loadStartedRef.current) return;
@@ -323,7 +326,7 @@ export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps
             
             <div className="flex items-center gap-2">
                 <StatusBadge 
-                    status={saveStatus}
+                    status={displayStatus}
                     loadingText="Saving..."
                     successText="Saved"
                     errorMessage={saveError?.message}
