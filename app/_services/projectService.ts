@@ -31,6 +31,31 @@ export const projectService = {
         return data as Project;
     },
 
+    async updateProject(id: string, updates: { title?: string; color?: string }) {
+        const { error } = await supabase
+            .from('projects')
+            .update({
+                ...updates,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', id);
+        if (error) throw error;
+        
+        await logService.logAction('update', 'projects', id, updates);
+    },
+
+    async deleteProject(id: string) {
+        // Folders and tasks should be deleted via cascade in DB, but if not configured, we might need manual deletion.
+        // Assuming cascade is ON for foreign keys.
+        const { error } = await supabase
+            .from('projects')
+            .delete()
+            .eq('id', id);
+        if (error) throw error;
+        
+        await logService.logAction('delete', 'projects', id);
+    },
+
     async updateProjectOrder(updates: { id: string; sort_order: number }[]) {
         // Log the reorder action (batch)
         if (updates.length > 0) {

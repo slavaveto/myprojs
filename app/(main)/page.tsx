@@ -89,7 +89,7 @@ const SortableProjectItem = ({ project, isActive, onClick }: SortableProjectItem
              >
                 <div
                    className="w-3 h-3 rounded-full flex-shrink-0"
-                   style={{ backgroundColor: project.color }}
+                   style={{ backgroundColor: project.color || '#3b82f6' }} // Default blue-500
                 />
                 <span className="truncate flex-grow">{project.title}</span>
              </button>
@@ -397,6 +397,14 @@ function AppContent() {
                       canLoad={activeProjectId === project.id || canLoadBackground}
                       onReady={() => handleProjectReady(project.id)}
                       globalStatus={sidebarStatus}
+                      onUpdateProject={(updates) => {
+                          setProjects(prev => prev.map(p => p.id === project.id ? { ...p, ...updates } : p));
+                      }}
+                      onDeleteProject={() => {
+                          setProjects(prev => prev.filter(p => p.id !== project.id));
+                          setActiveProjectId(null); // Or switch to Inbox/First project
+                          globalStorage.removeItem('active_project_id');
+                      }}
                   />
                </div>
             ))}

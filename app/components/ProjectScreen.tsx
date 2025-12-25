@@ -7,6 +7,8 @@ import { Folder, Task, Project } from '@/app/types';
 import { globalStorage } from '@/utils/storage';
 import { toast } from 'react-hot-toast';
 import { clsx } from 'clsx';
+import { EllipsisVertical } from 'lucide-react';
+import { Button } from '@heroui/react';
 
 import {
    DndContext,
@@ -34,6 +36,7 @@ import { TaskList } from '@/app/components/project/TaskList';
 import { projectService } from '@/app/_services/projectService';
 import { useAsyncAction, ActionStatus } from '@/utils/supabase/useAsyncAction';
 import { StatusBadge } from '@/utils/supabase/StatusBadge';
+import { EditProjectPopover } from '@/app/components/EditProjectPopover';
 
 const logger = createLogger('ProjectScreen');
 
@@ -51,9 +54,11 @@ interface ProjectScreenProps {
     onReady: () => void;
     globalStatus?: ActionStatus;
     canLoad?: boolean;
+    onUpdateProject: (updates: { title?: string; color?: string }) => void;
+    onDeleteProject: () => void;
 }
 
-export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle', canLoad = true }: ProjectScreenProps) => {
+export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle', canLoad = true, onUpdateProject, onDeleteProject }: ProjectScreenProps) => {
    const [folders, setFolders] = useState<Folder[]>([]);
    const [tasks, setTasks] = useState<Task[]>([]);
    const [selectedFolderId, setSelectedFolderId] = useState<string>('');
@@ -224,6 +229,28 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
        } catch (err) {
            logger.error('Failed to create folder', err);
            setFolders(prev => prev.filter(f => f.id !== tempId));
+       }
+   };
+
+   // --- Project Actions ---
+   const handleEditProject = async (title: string, color: string) => {
+       try {
+           await executeSave(async () => {
+               await projectService.updateProject(project.id, { title, color });
+               onUpdateProject({ title, color });
+           });
+       } catch (err) {
+           logger.error('Failed to update project', err);
+       }
+   };
+
+   const handleRemoveProject = async () => {
+       try {
+           await projectService.deleteProject(project.id);
+           onDeleteProject();
+       } catch (err) {
+           logger.error('Failed to delete project', err);
+           toast.error('Failed to delete project');
        }
    };
 
@@ -529,7 +556,19 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
           activeId ? "cursor-grabbing *:[cursor:grabbing]" : ""
       )}>
          <div className="flex justify-between items-center mb-4 min-h-[40px]">
-            <h1 className="text-2xl font-bold">{project.title}</h1>
+            <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-bold">{project.title}</h1>
+                <EditProjectPopover 
+                    initialTitle={project.title}
+                    initialColor={project.color}
+                    onUpdate={handleEditProject}
+                    onDelete={handleRemoveProject}
+                >
+                    <Button isIconOnly size="sm" variant="light" className="text-default-400 hover:text-default-600">
+                        <EllipsisVertical size={18} />
+                    </Button>
+                </EditProjectPopover>
+            </div>
             
             <div className="flex items-center gap-2">
                 <StatusBadge 
