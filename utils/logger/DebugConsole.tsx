@@ -408,10 +408,8 @@ function ConsoleLogItem({ log, showData }: { log: DebugLogItem, showData: boolea
       warning: 'text-yellow-500',
    };
 
-   // @ts-ignore
-   const Icon = methodIcons[log.type] || Info;
-   // @ts-ignore
-   const iconColor = methodColors[log.type] || 'text-default-500';
+   const Icon = methodIcons[log.level] || Info;
+   const iconColor = methodColors[log.level] || 'text-default-500';
 
    // Цвета
    const logColorHex = log.logColor ? (COLOR_MAP[log.logColor] || '#ccc') : '#444';
