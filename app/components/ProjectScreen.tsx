@@ -96,9 +96,10 @@ export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps
            
            if (isActive) {
                logger.success(`Active project loaded: ${project.title}`);
-               toast.success(`${project.title} loaded`, {
+               // toast.success(`${project.title} loaded`, {
+                  toast.success(`Данные загружены!`, {
                    id: 'project-loaded', 
-                   position: 'bottom-right'
+                   position: 'bottom-center'
                });
            } else {
                logger.success(`Background project loaded: ${project.title}`);
