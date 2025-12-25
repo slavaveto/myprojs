@@ -66,6 +66,7 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
    const loadStartedRef = useRef(false);
    const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
    const hoveredFolderIdRef = useRef<string | null>(null);
+   const isDraggingRef = useRef(false);
 
    // --- Status Management ---
    const { execute: executeSave, status: saveStatus, error: saveError } = useAsyncAction({
@@ -261,7 +262,9 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
               
               // Update state for UI highlighting (safely via timeout to avoid render-cycle issues)
               setTimeout(() => {
-                  setHoveredFolderId(folderId);
+                  if (isDraggingRef.current) {
+                      setHoveredFolderId(folderId);
+                  }
               }, 0);
               
               if (hoverTimeoutRef.current) {
@@ -274,6 +277,7 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
                   hoverTimeoutRef.current = setTimeout(() => {
                       setSelectedFolderId(targetId);
                       globalStorage.setItem(`active_folder_${project.id}`, targetId);
+                      // Don't reset background here, keep it highlighted as long as we hover
                   }, 700);
               }
           }
@@ -311,6 +315,7 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
 
    const handleDragStart = (event: DragStartEvent) => {
       setActiveId(event.active.id as string);
+      isDraggingRef.current = true;
    };
 
    // --- Spring-Loaded Folders Logic ---
@@ -329,6 +334,8 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
       const { active, over } = event;
       setActiveId(null);
       setIsOverFolder(false); 
+      setHoveredFolderId(null);
+      isDraggingRef.current = false;
       
       const folderOverId = hoveredFolderIdRef.current;
       hoveredFolderIdRef.current = null; // Reset ref
