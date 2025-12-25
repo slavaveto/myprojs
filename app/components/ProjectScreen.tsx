@@ -31,8 +31,8 @@ import {
    sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable';
 import { TaskRow } from '@/app/components/TaskRow';
-import { FolderTabs, FolderTab } from '@/app/components/project/FolderTabs';
-import { TaskList } from '@/app/components/project/TaskList';
+import { FolderTabs, FolderTab } from '@/app/components/FolderTabs';
+import { TaskList } from '@/app/components/TaskList';
 import { projectService } from '@/app/_services/projectService';
 import { useAsyncAction, ActionStatus } from '@/utils/supabase/useAsyncAction';
 import { StatusBadge } from '@/utils/supabase/StatusBadge';

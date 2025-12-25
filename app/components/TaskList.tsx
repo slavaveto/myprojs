@@ -19,7 +19,7 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty }: TaskLis
                 items={tasks.map(t => t.id)}
                 strategy={verticalListSortingStrategy}
              >
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-[3px]">
                    {tasks.map((task) => (
                       <TaskRow
                          key={task.id}
