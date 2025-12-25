@@ -48,7 +48,7 @@ export const FolderTab = ({
           className={clsx(
              'group relative flex items-center gap-2 px-3 h-[40px] select-none transition-colors min-w-fit outline-none rounded-lg border-2 border-transparent',
              // 1. Dragging state (highest priority for cursor/bg)
-             isDragging && 'cursor-grabbing bg-default-100',
+             isDragging && 'cursor-grabbing bg-default-100 ring-1 ring-primary/30',
              
              // 2. Hover/Drop state (when dragging a task over)
              !isDragging && isOver && 'bg-primary/10 text-primary cursor-pointer border-dashed border-primary',
