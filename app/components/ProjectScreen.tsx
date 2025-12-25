@@ -1,10 +1,12 @@
-import React, { useEffect, useMemo, useState, useRef } from 'react';
+'use client';
 
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useAppLoader } from '@/app/AppLoader';
+import { createLogger } from '@/utils/logger/Logger';
+import { supabase } from '@/utils/supabase/supabaseClient';
 import { Folder, Task, Project } from '@/app/types';
 import { globalStorage } from '@/utils/storage';
 import { toast } from 'react-hot-toast';
-import { supabase } from '@/utils/supabase/supabaseClient';
 import {
    DndContext,
    DragEndEvent,
@@ -74,8 +76,8 @@ export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps
    const [selectedFolderId, setSelectedFolderId] = useState<string>('');
    const [isDataLoaded, setIsDataLoaded] = useState(false);
    const [activeId, setActiveId] = useState<string | null>(null);
+   const { setLoading } = useAppLoader();
    
-   // Флаг, что мы начали загрузку (чтобы не грузить дважды)
    const loadStartedRef = useRef(false);
 
    useEffect(() => {
@@ -106,7 +108,7 @@ export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps
        };
 
        load();
-   }, [isActive, project.id, isDataLoaded]);
+   }, [isActive, project.id, isDataLoaded]); // Removed setLoading to avoid loops, it's stable
 
    const loadData = async () => {
       try {
@@ -122,7 +124,6 @@ export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps
          setFolders(foldersData || []);
 
          if (foldersData && foldersData.length > 0) {
-            // Restore active folder from storage
             const savedFolderId = globalStorage.getItem(`active_folder_${projectId}`);
             const folderExists = savedFolderId ? foldersData.find((f: any) => f.id === savedFolderId) : null;
             
@@ -328,8 +329,6 @@ export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps
        return tasks.filter(t => t.folder_id === folderId).length;
    };
 
-   // UI
-   // Если данные еще не загружены - ничего не рендерим (лоадер управляется глобально)
    if (!isDataLoaded) {
        return null;
    }
