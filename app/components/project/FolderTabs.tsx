@@ -53,8 +53,8 @@ export const FolderTab = ({
              // 2. Hover/Drop state (when dragging a task over)
              !isDragging && isOver && 'bg-primary/10 text-primary cursor-pointer border-dashed border-primary',
              
-             // 3. Active state (only if not dragging/hovering-over logic didn't override)
-             !isDragging && !isOver && isActive && 'text-primary font-medium cursor-pointer',
+             // 3. Active state (allow active styles even when dragging)
+             !isOver && isActive && 'text-primary font-medium cursor-pointer',
              
              // 4. Default state
              !isDragging && !isOver && !isActive && 'text-default-500 hover:text-default-700 cursor-pointer'
@@ -73,7 +73,7 @@ export const FolderTab = ({
           </Chip>
           
           {/* Active Indicator (Underline) with Framer Motion */}
-          {isActive && !isDragging && (
+          {isActive && (
               <motion.div 
                   layoutId={`${layoutIdPrefix}-underline`}
                   className="absolute bottom-0 left-0 w-full h-[2px] bg-primary z-0"
