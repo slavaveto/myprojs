@@ -340,7 +340,19 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
          const targetFolderId = over.id.toString().replace('folder-', '');
          const task = tasks.find(t => t.id === activeTaskId);
          if (task && task.folder_id !== targetFolderId) {
-            const updatedTask = { ...task, folder_id: targetFolderId, updated_at: new Date().toISOString() };
+            // Calculate new sort order to be at the top
+            const targetFolderTasks = tasks.filter(t => t.folder_id === targetFolderId);
+            const minOrder = targetFolderTasks.length > 0 
+                ? Math.min(...targetFolderTasks.map(t => t.sort_order)) 
+                : 0;
+            const newSortOrder = minOrder - 1000;
+
+            const updatedTask = { 
+                ...task, 
+                folder_id: targetFolderId, 
+                sort_order: newSortOrder,
+                updated_at: new Date().toISOString() 
+            };
             
             // Move to new folder locally
             setTasks(prev => prev.map(t => t.id === activeTaskId ? updatedTask : t));
@@ -350,7 +362,10 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
             
             try {
                 await executeSave(async () => {
-                    await projectService.updateTask(activeTaskId, { folder_id: targetFolderId });
+                    await projectService.updateTask(activeTaskId, { 
+                        folder_id: targetFolderId,
+                        sort_order: newSortOrder
+                    });
                 });
             } catch(err) {
                 logger.error('Failed to move task folder', err);
@@ -432,7 +447,13 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
       if (activeId && !activeId.toString().startsWith('folder-')) {
           const activeTask = tasks.find(t => t.id === activeId);
           if (activeTask && activeTask.folder_id !== selectedFolderId) {
-              tasksForFolder = [...tasksForFolder, activeTask];
+              // Calculate temp sort order to show it at the top
+              const minOrder = tasksForFolder.length > 0 
+                  ? Math.min(...tasksForFolder.map(t => t.sort_order)) 
+                  : 0;
+              
+              const tempTask = { ...activeTask, sort_order: minOrder - 1000 };
+              tasksForFolder = [...tasksForFolder, tempTask];
           }
       }
 
