@@ -87,7 +87,7 @@ function AppContent() {
                   <LayoutGrid size={24} className="text-primary" />
                   <span>Projects</span>
                </div>
-               <Button isIconOnly size="sm" variant="light">
+               <Button isIconOnly size="sm" variant="flat" color="success">
                   <Plus size={20} />
                </Button>
             </div>

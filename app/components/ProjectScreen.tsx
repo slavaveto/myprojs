@@ -96,8 +96,7 @@ export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps
            
            if (isActive) {
                logger.success(`Active project loaded: ${project.title}`);
-               // toast.success(`${project.title} loaded`, {
-                  toast.success(`Данные загружены!`, {
+               toast.success(`Данные загружены!`, {
                    id: 'project-loaded', 
                    position: 'bottom-center'
                });
@@ -109,7 +108,7 @@ export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps
        };
 
        load();
-   }, [isActive, project.id, isDataLoaded]); // Removed setLoading to avoid loops, it's stable
+   }, [isActive, project.id, isDataLoaded]);
 
    const loadData = async () => {
       try {
@@ -336,16 +335,8 @@ export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps
 
    return (
       <div className="h-full flex flex-col p-6 max-w-5xl mx-auto w-full">
-         <div className="flex justify-between items-center mb-6">
+         <div className="flex justify-between items-center mb-4">
             <h1 className="text-2xl font-bold">{project.title}</h1>
-            <Button 
-                color="primary" 
-                startContent={<FolderPlus size={18} />}
-                variant="ghost"
-                onPress={handleAddFolder}
-            >
-                New Folder
-            </Button>
          </div>
 
          <DndContext
@@ -354,39 +345,52 @@ export const ProjectScreen = ({ project, isActive, onReady }: ProjectScreenProps
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
          >
-            <Tabs
-               selectedKey={selectedFolderId}
-               onSelectionChange={(key) => {
-                   const newId = key as string;
-                   setSelectedFolderId(newId);
-                   globalStorage.setItem(`active_folder_${project.id}`, newId);
-               }}
-               variant="underlined"
-               color="primary"
-               classNames={{
-                  tabList: "gap-6 w-full relative rounded-none p-0 ",
-                  cursor: "w-full bg-primary",
-                  tab: "max-w-fit px-0 h-12",
-                  tabContent: "group-data-[selected=true]:text-primary"
-               }}
-            >
-               {folders.map((folder) => (
-                  <Tab
-                     key={folder.id}
-                     title={
-                        <DroppableTabTitle 
-                            folder={folder} 
-                            count={getFolderTaskCount(folder.id)} 
-                        />
-                     }
-                  />
-               ))}
-            </Tabs>
+            <div className="flex items-end gap-2 w-full">
+               <div className="flex-grow overflow-x-auto scrollbar-hide">
+                   <Tabs
+                      selectedKey={selectedFolderId}
+                      onSelectionChange={(key) => {
+                          const newId = key as string;
+                          setSelectedFolderId(newId);
+                          globalStorage.setItem(`active_folder_${project.id}`, newId);
+                      }}
+                      variant="underlined"
+                      color="primary"
+                      classNames={{
+                         tabList: "gap-6 relative rounded-none p-0 border-b-0",
+                         cursor: "w-full bg-primary",
+                         tab: "max-w-fit px-0 h-12",
+                         tabContent: "group-data-[selected=true]:text-primary"
+                      }}
+                   >
+                      {folders.map((folder) => (
+                         <Tab
+                            key={folder.id}
+                            title={
+                               <DroppableTabTitle 
+                                   folder={folder} 
+                                   count={getFolderTaskCount(folder.id)} 
+                               />
+                            }
+                         />
+                      ))}
+                   </Tabs>
+               </div>
+               <Button 
+                   isIconOnly 
+                   variant="flat" 
+                   size="sm" 
+                   color="success"
+                   onPress={handleAddFolder}
+               >
+                   <Plus size={20} />
+               </Button>
+            </div>
 
-            <div className="mt-6 flex-grow flex flex-col min-h-0">
+            <div className="mt-4 flex-grow flex flex-col min-h-0">
                 {selectedFolderId ? (
                    <>
-                      <div className="flex-grow overflow-y-auto pr-2 pb-10">
+                      <div className="flex-grow overflow-y-auto pr-0 pb-10">
                          <SortableContext
                             items={filteredTasks.map(t => t.id)}
                             strategy={verticalListSortingStrategy}
