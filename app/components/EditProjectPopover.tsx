@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Popover, PopoverTrigger, PopoverContent, Button, Input, PopoverProps } from '@heroui/react';
 import { clsx } from 'clsx';
 import { Check, Trash2 } from 'lucide-react';
+import { DeleteConfirmationModal } from '@/app/components/DeleteConfirmationModal';
 
 const COLORS = [
     { name: 'Blue', value: '#3b82f6' },      // blue-500
@@ -38,6 +39,7 @@ export const EditProjectPopover = ({
     const [selectedColor, setSelectedColor] = useState(initialColor);
     const [isLoading, setIsLoading] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
     // Sync state with props when popover is closed (or just use key on component to reset)
     useEffect(() => {
@@ -69,11 +71,16 @@ export const EditProjectPopover = ({
         }
     };
 
-    const handleDelete = async () => {
-        setIsDeleting(true); // Show spinner on delete button
+    const handleDeleteClick = () => {
+        setIsOpen(false); // Close popover first
+        setIsDeleteModalOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        setIsDeleting(true); 
         try {
             await onDelete();
-            // No need to close popover manually if parent unmounts/navigates away
+            // Popover will be unmounted by parent usually
         } catch (err) {
             console.error(err);
             setIsDeleting(false);
@@ -81,97 +88,108 @@ export const EditProjectPopover = ({
     };
 
     return (
-        <Popover 
-            isOpen={isOpen} 
-            onOpenChange={handleOpenChange}
-            placement={placement}
-            showArrow
-            offset={10}
-            classNames={{
-                content: "p-0"
-            }}
-        >
-            <PopoverTrigger>
-                {children}
-            </PopoverTrigger>
-            <PopoverContent>
-                <div className="px-3 py-3 w-[280px]">
-                    <p className="text-small font-bold text-foreground mb-2">
-                        Edit Project
-                    </p>
-                    <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
-                        <Input 
-                            autoFocus
-                            size="sm"
-                            variant="bordered"
-                            label="Name"
-                            placeholder="Project Name"
-                            value={title}
-                            onValueChange={setTitle}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                    e.preventDefault(); 
-                                    handleSubmit();
-                                }
-                            }}
-                        />
+        <>
+            <Popover 
+                isOpen={isOpen} 
+                onOpenChange={handleOpenChange}
+                placement={placement}
+                showArrow
+                offset={10}
+                classNames={{
+                    content: "p-0"
+                }}
+            >
+                <PopoverTrigger>
+                    {children}
+                </PopoverTrigger>
+                <PopoverContent>
+                    <div className="px-3 py-3 w-[280px]">
+                        <p className="text-small font-bold text-foreground mb-2">
+                            Edit Project
+                        </p>
+                        <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
+                            <Input 
+                                autoFocus
+                                size="sm"
+                                variant="bordered"
+                                label="Name"
+                                placeholder="Project Name"
+                                value={title}
+                                onValueChange={setTitle}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault(); 
+                                        handleSubmit();
+                                    }
+                                }}
+                            />
 
-                        <div className="flex flex-col gap-1.5">
-                            <span className="text-tiny text-default-500">Color</span>
-                            <div className="flex flex-wrap gap-2 justify-between px-1">
-                                {COLORS.map((color) => (
-                                    <button
-                                        key={color.value}
-                                        type="button"
-                                        onClick={() => setSelectedColor(color.value)}
-                                        className={clsx(
-                                            "w-6 h-6 rounded-full transition-transform hover:scale-110 flex items-center justify-center outline-none ring-offset-1 ring-offset-content1",
-                                            selectedColor?.toLowerCase() === color.value.toLowerCase() && "ring-2 ring-primary scale-110"
-                                        )}
-                                        style={{ backgroundColor: color.value }}
-                                        title={color.name}
-                                    >
-                                        {selectedColor?.toLowerCase() === color.value.toLowerCase() && (
-                                            <Check size={14} className="text-white drop-shadow-sm" />
-                                        )}
-                                    </button>
-                                ))}
+                            <div className="flex flex-col gap-1.5">
+                                <span className="text-tiny text-default-500">Color</span>
+                                <div className="flex flex-wrap gap-2 justify-between px-1">
+                                    {COLORS.map((color) => (
+                                        <button
+                                            key={color.value}
+                                            type="button"
+                                            onClick={() => setSelectedColor(color.value)}
+                                            className={clsx(
+                                                "w-6 h-6 rounded-full transition-transform hover:scale-110 flex items-center justify-center outline-none ring-offset-1 ring-offset-content1",
+                                                selectedColor?.toLowerCase() === color.value.toLowerCase() && "ring-2 ring-primary scale-110"
+                                            )}
+                                            style={{ backgroundColor: color.value }}
+                                            title={color.name}
+                                        >
+                                            {selectedColor?.toLowerCase() === color.value.toLowerCase() && (
+                                                <Check size={14} className="text-white drop-shadow-sm" />
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
 
-                        <div className="flex gap-2 justify-between pt-2 border-t border-divider mt-1">
-                             <Button 
-                                size="sm" 
-                                color="danger" 
-                                variant="light" 
-                                isIconOnly
-                                onPress={handleDelete}
-                                isLoading={isDeleting}
-                                isDisabled={isLoading}
-                                title="Delete Project"
-                            >
-                                <Trash2 size={18} />
-                            </Button>
-
-                            <div className="flex gap-2">
-                                <Button size="sm" variant="light" onPress={() => setIsOpen(false)} isDisabled={isDeleting || isLoading}>
-                                    Cancel
-                                </Button>
+                            <div className="flex gap-2 justify-between pt-2 border-t border-divider mt-1">
                                 <Button 
                                     size="sm" 
-                                    color="primary"
-                                    type="submit" 
-                                    isLoading={isLoading}
-                                    isDisabled={!title.trim() || isDeleting}
+                                    color="danger" 
+                                    variant="light" 
+                                    isIconOnly
+                                    onPress={handleDeleteClick}
+                                    isLoading={isDeleting}
+                                    isDisabled={isLoading}
+                                    title="Delete Project"
                                 >
-                                    Save
+                                    <Trash2 size={18} />
                                 </Button>
+
+                                <div className="flex gap-2">
+                                    <Button size="sm" variant="light" onPress={() => setIsOpen(false)} isDisabled={isDeleting || isLoading}>
+                                        Cancel
+                                    </Button>
+                                    <Button 
+                                        size="sm" 
+                                        color="primary"
+                                        type="submit" 
+                                        isLoading={isLoading}
+                                        isDisabled={!title.trim() || isDeleting}
+                                    >
+                                        Save
+                                    </Button>
+                                </div>
                             </div>
-                        </div>
-                    </form>
-                </div>
-            </PopoverContent>
-        </Popover>
+                        </form>
+                    </div>
+                </PopoverContent>
+            </Popover>
+
+            <DeleteConfirmationModal 
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={handleConfirmDelete}
+                entityName={initialTitle}
+                entityType="project"
+                title="Delete Project"
+            />
+        </>
     );
 };
 

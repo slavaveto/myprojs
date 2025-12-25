@@ -556,7 +556,7 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
           activeId ? "cursor-grabbing *:[cursor:grabbing]" : ""
       )}>
          <div className="flex justify-between items-center mb-4 min-h-[40px]">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1">
                 <h1 className="text-2xl font-bold">{project.title}</h1>
                 <EditProjectPopover 
                     initialTitle={project.title}

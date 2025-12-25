@@ -401,9 +401,27 @@ function AppContent() {
                           setProjects(prev => prev.map(p => p.id === project.id ? { ...p, ...updates } : p));
                       }}
                       onDeleteProject={() => {
-                          setProjects(prev => prev.filter(p => p.id !== project.id));
-                          setActiveProjectId(null); // Or switch to Inbox/First project
-                          globalStorage.removeItem('active_project_id');
+                          const currentIndex = projects.findIndex(p => p.id === project.id);
+                          const remainingProjects = projects.filter(p => p.id !== project.id);
+                          setProjects(remainingProjects);
+                          
+                          // Switch to nearest project or Inbox
+                          if (remainingProjects.length > 0) {
+                              // Try next project, otherwise previous
+                              const nextProject = remainingProjects[currentIndex] || remainingProjects[currentIndex - 1];
+                              if (nextProject) {
+                                  setActiveProjectId(nextProject.id);
+                                  globalStorage.setItem('active_project_id', nextProject.id);
+                              } else {
+                                  // Should not happen if length > 0
+                                  setActiveProjectId(remainingProjects[0].id);
+                                  globalStorage.setItem('active_project_id', remainingProjects[0].id);
+                              }
+                          } else {
+                              setActiveProjectId(null);
+                              setActiveSystemTab('inbox'); // Fallback to Inbox
+                              globalStorage.removeItem('active_project_id');
+                          }
                       }}
                   />
                </div>

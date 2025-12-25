@@ -45,8 +45,30 @@ export const projectService = {
     },
 
     async deleteProject(id: string) {
-        // Folders and tasks should be deleted via cascade in DB, but if not configured, we might need manual deletion.
-        // Assuming cascade is ON for foreign keys.
+        // 1. Get all folders to find tasks
+        const { data: folders } = await supabase
+            .from('folders')
+            .select('id')
+            .eq('project_id', id);
+            
+        if (folders && folders.length > 0) {
+            const folderIds = folders.map(f => f.id);
+            
+            // 2. Soft delete all tasks in these folders and detach them (make orphan)
+            // This prevents physical deletion if CASCADE is set on DB
+            const { error: taskError } = await supabase
+                .from('tasks')
+                .update({ 
+                    is_deleted: true, 
+                    folder_id: null, // Detach from folder
+                    updated_at: new Date().toISOString()
+                })
+                .in('folder_id', folderIds);
+                
+            if (taskError) throw taskError;
+        }
+
+        // 3. Delete project (will cascade delete folders)
         const { error } = await supabase
             .from('projects')
             .delete()
@@ -118,10 +140,12 @@ export const projectService = {
     // --- Tasks ---
     async getTasks(projectId: string) {
         // Join folders to filter by project_id
+        // Filter out deleted tasks
         const { data, error } = await supabase
             .from('tasks')
             .select('*, folders!inner(project_id)')
             .eq('folders.project_id', projectId)
+            .or('is_deleted.eq.false,is_deleted.is.null') // Handle both false and null (legacy)
             .order('sort_order');
             
         if (error) throw error;
@@ -139,6 +163,7 @@ export const projectService = {
                 content,
                 sort_order,
                 is_completed: false,
+                is_deleted: false,
                 updated_at: new Date().toISOString(),
                 created_at: new Date().toISOString()
             })
@@ -164,13 +189,17 @@ export const projectService = {
     },
 
     async deleteTask(id: string) {
+        // Soft delete
         const { error } = await supabase
             .from('tasks')
-            .delete()
+            .update({ 
+                is_deleted: true,
+                updated_at: new Date().toISOString()
+            })
             .eq('id', id);
         if (error) throw error;
         
-        await logService.logAction('delete', 'tasks', id);
+        await logService.logAction('delete', 'tasks', id, { soft: true });
     },
 
     async updateTaskOrder(updates: { id: string; sort_order: number }[]) {
