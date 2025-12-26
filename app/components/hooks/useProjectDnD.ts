@@ -49,6 +49,9 @@ export const useProjectDnD = ({
     const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const hoveredFolderIdRef = useRef<string | null>(null);
     const isDraggingRef = useRef(false);
+    
+    // Store initial state of the dragged item to prevent unnecessary saves
+    const initialDragStateRef = useRef<{ folderId: string; index: number } | null>(null);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -149,6 +152,14 @@ export const useProjectDnD = ({
     const handleDragStart = (event: DragStartEvent) => {
         setActiveId(event.active.id as string);
         isDraggingRef.current = true;
+
+        const task = tasks.find(t => t.id === event.active.id);
+        if (task) {
+            initialDragStateRef.current = {
+                folderId: task.folder_id,
+                index: task.sort_order
+            };
+        }
     };
 
     const handleDragOver = (event: DragOverEvent) => {
@@ -278,6 +289,33 @@ export const useProjectDnD = ({
         
         const activeTask = tasks.find(t => t.id === activeIdString);
         if (!activeTask) return;
+
+        // Optimization: Check if anything actually changed
+        // We compare current state of activeTask with initial state
+        // Note: activeTask is already updated in state via handleDragOver
+        if (initialDragStateRef.current) {
+            const { folderId: oldFolderId, index: oldIndex } = initialDragStateRef.current;
+            const currentFolderTasks = tasks
+                .filter(t => t.folder_id === selectedFolderId)
+                .sort((a, b) => a.sort_order - b.sort_order);
+            
+            // Find current index in the filtered list to be sure about visual order
+            const currentIndex = currentFolderTasks.findIndex(t => t.id === activeIdString);
+            
+            // If folder didn't change AND index is effectively the same (comparing sort_order might be tricky if we reindexed, 
+            // but checking index in sorted array is safer). 
+            // Actually, we reindex on DragOver, so sort_order matches index.
+            
+            // Wait, oldIndex comes from sort_order. If sort_order was 5, and we moved it to 5, it's same.
+            
+            if (activeTask.folder_id === oldFolderId && activeTask.sort_order === oldIndex) {
+                logger.info('Drag ended with no changes, skipping save');
+                initialDragStateRef.current = null;
+                return;
+            }
+        }
+        
+        initialDragStateRef.current = null;
 
         // Filter tasks in the destination folder (which is now selectedFolderId for the active task)
         const currentFolderTasks = tasks

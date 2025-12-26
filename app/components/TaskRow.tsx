@@ -28,9 +28,9 @@ const GapRow = ({ task, isOverlay, isDragging, isHovered, setIsHovered, style, s
     const [isIconHovered, setIsIconHovered] = React.useState(false); // New state for icon hover
 
     const gapClassName = clsx(
-        'group relative flex items-center justify-center h-[16px] w-full rounded outline-none transition-colors',
+        'group relative flex items-center justify-center h-[16px] w-full rounded outline-none transition-colors ',
         // Show background if hovered (icon area), dragging this gap, dragging ANY item, or menu is open
-        (isIconHovered || isDragging || isAnyDragging || !!menuPos) ? 'bg-default-100' : 'bg-transparent',
+        (isIconHovered || isDragging || isAnyDragging || !!menuPos) ? 'bg-default-100 ' : 'bg-transparent',
         // Cursor logic:
         isDragging ? 'cursor-grabbing' : 'cursor-default', 
     );
@@ -68,7 +68,7 @@ const GapRow = ({ task, isOverlay, isDragging, isHovered, setIsHovered, style, s
             {/* Icon visible ONLY on ICON AREA hover, dragging SELF, or menu open */}
             <div 
                 className={clsx(
-                    "absolute left-[2px] ml-[5px] cursor-grab active:cursor-grabbing hover:bg-default-100 rounded text-center outline-none transition-opacity duration-200 z-20", // Added z-20 to be clickable
+                    "absolute left-[2px] ml-[5px] cursor-grab active:cursor-grabbing hover:bg-default-100  rounded text-center outline-none transition-opacity duration-200 z-20", // Added z-20 to be clickable
                     (isIconHovered || isDragging || !!menuPos) ? "opacity-100" : "opacity-0 pointer-events-none" // pointer-events-none hides it from mouse if invisible
                 )}
                 {...attributes}
