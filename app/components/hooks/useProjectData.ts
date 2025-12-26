@@ -137,13 +137,14 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
    const handleAddTask = async (targetIndex?: number) => {
       if (!selectedFolderId) return;
 
-      const currentFolderTasks = tasks
-          .filter(t => t.folder_id === selectedFolderId)
+      // Filter only active tasks because targetIndex comes from the UI which shows only active tasks
+      const activeTasks = tasks
+          .filter(t => t.folder_id === selectedFolderId && !t.is_completed)
           .sort((a, b) => a.sort_order - b.sort_order);
       
-      let insertIndex = targetIndex !== undefined ? targetIndex : currentFolderTasks.length;
+      let insertIndex = targetIndex !== undefined ? targetIndex : activeTasks.length;
       if (insertIndex < 0) insertIndex = 0;
-      if (insertIndex > currentFolderTasks.length) insertIndex = currentFolderTasks.length;
+      if (insertIndex > activeTasks.length) insertIndex = activeTasks.length;
 
       const tempId = crypto.randomUUID();
       const newTask: Task = {
@@ -161,12 +162,14 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
 
       // Optimistic update: insert and shift
       setTasks(prev => {
-          const otherTasks = prev.filter(t => t.folder_id !== selectedFolderId);
-          const newFolderTasks = [...currentFolderTasks];
-          newFolderTasks.splice(insertIndex, 0, newTask);
+          // Keep completed tasks and tasks from other folders as is
+          const otherTasks = prev.filter(t => t.folder_id !== selectedFolderId || t.is_completed);
           
-          // Re-index locally
-          const reindexed = newFolderTasks.map((t, idx) => ({ ...t, sort_order: idx }));
+          const newActiveTasks = [...activeTasks];
+          newActiveTasks.splice(insertIndex, 0, newTask);
+          
+          // Re-index only active tasks to ensure visual order
+          const reindexed = newActiveTasks.map((t, idx) => ({ ...t, sort_order: idx }));
           return [...otherTasks, ...reindexed];
       });
 
