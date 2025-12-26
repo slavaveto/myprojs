@@ -16,10 +16,12 @@ interface TaskRowProps {
    onDelete: (id: string) => void;
    isOverlay?: boolean;
    isHighlighted?: boolean;
+   onAddGap?: () => void;
 }
 
-export const TaskRow = ({ task, onUpdate, onDelete, isOverlay, isHighlighted }: TaskRowProps) => {
+export const TaskRow = ({ task, onUpdate, onDelete, isOverlay, isHighlighted, onAddGap }: TaskRowProps) => {
    const [menuPos, setMenuPos] = React.useState<{x: number, y: number} | null>(null);
+   const [isHovered, setIsHovered] = React.useState(false);
    
    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
       id: task.id,
@@ -31,12 +33,61 @@ export const TaskRow = ({ task, onUpdate, onDelete, isOverlay, isHighlighted }: 
       transition,
    };
 
+   // --- GAP RENDER ---
+   if (task.task_type === 'gap') {
+       const gapClassName = clsx(
+          'group relative flex items-center justify-center h-[16px] w-full rounded outline-none transition-colors',
+          // Show background only on hover or when dragging something else (handled by parent/dnd ideally, but here local hover)
+          (isHovered || isDragging) ? 'bg-default-100/50' : 'bg-transparent',
+          isDragging && 'opacity-50 cursor-grabbing',
+          !isDragging && 'hover:cursor-grab'
+       );
+
+       if (isOverlay) {
+           return (
+               <div ref={setNodeRef} style={{...style, opacity: 1}} className={clsx(gapClassName, 'bg-default-200 border border-dashed border-default-400')}>
+                    <GripVertical size={14} className="text-default-400" />
+               </div>
+           );
+       }
+
+       return (
+          <motion.div
+             ref={setNodeRef}
+             style={style}
+             data-task-row={task.id}
+             className={gapClassName}
+             layout
+             initial={task.isNew ? { opacity: 0, height: 0 } : false}
+             animate={{ opacity: 1, height: 16 }}
+             exit={{ opacity: 0, height: 0 }}
+             transition={{ duration: 0.2 }}
+             {...attributes}
+             {...listeners}
+             onMouseEnter={() => setIsHovered(true)}
+             onMouseLeave={() => setIsHovered(false)}
+             onContextMenu={(e) => {
+                 e.preventDefault();
+                 onDelete(task.id); 
+             }}
+          >
+             {/* Icon positioned exactly like in standard task */}
+             {(isHovered || isDragging) && (
+                 <div className="absolute left-[7px]">
+                    <GripVertical size={16} className="text-default-400" />
+                 </div>
+             )}
+          </motion.div>
+       );
+   }
+
+   // --- STANDARD TASK RENDER ---
    const className = clsx(
       'group px-1 flex justify-between min-h-[30px] items-center rounded-lg border border-default-300 bg-content1 transition-colors outline-none overflow-hidden',
       !isDragging && !isOverlay && 'hover:bg-default-50',
-      isDragging && '!opacity-50', // Placeholder (в списке) - прозрачный
-      isOverlay && 'z-50 bg-default-100 border-primary/50 pointer-events-none cursor-grabbing', // Overlay - непрозрачный
-      isHighlighted && 'border-orange-500/50' // Highlight style
+      isDragging && '!opacity-50', 
+      isOverlay && 'z-50 bg-default-100 border-primary/50 pointer-events-none cursor-grabbing', 
+      isHighlighted && 'border-orange-500/50' 
    );
 
    const content = (
@@ -158,7 +209,8 @@ export const TaskRow = ({ task, onUpdate, onDelete, isOverlay, isHighlighted }: 
                 aria-label="Task Actions"
                 onAction={(key) => {
                     if (key === 'make-gap') {
-                        console.log('Make Gap clicked');
+                        onAddGap?.();
+                        setMenuPos(null);
                     }
                 }}
             >

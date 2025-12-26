@@ -12,9 +12,10 @@ interface TaskListProps {
     onDeleteTask: (id: string) => void;
     isEmpty: boolean;
     highlightedTaskId?: string | null;
+    onAddGap?: (index: number) => void;
 }
 
-export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlightedTaskId }: TaskListProps) => {
+export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlightedTaskId, onAddGap }: TaskListProps) => {
     return (
         <div className="flex-grow overflow-y-auto pr-0 pb-10">
              <SortableContext
@@ -23,13 +24,14 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlight
              >
                 <div className="flex flex-col gap-[3px] min-h-[50px] outline-none">
                    <AnimatePresence initial={false} mode="popLayout">
-                       {tasks.map((task) => (
+                       {tasks.map((task, index) => (
                           <TaskRow
                              key={task._tempId || task.id}
                              task={task}
                              onUpdate={onUpdateTask}
                              onDelete={onDeleteTask}
                              isHighlighted={highlightedTaskId === task.id}
+                             onAddGap={() => onAddGap?.(index)}
                           />
                        ))}
                    </AnimatePresence>

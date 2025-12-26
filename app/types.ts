@@ -24,6 +24,7 @@ export interface Task {
    is_completed: boolean;
    created_at: string;
    updated_at: string;
+   task_type: 'task' | 'gap' | 'group'; // New field
    isNew?: boolean;
    isDraft?: boolean;
    _tempId?: string;

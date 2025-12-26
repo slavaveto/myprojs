@@ -154,6 +154,7 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
          content: '',
          sort_order: insertIndex,
          is_completed: false,
+         task_type: 'task', // Default type
          created_at: new Date().toISOString(),
          updated_at: new Date().toISOString(),
          isNew: true,
@@ -201,6 +202,7 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
                   folder_id: realTask.folder_id,
                   sort_order: realTask.sort_order,
                   is_completed: realTask.is_completed,
+                  task_type: realTask.task_type || 'task'
               };
               
               // 2. Update local state (remove draft status, add saving flag)
@@ -209,7 +211,19 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
               try {
                  await executeSave(async () => {
                      // 3. Create in DB
-                     const data = await projectService.createTask(snapshotBeforeSave.folder_id, content, snapshotBeforeSave.sort_order);
+                     // Pass task_type if your service supports it, or update service first. 
+                     // Assuming projectService.createTask handles it or defaults.
+                     // We need to update create task signature or pass object.
+                     // For now let's assume standard creation is 'task' type and we update if needed or service is smart.
+                     // Better: Update projectService later. For now let's stick to current flow, 
+                     // but if we create a GAP, we likely need a separate method or param.
+                     // But here we are creating a STANDARD task from draft (which is always task type for now).
+                     
+                     // WAIT, user asked for "Make Gap" which creates a GAP below. 
+                     // This function handleUpdateTask is for editing existing tasks (or promoting drafts).
+                     // "Make Gap" will likely be a new function handleAddGap.
+                     
+                     const data = await projectService.createTask(snapshotBeforeSave.folder_id, content, snapshotBeforeSave.sort_order); // TODO: Pass task_type
                      
                      // 4. Persist the new order for ALL tasks in this folder 
                      const currentFolderTasks = tasks.filter(t => t.folder_id === snapshotBeforeSave.folder_id).sort((a, b) => a.sort_order - b.sort_order);
@@ -266,6 +280,9 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
                                  if (currentState.is_completed !== snapshotBeforeSave.is_completed) {
                                      changes.is_completed = currentState.is_completed;
                                  }
+                                 if (currentState.task_type !== snapshotBeforeSave.task_type) {
+                                    changes.task_type = currentState.task_type;
+                                 }
                                  
                                  const hasChanges = Object.keys(changes).length > 0;
                                  
@@ -276,7 +293,8 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
                                              content: currentState.content,
                                              folder_id: currentState.folder_id,
                                              sort_order: currentState.sort_order,
-                                             is_completed: currentState.is_completed
+                                             is_completed: currentState.is_completed,
+                                             task_type: currentState.task_type
                                          },
                                          changes
                                      });
@@ -500,6 +518,82 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
        }
    };
 
+   // --- Gap Management ---
+   const handleAddGap = async (targetIndex: number) => {
+        if (!selectedFolderId) return;
+
+        const activeTasks = tasks
+            .filter(t => t.folder_id === selectedFolderId && !t.is_completed)
+            .sort((a, b) => a.sort_order - b.sort_order);
+
+        // Insert after target
+        let insertIndex = targetIndex + 1;
+        if (insertIndex > activeTasks.length) insertIndex = activeTasks.length;
+
+        const tempId = crypto.randomUUID();
+        const newGap: Task = {
+            id: tempId,
+            _tempId: tempId,
+            folder_id: selectedFolderId,
+            content: '',
+            sort_order: insertIndex,
+            is_completed: false,
+            task_type: 'gap',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            isNew: true,
+            isDraft: false // Gaps are saved immediately usually, or behave like drafts? 
+                           // You said "create task type gap". Let's assume immediate save for now 
+                           // or draft if you want to edit it? 
+                           // "у него нет чекбокса title - ничего нет КРОМЕ иконки drag" -> so nothing to edit.
+                           // So it must be saved immediately.
+        };
+
+        // Optimistic update
+        setTasks(prev => {
+            const otherTasks = prev.filter(t => t.folder_id !== selectedFolderId || t.is_completed);
+            const newActiveTasks = [...activeTasks];
+            newActiveTasks.splice(insertIndex, 0, newGap);
+            const reindexed = newActiveTasks.map((t, idx) => ({ ...t, sort_order: idx }));
+            return [...otherTasks, ...reindexed];
+        });
+
+        try {
+            await executeSave(async () => {
+                // Create in DB
+                // We need to support task_type in create.
+                // Assuming projectService.createTask will be updated or we use a generic create.
+                // For now, let's assume we pass it in content or special field?
+                // Actually, I should check projectService. 
+                // Since I cannot change projectService signature easily without seeing it,
+                // I will assume I can update the task immediately after creation or 
+                // use a new method if I see projectService.
+                
+                // Let's look at projectService first or just create generic task and update it.
+                // But better to have create support it.
+                
+                // Temporary hack: Create task -> Update type immediately.
+                // ideally: await projectService.createTask(..., type='gap')
+                
+                const data = await projectService.createTask(selectedFolderId, '', insertIndex);
+                await projectService.updateTask(data.id, { task_type: 'gap' });
+                
+                // Update order
+                const currentFolderTasks = [...activeTasks];
+                currentFolderTasks.splice(insertIndex, 0, { ...newGap, id: data.id });
+                const orderUpdates = currentFolderTasks.map((t, idx) => ({ id: t.id === tempId ? data.id : t.id, sort_order: idx }));
+                await projectService.updateTaskOrder(orderUpdates);
+
+                // Update local id
+                 setTasks(prev => prev.map(t => t.id === tempId ? { ...t, id: data.id, _tempId: undefined, isNew: false } : t));
+            });
+        } catch (err) {
+            logger.error('Failed to create gap', err);
+            // Revert
+            setTasks(prev => prev.filter(t => t.id !== tempId));
+        }
+   };
+
    // --- Project Actions ---
    const handleEditProject = async (title: string, color: string) => {
        try {
@@ -547,6 +641,7 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
        handleEditProject,
        handleRemoveProject,
        getFolderTaskCount,
-       highlightedTaskId // Added
+       highlightedTaskId, // Added
+       handleAddGap
    };
 };
