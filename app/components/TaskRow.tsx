@@ -287,7 +287,7 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
                     }
                 }}
             >
-                <DropdownItem key="make-gap">Make Gap</DropdownItem>
+                <DropdownItem key="make-gap">Make Gap Below</DropdownItem>
             </DropdownMenu>
          </Dropdown>
       </motion.div>
