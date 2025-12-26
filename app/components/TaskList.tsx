@@ -4,6 +4,7 @@ import React from 'react';
 import { Task } from '@/app/types';
 import { TaskRow } from '@/app/components/TaskRow';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { AnimatePresence } from 'framer-motion';
 
 interface TaskListProps {
     tasks: Task[];
@@ -20,14 +21,16 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty }: TaskLis
                 strategy={verticalListSortingStrategy}
              >
                 <div className="flex flex-col gap-[3px] min-h-[50px] outline-none">
-                   {tasks.map((task) => (
-                      <TaskRow
-                         key={task.id}
-                         task={task}
-                         onUpdate={onUpdateTask}
-                         onDelete={onDeleteTask}
-                      />
-                   ))}
+                   <AnimatePresence initial={false} mode="popLayout">
+                       {tasks.map((task) => (
+                          <TaskRow
+                             key={task.id}
+                             task={task}
+                             onUpdate={onUpdateTask}
+                             onDelete={onDeleteTask}
+                          />
+                       ))}
+                   </AnimatePresence>
                    {isEmpty && (
                        <div className="text-center py-10 text-default-400">
                            No tasks in this folder.

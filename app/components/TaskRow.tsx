@@ -8,6 +8,7 @@ import { GripVertical, Trash2 } from 'lucide-react';
 import { Task } from '../types';
 import { EditableCell } from './EditableCell';
 import { clsx } from 'clsx';
+import { motion } from 'framer-motion';
 
 interface TaskRowProps {
    task: Task;
@@ -25,21 +26,17 @@ export const TaskRow = ({ task, onUpdate, onDelete, isOverlay }: TaskRowProps) =
    const style = {
       transform: CSS.Translate.toString(transform),
       transition,
-      opacity: isDragging ? 0.3 : 1,
    };
 
-   return (
-      <div
-         ref={setNodeRef}
-         style={style}
-         data-task-row // Marker for double click detection
-         className={clsx(
-            'group px-1 flex justify-between h-[30px]  items-center  rounded-lg border border-default-300 bg-content1 transition-colors outline-none',
-            !isDragging && !isOverlay && 'hover:bg-default-50',
-            (isDragging || isOverlay) &&
-               'z-50 bg-default-100 border-primary/50 pointer-events-none cursor-grabbing'
-         )}
-      >
+   const className = clsx(
+      'group px-1 flex justify-between min-h-[30px] items-center rounded-lg border border-default-300 bg-content1 transition-colors outline-none overflow-hidden',
+      !isDragging && !isOverlay && 'hover:bg-default-50',
+      (isDragging || isOverlay) &&
+         'z-50 bg-default-100 border-primary/50 pointer-events-none cursor-grabbing'
+   );
+
+   const content = (
+      <>
          {/* Drag Handle + Checkbox Wrapper */}
          <div className="flex flex-1 gap-1 flex-row items-center justify-center">
             <div
@@ -91,6 +88,34 @@ export const TaskRow = ({ task, onUpdate, onDelete, isOverlay }: TaskRowProps) =
                <Trash2 size={16} />
             </button>
          </div>
-      </div>
+      </>
+   );
+
+   if (isOverlay) {
+      return (
+         <div
+            ref={setNodeRef}
+            style={{ ...style, opacity: 1 }}
+            className={className}
+         >
+            {content}
+         </div>
+      );
+   }
+
+   return (
+      <motion.div
+         ref={setNodeRef}
+         style={style}
+         data-task-row={task.id}
+         className={className}
+         layout
+         initial={{ opacity: 0, height: 0 }}
+         animate={{ opacity: isDragging ? 0.3 : 1, height: 'auto' }}
+         exit={{ opacity: 0, height: 0 }}
+         transition={{ duration: 0.2 }}
+      >
+         {content}
+      </motion.div>
    );
 };
