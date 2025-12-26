@@ -14,6 +14,7 @@ const logger = createLogger('DoneScreen');
 interface DoneScreenProps {
     globalStatus?: string;
     canLoad?: boolean;
+    isActive?: boolean;
 }
 
 const TIME_RANGES = [
@@ -22,7 +23,7 @@ const TIME_RANGES = [
     { key: 'hour', label: 'Last Hour' },
 ];
 
-export const DoneScreen = ({ globalStatus = 'idle', canLoad = true }: DoneScreenProps) => {
+export const DoneScreen = ({ globalStatus = 'idle', canLoad = true, isActive = false }: DoneScreenProps) => {
     const [tasks, setTasks] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
@@ -47,11 +48,16 @@ export const DoneScreen = ({ globalStatus = 'idle', canLoad = true }: DoneScreen
     };
 
     useEffect(() => {
-        if (canLoad) {
-            logger.info('DoneScreen became active or filters changed, fetching...');
+        // Fetch if allowed to load AND (it's active OR filters changed)
+        // If background loading is allowed (canLoad=true), we still want to refresh when it becomes active
+        if (canLoad && isActive) {
+            logger.info('DoneScreen became active, fetching...');
+            fetchTasks();
+        } else if (canLoad && !isLoaded) {
+            // Initial background load
             fetchTasks();
         }
-    }, [canLoad, showDeleted, timeFilter]); // Re-fetch on filter change or tab activation
+    }, [canLoad, isActive, showDeleted, timeFilter]); // Re-fetch on filter change or tab activation
 
     return (
         <div className="h-full flex flex-col p-6 max-w-5xl mx-auto w-full">

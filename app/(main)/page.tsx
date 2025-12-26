@@ -418,9 +418,13 @@ function AppContent() {
                )}
             >
                 {/* System Screen: Logs */}
-                <LogsScreen globalStatus={sidebarStatus} canLoad={canLoadBackground || activeSystemTab === 'logs'} />
+                <LogsScreen 
+                    globalStatus={sidebarStatus} 
+                    canLoad={canLoadBackground || activeSystemTab === 'logs'} 
+                    isActive={activeSystemTab === 'logs'}
+                />
             </div>
-
+            
             <div 
                className={clsx(
                   "absolute inset-0 w-full h-full bg-background transition-opacity duration-300",
@@ -445,7 +449,11 @@ function AppContent() {
                   activeSystemTab === 'done' ? "z-30 opacity-100 pointer-events-auto" : "z-0 opacity-0 pointer-events-none"
                )}
             >
-                <DoneScreen globalStatus={sidebarStatus} canLoad={canLoadBackground || activeSystemTab === 'done'} />
+                <DoneScreen 
+                    globalStatus={sidebarStatus} 
+                    canLoad={canLoadBackground || activeSystemTab === 'done'} 
+                    isActive={activeSystemTab === 'done'}
+                />
             </div>
             
             {projects.map((project) => (

@@ -40,9 +40,10 @@ const LogDetails = ({ details }: { details: any }) => {
 interface LogsScreenProps {
     globalStatus?: ActionStatus;
     canLoad?: boolean;
+    isActive?: boolean;
 }
 
-export const LogsScreen = ({ globalStatus = 'idle', canLoad = true }: LogsScreenProps) => {
+export const LogsScreen = ({ globalStatus = 'idle', canLoad = true, isActive = false }: LogsScreenProps) => {
     const [logs, setLogs] = useState<LogEntry[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -78,13 +79,16 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true }: LogsScreen
     };
 
     useEffect(() => {
-        if (canLoad) {
+        // Fetch if allowed to load AND (it's active OR filters changed)
+        if (canLoad && isActive) {
             logger.info('LogsScreen became active, fetching...');
+            // Don't show full spinner if already loaded, just refresh icon spin
             fetchLogs(!isLoaded);
-        } else if (!canLoad) {
-            // Optional: cancel pending requests or just log
+        } else if (canLoad && !isLoaded) {
+            // Initial background load
+            fetchLogs(true);
         }
-    }, [canLoad, timeFilter]); // Re-fetch on filter change or tab activation
+    }, [canLoad, isActive, timeFilter]); // Re-fetch on filter change or tab activation
 
     const getActionColor = (action: string) => {
         switch (action) {
