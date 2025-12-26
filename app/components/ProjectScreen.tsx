@@ -195,18 +195,26 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
 
               // Create real task
               const updatesWithTimestamp = { ...updates, updated_at: new Date().toISOString() };
-              const realTask = { ...task, ...updatesWithTimestamp, isDraft: false, isNew: false };
+              const realTask = { ...task, ...updatesWithTimestamp, isDraft: false, isNew: false, _isSaving: true };
               
-              // 1. Update local state (remove draft status)
+              // 1. Сохраняем ПОЛНЫЙ snapshot состояния ПЕРЕД сохранением
+              const snapshotBeforeSave = {
+                  content: realTask.content,
+                  folder_id: realTask.folder_id,
+                  sort_order: realTask.sort_order,
+                  is_completed: realTask.is_completed,
+              };
+              
+              // 2. Update local state (remove draft status, add saving flag)
               setTasks(prev => prev.map(t => t.id === id ? realTask : t));
 
               try {
                  await executeSave(async () => {
-                     // 2. Create in DB
-                     const data = await projectService.createTask(selectedFolderId, content, realTask.sort_order);
+                     // 3. Create in DB
+                     const data = await projectService.createTask(snapshotBeforeSave.folder_id, content, snapshotBeforeSave.sort_order);
                      
-                     // 3. Persist the new order for ALL tasks in this folder 
-                     const currentFolderTasks = tasks.filter(t => t.folder_id === selectedFolderId).sort((a, b) => a.sort_order - b.sort_order);
+                     // 4. Persist the new order for ALL tasks in this folder 
+                     const currentFolderTasks = tasks.filter(t => t.folder_id === snapshotBeforeSave.folder_id).sort((a, b) => a.sort_order - b.sort_order);
                      const updatesForOrder = currentFolderTasks.map((t, idx) => ({ 
                          id: t.id === id ? data.id : t.id, 
                          sort_order: idx 
@@ -214,11 +222,132 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
                      
                      await projectService.updateTaskOrder(updatesForOrder);
 
-                     // 4. Final local update with real ID
-                     setTasks(prev => prev.map(t => t.id === id ? { ...data, sort_order: realTask.sort_order, _tempId: realTask._tempId } : t));
+                     // 5. Проверяем, изменилась ли задача во время сохранения
+                     let needsResave = false;
+                     let wasDeleted = false;
+                     let resaveData: { 
+                         newId: string; 
+                         changes: Partial<Task>;
+                     } | null = null;
+                     
+                     setTasks(prev => {
+                         const currentTask = prev.find(t => t.id === id);
+                         
+                         // Проверяем, была ли задача удалена во время сохранения
+                         if (!currentTask) {
+                             logger.warning('Task was deleted during save, will delete from DB');
+                             wasDeleted = true;
+                             return prev;
+                         }
+                         
+                         return prev.map(t => {
+                             if (t.id !== id) return t;
+                             
+                             const currentState = t;
+                             
+                             // Сравниваем ВСЕ поля со snapshot
+                             const changes: Partial<Task> = {};
+                             
+                             if (currentState.content !== snapshotBeforeSave.content) {
+                                 changes.content = currentState.content;
+                             }
+                             if (currentState.folder_id !== snapshotBeforeSave.folder_id) {
+                                 changes.folder_id = currentState.folder_id;
+                             }
+                             if (currentState.sort_order !== snapshotBeforeSave.sort_order) {
+                                 changes.sort_order = currentState.sort_order;
+                             }
+                             if (currentState.is_completed !== snapshotBeforeSave.is_completed) {
+                                 changes.is_completed = currentState.is_completed;
+                             }
+                             
+                             const hasChanges = Object.keys(changes).length > 0;
+                             
+                             if (hasChanges) {
+                                 logger.warning('Task was modified during save, will resave changes', {
+                                     snapshot: snapshotBeforeSave,
+                                     current: {
+                                         content: currentState.content,
+                                         folder_id: currentState.folder_id,
+                                         sort_order: currentState.sort_order,
+                                         is_completed: currentState.is_completed
+                                     },
+                                     changes
+                                 });
+                                 
+                                 needsResave = true;
+                                 resaveData = {
+                                     newId: data.id,
+                                     changes
+                                 };
+                                 
+                                 return {
+                                     ...currentState,
+                                     id: data.id,
+                                     _tempId: realTask._tempId,
+                                     _isSaving: true, // Оставляем флаг для пересохранения
+                                     created_at: data.created_at,
+                                 };
+                             } else {
+                                 // Ничего не изменилось - применяем данные из БД
+                                 return {
+                                     ...data,
+                                     _tempId: realTask._tempId,
+                                     _isSaving: false,
+                                 };
+                             }
+                         });
+                     });
+                     
+                     // 6. Если задача была удалена во время сохранения - удаляем из БД
+                     if (wasDeleted) {
+                         try {
+                             await projectService.deleteTask(data.id);
+                             logger.success('Deleted task that was removed during save');
+                         } catch (deleteErr) {
+                             logger.error('Failed to delete task after creation', deleteErr);
+                         }
+                         return; // Выходим, дальше ничего не делаем
+                     }
+                     
+                     // 7. Если задача изменилась, пересохраняем в БД
+                     if (needsResave && resaveData) {
+                         const { newId, changes } = resaveData;
+                         
+                         try {
+                             // Обновляем изменённые поля в БД
+                             await projectService.updateTask(newId, changes);
+                             
+                             // Если изменилась папка или порядок - обновляем порядок задач
+                             if ('folder_id' in changes || 'sort_order' in changes) {
+                                 const targetFolderId = (changes as any).folder_id ?? snapshotBeforeSave.folder_id;
+                                 const newFolderTasks = tasks
+                                     .filter(t => t.folder_id === targetFolderId || t.id === id)
+                                     .sort((a, b) => a.sort_order - b.sort_order);
+                                 
+                                 const orderUpdates = newFolderTasks.map((t, idx) => ({
+                                     id: t.id === id ? newId : t.id,
+                                     sort_order: idx
+                                 }));
+                                 
+                                 await projectService.updateTaskOrder(orderUpdates);
+                             }
+                             
+                             logger.success('Task changes resaved successfully');
+                         } catch (resaveErr) {
+                             logger.error('Failed to resave task changes', resaveErr);
+                         } finally {
+                             // Снимаем флаг сохранения
+                             setTasks(prev => prev.map(t => 
+                                 t.id === newId ? { ...t, _isSaving: false } : t
+                             ));
+                         }
+                     }
                  });
               } catch (err) {
                  logger.error('Failed to create task from draft', err);
+                 // Снимаем флаг сохранения при ошибке
+                 setTasks(prev => prev.map(t => t.id === id ? { ...t, _isSaving: false } : t));
               }
           }
           return;

@@ -27,4 +27,5 @@ export interface Task {
    isNew?: boolean;
    isDraft?: boolean;
    _tempId?: string;
+   _isSaving?: boolean; // Флаг активного сохранения
 }
