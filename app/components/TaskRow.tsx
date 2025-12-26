@@ -65,16 +65,17 @@ const GapRow = ({ task, isOverlay, isDragging, isHovered, setIsHovered, style, s
                 });
             }}
         >
-            {/* Icon visible ONLY on hover, dragging SELF, or menu open */}
-            {(isHovered || isDragging || !!menuPos) && (
-                <div 
-                    className="absolute left-[2px] ml-[5px] cursor-grab active:cursor-grabbing hover:bg-default-100 rounded text-center outline-none"
-                    {...attributes}
-                    {...listeners}
-                >
-                    <GripVertical size={16} className="text-default-400 hover:text-default-600" />
-                </div>
-            )}
+            {/* Icon always in DOM to prevent layout shifts, controlled by opacity */}
+            <div 
+                className={clsx(
+                    "absolute left-[2px] ml-[5px] cursor-grab active:cursor-grabbing hover:bg-default-100 rounded text-center outline-none transition-opacity duration-200",
+                    (isHovered || isDragging || !!menuPos) ? "opacity-100" : "opacity-0 pointer-events-none"
+                )}
+                {...attributes}
+                {...listeners}
+            >
+                <GripVertical size={16} className="text-default-400 hover:text-default-600" />
+            </div>
 
             <Dropdown 
                 isOpen={!!menuPos} 

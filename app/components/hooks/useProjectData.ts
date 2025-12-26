@@ -591,8 +591,8 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
                 const orderUpdates = currentFolderTasks.map((t, idx) => ({ id: t.id === tempId ? data.id : t.id, sort_order: idx }));
                 await projectService.updateTaskOrder(orderUpdates);
 
-                // Update local id
-                 setTasks(prev => prev.map(t => t.id === tempId ? { ...t, id: data.id, _tempId: undefined, isNew: false } : t));
+                // Update local id - KEEP _tempId to prevent re-mount animation glitch
+                 setTasks(prev => prev.map(t => t.id === tempId ? { ...t, id: data.id, _tempId: tempId, isNew: false } : t));
             });
         } catch (err) {
             logger.error('Failed to create gap', err);
