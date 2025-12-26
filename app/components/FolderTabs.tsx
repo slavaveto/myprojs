@@ -50,7 +50,7 @@ export const FolderTab = ({
           ref={setNodeRef}
           onClick={onClick}
           className={clsx(
-             'group/tab relative flex items-center gap-2 pl-1 h-[40px] select-none transition-colors min-w-fit outline-none rounded-lg border-2 border-transparent',
+             'group/tab relative flex items-center gap-1 px-1 h-[40px] select-none transition-colors min-w-fit outline-none rounded-lg border-2 border-transparent',
              // 1. Dragging state (highest priority for cursor/bg)
              isDragging && 'cursor-grabbing bg-default-100 ring-1 ring-primary/30',
              
@@ -66,43 +66,54 @@ export const FolderTab = ({
        >
           <span className="relative z-10">{folder.title}</span>
 
-          {onUpdate && onDelete && !isDragging && (
+          <div className="relative flex items-center justify-center min-w-[20px] -mt-[1px] h-5">
+              {/* Chip - visible by default, hidden on hover if actions exist */}
               <div 
                   className={clsx(
-                      "opacity-0 group-hover/tab:opacity-100 transition-opacity z-20 ml-0",
-                      "flex items-center"
+                      "transition-opacity duration-200",
+                      (onUpdate && onDelete && !isDragging) && "group-hover/tab:opacity-0"
                   )}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onClick={(e) => e.stopPropagation()}
               >
-                  <EditFolderPopover
-                      initialTitle={folder.title}
-                      onUpdate={onUpdate}
-                      onDelete={onDelete}
-                      onMove={onMove}
-                      canMoveLeft={canMoveLeft}
-                      canMoveRight={canMoveRight}
+                  <Chip 
+                      size="sm" 
+                      variant="flat" 
+                      className={clsx(
+                          "h-5 min-w-5 px-1 text-[10px] relative z-10",
+                          isActive ? "bg-primary/20 text-primary" : "bg-default-100 text-default-500"
+                      )}
                   >
-                      <button 
-                          type="button"
-                          className="-ml-1 flex items-center justify-center text-default-400 hover:text-primary transition-colors outline-none cursor-pointer"
-                      >
-                          <EllipsisVertical size={14} />
-                      </button>
-                  </EditFolderPopover>
+                     {count}
+                  </Chip>
               </div>
-          )}
-          
-          <Chip 
-              size="sm" 
-              variant="flat" 
-              className={clsx(
-                  "h-5 min-w-5 px-1 text-[10px] relative z-10",
-                  isActive ? "bg-primary/20 text-primary" : "bg-default-100 text-default-500"
+
+              {/* Action Button - hidden by default, visible on hover */}
+              {onUpdate && onDelete && !isDragging && (
+                  <div 
+                      className={clsx(
+                          "absolute inset-0 flex items-center justify-center",
+                          "opacity-0 group-hover/tab:opacity-100 transition-opacity duration-200 z-20"
+                      )}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={(e) => e.stopPropagation()}
+                  >
+                      <EditFolderPopover
+                          initialTitle={folder.title}
+                          onUpdate={onUpdate}
+                          onDelete={onDelete}
+                          onMove={onMove}
+                          canMoveLeft={canMoveLeft}
+                          canMoveRight={canMoveRight}
+                      >
+                          <button 
+                              type="button"
+                              className="flex items-center justify-center text-default-400 hover:text-primary transition-colors outline-none cursor-pointer"
+                          >
+                              <EllipsisVertical size={16} />
+                          </button>
+                      </EditFolderPopover>
+                  </div>
               )}
-          >
-             {count}
-          </Chip>
+          </div>
           
           {/* Action Button */}
           
