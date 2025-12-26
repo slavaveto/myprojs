@@ -25,18 +25,19 @@ const GapRow = ({ task, isOverlay, isDragging, isHovered, setIsHovered, style, s
     const { active } = useDndContext(); 
     const isAnyDragging = !!active;
     const [menuPos, setMenuPos] = React.useState<{x: number, y: number} | null>(null);
+    const [isIconHovered, setIsIconHovered] = React.useState(false); // New state for icon hover
 
     const gapClassName = clsx(
         'group relative flex items-center justify-center h-[16px] w-full rounded outline-none transition-colors',
-        // Show background if hovered, dragging this gap, dragging ANY item, or menu is open
-        (isHovered || isDragging || isAnyDragging || !!menuPos) ? 'bg-default-100/50' : 'bg-transparent',
+        // Show background if hovered (icon area), dragging this gap, dragging ANY item, or menu is open
+        (isIconHovered || isDragging || isAnyDragging || !!menuPos) ? 'bg-default-100' : 'bg-transparent',
         // Cursor logic:
         isDragging ? 'cursor-grabbing' : 'cursor-default', 
     );
 
     if (isOverlay) {
         return (
-            <div ref={setNodeRef} style={{...style, opacity: 1, cursor: 'grabbing'}} className={clsx(gapClassName, 'bg-default-200 border border-dashed border-default-400 cursor-grabbing')}>
+            <div ref={setNodeRef} style={{...style, opacity: 1, cursor: 'grabbing'}} className={clsx(gapClassName, 'bg-default-200/50 border border-dashed border-default-400 cursor-grabbing')}>
                 <div className="absolute left-[2px] p-[2px]">
                     <GripVertical size={16} className="text-default-400" />
                 </div>
@@ -55,8 +56,7 @@ const GapRow = ({ task, isOverlay, isDragging, isHovered, setIsHovered, style, s
             animate={{ opacity: 1, height: 16 }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
+            // Removed global hover handlers
             onContextMenu={(e) => {
                 e.preventDefault();
                 setMenuPos({
@@ -65,17 +65,26 @@ const GapRow = ({ task, isOverlay, isDragging, isHovered, setIsHovered, style, s
                 });
             }}
         >
-            {/* Icon always in DOM to prevent layout shifts, controlled by opacity */}
+            {/* Icon visible ONLY on ICON AREA hover, dragging SELF, or menu open */}
             <div 
                 className={clsx(
-                    "absolute left-[2px] ml-[5px] cursor-grab active:cursor-grabbing hover:bg-default-100 rounded text-center outline-none transition-opacity duration-200",
-                    (isHovered || isDragging || !!menuPos) ? "opacity-100" : "opacity-0 pointer-events-none"
+                    "absolute left-[2px] ml-[5px] cursor-grab active:cursor-grabbing hover:bg-default-100 rounded text-center outline-none transition-opacity duration-200 z-20", // Added z-20 to be clickable
+                    (isIconHovered || isDragging || !!menuPos) ? "opacity-100" : "opacity-0 pointer-events-none" // pointer-events-none hides it from mouse if invisible
                 )}
                 {...attributes}
                 {...listeners}
+                onMouseEnter={() => setIsIconHovered(true)} // Keep icon visible if mouse moves from sensor zone to icon itself
+                onMouseLeave={() => setIsIconHovered(false)}
             >
                 <GripVertical size={16} className="text-default-400 hover:text-default-600" />
             </div>
+
+            {/* Invisible Hit Area for Icon (larger than icon itself) */}
+            <div 
+                className="absolute left-0 top-0 bottom-0 w-[30px] z-10" // Lower z-index than icon
+                onMouseEnter={() => setIsIconHovered(true)}
+                onMouseLeave={() => setIsIconHovered(false)}
+            />
 
             <Dropdown 
                 isOpen={!!menuPos} 
