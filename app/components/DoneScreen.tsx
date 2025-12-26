@@ -39,7 +39,7 @@ const DoneTaskRow = ({ task, onRestore, onDelete }: { task: any, onRestore: (t: 
                 'hover:bg-default-50'
             )}
         >
-             <div className="flex flex-1 gap-1 flex-row items-center pl-2">
+             <div className="flex flex-1 gap-2 flex-row items-center pl-2">
                 <Checkbox
                    isSelected={!task.is_deleted} // Always checked unless deleted (logic separation?)
                    // Actually, for Done tasks, they ARE completed. 
@@ -63,14 +63,14 @@ const DoneTaskRow = ({ task, onRestore, onDelete }: { task: any, onRestore: (t: 
                 <div className="flex-grow min-w-0 pl-1 mr-2 flex flex-col justify-center py-1">
                     <div className={clsx(
                         "text-[16px] leading-normal break-words whitespace-pre-wrap",
-                        !task.is_deleted && "text-default-400 line-through",
+                        !task.is_deleted && "text-default-400 ",
                         task.is_deleted && "text-danger"
                     )}>
                         {task.content || "Empty task"}
                     </div>
                     
                     {/* Metadata line */}
-                    <div className="flex items-center gap-2 text-xs text-default-400 mt-0.5">
+                    <div className="hidden flex items-center gap-2 text-xs text-default-400 mt-0.5">
                         {task.folders?.projects && (
                             <div className="flex items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
                                 <div 
@@ -167,8 +167,8 @@ export const DoneScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
         setTasks(prev => prev.filter(t => t.id !== task.id));
         
         try {
-            // Update DB
-            await projectService.updateTask(task.id, { is_completed: false });
+            // Update DB using special restore method (to put at top)
+            await projectService.restoreTask(task.id);
             
             // Notify parent to switch context
             if (onRestoreTask) {

@@ -34,7 +34,7 @@ export const TaskRow = ({ task, onUpdate, onDelete, isOverlay, isHighlighted }: 
       !isDragging && !isOverlay && 'hover:bg-default-50',
       isDragging && '!opacity-50', // Placeholder (в списке) - прозрачный
       isOverlay && 'z-50 bg-default-100 border-primary/50 pointer-events-none cursor-grabbing', // Overlay - непрозрачный
-      isHighlighted && 'bg-orange-500/20 border-orange-500/50' // Highlight style
+      isHighlighted && 'border-orange-500/50' // Highlight style
    );
 
    const content = (

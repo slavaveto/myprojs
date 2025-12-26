@@ -276,6 +276,7 @@ export const projectService = {
 
         const { data, error } = await query
             .order('updated_at', { ascending: false })
+            .order('created_at', { ascending: false }) // Secondary sort for stability
             .limit(100);
 
         if (error) throw error;
@@ -315,6 +316,45 @@ export const projectService = {
         await logService.logAction('update', 'tasks', id, updates);
     },
 
+    // Special method to restore task to the TOP of its folder
+    async restoreTask(id: string) {
+        // 1. Get task to find folder_id
+        const { data: task, error: taskError } = await supabase
+            .from('tasks')
+            .select('folder_id')
+            .eq('id', id)
+            .single();
+            
+        if (taskError) throw taskError;
+        
+        // 2. Find min sort_order in this folder
+        const { data: minTask, error: minError } = await supabase
+            .from('tasks')
+            .select('sort_order')
+            .eq('folder_id', task.folder_id)
+            .or('is_completed.eq.false,is_completed.is.null') // Only active tasks
+            .order('sort_order', { ascending: true })
+            .limit(1)
+            .maybeSingle(); // Use maybeSingle to avoid error on empty folder
+            
+        // If no tasks, default to 0
+        const minOrder = minTask ? minTask.sort_order : 0;
+        
+        // 3. Update task
+        const { error } = await supabase
+            .from('tasks')
+            .update({
+                is_completed: false,
+                sort_order: minOrder - 1000, // Put at the top
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', id);
+            
+        if (error) throw error;
+        
+        await logService.logAction('update', 'tasks', id, { is_completed: false, action: 'restore_top' });
+    },
+
     async deleteTask(id: string) {
         // Soft delete
         const { error } = await supabase
@@ -351,4 +391,3 @@ export const projectService = {
         );
     }
 };
-
