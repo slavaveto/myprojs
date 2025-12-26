@@ -5,7 +5,7 @@ import { Button, ScrollShadow, Popover, PopoverTrigger, PopoverContent } from '@
 import { Bug, X, Trash2, Maximize2, Minimize2, Copy, Check, Info, Rocket, CheckCircle, AlertCircle, AlertTriangle, FileJson, ChevronUp, Eye, EyeOff } from 'lucide-react';
 import { subscribeToDebugLogs, DebugLogItem, LogLevel } from './PageLogger';
 import { COLOR_MAP, convertTailwindToCSS } from './services/loggerColors';
-import { globalStorage } from '@/utils/storage';
+import { storage, globalStorage } from '@/utils/storage';
 import { usePermission } from '@/app/admin/_services/usePermission';
 import { PERMISSIONS } from '@/app/admin/_services/acl';
 import { usePathname } from 'next/navigation';
@@ -60,9 +60,9 @@ export function DebugConsole({ isLocal = false }: { isLocal?: boolean }) {
    useEffect(() => {
       setIsMounted(true);
       
-      // Восстанавливаем позицию из local Storage
+      // Восстанавливаем позицию из session Storage
       try {
-         const saved = globalStorage.getItem('debug-console-state');
+         const saved = storage.getItem('debug-console-state');
          if (saved) {
             setWindowState({ ...DEFAULT_STATE, ...JSON.parse(saved) });
          }
@@ -75,7 +75,7 @@ export function DebugConsole({ isLocal = false }: { isLocal?: boolean }) {
    useEffect(() => {
       if (!isMounted) return;
       const timer = setTimeout(() => {
-         globalStorage.setItem('debug-console-state', JSON.stringify(windowState));
+         storage.setItem('debug-console-state', JSON.stringify(windowState));
       }, 500);
       return () => clearTimeout(timer);
    }, [windowState, isMounted]);
@@ -84,6 +84,7 @@ export function DebugConsole({ isLocal = false }: { isLocal?: boolean }) {
    useEffect(() => {
       const checkDevInfo = () => {
          try {
+            // This one stays in global storage as it's a global setting
             const saved = globalStorage.getItem('global-show-dev-info');
             setShowDevInfo(saved ? JSON.parse(saved) : false);
          } catch {
