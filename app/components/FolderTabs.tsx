@@ -80,7 +80,7 @@ export const FolderTab = ({
           {onUpdate && onDelete && !isDragging && (
               <div 
                   className={clsx(
-                      "opacity-0 group-hover/tab:opacity-100 transition-opacity z-20 ml-0",
+                      "opacity-100 group-hover/tab:opacity-100 transition-opacity z-20 ml-0",
                       "flex items-center"
                   )}
                   onPointerDown={(e) => e.stopPropagation()}
@@ -96,7 +96,7 @@ export const FolderTab = ({
                   >
                       <button 
                           type="button"
-                          className=" flex items-center justify-center text-default-400 hover:text-primary transition-colors outline-none cursor-pointer"
+                          className="-ml-1 flex items-center justify-center text-default-400 hover:text-primary transition-colors outline-none cursor-pointer"
                       >
                           <EllipsisVertical size={14} />
                       </button>
