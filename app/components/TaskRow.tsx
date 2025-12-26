@@ -304,8 +304,9 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
                     }
                 }}
             >
+               <DropdownItem key="make-group">Make As Group</DropdownItem>
                 <DropdownItem key="make-gap">Make Gap Below</DropdownItem>
-                <DropdownItem key="make-group">Make As Group</DropdownItem>
+                
             </DropdownMenu>
          </Dropdown>
       </motion.div>
