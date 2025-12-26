@@ -716,11 +716,56 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
       */
 
       const activeTaskId = active.id as string;
+      
+      // Calculate currentFolderTasks once at the top level of drag end
+      const currentFolderTasks = tasks
+         .filter(t => t.folder_id === selectedFolderId)
+         .sort((a, b) => a.sort_order - b.sort_order);
+
+      // 1. Handle drop on itself (happens when dropping on the placeholder at the top)
+      // or when dropping on the same position in the same list
+      if (active.id === over.id) {
+          // If moving from another folder, this means we want to drop at the current placeholder position (top)
+          const activeTask = tasks.find(t => t.id === activeTaskId);
+          if (activeTask && activeTask.folder_id !== selectedFolderId) {
+             const minOrder = currentFolderTasks.length > 0 
+                ? Math.min(...currentFolderTasks.map(t => t.sort_order)) 
+                : 0;
+             
+             const updatedTask = { 
+                 ...activeTask, 
+                 folder_id: selectedFolderId, 
+                 sort_order: minOrder - 1000, // Put at the top
+                 updated_at: new Date().toISOString() 
+             };
+             
+             setTasks(prev => {
+                 const otherTasks = prev.filter(t => t.folder_id !== selectedFolderId && t.id !== activeTaskId);
+                 const currentFolderTasksUpdated = currentFolderTasks.map(t => ({...t})); // Clone
+                 return [...otherTasks, updatedTask, ...currentFolderTasksUpdated];
+             });
+             
+             // Update DB
+             try {
+                 await executeSave(async () => {
+                     await projectService.updateTask(activeTaskId, { 
+                         folder_id: selectedFolderId,
+                         sort_order: minOrder - 1000 
+                     });
+                     // Reorder full list to clean up sort orders
+                     const allTasksInFolder = [updatedTask, ...currentFolderTasks];
+                     const updates = allTasksInFolder.map((t, idx) => ({ id: t.id, sort_order: idx }));
+                     await projectService.updateTaskOrder(updates);
+                 });
+             } catch(err) {
+                 logger.error('Failed to move task to top', err);
+             }
+          }
+          return;
+      }
+
       if (active.id !== over.id) {
-         // Sort current folder tasks to match visual order
-         const currentFolderTasks = tasks
-            .filter(t => t.folder_id === selectedFolderId)
-            .sort((a, b) => a.sort_order - b.sort_order);
+         // currentFolderTasks is already calculated above
 
          const activeTask = tasks.find(t => t.id === activeTaskId);
          
@@ -728,11 +773,29 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
          if (activeTask && activeTask.folder_id !== selectedFolderId) {
              const overIndex = currentFolderTasks.findIndex(t => t.id === over.id);
              
-             // Fix off-by-one error when dropping items from another list.
-             // If we drop over an item that is NOT the first one, we usually want to insert AFTER it
-             // because dragging downwards typically means "append". 
-             // Exception: Dragging to the very top (index 0).
-             const modifier = overIndex === 0 ? 0 : 1;
+             // GEOMETRIC CALCULATION (Center based)
+             let modifier = 0;
+             let isBelow = false;
+             
+             // Safety check for rects
+             if (active.rect.current.translated && over.rect) {
+                 const activeRect = active.rect.current.translated;
+                 const overRect = over.rect;
+                 
+                 const activeCenterY = activeRect.top + (activeRect.height / 2);
+                 const overCenterY = overRect.top + (overRect.height / 2);
+                 
+                 isBelow = activeCenterY > overCenterY;
+                 modifier = isBelow ? 1 : 0;
+                 
+                 logger.info('Drag Calc (Center):', {
+                     activeCenterY,
+                     overCenterY,
+                     isBelow,
+                     modifier,
+                     overIndex
+                 });
+             }
              
              const newIndex = overIndex >= 0 ? overIndex + modifier : currentFolderTasks.length;
              

@@ -27,7 +27,7 @@ export const logService = {
             });
             
         if (error) {
-            console.error('Failed to write log:', JSON.stringify(error, null, 2));
+
         }
     },
 
