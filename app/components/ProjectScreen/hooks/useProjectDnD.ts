@@ -286,7 +286,7 @@ export const useProjectDnD = ({
     // Simplify filteredTasks - no more "temp" logic needed
     const filteredTasks = useMemo(() => {
         return tasks
-            .filter(t => t.folder_id === selectedFolderId)
+            .filter(t => t.folder_id === selectedFolderId && !t.is_completed)
             .sort((a, b) => a.sort_order - b.sort_order);
     }, [tasks, selectedFolderId]);
 
