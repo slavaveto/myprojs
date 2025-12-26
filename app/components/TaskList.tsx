@@ -24,7 +24,7 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty }: TaskLis
                    <AnimatePresence initial={false} mode="popLayout">
                        {tasks.map((task) => (
                           <TaskRow
-                             key={task.id}
+                             key={task._tempId || task.id}
                              task={task}
                              onUpdate={onUpdateTask}
                              onDelete={onDeleteTask}

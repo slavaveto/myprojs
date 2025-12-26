@@ -153,6 +153,7 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
       const tempId = crypto.randomUUID();
       const newTask: Task = {
          id: tempId,
+         _tempId: tempId,
          folder_id: selectedFolderId,
          content: '',
          sort_order: insertIndex,
@@ -214,7 +215,7 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
                      await projectService.updateTaskOrder(updatesForOrder);
 
                      // 4. Final local update with real ID
-                     setTasks(prev => prev.map(t => t.id === id ? { ...data, sort_order: realTask.sort_order } : t));
+                     setTasks(prev => prev.map(t => t.id === id ? { ...data, sort_order: realTask.sort_order, _tempId: realTask._tempId } : t));
                  });
               } catch (err) {
                  logger.error('Failed to create task from draft', err);

@@ -32,7 +32,7 @@ export const TaskRow = ({ task, onUpdate, onDelete, isOverlay }: TaskRowProps) =
       'group px-1 flex justify-between min-h-[30px] items-center rounded-lg border border-default-300 bg-content1 transition-colors outline-none overflow-hidden',
       !isDragging && !isOverlay && 'hover:bg-default-50',
       (isDragging || isOverlay) &&
-         'z-50 bg-default-100 border-primary/50 pointer-events-none cursor-grabbing'
+         'z-50 bg-default-100 border-primary/50 pointer-events-none cursor-grabbing !opacity-50'
    );
 
    const content = (
@@ -111,7 +111,7 @@ export const TaskRow = ({ task, onUpdate, onDelete, isOverlay }: TaskRowProps) =
          className={className}
          layout
          initial={task.isNew ? { opacity: 0, height: 0 } : false}
-         animate={{ opacity: isDragging ? 0.3 : 1, height: 'auto' }}
+         animate={{ opacity: 1, height: 'auto' }}
          exit={{ opacity: 0, height: 0 }}
          transition={{ duration: 0.2 }}
       >
