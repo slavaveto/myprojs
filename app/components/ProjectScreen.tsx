@@ -67,7 +67,8 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
        handleMoveFolder,
        handleEditProject,
        handleRemoveProject,
-       getFolderTaskCount
+       getFolderTaskCount,
+       highlightedTaskId
    } = useProjectData(props);
 
    // 2. Drag and Drop Hook
@@ -179,6 +180,7 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
                         onUpdateTask={handleUpdateTask}
                         onDeleteTask={handleDeleteTask}
                         isEmpty={filteredTasks.length === 0}
+                        highlightedTaskId={highlightedTaskId}
                    />
                 ) : (
                     <div className="text-center py-20 text-default-400">

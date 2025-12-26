@@ -24,6 +24,7 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
    const [tasks, setTasks] = useState<Task[]>([]);
    const [selectedFolderId, setSelectedFolderId] = useState<string>('');
    const [isDataLoaded, setIsDataLoaded] = useState(false);
+   const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null);
    
    const loadStartedRef = useRef(false);
 
@@ -71,6 +72,46 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
 
        load();
    }, [isActive, project.id, isDataLoaded, canLoad]);
+
+    // --- Sync active folder from storage when becoming active ---
+    useEffect(() => {
+        if (isActive && isDataLoaded && folders.length > 0) {
+            const savedFolderId = globalStorage.getItem(`active_folder_${project.id}`);
+            if (savedFolderId && savedFolderId !== selectedFolderId) {
+                // Verify existence
+                const folderExists = folders.find(f => f.id === savedFolderId);
+                if (folderExists) {
+                    logger.info(`Switching to saved folder: ${savedFolderId}`);
+                    setSelectedFolderId(savedFolderId);
+                }
+            }
+        }
+    }, [isActive, isDataLoaded, project.id, folders, selectedFolderId]);
+
+    // --- Silent Refresh when becoming active ---
+    useEffect(() => {
+        if (isActive && isDataLoaded) {
+            projectService.getTasks(project.id).then(newTasks => {
+                setTasks(newTasks);
+                
+                // Check for highlight request
+                const highlightId = globalStorage.getItem(`highlight_task_${project.id}`);
+                if (highlightId) {
+                    globalStorage.removeItem(`highlight_task_${project.id}`);
+                    const taskExists = newTasks.find(t => t.id === highlightId);
+                    if (taskExists) {
+                        setHighlightedTaskId(highlightId);
+                        setTimeout(() => {
+                            setHighlightedTaskId(null);
+                        }, 3000);
+                    }
+                }
+            }).catch(err => {
+                logger.error('Failed to silently refresh tasks', err);
+            });
+        }
+    }, [isActive, isDataLoaded, project.id]);
+
 
    const loadData = async () => {
       // Parallel loading
@@ -473,7 +514,7 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
    };
 
    const getFolderTaskCount = (folderId: string) => {
-       return tasks.filter(t => t.folder_id === folderId).length;
+       return tasks.filter(t => t.folder_id === folderId && !t.is_completed).length;
    };
 
    return {
@@ -496,7 +537,7 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
        handleMoveFolder,
        handleEditProject,
        handleRemoveProject,
-       getFolderTaskCount
+       getFolderTaskCount,
+       highlightedTaskId // Added
    };
 };
-

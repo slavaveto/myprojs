@@ -129,11 +129,6 @@ const SidebarItem = ({ icon: Icon, label, onClick, isActive }: { icon: any, labe
 function AppContent() {
    const [projects, setProjects] = useState<Project[]>([]);
    const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
-   // System tabs: 'inbox', 'today', 'done' or null (if project selected)
-   // We reuse activeProjectId for this? Or separate state?
-   // Let's assume system tabs are handled by 'activeProjectId' being a special string like 'sys_inbox', 'sys_today', 'sys_done'
-   // But we need to make sure it doesn't conflict with UUIDs. UUIDs are long, these are short.
-   
    const [activeSystemTab, setActiveSystemTab] = useState<string | null>(null); // 'inbox' | 'today' | 'done' | null
    const { setLoading: setGlobalLoading } = useAppLoader();
    
@@ -266,6 +261,26 @@ function AppContent() {
        } catch (err) {
            logger.error('Failed to delete project', err);
            toast.error('Failed to delete project');
+       }
+   };
+
+   const handleRestoreTaskFromDone = (task: any) => {
+       if (task && task.folders?.projects?.id && task.folders?.id) {
+           const projectId = task.folders.projects.id;
+           const folderId = task.folders.id;
+
+           logger.info('Restoring task, switching to:', { projectId, folderId });
+
+           // Save target folder to storage so ProjectScreen can pick it up
+           globalStorage.setItem(`active_folder_${projectId}`, folderId);
+           
+           // Save task ID for highlighting
+           globalStorage.setItem(`highlight_task_${projectId}`, task.id);
+
+           // Switch project
+           setActiveProjectId(projectId);
+           setActiveSystemTab(null);
+           globalStorage.setItem('active_project_id', projectId);
        }
    };
 
@@ -453,6 +468,7 @@ function AppContent() {
                     globalStatus={sidebarStatus} 
                     canLoad={canLoadBackground || activeSystemTab === 'done'} 
                     isActive={activeSystemTab === 'done'}
+                    onRestoreTask={handleRestoreTaskFromDone}
                 />
             </div>
             

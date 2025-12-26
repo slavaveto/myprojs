@@ -11,9 +11,10 @@ interface TaskListProps {
     onUpdateTask: (id: string, updates: Partial<Task>) => void;
     onDeleteTask: (id: string) => void;
     isEmpty: boolean;
+    highlightedTaskId?: string | null;
 }
 
-export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty }: TaskListProps) => {
+export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlightedTaskId }: TaskListProps) => {
     return (
         <div className="flex-grow overflow-y-auto pr-0 pb-10">
              <SortableContext
@@ -28,6 +29,7 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty }: TaskLis
                              task={task}
                              onUpdate={onUpdateTask}
                              onDelete={onDeleteTask}
+                             isHighlighted={highlightedTaskId === task.id}
                           />
                        ))}
                    </AnimatePresence>
@@ -41,4 +43,3 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty }: TaskLis
         </div>
     );
 };
-

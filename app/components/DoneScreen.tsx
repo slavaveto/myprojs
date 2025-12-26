@@ -4,10 +4,11 @@ import React, { useEffect, useState } from 'react';
 import { createLogger } from '@/utils/logger/Logger';
 import { projectService } from '@/app/_services/projectService';
 import { clsx } from 'clsx';
-import { CheckCircle2, Trash2, Folder as FolderIcon, RefreshCw } from 'lucide-react';
-import { Spinner, Chip, Button, Switch, Select, SelectItem } from '@heroui/react';
+import { CheckCircle2, Trash2, Folder as FolderIcon, RefreshCw, GripVertical } from 'lucide-react';
+import { Spinner, Chip, Button, Switch, Select, SelectItem, Checkbox } from '@heroui/react';
 import { format } from 'date-fns';
 import { useGlobalPersistentState } from '@/utils/storage';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const logger = createLogger('DoneScreen');
 
@@ -15,6 +16,7 @@ interface DoneScreenProps {
     globalStatus?: string;
     canLoad?: boolean;
     isActive?: boolean;
+    onRestoreTask?: (task: any) => void;
 }
 
 const TIME_RANGES = [
@@ -23,7 +25,94 @@ const TIME_RANGES = [
     { key: 'hour', label: 'Last Hour' },
 ];
 
-export const DoneScreen = ({ globalStatus = 'idle', canLoad = true, isActive = false }: DoneScreenProps) => {
+// Visual clone of TaskRow for Done items
+const DoneTaskRow = ({ task, onRestore, onDelete }: { task: any, onRestore: (t: any) => void, onDelete: (id: string) => void }) => {
+    return (
+        <motion.div
+            layout
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className={clsx(
+                'group px-1 flex justify-between min-h-[30px] items-center rounded-lg border border-default-300 bg-content1 transition-colors outline-none overflow-hidden mb-[3px]',
+                'hover:bg-default-50'
+            )}
+        >
+             <div className="flex flex-1 gap-1 flex-row items-center pl-2">
+                <Checkbox
+                   isSelected={!task.is_deleted} // Always checked unless deleted (logic separation?)
+                   // Actually, for Done tasks, they ARE completed. 
+                   // So checkbox should be checked. Unchecking it restores the task.
+                   // For deleted tasks, maybe show differently? 
+                   // Let's assume this row is for DONE tasks mostly.
+                   defaultSelected={true}
+                   isDisabled={task.is_deleted} // Cannot restore deleted via checkbox?
+                   onValueChange={(isSelected) => {
+                       if (!isSelected) {
+                           onRestore(task);
+                       }
+                   }}
+                   classNames={{
+                      wrapper: 'after:bg-primary',
+                   }}
+                   className={clsx('p-0 m-0 text-center !w-[16px] mx-0')}
+                   size="sm"
+                />
+
+                <div className="flex-grow min-w-0 pl-1 mr-2 flex flex-col justify-center py-1">
+                    <div className={clsx(
+                        "text-[16px] leading-normal break-words whitespace-pre-wrap",
+                        !task.is_deleted && "text-default-400 line-through",
+                        task.is_deleted && "text-danger"
+                    )}>
+                        {task.content || "Empty task"}
+                    </div>
+                    
+                    {/* Metadata line */}
+                    <div className="flex items-center gap-2 text-xs text-default-400 mt-0.5">
+                        {task.folders?.projects && (
+                            <div className="flex items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
+                                <div 
+                                    className="w-1.5 h-1.5 rounded-full" 
+                                    style={{ backgroundColor: task.folders.projects.color || '#3b82f6' }}
+                                />
+                                <span className="truncate max-w-[100px]">{task.folders.projects.title}</span>
+                            </div>
+                        )}
+                        <span className="opacity-50">/</span>
+                        <div className="flex items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
+                            <FolderIcon size={10} />
+                            <span className="truncate max-w-[100px]">{task.folders?.title || "Unknown Folder"}</span>
+                        </div>
+                        <span className="ml-auto opacity-50">
+                            {format(new Date(task.updated_at), 'MMM d, HH:mm')}
+                        </span>
+                         {task.is_deleted && (
+                            <Chip size="sm" variant="flat" color="danger" className="h-4 text-[10px] px-1 ml-2">
+                                Deleted
+                            </Chip>
+                        )}
+                    </div>
+                </div>
+             </div>
+
+             {/* Actions */}
+             <div className="p-0 text-center relative flex justify-center">
+                <button
+                   onClick={() => onDelete(task.id)}
+                   className="opacity-0 p-[2px] group-hover:opacity-100 text-default-400 cursor-pointer hover:text-danger hover:bg-danger/10 rounded transition-all"
+                   aria-label="Delete task forever"
+                   title="Delete forever"
+                >
+                   <Trash2 size={16} />
+                </button>
+             </div>
+        </motion.div>
+    );
+}
+
+export const DoneScreen = ({ globalStatus = 'idle', canLoad = true, isActive = false, onRestoreTask }: DoneScreenProps) => {
     const [tasks, setTasks] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true); // Initial load (full screen)
     const [isRefreshing, setIsRefreshing] = useState(false); // Refresh (button spin)
@@ -73,6 +162,43 @@ export const DoneScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
         }
     }, [canLoad, isActive, showDeleted, timeFilter]); // Re-fetch on filter change or tab activation
 
+    const handleRestore = async (task: any) => {
+        // Optimistic remove
+        setTasks(prev => prev.filter(t => t.id !== task.id));
+        
+        try {
+            // Update DB
+            await projectService.updateTask(task.id, { is_completed: false });
+            
+            // Notify parent to switch context
+            if (onRestoreTask) {
+                // Short delay to allow exit animation to start/finish
+                setTimeout(() => {
+                    onRestoreTask(task);
+                }, 300);
+            }
+        } catch (err) {
+            logger.error('Failed to restore task', err);
+            // Revert optimistic update (simplified, ideally re-fetch or insert back)
+            fetchTasks(false); 
+        }
+    };
+
+    const handleDeleteForever = async (id: string) => {
+        if (!confirm('Are you sure you want to delete this task forever?')) return;
+
+        setTasks(prev => prev.filter(t => t.id !== id));
+        try {
+            await projectService.deleteTask(id); // Physically delete? Or soft delete if not already?
+            // Assuming deleteTask does physical delete or soft delete based on implementation. 
+            // If it's already soft deleted (is_deleted=true), we might want a hard delete endpoint.
+            // But let's assume standard delete logic for now.
+        } catch (err) {
+            logger.error('Failed to delete task', err);
+            fetchTasks(false);
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-full">
@@ -89,10 +215,8 @@ export const DoneScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
                     Done {showDeleted && "& Deleted"}
                 </h1>
                 
-                
                 <div className="flex items-center gap-4">
-
-                <Switch
+                    <Switch
                         size="sm"
                         isSelected={showDeleted}
                         onValueChange={setShowDeleted}
@@ -119,8 +243,6 @@ export const DoneScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
                         ))}
                     </Select>
 
-                
-
                     <Button 
                         isIconOnly
                         size="sm" 
@@ -134,71 +256,26 @@ export const DoneScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
                 </div>
             </div>
 
-            <div className="flex-grow overflow-y-auto pr-0">
+            <div className="flex-grow overflow-y-auto pr-0 pb-10">
                 {tasks.length === 0 ? (
                     <div className="text-center py-20 text-default-400">
                         No completed or deleted tasks found.
                     </div>
                 ) : (
-                    <div className="flex flex-col gap-2">
-                        {tasks.map((task) => (
-                            <div 
-                                key={task.id}
-                                className={clsx(
-                                    "p-3 rounded-lg border flex items-center gap-3 transition-colors",
-                                    task.is_deleted 
-                                        ? "bg-danger/5 border-danger/20" 
-                                        : "bg-success/5 border-success/20"
-                                )}
-                            >
-                                <div className="flex-shrink-0">
-                                    {task.is_deleted ? (
-                                        <div className="w-8 h-8 rounded-full bg-danger/10 flex items-center justify-center text-danger">
-                                            <Trash2 size={16} />
-                                        </div>
-                                    ) : (
-                                        <div className="w-8 h-8 rounded-full bg-success/10 flex items-center justify-center text-success">
-                                            <CheckCircle2 size={16} />
-                                        </div>
-                                    )}
-                                </div>
-                                
-                                <div className="flex-grow min-w-0">
-                                    <div className={clsx("text-sm font-medium", task.is_deleted ? "text-danger" : "text-foreground line-through decoration-default-400")}>
-                                        {task.content || "Empty task"}
-                                    </div>
-                                    <div className="flex items-center gap-2 text-xs text-default-400 mt-1">
-                                        {task.folders?.projects && (
-                                            <div className="flex items-center gap-1">
-                                                <div 
-                                                    className="w-2 h-2 rounded-full" 
-                                                    style={{ backgroundColor: task.folders.projects.color || '#3b82f6' }}
-                                                />
-                                                <span>{task.folders.projects.title}</span>
-                                            </div>
-                                        )}
-                                        <span>/</span>
-                                        <div className="flex items-center gap-1">
-                                            <FolderIcon size={12} />
-                                            <span>{task.folders?.title || "Unknown Folder"}</span>
-                                        </div>
-                                        <span className="ml-auto">
-                                            {format(new Date(task.updated_at), 'MMM d, HH:mm')}
-                                        </span>
-                                    </div>
-                                </div>
-                                
-                                <div>
-                                    <Chip size="sm" variant="flat" color={task.is_deleted ? "danger" : "success"}>
-                                        {task.is_deleted ? "Deleted" : "Done"}
-                                    </Chip>
-                                </div>
-                            </div>
-                        ))}
+                    <div className="flex flex-col gap-[3px]">
+                        <AnimatePresence initial={false} mode="popLayout">
+                            {tasks.map((task) => (
+                                <DoneTaskRow 
+                                    key={task.id} 
+                                    task={task} 
+                                    onRestore={handleRestore}
+                                    onDelete={handleDeleteForever}
+                                />
+                            ))}
+                        </AnimatePresence>
                     </div>
                 )}
             </div>
         </div>
     );
 };
-

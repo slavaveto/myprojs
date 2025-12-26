@@ -15,9 +15,10 @@ interface TaskRowProps {
    onUpdate: (id: string, updates: Partial<Task>) => void;
    onDelete: (id: string) => void;
    isOverlay?: boolean;
+   isHighlighted?: boolean;
 }
 
-export const TaskRow = ({ task, onUpdate, onDelete, isOverlay }: TaskRowProps) => {
+export const TaskRow = ({ task, onUpdate, onDelete, isOverlay, isHighlighted }: TaskRowProps) => {
    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
       id: task.id,
       data: task,
@@ -32,7 +33,8 @@ export const TaskRow = ({ task, onUpdate, onDelete, isOverlay }: TaskRowProps) =
       'group px-1 flex justify-between min-h-[30px] items-center rounded-lg border border-default-300 bg-content1 transition-colors outline-none overflow-hidden',
       !isDragging && !isOverlay && 'hover:bg-default-50',
       isDragging && '!opacity-50', // Placeholder (в списке) - прозрачный
-      isOverlay && 'z-50 bg-default-100 border-primary/50 pointer-events-none cursor-grabbing' // Overlay - непрозрачный
+      isOverlay && 'z-50 bg-default-100 border-primary/50 pointer-events-none cursor-grabbing', // Overlay - непрозрачный
+      isHighlighted && 'bg-orange-500/20 border-orange-500/50' // Highlight style
    );
 
    const content = (
@@ -111,7 +113,11 @@ export const TaskRow = ({ task, onUpdate, onDelete, isOverlay }: TaskRowProps) =
          className={className}
          layout
          initial={task.isNew ? { opacity: 0, height: 0 } : false}
-         animate={{ opacity: 1, height: 'auto' }}
+         animate={{ 
+            opacity: 1, 
+            height: 'auto',
+            backgroundColor: isHighlighted ? 'var(--heroui-primary-100)' : undefined // Extra smooth animation if needed, but class change is ok
+         }}
          exit={{ opacity: 0, height: 0 }}
          transition={{ duration: 0.2 }}
       >
