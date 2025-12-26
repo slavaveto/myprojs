@@ -373,9 +373,12 @@ function AppContent() {
                                     onUpdate={(t, c) => handleUpdateProject(project.id, t, c)}
                                     onDelete={() => handleDeleteProject(project.id)}
                                 >
-                                    <Button isIconOnly size="sm" variant="light" className="text-default-400 hover:text-primary bg-transparent hover:bg-transparent min-w-8 w-8 h-8">
+                                    <button 
+                                        type="button"
+                                        className="w-8 h-8 flex items-center justify-center text-default-400 hover:text-primary transition-colors outline-none cursor-pointer"
+                                    >
                                         <EllipsisVertical size={18} />
-                                    </Button>
+                                    </button>
                                 </EditProjectPopover>
                           </SortableProjectItem>
                        ))}
