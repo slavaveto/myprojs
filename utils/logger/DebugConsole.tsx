@@ -429,17 +429,19 @@ function ConsoleLogItem({ log, showData }: { log: DebugLogItem, showData: boolea
    const logContent = (
       <div 
          className={`relative rounded-lg p-1 transition-colors text-left group bg-content2 ${
-            !log.logColor || log.logColor === 'black' ? 'border border-default-200' : ''
+            !log.logColor || log.logColor === 'black' ? '' : ''
          } ${log.data ? 'cursor-pointer hover:bg-default-100' : ''}`}
          onClick={() => log.data && setLocalShowData(!localShowData)}
          style={{ 
             fontSize: '12px',
-            borderLeftWidth: log.logColor && log.logColor !== 'black' ? '2px' : '1px',
-            borderLeftColor: logColorHex,
-            borderTopWidth: log.logColor && log.logColor !== 'black' ? '1px' : '1px',
-            borderRightWidth: log.logColor && log.logColor !== 'black' ? '1px' : '1px',
-            borderBottomWidth: log.logColor && log.logColor !== 'black' ? '1px' : '1px',
-            borderColor: log.logColor && log.logColor !== 'black' ? logColorHex : undefined,
+            borderStyle: 'solid',
+            borderWidth: '1px',
+            borderColor: log.logColor && log.logColor !== 'black' ? logColorHex : '#e5e7eb',
+            // Only add accent if there is a specific color
+            ...(log.logColor && log.logColor !== 'black' ? {
+                borderLeftWidth: '1px',
+                borderLeftColor: logColorHex
+            } : {})
          }}
       >
          {/* Copy Button (on hover) */}
