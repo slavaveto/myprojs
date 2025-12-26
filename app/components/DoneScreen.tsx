@@ -5,8 +5,9 @@ import { createLogger } from '@/utils/logger/Logger';
 import { projectService } from '@/app/_services/projectService';
 import { clsx } from 'clsx';
 import { CheckCircle2, Trash2, Folder as FolderIcon, RefreshCw } from 'lucide-react';
-import { Spinner, Chip, Button } from '@heroui/react';
+import { Spinner, Chip, Button, Switch, Select, SelectItem } from '@heroui/react';
 import { format } from 'date-fns';
+import { useGlobalPersistentState } from '@/utils/storage';
 
 const logger = createLogger('DoneScreen');
 
@@ -15,16 +16,26 @@ interface DoneScreenProps {
     canLoad?: boolean;
 }
 
+const TIME_RANGES = [
+    { key: 'all', label: 'All Time' },
+    { key: 'today', label: 'Today' },
+    { key: 'hour', label: 'Last Hour' },
+];
+
 export const DoneScreen = ({ globalStatus = 'idle', canLoad = true }: DoneScreenProps) => {
     const [tasks, setTasks] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
+    
+    // Persistent filters
+    const [showDeleted, setShowDeleted] = useGlobalPersistentState<boolean>('done_show_deleted', false);
+    const [timeFilter, setTimeFilter] = useGlobalPersistentState<string>('done_time_filter', 'all');
 
     const fetchTasks = async () => {
         setIsLoading(true);
         logger.start('Loading done tasks...');
         try {
-            const data = await projectService.getDoneTasks();
+            const data = await projectService.getDoneTasks(showDeleted, timeFilter);
             setTasks(data || []);
             logger.success('Done tasks loaded', { count: data?.length });
             setIsLoaded(true);
@@ -36,29 +47,58 @@ export const DoneScreen = ({ globalStatus = 'idle', canLoad = true }: DoneScreen
     };
 
     useEffect(() => {
-        if (canLoad && !isLoaded) {
+        if (canLoad) {
             fetchTasks();
         }
-    }, [canLoad, isLoaded]);
+    }, [canLoad, showDeleted, timeFilter]); // Re-fetch on filter change
 
     return (
         <div className="h-full flex flex-col p-6 max-w-5xl mx-auto w-full">
             <div className="flex justify-between items-center mb-4 min-h-[40px]">
                 <h1 className="text-2xl font-bold flex items-center gap-2">
                     <CheckCircle2 className="text-success" />
-                    Done & Deleted
+                    Done {showDeleted && "& Deleted"}
                 </h1>
                 
-                <Button 
-                    isIconOnly
-                    size="sm" 
-                    variant="flat" 
-                    color="success" 
-                    onPress={fetchTasks}
-                    isLoading={isLoading}
-                >
-                    <RefreshCw size={18} className={clsx(isLoading && "animate-spin")} />
-                </Button>
+                <div className="flex items-center gap-4">
+                    <Select 
+                        size="sm"
+                        selectedKeys={[timeFilter]}
+                        onChange={(e) => setTimeFilter(e.target.value)}
+                        className="w-[200px]"
+                        aria-label="Time Range"
+                        disallowEmptySelection
+                    >
+                        {TIME_RANGES.map((range) => (
+                            <SelectItem key={range.key}>
+                                {range.label}
+                            </SelectItem>
+                        ))}
+                    </Select>
+
+                    <Switch
+                        size="sm"
+                        isSelected={showDeleted}
+                        onValueChange={setShowDeleted}
+                        classNames={{
+                            base: "flex-row-reverse gap-2",
+                            label: "text-default-500 whitespace-nowrap"
+                        }}
+                    >
+                        Show Deleted
+                    </Switch>
+
+                    <Button 
+                        isIconOnly
+                        size="sm" 
+                        variant="flat" 
+                        color="success" 
+                        onPress={fetchTasks}
+                        isLoading={isLoading}
+                    >
+                        <RefreshCw size={18} className={clsx(isLoading && "animate-spin")} />
+                    </Button>
+                </div>
             </div>
 
             <div className="flex-grow overflow-y-auto pr-0">

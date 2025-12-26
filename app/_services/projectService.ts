@@ -76,14 +76,18 @@ export const projectService = {
             if (foldersError) throw foldersError;
         }
 
-        // 3. Delete project
+        // 4. Delete project
         const { error } = await supabase
             .from('projects')
             .delete()
             .eq('id', id);
         if (error) throw error;
         
-        await logService.logAction('delete', 'projects', id);
+        try {
+            await logService.logAction('delete', 'projects', id);
+        } catch (logError) {
+            console.error('Failed to log project deletion:', logError);
+        }
     },
 
     async updateProjectOrder(updates: { id: string; sort_order: number }[]) {
@@ -163,14 +167,18 @@ export const projectService = {
             
         if (taskError) throw taskError;
 
-        // 2. Delete folder
+        // 3. Delete folder
         const { error } = await supabase
             .from('folders')
             .delete()
             .eq('id', id);
         if (error) throw error;
-        
-        await logService.logAction('delete', 'folders', id);
+
+        try {
+            await logService.logAction('delete', 'folders', id);
+        } catch (logError) {
+            console.error('Failed to log folder deletion:', logError);
+        }
     },
 
     async updateFolderOrder(updates: { id: string; sort_order: number }[]) {
@@ -205,8 +213,8 @@ export const projectService = {
         });
     },
 
-    async getDoneTasks() {
-        const { data, error } = await supabase
+    async getDoneTasks(showDeleted = false, timeFilter = 'all') {
+        let query = supabase
             .from('tasks')
             .select(`
                 *,
@@ -219,8 +227,40 @@ export const projectService = {
                         color
                     )
                 )
-            `)
-            .or('is_completed.eq.true,is_deleted.eq.true')
+            `);
+
+        // 1. Filter by Status (Done / Deleted)
+        if (showDeleted) {
+            // Show done OR deleted (archive view)
+            query = query.or('is_completed.eq.true,is_deleted.eq.true');
+        } else {
+            // Show ONLY done and NOT deleted
+            // Note: is_deleted can be null or false
+            query = query.eq('is_completed', true).or('is_deleted.eq.false,is_deleted.is.null');
+        }
+
+        // 2. Filter by Time
+        if (timeFilter !== 'all') {
+            const now = new Date();
+            let fromTime;
+
+            if (timeFilter === 'hour') {
+                fromTime = new Date(now.getTime() - 60 * 60 * 1000).toISOString();
+            } else if (timeFilter === 'today') {
+                // Beginning of today (local time approximated or UTC depending on reqs, usually UTC for simplicity)
+                // For simplicity let's take just the date part in UTC or last 24h?
+                // "Today" usually means "since midnight". 
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                fromTime = today.toISOString();
+            }
+
+            if (fromTime) {
+                query = query.gte('updated_at', fromTime);
+            }
+        }
+
+        const { data, error } = await query
             .order('updated_at', { ascending: false })
             .limit(100);
 

@@ -2,14 +2,21 @@
 
 import React, { useEffect, useState } from 'react';
 import { logService, LogEntry } from '@/app/_services/logService';
-import { Spinner, Chip, Card, CardBody, Button } from '@heroui/react';
+import { Spinner, Chip, Card, CardBody, Button, Select, SelectItem } from '@heroui/react';
 import { createLogger } from '@/utils/logger/Logger';
 import { clsx } from 'clsx';
 import { RefreshCw } from 'lucide-react';
 import { StatusBadge } from '@/utils/supabase/StatusBadge';
 import { ActionStatus } from '@/utils/supabase/useAsyncAction';
+import { useGlobalPersistentState } from '@/utils/storage';
 
 const logger = createLogger('LogsScreen');
+
+const TIME_RANGES = [
+    { key: 'hour', label: 'Last Hour' },
+    { key: 'today', label: 'Today' },
+    { key: 'all', label: 'All Time' },
+];
 
 const LogDetails = ({ details }: { details: any }) => {
     if (!details || typeof details !== 'object' || Object.keys(details).length === 0) return null;
@@ -40,6 +47,7 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true }: LogsScreen
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
+    const [timeFilter, setTimeFilter] = useGlobalPersistentState<string>('logs_time_filter', 'all');
 
     const fetchLogs = async (showSpinner = true) => {
         // If we shouldn't load, just return. 
@@ -55,7 +63,7 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true }: LogsScreen
         
         try {
             const [data] = await Promise.all([
-                logService.getLogs(50),
+                logService.getLogs(50, timeFilter),
                 new Promise(resolve => setTimeout(resolve, 1000))
             ]);
             setLogs(data || []);
@@ -70,12 +78,12 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true }: LogsScreen
     };
 
     useEffect(() => {
-        if (canLoad && !isLoaded) {
-            fetchLogs(true);
+        if (canLoad) {
+            fetchLogs(!isLoaded);
         } else if (!canLoad) {
             logger.info('Waiting for background load permission...');
         }
-    }, [canLoad, isLoaded]);
+    }, [canLoad, timeFilter]); // Re-fetch on filter change
 
     const getActionColor = (action: string) => {
         switch (action) {
@@ -99,22 +107,39 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true }: LogsScreen
         <div className="h-full flex flex-col p-6 max-w-5xl mx-auto w-full">
             <div className="flex justify-between items-center mb-4 min-h-[40px]">
                 <h1 className="text-2xl font-bold">Activity Logs</h1>
-                <div className="flex items-center gap-2">
-                    <StatusBadge 
-                        status={globalStatus}
-                        loadingText="Saving..."
-                        successText="Saved"
-                    />
-                    <Button 
-                        isIconOnly 
-                        size="sm" 
-                        variant="flat" 
-                        color="success"
-                        onPress={() => fetchLogs(false)}
-                        isLoading={isRefreshing}
+                <div className="flex items-center gap-4">
+                    <Select 
+                        size="sm"
+                        selectedKeys={[timeFilter]}
+                        onChange={(e) => setTimeFilter(e.target.value)}
+                        className="w-[200px]"
+                        aria-label="Time Range"
+                        disallowEmptySelection
                     >
-                        <RefreshCw size={18} />
-                    </Button>
+                        {TIME_RANGES.map((range) => (
+                            <SelectItem key={range.key}>
+                                {range.label}
+                            </SelectItem>
+                        ))}
+                    </Select>
+
+                    <div className="flex items-center gap-2">
+                        <StatusBadge 
+                            status={globalStatus}
+                            loadingText="Saving..."
+                            successText="Saved"
+                        />
+                        <Button 
+                            isIconOnly 
+                            size="sm" 
+                            variant="flat" 
+                            color="success"
+                            onPress={() => fetchLogs(false)}
+                            isLoading={isRefreshing}
+                        >
+                            <RefreshCw size={18} />
+                        </Button>
+                    </div>
                 </div>
             </div>
             

@@ -31,10 +31,30 @@ export const logService = {
         }
     },
 
-    async getLogs(limit = 100) {
-        const { data, error } = await supabase
+    async getLogs(limit = 100, timeFilter = 'all') {
+        let query = supabase
             .from('logs')
-            .select('*')
+            .select('*');
+
+        // Filter by Time
+        if (timeFilter !== 'all') {
+            const now = new Date();
+            let fromTime;
+
+            if (timeFilter === 'hour') {
+                fromTime = new Date(now.getTime() - 60 * 60 * 1000).toISOString();
+            } else if (timeFilter === 'today') {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                fromTime = today.toISOString();
+            }
+
+            if (fromTime) {
+                query = query.gte('created_at', fromTime);
+            }
+        }
+
+        const { data, error } = await query
             .order('created_at', { ascending: false })
             .limit(limit);
 
