@@ -55,9 +55,10 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
        setFolders,
        selectedFolderId,
        setSelectedFolderId,
-       displayStatus,
+       displayStatus, // Use displayStatus calculated in hook
        saveError,
        executeSave,
+       executeQuickSave,
        handleAddTask,
        handleUpdateTask,
        handleDeleteTask,
@@ -69,7 +70,8 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
        handleRemoveProject,
        getFolderTaskCount,
        highlightedTaskId,
-       handleAddGap
+       handleAddGap,
+       quickSaveStatus // Exported from hook
    } = useProjectData(props);
 
    // 2. Drag and Drop Hook
@@ -89,7 +91,7 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
        folders,
        selectedFolderId,
        setSelectedFolderId,
-       executeSave
+       executeSave: executeQuickSave // Use quick save for DnD
    });
 
    const handleDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -116,6 +118,15 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
        handleAddTask(insertIndex);
    };
 
+   // Use displayStatus calculated in hook or locally if needed. 
+   // Actually displayStatus is already returned from useProjectData correctly now?
+   // Wait, I see I removed it from destructuring in my previous failed tool call?
+   // Let's check what I have in destructuring.
+   // I have displayStatus in destructuring in line 58.
+   // So I should NOT redeclare it here.
+   
+   // Removing the redeclaration:
+   
    return (
       <div 
           className={clsx(

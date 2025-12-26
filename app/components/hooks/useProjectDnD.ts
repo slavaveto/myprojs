@@ -39,7 +39,7 @@ export const useProjectDnD = ({
     folders,
     selectedFolderId,
     setSelectedFolderId,
-    executeSave
+    executeSave // This will be executeQuickSave passed from parent
 }: UseProjectDnDProps) => {
     // --- Local UI State for DnD (Visuals only) ---
     const [activeId, setActiveId] = useState<string | null>(null);
@@ -292,21 +292,15 @@ export const useProjectDnD = ({
 
         try {
             await executeSave(async () => {
-                // 1. If folder changed, update the task specifically
-                // (Although updatedTask is already in 'updates', we might want to ensure folder_id is sent)
-                // But updateTaskOrder usually only updates sort_order. 
-                // So we should check if we need to update folder_id explicitly.
-                
-                // We don't have "previous folder id" here easily available unless we store it.
-                // But we can just update the active task's folder_id to be safe.
-                
-                await projectService.updateTask(activeIdString, { 
-                    folder_id: selectedFolderId,
-                    // We also send sort_order here, but the bulk update below will fix all orders
-                });
-
-                // 2. Update order for ALL tasks in the folder to ensure consistency
-                await projectService.updateTaskOrder(updates);
+                // Execute updates in parallel
+                await Promise.all([
+                    // 1. If folder changed, update the task specifically
+                    projectService.updateTask(activeIdString, { 
+                        folder_id: selectedFolderId,
+                    }),
+                    // 2. Update order for ALL tasks in the folder
+                    projectService.updateTaskOrder(updates)
+                ]);
             });
         } catch (err) {
             logger.error('Failed to save drag changes', err);

@@ -38,7 +38,14 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
        errorMessage: 'Failed to save'
    });
 
-   const displayStatus = globalStatus !== 'idle' ? globalStatus : saveStatus;
+   // Fast save for DnD (no artificial delay)
+   const { execute: executeQuickSave, status: quickSaveStatus } = useAsyncAction({
+       useToast: false,
+       minDuration: 0,
+       successDuration: 1000,
+   });
+
+   const displayStatus = globalStatus !== 'idle' ? globalStatus : (saveStatus !== 'idle' ? saveStatus : quickSaveStatus);
 
    useEffect(() => {
        // If already loaded or load initiated, do nothing
@@ -631,6 +638,8 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
        displayStatus,
        saveError,
        executeSave,
+       executeQuickSave, // Export new quick save
+       quickSaveStatus, // Export status
        handleAddTask,
        handleUpdateTask,
        handleDeleteTask,
