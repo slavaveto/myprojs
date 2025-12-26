@@ -49,7 +49,6 @@ export const TaskRow = ({ task, onUpdate, onDelete, isOverlay }: TaskRowProps) =
                <GripVertical size={16} />
             </div>
 
-
             <Checkbox
                isSelected={task.is_completed}
                onValueChange={(isSelected) => onUpdate(task.id, { is_completed: isSelected })}
@@ -60,18 +59,17 @@ export const TaskRow = ({ task, onUpdate, onDelete, isOverlay }: TaskRowProps) =
                size="sm"
                //   className="scale-90"
             />
+
             <EditableCell
                value={task.content}
                onSave={(val) => onUpdate(task.id, { content: val })}
                isMultiline
                className={clsx(
-                  'text-[16px] font-medium w-full p-0 m-0 pl-1 mr-2',
+                  'text-[16px]  w-full p-0 m-0 pl-1 mr-2 ',
                   task.is_completed && 'text-default-400 line-through'
                )}
             />
          </div>
-
-     
 
          {/* Actions */}
          <div className="p-0 text-center relative flex justify-center">

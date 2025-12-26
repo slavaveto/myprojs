@@ -93,7 +93,7 @@ export const EditProjectPopover = ({
                 isOpen={isOpen} 
                 onOpenChange={handleOpenChange}
                 placement={placement}
-                showArrow
+                showArrow ={false}
                 offset={10}
                 classNames={{
                     content: "p-0"
@@ -102,7 +102,7 @@ export const EditProjectPopover = ({
                 <PopoverTrigger>
                     {children}
                 </PopoverTrigger>
-                <PopoverContent>
+                <PopoverContent >
                     <div className="px-3 py-3 w-[280px]">
                         <p className="text-small font-bold text-foreground mb-2">
                             Edit Project

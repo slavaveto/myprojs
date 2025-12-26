@@ -14,11 +14,12 @@
       ".eslintignore": true,
       "eslint.config.mjs": true,
       "tsconfig.tsbuildinfo": true,
-      ".cursor": true,
       ".certificates": true,
       "wakelock.d.ts": true,
       ".gitignore": true,
-      ".vercelignore": true
+      ".vercelignore": true,
+      ".cursor": true,
+      "package.json": true
    },
    "css.validate": false,
    "less.validate": false,

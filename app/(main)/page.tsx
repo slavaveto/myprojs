@@ -6,7 +6,7 @@ import { projectService } from '@/app/_services/projectService';
 import { Project } from '@/app/types';
 import { clsx } from 'clsx';
 import { Button, Spinner } from '@heroui/react';
-import { Plus, LayoutGrid, GripVertical, Inbox, Calendar, CheckCircle2, FileText } from 'lucide-react';
+import { Plus, LayoutGrid, GripVertical, Inbox, Calendar, CheckCircle2, FileText, EllipsisVertical } from 'lucide-react';
 import { AppLoaderProvider, useAppLoader } from '@/app/AppLoader';
 import { ProjectScreen } from '@/app/components/ProjectScreen';
 import { CreateItemPopover } from '@/app/components/CreateItem';
@@ -16,6 +16,8 @@ import { SystemScreen } from '@/app/components/SystemScreen';
 import { globalStorage } from '@/utils/storage';
 import { useAsyncAction } from '@/utils/supabase/useAsyncAction';
 import { StatusBadge } from '@/utils/supabase/StatusBadge';
+import { EditProjectPopover } from '@/app/components/EditProject';
+import { toast } from 'react-hot-toast';
 
 // DnD Imports
 import {
@@ -44,9 +46,10 @@ interface SortableProjectItemProps {
     project: Project;
     isActive: boolean;
     onClick: () => void;
+    children?: React.ReactNode;
 }
 
-const SortableProjectItem = ({ project, isActive, onClick }: SortableProjectItemProps) => {
+const SortableProjectItem = ({ project, isActive, onClick, children }: SortableProjectItemProps) => {
     const {
         attributes,
         listeners,
@@ -65,19 +68,19 @@ const SortableProjectItem = ({ project, isActive, onClick }: SortableProjectItem
     };
 
     return (
-        <div ref={setNodeRef} style={style} className="w-full mb-1">
+        <div ref={setNodeRef} style={style} className="w-full mb-1 group relative">
              <button
                 {...attributes}
                 {...listeners}
                 onClick={onClick}
                 className={clsx(
-                   'group flex items-center gap-3 px-3 py-2 rounded-lg transition-colors w-full text-left select-none',
+                   'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors w-full text-left select-none pr-9',
                    
                    // Dragging state (cursor, z-index, ring)
                    isDragging && 'cursor-grabbing z-20 ring-1 ring-primary/30',
                    
-                   // Hover state (only if not dragging and not active)
-                   !isDragging && !isActive && 'cursor-pointer hover:bg-default-100',
+                   // Hover state (handled via group-hover on parent to keep highlight when hovering actions)
+                   !isDragging && !isActive && 'cursor-pointer group-hover:bg-default-100',
                    !isDragging && isActive && 'cursor-pointer',
 
                    // Colors and Backgrounds
@@ -85,7 +88,7 @@ const SortableProjectItem = ({ project, isActive, onClick }: SortableProjectItem
                        ? clsx('bg-default-100', isActive ? 'text-primary font-medium' : 'text-foreground')
                        : isActive 
                            ? 'bg-primary/10 text-primary font-medium'
-                           : 'text-foreground hover:bg-default-100'
+                           : 'text-foreground'
                 )}
              >
                 <div
@@ -94,6 +97,16 @@ const SortableProjectItem = ({ project, isActive, onClick }: SortableProjectItem
                 />
                 <span className="truncate flex-grow">{project.title}</span>
              </button>
+
+            {children && (
+                <div 
+                    className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    {children}
+                </div>
+            )}
         </div>
     );
 };
@@ -218,6 +231,44 @@ function AppContent() {
        }
    };
 
+   const handleUpdateProject = async (projectId: string, title: string, color: string) => {
+       setProjects(prev => prev.map(p => p.id === projectId ? { ...p, title, color } : p));
+       try {
+           await executeSidebarAction(async () => {
+               await projectService.updateProject(projectId, { title, color });
+           });
+       } catch (err) {
+           logger.error('Failed to update project', err);
+       }
+   };
+
+   const handleDeleteProject = async (projectId: string) => {
+       try {
+           await projectService.deleteProject(projectId);
+           
+           if (activeProjectId === projectId) {
+                const currentIndex = projects.findIndex(p => p.id === projectId);
+                const remainingProjects = projects.filter(p => p.id !== projectId);
+                
+                if (remainingProjects.length > 0) {
+                     const nextProject = remainingProjects[currentIndex] || remainingProjects[currentIndex - 1] || remainingProjects[0];
+                     setActiveProjectId(nextProject.id);
+                     globalStorage.setItem('active_project_id', nextProject.id);
+                } else {
+                     setActiveProjectId(null);
+                     setActiveSystemTab('inbox');
+                     globalStorage.removeItem('active_project_id');
+                }
+           }
+           
+           setProjects(prev => prev.filter(p => p.id !== projectId));
+           toast.success('Project deleted');
+       } catch (err) {
+           logger.error('Failed to delete project', err);
+           toast.error('Failed to delete project');
+       }
+   };
+
    // --- DnD Handlers ---
    const handleDragEnd = async (event: DragEndEvent) => {
        const { active, over } = event;
@@ -268,6 +319,7 @@ function AppContent() {
             </div>
 
             <div className="flex-grow overflow-y-auto p-2">
+                
                 {/* System Tabs Top */}
                 <div className="mb-4">
                     <SidebarItem 
@@ -314,7 +366,18 @@ function AppContent() {
                                  setActiveSystemTab(null);
                                  globalStorage.setItem('active_project_id', project.id);
                               }}
-                          />
+                          >
+                                <EditProjectPopover 
+                                    initialTitle={project.title}
+                                    initialColor={project.color}
+                                    onUpdate={(t, c) => handleUpdateProject(project.id, t, c)}
+                                    onDelete={() => handleDeleteProject(project.id)}
+                                >
+                                    <Button isIconOnly size="sm" variant="light" className="text-default-400 hover:text-primary bg-transparent hover:bg-transparent min-w-8 w-8 h-8">
+                                        <EllipsisVertical size={18} />
+                                    </Button>
+                                </EditProjectPopover>
+                          </SortableProjectItem>
                        ))}
                     </SortableContext>
                 </DndContext>

@@ -1,0 +1,51 @@
+# GLOBAL CRITICAL INSTRUCTIONS (ГЛОБАЛЬНЫЕ КРИТИЧЕСКИЕ ИНСТРУКЦИИ)
+
+# 1. LANGUAGE ENFORCEMENT (ПРИНУДИТЕЛЬНЫЙ РУССКИЙ ЯЗЫК)
+# Отвечай мне ТОЛЬКО на русском языке.
+# Даже если код на английском, объяснения и комментарии должны быть на РУССКОМ.
+# Никогда не переключайся на английский в разговоре.
+- YOU MUST ANSWER IN RUSSIAN LANGUAGE ONLY.
+- Even if the code is in English, your explanation, comments, and logic MUST be in RUSSIAN.
+- Never switch to English for conversation.
+
+# 2. ANTI-LAZINESS & PROTOCOL (ПРОТОКОЛ ПРОТИВ ЛЕНИ И СПЕШКИ)
+# Никогда не пиши код сразу, пока я явно не скажу "КОД", "НАПИШИ", "РЕАЛИЗУЙ".
+# Стандартное поведение: Сначала Анализ -> Потом План -> Жди подтверждения.
+# Если видишь ошибку: Объясни ПОЧЕМУ она произошла, прежде чем чинить.
+- NEVER write code immediately unless I explicitly ask with "CODE", "IMPLEMENT", "НАПИШИ".
+- DEFAULT BEHAVIOR: Analyze -> Plan -> Wait for confirmation.
+- IF YOU SEE AN ERROR: Explain WHY it happened before fixing it.
+
+# 3. COST SAVING (ЭКОНОМИЯ ДЕНЕГ/ТОКЕНОВ)
+# Никогда не переписывай файлы целиком. Используй инструменты для замены кусков или показывай только diff.
+# Если ответ требует больше 50 строк кода — ОСТАНОВИСЬ и спроси, нужно ли писать всё.
+- NEVER rewrite entire files. Use `search_replace` or show diffs.
+- If a response requires >50 lines of code, STOP and ask if I want full implementation.
+
+# 4. USER RULES & TECH STACK (ПРАВИЛА ПОЛЬЗОВАТЕЛЯ И СТЕК)
+# Используй logger вместо console.log.
+# API: const logger = createLogger('ComponentName');
+# Methods: logger.info(), .error(), .success(), .warning(), .start(), .end().
+- Use `logger` instead of `console.log` (import { createLogger } from '@/utils/logger/Logger').
+- Log usage: `logger.info('message', data)`
+- Use `clsx()` for class merging.
+- DO NOT TOUCH GIT state (read-only allowed: status/diff/log). NO commits/checkouts.
+- DO NOT READ .env files.
+- ALWAYS add a brief (1-line) comment in Russian above new functions explaining intent.
+- Keep comments concise. No verbose JSDoc tags (@param, @return) unless necessary.
+
+# 5. NO GUESSING POLICY (ПОЛИТИКА "НЕ ГАДАЙ")
+# Если ты не на 100% уверен в именах переменных, импортах или логике — СПРОСИ МЕНЯ.
+# Никогда не выдумывай имена файлов или функций, если не видишь их в контексте.
+# Лучше задай 3 глупых вопроса, чем напишешь 1 неправильную строку кода.
+- IF UNCERTAIN about imports, variable names, or logic: STOP AND ASK.
+- DO NOT HALLUCINATE code or filenames.
+- ASK clarifying questions if the task is ambiguous.
+
+# 6. AMBIGUITY TRAP (ЛОВУШКА ДВУСМЫСЛЕННОСТИ)
+# Если мой запрос можно понять двояко (например, "удалить" = "скрыть" или "стереть") — СТОП.
+# Никогда не выбирай "наиболее вероятный" вариант молча.
+# Спроси меня: "Ты имеешь в виду А или Б?"
+- IF a request has multiple valid interpretations: STOP AND ASK.
+- DO NOT assume the "most likely" path. Present options.
+- Explicitly ask: "Did you mean X or Y?" before proceeding.
