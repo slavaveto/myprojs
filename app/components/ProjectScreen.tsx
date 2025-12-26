@@ -230,80 +230,91 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
                          changes: Partial<Task>;
                      } | null = null;
                      
-                     setTasks(prev => {
-                         const currentTask = prev.find(t => t.id === id);
-                         
-                         // Проверяем, была ли задача удалена во время сохранения
-                         if (!currentTask) {
-                             logger.warning('Task was deleted during save, will delete from DB');
-                             wasDeleted = true;
-                             return prev;
-                         }
-                         
-                         return prev.map(t => {
-                             if (t.id !== id) return t;
+                     // Сначала проверяем, существует ли задача в текущем стейте
+                     const currentTaskBeforeUpdate = tasks.find(t => t.id === id);
+                     
+                     if (!currentTaskBeforeUpdate) {
+                         // Задача была удалена во время сохранения
+                         logger.warning('Task was deleted during save, will delete from DB');
+                         wasDeleted = true;
+                     }
+                     
+                     if (!wasDeleted) {
+                         setTasks(prev => {
+                             const currentTask = prev.find(t => t.id === id);
                              
-                             const currentState = t;
-                             
-                             // Сравниваем ВСЕ поля со snapshot
-                             const changes: Partial<Task> = {};
-                             
-                             if (currentState.content !== snapshotBeforeSave.content) {
-                                 changes.content = currentState.content;
-                             }
-                             if (currentState.folder_id !== snapshotBeforeSave.folder_id) {
-                                 changes.folder_id = currentState.folder_id;
-                             }
-                             if (currentState.sort_order !== snapshotBeforeSave.sort_order) {
-                                 changes.sort_order = currentState.sort_order;
-                             }
-                             if (currentState.is_completed !== snapshotBeforeSave.is_completed) {
-                                 changes.is_completed = currentState.is_completed;
+                             if (!currentTask) {
+                                 // На всякий случай повторная проверка
+                                 return prev;
                              }
                              
-                             const hasChanges = Object.keys(changes).length > 0;
-                             
-                             if (hasChanges) {
-                                 logger.warning('Task was modified during save, will resave changes', {
-                                     snapshot: snapshotBeforeSave,
-                                     current: {
-                                         content: currentState.content,
-                                         folder_id: currentState.folder_id,
-                                         sort_order: currentState.sort_order,
-                                         is_completed: currentState.is_completed
-                                     },
-                                     changes
-                                 });
+                             return prev.map(t => {
+                                 if (t.id !== id) return t;
                                  
-                                 needsResave = true;
-                                 resaveData = {
-                                     newId: data.id,
-                                     changes
-                                 };
+                                 const currentState = t;
                                  
-                                 return {
-                                     ...currentState,
-                                     id: data.id,
-                                     _tempId: realTask._tempId,
-                                     _isSaving: true, // Оставляем флаг для пересохранения
-                                     created_at: data.created_at,
-                                 };
-                             } else {
-                                 // Ничего не изменилось - применяем данные из БД
-                                 return {
-                                     ...data,
-                                     _tempId: realTask._tempId,
-                                     _isSaving: false,
-                                 };
-                             }
+                                 // Сравниваем ВСЕ поля со snapshot
+                                 const changes: Partial<Task> = {};
+                                 
+                                 if (currentState.content !== snapshotBeforeSave.content) {
+                                     changes.content = currentState.content;
+                                 }
+                                 if (currentState.folder_id !== snapshotBeforeSave.folder_id) {
+                                     changes.folder_id = currentState.folder_id;
+                                 }
+                                 if (currentState.sort_order !== snapshotBeforeSave.sort_order) {
+                                     changes.sort_order = currentState.sort_order;
+                                 }
+                                 if (currentState.is_completed !== snapshotBeforeSave.is_completed) {
+                                     changes.is_completed = currentState.is_completed;
+                                 }
+                                 
+                                 const hasChanges = Object.keys(changes).length > 0;
+                                 
+                                 if (hasChanges) {
+                                     logger.warning('Task was modified during save, will resave changes', {
+                                         snapshot: snapshotBeforeSave,
+                                         current: {
+                                             content: currentState.content,
+                                             folder_id: currentState.folder_id,
+                                             sort_order: currentState.sort_order,
+                                             is_completed: currentState.is_completed
+                                         },
+                                         changes
+                                     });
+                                     
+                                     needsResave = true;
+                                     resaveData = {
+                                         newId: data.id,
+                                         changes
+                                     };
+                                     
+                                     return {
+                                         ...currentState,
+                                         id: data.id,
+                                         _tempId: realTask._tempId,
+                                         _isSaving: true, // Оставляем флаг для пересохранения
+                                         created_at: data.created_at,
+                                     };
+                                 } else {
+                                     // Ничего не изменилось - применяем данные из БД
+                                     return {
+                                         ...data,
+                                         _tempId: realTask._tempId,
+                                         _isSaving: false,
+                                     };
+                                 }
+                             });
                          });
-                     });
+                     }
                      
                      // 6. Если задача была удалена во время сохранения - удаляем из БД
                      if (wasDeleted) {
                          try {
-                             await projectService.deleteTask(data.id);
-                             logger.success('Deleted task that was removed during save');
+                             await executeSave(async () => {
+                                 await projectService.deleteTask(data.id);
+                                 logger.success('Deleted task that was removed during save');
+                             });
                          } catch (deleteErr) {
                              logger.error('Failed to delete task after creation', deleteErr);
                          }
@@ -315,25 +326,27 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
                          const { newId, changes } = resaveData;
                          
                          try {
-                             // Обновляем изменённые поля в БД
-                             await projectService.updateTask(newId, changes);
-                             
-                             // Если изменилась папка или порядок - обновляем порядок задач
-                             if ('folder_id' in changes || 'sort_order' in changes) {
-                                 const targetFolderId = (changes as any).folder_id ?? snapshotBeforeSave.folder_id;
-                                 const newFolderTasks = tasks
-                                     .filter(t => t.folder_id === targetFolderId || t.id === id)
-                                     .sort((a, b) => a.sort_order - b.sort_order);
+                             await executeSave(async () => {
+                                 // Обновляем изменённые поля в БД
+                                 await projectService.updateTask(newId, changes);
                                  
-                                 const orderUpdates = newFolderTasks.map((t, idx) => ({
-                                     id: t.id === id ? newId : t.id,
-                                     sort_order: idx
-                                 }));
+                                 // Если изменилась папка или порядок - обновляем порядок задач
+                                 if ('folder_id' in changes || 'sort_order' in changes) {
+                                     const targetFolderId = (changes as any).folder_id ?? snapshotBeforeSave.folder_id;
+                                     const newFolderTasks = tasks
+                                         .filter(t => t.folder_id === targetFolderId || t.id === id)
+                                         .sort((a, b) => a.sort_order - b.sort_order);
+                                     
+                                     const orderUpdates = newFolderTasks.map((t, idx) => ({
+                                         id: t.id === id ? newId : t.id,
+                                         sort_order: idx
+                                     }));
+                                     
+                                     await projectService.updateTaskOrder(orderUpdates);
+                                 }
                                  
-                                 await projectService.updateTaskOrder(orderUpdates);
-                             }
-                             
-                             logger.success('Task changes resaved successfully');
+                                 logger.success('Task changes resaved successfully');
+                             });
                          } catch (resaveErr) {
                              logger.error('Failed to resave task changes', resaveErr);
                          } finally {
