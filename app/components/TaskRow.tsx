@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Checkbox } from '@heroui/react';
+import { Checkbox, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
 import { GripVertical, Trash2 } from 'lucide-react';
 import { Task } from '../types';
 import { EditableCell } from './EditableCell';
@@ -19,6 +19,8 @@ interface TaskRowProps {
 }
 
 export const TaskRow = ({ task, onUpdate, onDelete, isOverlay, isHighlighted }: TaskRowProps) => {
+   const [menuPos, setMenuPos] = React.useState<{x: number, y: number} | null>(null);
+   
    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
       id: task.id,
       data: task,
@@ -116,12 +118,53 @@ export const TaskRow = ({ task, onUpdate, onDelete, isOverlay, isHighlighted }: 
          animate={{ 
             opacity: 1, 
             height: 'auto',
-            backgroundColor: isHighlighted ? 'var(--heroui-primary-100)' : undefined // Extra smooth animation if needed, but class change is ok
+            backgroundColor: isHighlighted ? 'var(--heroui-primary-100)' : undefined 
          }}
          exit={{ opacity: 0, height: 0 }}
          transition={{ duration: 0.2 }}
+         onContextMenu={(e) => {
+            e.preventDefault();
+            // Using e.clientX/Y for absolute position on screen
+            setMenuPos({
+                x: e.clientX,
+                y: e.clientY
+            });
+         }}
       >
          {content}
+
+         <Dropdown 
+            isOpen={!!menuPos} 
+            onOpenChange={(open) => {
+                if (!open) setMenuPos(null);
+            }}
+            placement="bottom-start"
+            triggerScaleOnOpen={false}
+         >
+            <DropdownTrigger>
+               <div 
+                   style={{ 
+                       position: 'fixed', 
+                       left: menuPos?.x ?? 0, 
+                       top: menuPos?.y ?? 0,
+                       width: 0,
+                       height: 0,
+                       pointerEvents: 'none',
+                       zIndex: 9999
+                   }} 
+               />
+            </DropdownTrigger>
+            <DropdownMenu 
+                aria-label="Task Actions"
+                onAction={(key) => {
+                    if (key === 'make-gap') {
+                        console.log('Make Gap clicked');
+                    }
+                }}
+            >
+                <DropdownItem key="make-gap">Make Gap</DropdownItem>
+            </DropdownMenu>
+         </Dropdown>
       </motion.div>
    );
 };
