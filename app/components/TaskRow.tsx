@@ -155,12 +155,14 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
    }
 
    // --- STANDARD TASK RENDER ---
+   const isGroup = task.task_type === 'group';
+
    const className = clsx(
       'group px-1 flex justify-between min-h-[30px] items-center rounded-lg border border-default-300 bg-content1 transition-colors outline-none overflow-hidden',
       !isDragging && !isOverlay && 'hover:bg-default-50',
       isDragging && '!opacity-50', 
       isOverlay && 'z-50 bg-default-100 border-primary/50 pointer-events-none cursor-grabbing', 
-      isHighlighted && 'border-orange-500/50' 
+      isHighlighted && 'border-orange-500/50'
    );
 
    const content = (
@@ -175,16 +177,18 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
                <GripVertical size={16} />
             </div>
 
-            <Checkbox
-               isSelected={task.is_completed}
-               onValueChange={(isSelected) => onUpdate(task.id, { is_completed: isSelected })}
-               classNames={{
-                  wrapper: 'after:bg-primary',
-               }}
-               className={clsx(' p-0 m-0 text-center  !w-[16px] mx-0')}
-               size="sm"
-               //   className="scale-90"
-            />
+            {!isGroup && (
+                <Checkbox
+                   isSelected={task.is_completed}
+                   onValueChange={(isSelected) => onUpdate(task.id, { is_completed: isSelected })}
+                   classNames={{
+                      wrapper: 'after:bg-primary',
+                   }}
+                   className={clsx(' p-0 m-0 text-center  !w-[16px] mx-0')}
+                   size="sm"
+                   //   className="scale-90"
+                />
+            )}
 
             <EditableCell
                value={task.content}
@@ -208,13 +212,15 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
 
          {/* Actions */}
          <div className="p-0 text-center relative flex justify-center">
-            <button
-               onClick={() => onDelete(task.id)}
-               className="opacity-0 p-[2px] group-hover:opacity-100  text-default-400 cursor-pointer hover:text-danger hover:bg-danger/10 rounded transition-all"
-               aria-label="Delete task"
-            >
-               <Trash2 size={16} />
-            </button>
+            {!isGroup && (
+                <button
+                   onClick={() => onDelete(task.id)}
+                   className="opacity-0 p-[2px] group-hover:opacity-100  text-default-400 cursor-pointer hover:text-danger hover:bg-danger/10 rounded transition-all"
+                   aria-label="Delete task"
+                >
+                   <Trash2 size={16} />
+                </button>
+            )}
          </div>
       </>
    );
@@ -284,10 +290,14 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
                     if (key === 'make-gap') {
                         onAddGap?.();
                         setMenuPos(null);
+                    } else if (key === 'make-group') {
+                        onUpdate(task.id, { task_type: 'group' });
+                        setMenuPos(null);
                     }
                 }}
             >
                 <DropdownItem key="make-gap">Make Gap Below</DropdownItem>
+                <DropdownItem key="make-group">Make As Group</DropdownItem>
             </DropdownMenu>
          </Dropdown>
       </motion.div>
