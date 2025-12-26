@@ -10,6 +10,8 @@ interface EditableCellProps {
    className?: string;
    onValidate?: (val: string) => string | null;
    autoFocus?: boolean;
+   onCancel?: () => void;
+   onBlur?: (val: string) => void;
 }
 
 export const EditableCell = ({ 
@@ -19,7 +21,9 @@ export const EditableCell = ({
    isMultiline = false,
    className,
    onValidate,
-   autoFocus
+   autoFocus,
+   onCancel,
+   onBlur: onBlurProp
 }: EditableCellProps) => {
    const [localValue, setLocalValue] = useState(value);
    const [error, setError] = useState<string | null>(null);
@@ -51,6 +55,10 @@ export const EditableCell = ({
    };
 
    const handleBlur = () => {
+      if (onBlurProp) {
+          onBlurProp(localValue);
+      }
+
       if (isCanceling.current) {
          isCanceling.current = false;
          return;
@@ -80,6 +88,8 @@ export const EditableCell = ({
          isCanceling.current = true;
          setLocalValue(value);
          setError(null);
+         
+         if (onCancel) onCancel();
          
          // Use setTimeout to ensure state updates and avoid event conflicts
          setTimeout(() => {

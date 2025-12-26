@@ -32,6 +32,7 @@ export const TaskRow = ({ task, onUpdate, onDelete, isOverlay }: TaskRowProps) =
       <div
          ref={setNodeRef}
          style={style}
+         data-task-row // Marker for double click detection
          className={clsx(
             'group px-1 flex justify-between h-[30px]  items-center  rounded-lg border border-default-300 bg-content1 transition-colors outline-none',
             !isDragging && !isOverlay && 'hover:bg-default-50',
@@ -63,6 +64,15 @@ export const TaskRow = ({ task, onUpdate, onDelete, isOverlay }: TaskRowProps) =
             <EditableCell
                value={task.content}
                onSave={(val) => onUpdate(task.id, { content: val })}
+               autoFocus={task.isDraft}
+               onCancel={() => {
+                   if (task.isDraft) onDelete(task.id);
+               }}
+               onBlur={(val) => {
+                   if (task.isDraft && !val.trim()) {
+                       onDelete(task.id);
+                   }
+               }}
                isMultiline
                className={clsx(
                   'text-[16px]  w-full p-0 m-0 pl-1 mr-2 ',

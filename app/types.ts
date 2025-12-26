@@ -25,5 +25,6 @@ export interface Task {
    created_at: string;
    updated_at: string;
    isNew?: boolean;
+   isDraft?: boolean;
    _tempId?: string;
 }

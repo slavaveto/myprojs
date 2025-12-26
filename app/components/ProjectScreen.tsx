@@ -139,45 +139,94 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
    };
 
    // --- Actions ---
-   const handleAddTask = async () => {
+   const handleAddTask = async (targetIndex?: number) => {
       if (!selectedFolderId) return;
 
-      const currentFolderTasks = tasks.filter(t => t.folder_id === selectedFolderId);
-      const newOrder = currentFolderTasks.length > 0 
-         ? Math.max(...currentFolderTasks.map(t => t.sort_order)) + 1 
-         : 0;
+      const currentFolderTasks = tasks
+          .filter(t => t.folder_id === selectedFolderId)
+          .sort((a, b) => a.sort_order - b.sort_order);
+      
+      let insertIndex = targetIndex !== undefined ? targetIndex : currentFolderTasks.length;
+      if (insertIndex < 0) insertIndex = 0;
+      if (insertIndex > currentFolderTasks.length) insertIndex = currentFolderTasks.length;
 
       const tempId = crypto.randomUUID();
       const newTask: Task = {
          id: tempId,
          folder_id: selectedFolderId,
          content: '',
-         sort_order: newOrder,
+         sort_order: insertIndex,
          is_completed: false,
          created_at: new Date().toISOString(),
          updated_at: new Date().toISOString(),
-         isNew: true
+         isNew: true,
+         isDraft: true // Create as draft
       };
 
-      setTasks(prev => [newTask, ...prev]);
+      // Optimistic update: insert and shift
+      setTasks(prev => {
+          const otherTasks = prev.filter(t => t.folder_id !== selectedFolderId);
+          const newFolderTasks = [...currentFolderTasks];
+          newFolderTasks.splice(insertIndex, 0, newTask);
+          
+          // Re-index locally
+          const reindexed = newFolderTasks.map((t, idx) => ({ ...t, sort_order: idx }));
+          return [...otherTasks, ...reindexed];
+      });
 
-      try {
-         await executeSave(async () => {
-             const data = await projectService.createTask(selectedFolderId, '', newOrder);
-             setTasks(prev => prev.map(t => t.id === tempId ? data : t));
-         });
-      } catch (err) {
-         logger.error('Failed to create task', err);
-         setTasks(prev => prev.filter(t => t.id !== tempId));
-      }
+      // Do NOT save to DB yet. Waiting for user input.
    };
 
    const handleUpdateTask = async (id: string, updates: Partial<Task>) => {
+      const task = tasks.find(t => t.id === id);
+      if (!task) return;
+
+      // Handle Draft Saving
+      if (task.isDraft) {
+          // Only proceed if we are updating content
+          if (updates.content !== undefined) {
+              const content = updates.content.trim();
+              if (!content) {
+                  // Empty content -> Delete draft
+                  handleDeleteTask(id);
+                  return;
+              }
+
+              // Create real task
+              const updatesWithTimestamp = { ...updates, updated_at: new Date().toISOString() };
+              const realTask = { ...task, ...updatesWithTimestamp, isDraft: false, isNew: false };
+              
+              // 1. Update local state (remove draft status)
+              setTasks(prev => prev.map(t => t.id === id ? realTask : t));
+
+              try {
+                 await executeSave(async () => {
+                     // 2. Create in DB
+                     const data = await projectService.createTask(selectedFolderId, content, realTask.sort_order);
+                     
+                     // 3. Persist the new order for ALL tasks in this folder 
+                     const currentFolderTasks = tasks.filter(t => t.folder_id === selectedFolderId).sort((a, b) => a.sort_order - b.sort_order);
+                     const updatesForOrder = currentFolderTasks.map((t, idx) => ({ 
+                         id: t.id === id ? data.id : t.id, 
+                         sort_order: idx 
+                     }));
+                     
+                     await projectService.updateTaskOrder(updatesForOrder);
+
+                     // 4. Final local update with real ID
+                     setTasks(prev => prev.map(t => t.id === id ? { ...data, sort_order: realTask.sort_order } : t));
+                 });
+              } catch (err) {
+                 logger.error('Failed to create task from draft', err);
+              }
+          }
+          return;
+      }
+
       // Optimistic Update
       const updatesWithTimestamp = { ...updates, updated_at: new Date().toISOString() };
       setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updatesWithTimestamp } : t));
       
-      const task = tasks.find(t => t.id === id);
       if (task?.isNew) return; // Wait for creation
 
       try {
@@ -186,13 +235,18 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
          });
       } catch (err) {
          logger.error('Failed to update task', err);
-         // Optional: rollback logic here
       }
    };
 
    const handleDeleteTask = async (id: string) => {
+      const task = tasks.find(t => t.id === id);
+      const isDraft = task?.isDraft;
+
       const oldTasks = [...tasks];
       setTasks(prev => prev.filter(t => t.id !== id));
+      
+      if (isDraft) return; // Local delete only for drafts
+
       try {
          await executeSave(async () => {
              await projectService.deleteTask(id);
@@ -379,6 +433,38 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
    const handleDragStart = (event: DragStartEvent) => {
       setActiveId(event.active.id as string);
       isDraggingRef.current = true;
+   };
+
+   const handleDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+       // Ignore if clicked on interactive elements (buttons, inputs)
+       if ((e.target as HTMLElement).closest('button, input, [role="button"], [data-task-row]')) return;
+
+       // Find all rendered task rows within this component
+       // Use a ref for the container or just querySelector inside currentTarget if possible?
+       // document.querySelectorAll is global, might pick up other screens if active?
+       // But ProjectScreen is only one active (opacity 0 others). pointer-events-none on others.
+       // So clicking is safe. Querying might find hidden ones?
+       // Yes, opacity-0 elements are still in DOM.
+       
+       // We need to query only visible tasks.
+       // Or scope query to e.currentTarget
+       const container = e.currentTarget;
+       const taskElements = Array.from(container.querySelectorAll('[data-task-row]'));
+       
+       const clickY = e.clientY;
+       let insertIndex = taskElements.length;
+       
+       for (let i = 0; i < taskElements.length; i++) {
+           const rect = taskElements[i].getBoundingClientRect();
+           const centerY = rect.top + rect.height / 2;
+           
+           if (clickY < centerY) {
+               insertIndex = i;
+               break;
+           }
+       }
+       
+       handleAddTask(insertIndex);
    };
 
    // --- Spring-Loaded Folders Logic ---
@@ -594,10 +680,13 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
    // }
 
    return (
-      <div className={clsx(
-          "h-full flex flex-col p-6 max-w-5xl mx-auto w-full",
-          activeId ? "cursor-grabbing *:[cursor:grabbing]" : ""
-      )}>
+      <div 
+          className={clsx(
+            "h-full flex flex-col p-6 max-w-5xl mx-auto w-full",
+            activeId ? "cursor-grabbing *:[cursor:grabbing]" : ""
+          )}
+          onDoubleClick={handleDoubleClick}
+      >
          <div className="flex justify-between items-center mb-4 min-h-[40px]">
             <div className="flex items-center gap-1">
                 <h1 className="text-2xl font-bold">{project.title}</h1>
