@@ -682,12 +682,13 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
    return (
       <div 
           className={clsx(
-            "h-full flex flex-col p-6 max-w-5xl mx-auto w-full",
+            "h-full w-full overflow-hidden flex flex-col",
             activeId ? "cursor-grabbing *:[cursor:grabbing]" : ""
           )}
           onDoubleClick={handleDoubleClick}
       >
-         <div className="flex justify-between items-center mb-4 min-h-[40px]">
+         <div className="flex-grow w-full max-w-5xl mx-auto flex flex-col px-[50px] py-6">
+             <div className="flex justify-between items-center mb-4 min-h-[40px]">
             <div className="flex items-center gap-1">
                 <h1 className="text-2xl font-bold">{project.title}</h1>
                 <EditProjectPopover 
@@ -773,6 +774,7 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
                ) : null}
             </DragOverlay>
          </DndContext>
+         </div>
       </div>
    );
 };
