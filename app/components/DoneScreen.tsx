@@ -25,18 +25,31 @@ const TIME_RANGES = [
 
 export const DoneScreen = ({ globalStatus = 'idle', canLoad = true, isActive = false }: DoneScreenProps) => {
     const [tasks, setTasks] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true); // Initial load (full screen)
+    const [isRefreshing, setIsRefreshing] = useState(false); // Refresh (button spin)
     const [isLoaded, setIsLoaded] = useState(false);
     
     // Persistent filters
     const [showDeleted, setShowDeleted] = useGlobalPersistentState<boolean>('done_show_deleted', false);
     const [timeFilter, setTimeFilter] = useGlobalPersistentState<string>('done_time_filter', 'all');
 
-    const fetchTasks = async () => {
-        setIsLoading(true);
-        logger.start('Loading done tasks...');
+    const fetchTasks = async (showSpinner = true) => {
+        // If we shouldn't load, just return. 
+        if (!canLoad && showSpinner) return;
+
+        if (showSpinner) {
+            setIsLoading(true);
+            logger.start('Loading done tasks...');
+        } else {
+            setIsRefreshing(true);
+            logger.info('Refreshing done tasks...');
+        }
+
         try {
-            const data = await projectService.getDoneTasks(showDeleted, timeFilter);
+            const [data] = await Promise.all([
+                projectService.getDoneTasks(showDeleted, timeFilter),
+                new Promise(resolve => setTimeout(resolve, 1000)) // Min wait time for better UX
+            ]);
             setTasks(data || []);
             logger.success('Done tasks loaded', { count: data?.length });
             setIsLoaded(true);
@@ -44,20 +57,29 @@ export const DoneScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
             logger.error('Failed to load done tasks', err);
         } finally {
             setIsLoading(false);
+            setIsRefreshing(false);
         }
     };
 
     useEffect(() => {
         // Fetch if allowed to load AND (it's active OR filters changed)
-        // If background loading is allowed (canLoad=true), we still want to refresh when it becomes active
         if (canLoad && isActive) {
             logger.info('DoneScreen became active, fetching...');
-            fetchTasks();
+            // Don't show full spinner if already loaded, just refresh icon spin
+            fetchTasks(!isLoaded);
         } else if (canLoad && !isLoaded) {
             // Initial background load
-            fetchTasks();
+            fetchTasks(true);
         }
     }, [canLoad, isActive, showDeleted, timeFilter]); // Re-fetch on filter change or tab activation
+
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center h-full">
+                <Spinner label="Loading done tasks..." />
+            </div>
+        );
+    }
 
     return (
         <div className="h-full flex flex-col p-6 max-w-5xl mx-auto w-full">
@@ -100,20 +122,16 @@ export const DoneScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
                         size="sm" 
                         variant="flat" 
                         color="success" 
-                        onPress={fetchTasks}
-                        isLoading={isLoading}
+                        onPress={() => fetchTasks(false)}
+                        isLoading={isRefreshing}
                     >
-                        <RefreshCw size={18} className={clsx(isLoading && "animate-spin")} />
+                        <RefreshCw size={18} />
                     </Button>
                 </div>
             </div>
 
             <div className="flex-grow overflow-y-auto pr-0">
-                {isLoading && !isLoaded ? (
-                    <div className="flex justify-center py-20">
-                        <Spinner size="lg" color="primary" />
-                    </div>
-                ) : tasks.length === 0 ? (
+                {tasks.length === 0 ? (
                     <div className="text-center py-20 text-default-400">
                         No completed or deleted tasks found.
                     </div>
