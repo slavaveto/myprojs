@@ -69,7 +69,7 @@ const DoneTaskRow = ({ task, onRestore, onDelete }: { task: any, onRestore: (t: 
                         {task.content || "Empty task"}
                     </div>
                     
-                    {/* Metadata line */}
+                    {/* Metadata line (hidden per user request) */}
                     <div className="hidden flex items-center gap-2 text-xs text-default-400 mt-0.5">
                         {task.folders?.projects && (
                             <div className="flex items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
@@ -99,14 +99,16 @@ const DoneTaskRow = ({ task, onRestore, onDelete }: { task: any, onRestore: (t: 
 
              {/* Actions */}
              <div className="p-0 text-center relative flex justify-center">
-                <button
-                   onClick={() => onDelete(task.id)}
-                   className="opacity-0 p-[2px] group-hover:opacity-100 text-default-400 cursor-pointer hover:text-danger hover:bg-danger/10 rounded transition-all"
-                   aria-label="Delete task forever"
-                   title="Delete forever"
-                >
-                   <Trash2 size={16} />
-                </button>
+                {!task.is_deleted && (
+                    <button
+                        onClick={() => onDelete(task.id)}
+                        className="opacity-0 p-[2px] group-hover:opacity-100 text-default-400 cursor-pointer hover:text-danger hover:bg-danger/10 rounded transition-all"
+                        aria-label="Delete task"
+                        title="Delete"
+                    >
+                        <Trash2 size={16} />
+                    </button>
+                )}
              </div>
         </motion.div>
     );
@@ -184,15 +186,19 @@ export const DoneScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
         }
     };
 
-    const handleDeleteForever = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this task forever?')) return;
+    const handleDelete = async (id: string) => {
+        // Optimistic update: mark as deleted locally or remove if not showing deleted
+        // If we show deleted, we update the item to appear deleted.
+        // If we hide deleted, we remove it.
+        
+        if (!showDeleted) {
+            setTasks(prev => prev.filter(t => t.id !== id));
+        } else {
+            setTasks(prev => prev.map(t => t.id === id ? { ...t, is_deleted: true } : t));
+        }
 
-        setTasks(prev => prev.filter(t => t.id !== id));
         try {
-            await projectService.deleteTask(id); // Physically delete? Or soft delete if not already?
-            // Assuming deleteTask does physical delete or soft delete based on implementation. 
-            // If it's already soft deleted (is_deleted=true), we might want a hard delete endpoint.
-            // But let's assume standard delete logic for now.
+            await projectService.deleteTask(id); // Soft delete (is_deleted = true)
         } catch (err) {
             logger.error('Failed to delete task', err);
             fetchTasks(false);
@@ -269,7 +275,7 @@ export const DoneScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
                                     key={task.id} 
                                     task={task} 
                                     onRestore={handleRestore}
-                                    onDelete={handleDeleteForever}
+                                    onDelete={handleDelete}
                                 />
                             ))}
                         </AnimatePresence>
