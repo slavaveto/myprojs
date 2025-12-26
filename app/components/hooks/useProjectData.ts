@@ -99,7 +99,16 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
     useEffect(() => {
         if (isActive && isDataLoaded) {
             projectService.getTasks(project.id).then(newTasks => {
-                setTasks(newTasks);
+                // Merge _tempId to preserve keys and prevent remount animation
+                setTasks(prevTasks => {
+                    return newTasks.map(newTask => {
+                        const prevTask = prevTasks.find(p => p.id === newTask.id);
+                        if (prevTask && prevTask._tempId) {
+                            return { ...newTask, _tempId: prevTask._tempId };
+                        }
+                        return newTask;
+                    });
+                });
                 
                 // Check for highlight request
                 const highlightId = globalStorage.getItem(`highlight_task_${project.id}`);

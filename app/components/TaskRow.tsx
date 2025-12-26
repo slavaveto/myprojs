@@ -28,7 +28,7 @@ const GapRow = ({ task, isOverlay, isDragging, isHovered, setIsHovered, style, s
     const [isIconHovered, setIsIconHovered] = React.useState(false); // New state for icon hover
 
     const gapClassName = clsx(
-        'group relative flex items-center justify-center h-[16px] w-full rounded outline-none transition-colors',
+        'group relative flex items-center justify-center h-[16px] w-full rounded outline-none transition-colors overflow-hidden',
         // Show background if hovered (icon area), dragging this gap, dragging ANY item, or menu is open
         (isIconHovered || isDragging || isAnyDragging || !!menuPos) ? 'bg-default-100/50' : 'bg-transparent',
         // Cursor logic:
@@ -76,7 +76,7 @@ const GapRow = ({ task, isOverlay, isDragging, isHovered, setIsHovered, style, s
                 onMouseEnter={() => setIsIconHovered(true)} 
                 onMouseLeave={() => setIsIconHovered(false)}
             >
-                <GripVertical size={16} className="text-default-400 hover:text-default-600 block" />
+                <GripVertical size={16} className="text-default-400 hover:text-default-600 " />
             </div>
 
             {/* Invisible Hit Area for Icon (larger than icon itself) */}
