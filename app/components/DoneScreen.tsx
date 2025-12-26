@@ -89,7 +89,21 @@ export const DoneScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
                     Done {showDeleted && "& Deleted"}
                 </h1>
                 
+                
                 <div className="flex items-center gap-4">
+
+                <Switch
+                        size="sm"
+                        isSelected={showDeleted}
+                        onValueChange={setShowDeleted}
+                        classNames={{
+                            base: "flex-row-reverse gap-2",
+                            label: "text-default-500 whitespace-nowrap"
+                        }}
+                    >
+                        Show Deleted
+                    </Switch>
+                    
                     <Select 
                         size="sm"
                         selectedKeys={[timeFilter]}
@@ -105,17 +119,7 @@ export const DoneScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
                         ))}
                     </Select>
 
-                    <Switch
-                        size="sm"
-                        isSelected={showDeleted}
-                        onValueChange={setShowDeleted}
-                        classNames={{
-                            base: "flex-row-reverse gap-2",
-                            label: "text-default-500 whitespace-nowrap"
-                        }}
-                    >
-                        Show Deleted
-                    </Switch>
+                
 
                     <Button 
                         isIconOnly
