@@ -66,9 +66,17 @@ export const projectService = {
                 .in('folder_id', folderIds);
                 
             if (taskError) throw taskError;
+            
+            // 2.1. Explicitly delete folders (since no CASCADE in DB)
+            const { error: foldersError } = await supabase
+                .from('folders')
+                .delete()
+                .in('id', folderIds);
+                
+            if (foldersError) throw foldersError;
         }
 
-        // 3. Delete project (will cascade delete folders)
+        // 3. Delete project
         const { error } = await supabase
             .from('projects')
             .delete()
