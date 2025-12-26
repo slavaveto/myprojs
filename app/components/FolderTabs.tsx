@@ -52,7 +52,7 @@ export const FolderTab = ({
           {...listeners}
           onClick={onClick}
           className={clsx(
-             'group/tab relative flex items-center gap-2 px-3 h-[40px] select-none transition-colors min-w-fit outline-none rounded-lg border-2 border-transparent',
+             'group/tab relative flex items-center gap-2 pl-1 h-[40px] select-none transition-colors min-w-fit outline-none rounded-lg border-2 border-transparent',
              // 1. Dragging state (highest priority for cursor/bg)
              isDragging && 'cursor-grabbing bg-default-100 ring-1 ring-primary/30',
              
@@ -82,7 +82,7 @@ export const FolderTab = ({
           {onUpdate && onDelete && !isDragging && (
               <div 
                   className={clsx(
-                      "opacity-0 group-hover/tab:opacity-100 transition-opacity z-20 ml-1",
+                      "opacity-0 group-hover/tab:opacity-100 transition-opacity z-20 ml-0",
                       "flex items-center"
                   )}
                   onPointerDown={(e) => e.stopPropagation()}
@@ -95,7 +95,7 @@ export const FolderTab = ({
                   >
                       <button 
                           type="button"
-                          className="w-5 h-5 flex items-center justify-center text-default-400 hover:text-primary transition-colors outline-none cursor-pointer"
+                          className=" flex items-center justify-center text-default-400 hover:text-primary transition-colors outline-none cursor-pointer"
                       >
                           <EllipsisVertical size={14} />
                       </button>
