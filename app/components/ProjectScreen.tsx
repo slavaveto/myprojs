@@ -232,6 +232,49 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
        }
    };
 
+   const handleUpdateFolder = async (folderId: string, title: string) => {
+       setFolders(prev => prev.map(f => f.id === folderId ? { ...f, title, updated_at: new Date().toISOString() } : f));
+       try {
+           await executeSave(async () => {
+               await projectService.updateFolder(folderId, { title });
+           });
+       } catch (err) {
+           logger.error('Failed to update folder', err);
+           // Rollback could be added here
+       }
+   };
+
+   const handleDeleteFolder = async (folderId: string) => {
+       const oldFolders = [...folders];
+       const oldTasks = [...tasks];
+       
+       // Optimistic delete
+       setFolders(prev => prev.filter(f => f.id !== folderId));
+       setTasks(prev => prev.filter(t => t.folder_id !== folderId)); // Assume tasks deleted/moved
+       
+       // Switch selection if needed
+       if (selectedFolderId === folderId) {
+           const remaining = oldFolders.filter(f => f.id !== folderId);
+           if (remaining.length > 0) {
+               setSelectedFolderId(remaining[0].id);
+           } else {
+               setSelectedFolderId('');
+           }
+       }
+
+       try {
+           await executeSave(async () => {
+               await projectService.deleteFolder(folderId);
+           });
+           toast.success('Folder deleted');
+       } catch (err) {
+           logger.error('Failed to delete folder', err);
+           toast.error('Failed to delete folder');
+           setFolders(oldFolders);
+           setTasks(oldTasks);
+       }
+   };
+
    // --- Project Actions ---
    const handleEditProject = async (title: string, color: string) => {
        try {
@@ -595,6 +638,8 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
                     globalStorage.setItem(`active_folder_${project.id}`, id);
                 }}
                 onAddFolder={handleAddFolder}
+                onUpdateFolder={handleUpdateFolder}
+                onDeleteFolder={handleDeleteFolder}
                 getTaskCount={getFolderTaskCount}
                 projectId={project.id}
                 hoveredFolderId={hoveredFolderId}

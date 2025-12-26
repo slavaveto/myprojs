@@ -75,7 +75,7 @@ export const TaskRow = ({ task, onUpdate, onDelete, isOverlay }: TaskRowProps) =
          <div className="p-0 text-center relative flex justify-center">
             <button
                onClick={() => onDelete(task.id)}
-               className="opacity-0 p-[2px] group-hover:opacity-100  text-default-400 hover:text-danger hover:bg-danger/10 rounded transition-all"
+               className="opacity-0 p-[2px] group-hover:opacity-100  text-default-400 cursor-pointer hover:text-danger hover:bg-danger/10 rounded transition-all"
                aria-label="Delete task"
             >
                <Trash2 size={16} />

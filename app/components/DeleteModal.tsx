@@ -11,6 +11,7 @@ interface DeleteConfirmationModalProps {
     entityName: string; // Название удаляемого элемента (например, имя проекта)
     entityType: 'project' | 'folder' | 'task';
     title?: string;
+    description?: string;
 }
 
 export const DeleteConfirmationModal = ({
@@ -19,7 +20,8 @@ export const DeleteConfirmationModal = ({
     onConfirm,
     entityName,
     entityType,
-    title = 'Confirm Deletion'
+    title = 'Confirm Deletion',
+    description
 }: DeleteConfirmationModalProps) => {
     const [inputValue, setInputValue] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -66,7 +68,13 @@ export const DeleteConfirmationModal = ({
                         Are you sure you want to delete the {entityType} <span className="font-bold text-foreground">"{entityName}"</span>?
                     </p>
                     
-                    {entityType === 'project' && (
+                    {description && (
+                         <p className="text-default-500 text-sm mt-2">
+                            {description}
+                        </p>
+                    )}
+
+                    {entityType === 'project' && !description && (
                         <p className="text-default-500 text-sm mt-2">
                             This action cannot be undone. All folders will be permanently deleted. Tasks will be moved to archive.
                         </p>

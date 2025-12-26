@@ -3,12 +3,13 @@
 import React from 'react';
 import { Folder } from '@/app/types';
 import { Button, Chip } from '@heroui/react';
-import { Plus } from 'lucide-react';
+import { Plus, EllipsisVertical } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion } from 'framer-motion';
 import { useSortable, SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { CreateItemPopover } from '@/app/components/CreateItem';
+import { EditFolderPopover } from '@/app/components/EditFolder';
 
 // --- Single Tab Component ---
 interface FolderTabProps {
@@ -17,6 +18,8 @@ interface FolderTabProps {
     isActive: boolean;
     onClick: () => void;
     layoutIdPrefix: string;
+    onUpdate?: (title: string) => void;
+    onDelete?: () => void;
     // DnD props
     attributes?: any;
     listeners?: any;
@@ -32,6 +35,8 @@ export const FolderTab = ({
     isActive, 
     onClick, 
     layoutIdPrefix,
+    onUpdate,
+    onDelete,
     attributes,
     listeners,
     setNodeRef,
@@ -47,7 +52,7 @@ export const FolderTab = ({
           {...listeners}
           onClick={onClick}
           className={clsx(
-             'group relative flex items-center gap-2 px-3 h-[40px] select-none transition-colors min-w-fit outline-none rounded-lg border-2 border-transparent',
+             'group/tab relative flex items-center gap-2 px-3 h-[40px] select-none transition-colors min-w-fit outline-none rounded-lg border-2 border-transparent',
              // 1. Dragging state (highest priority for cursor/bg)
              isDragging && 'cursor-grabbing bg-default-100 ring-1 ring-primary/30',
              
@@ -73,6 +78,31 @@ export const FolderTab = ({
              {count}
           </Chip>
           
+          {/* Action Button */}
+          {onUpdate && onDelete && !isDragging && (
+              <div 
+                  className={clsx(
+                      "opacity-0 group-hover/tab:opacity-100 transition-opacity z-20 ml-1",
+                      "flex items-center"
+                  )}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => e.stopPropagation()}
+              >
+                  <EditFolderPopover
+                      initialTitle={folder.title}
+                      onUpdate={onUpdate}
+                      onDelete={onDelete}
+                  >
+                      <button 
+                          type="button"
+                          className="w-5 h-5 flex items-center justify-center text-default-400 hover:text-primary transition-colors outline-none cursor-pointer"
+                      >
+                          <EllipsisVertical size={14} />
+                      </button>
+                  </EditFolderPopover>
+              </div>
+          )}
+
           {/* Active Indicator (Underline) with Framer Motion */}
           {isActive && !isDragging && (
               <motion.div 
@@ -85,6 +115,7 @@ export const FolderTab = ({
        </div>
     );
 };
+
 
 // --- Sortable Wrapper ---
 const SortableFolderTab = (props: FolderTabProps) => {
@@ -128,6 +159,8 @@ interface FolderTabsProps {
     selectedFolderId: string;
     onSelect: (folderId: string) => void;
     onAddFolder: (name: string, color?: string) => Promise<void> | void;
+    onUpdateFolder?: (id: string, name: string) => Promise<void> | void;
+    onDeleteFolder?: (id: string) => Promise<void> | void;
     getTaskCount: (folderId: string) => number;
     projectId: string;
     hoveredFolderId?: string | null;
@@ -138,6 +171,8 @@ export const FolderTabs = ({
     selectedFolderId, 
     onSelect, 
     onAddFolder, 
+    onUpdateFolder,
+    onDeleteFolder,
     getTaskCount,
     projectId,
     hoveredFolderId
@@ -158,6 +193,8 @@ export const FolderTabs = ({
                             layoutIdPrefix={`project-${projectId}`}
                             onClick={() => onSelect(folder.id)}
                             isOver={hoveredFolderId === `folder-${folder.id}`}
+                            onUpdate={onUpdateFolder ? (title) => onUpdateFolder(folder.id, title) : undefined}
+                            onDelete={onDeleteFolder ? () => onDeleteFolder(folder.id) : undefined}
                          />
                    ))}
                </SortableContext>

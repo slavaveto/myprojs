@@ -123,6 +123,48 @@ export const projectService = {
         return data as Folder;
     },
 
+    async updateFolder(id: string, updates: { title?: string }) {
+        const { error } = await supabase
+            .from('folders')
+            .update({
+                ...updates,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', id);
+        if (error) throw error;
+        
+        await logService.logAction('update', 'folders', id, updates);
+    },
+
+    async deleteFolder(id: string) {
+        // 1. Soft delete tasks (orphan them or move to inbox? usually just detach)
+        // Check if we should move them to "Inbox" or just delete?
+        // Logic in deleteProject was: soft delete tasks.
+        // For folder delete, let's keep tasks but move them to "Inbox" (folder_id = null)? 
+        // OR soft delete them too.
+        // Usually deleting a folder implies deleting its content.
+        
+        const { error: taskError } = await supabase
+            .from('tasks')
+            .update({ 
+                is_deleted: true, 
+                folder_id: null,
+                updated_at: new Date().toISOString()
+            })
+            .eq('folder_id', id);
+            
+        if (taskError) throw taskError;
+
+        // 2. Delete folder
+        const { error } = await supabase
+            .from('folders')
+            .delete()
+            .eq('id', id);
+        if (error) throw error;
+        
+        await logService.logAction('delete', 'folders', id);
+    },
+
     async updateFolderOrder(updates: { id: string; sort_order: number }[]) {
         if (updates.length > 0) {
              const batchId = crypto.randomUUID();
