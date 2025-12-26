@@ -13,9 +13,10 @@ interface TaskListProps {
     isEmpty: boolean;
     highlightedTaskId?: string | null;
     onAddGap?: (index: number) => void;
+    projectColor?: string;
 }
 
-export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlightedTaskId, onAddGap }: TaskListProps) => {
+export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlightedTaskId, onAddGap, projectColor }: TaskListProps) => {
     return (
         <div className="flex-grow overflow-y-auto pr-0 pb-10">
              <SortableContext
@@ -32,6 +33,7 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlight
                              onDelete={onDeleteTask}
                              isHighlighted={highlightedTaskId === task.id}
                              onAddGap={() => onAddGap?.(index)}
+                             projectColor={projectColor}
                           />
                        ))}
                    </AnimatePresence>

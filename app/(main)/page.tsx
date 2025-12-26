@@ -209,7 +209,7 @@ function AppContent() {
 
    const handleCreateProject = async (title: string, color?: string) => {
        try {
-           const finalColor = color || '#006FEE'; // Default blue-500 if not provided
+           const finalColor = color || '#3b82f6'; // Default blue-500 (matches palette)
            
            const newProject = await projectService.createProject(title, finalColor, projects.length);
            setProjects(prev => [...prev, newProject]);

@@ -18,6 +18,7 @@ interface TaskRowProps {
    isOverlay?: boolean;
    isHighlighted?: boolean;
    onAddGap?: () => void;
+   projectColor?: string;
 }
 
 // Separate component for Gap to keep logic clean and handle hooks
@@ -124,7 +125,7 @@ const GapRow = ({ task, isOverlay, isDragging, isHovered, setIsHovered, style, s
 };
 
 // Use React.memo to prevent unnecessary re-renders of all rows during drag
-export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHighlighted, onAddGap }: TaskRowProps) => {
+export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHighlighted, onAddGap, projectColor }: TaskRowProps) => {
    const [menuPos, setMenuPos] = React.useState<{x: number, y: number} | null>(null);
    const [isHovered, setIsHovered] = React.useState(false);
    
@@ -156,6 +157,10 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
 
    // --- STANDARD TASK RENDER ---
    const isGroup = task.task_type === 'group';
+   
+   // Group Color Logic
+   // Use task.group_color or default project blue (#3b82f6) with 50% opacity (80 hex)
+   const groupBackgroundColor = isGroup ? `${task.group_color || '#3b82f6'}80` : undefined;
 
    const className = clsx(
       'group px-1 flex justify-between min-h-[30px] items-center rounded-lg border border-default-300 bg-content1 transition-colors outline-none overflow-hidden',
@@ -248,7 +253,7 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
          animate={{ 
             opacity: 1, 
             height: 'auto',
-            backgroundColor: isHighlighted ? 'var(--heroui-primary-100)' : undefined 
+            backgroundColor: isHighlighted ? 'var(--heroui-primary-100)' : groupBackgroundColor 
          }}
          exit={{ opacity: 0, height: 0 }}
          transition={{ duration: 0.2 }}
@@ -291,7 +296,10 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
                         onAddGap?.();
                         setMenuPos(null);
                     } else if (key === 'make-group') {
-                        onUpdate(task.id, { task_type: 'group' });
+                        onUpdate(task.id, { 
+                            task_type: 'group',
+                            group_color: projectColor
+                        });
                         setMenuPos(null);
                     }
                 }}

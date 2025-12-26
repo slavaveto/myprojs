@@ -25,6 +25,7 @@ export interface Task {
    created_at: string;
    updated_at: string;
    task_type: 'task' | 'gap' | 'group'; // New field
+   group_color?: string;
    isNew?: boolean;
    isDraft?: boolean;
    _tempId?: string;

@@ -194,6 +194,7 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
                         isEmpty={filteredTasks.length === 0}
                         highlightedTaskId={highlightedTaskId}
                         onAddGap={handleAddGap} // Pass down
+                        projectColor={project.color} // Pass project color
                    />
                 ) : (
                     <div className="text-center py-20 text-default-400">
