@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useDndContext } from '@dnd-kit/core';
 import { Checkbox, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
 import { GripVertical, Trash2 } from 'lucide-react';
 import { Task } from '../types';
@@ -19,7 +20,64 @@ interface TaskRowProps {
    onAddGap?: () => void;
 }
 
-export const TaskRow = ({ task, onUpdate, onDelete, isOverlay, isHighlighted, onAddGap }: TaskRowProps) => {
+// Separate component for Gap to keep logic clean and handle hooks
+const GapRow = ({ task, isOverlay, isDragging, isHovered, setIsHovered, style, setNodeRef, attributes, listeners, onDelete }: any) => {
+    const { active } = useDndContext(); 
+    const isAnyDragging = !!active;
+
+    const gapClassName = clsx(
+        'group relative flex items-center justify-center h-[16px] w-full rounded outline-none transition-colors',
+        // Show background if hovered, dragging this gap, OR ANY drag is happening (to show drop target)
+        (isHovered || isDragging || isAnyDragging) ? 'bg-default-100/50' : 'bg-transparent',
+        // Cursor logic:
+        isDragging ? 'cursor-grabbing' : 'cursor-default', // Default cursor on the gap itself
+        // !isDragging && 'hover:cursor-grab' // REMOVED: No grab cursor on full row hover
+    );
+
+    if (isOverlay) {
+        return (
+            <div ref={setNodeRef} style={{...style, opacity: 1, cursor: 'grabbing'}} className={clsx(gapClassName, 'bg-default-200 border border-dashed border-default-400 cursor-grabbing')}>
+                <div className="absolute left-[2px] p-[2px]">
+                    <GripVertical size={16} className="text-default-400" />
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <motion.div
+            ref={setNodeRef}
+            style={style}
+            data-task-row={task.id}
+            className={gapClassName}
+            layout
+            initial={task.isNew ? { opacity: 0, height: 0 } : false}
+            animate={{ opacity: 1, height: 16 }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            onContextMenu={(e) => {
+                e.preventDefault();
+                onDelete(task.id); 
+            }}
+        >
+            {/* Icon visible ONLY on hover or dragging SELF */}
+            {(isHovered || isDragging) && (
+                <div 
+                    className="absolute left-[2px] ml-[5px] cursor-grab active:cursor-grabbing hover:bg-default-100 rounded text-center outline-none"
+                    {...attributes}
+                    {...listeners}
+                >
+                    <GripVertical size={16} className="text-default-400 hover:text-default-600" />
+                </div>
+            )}
+        </motion.div>
+    );
+};
+
+// Use React.memo to prevent unnecessary re-renders of all rows during drag
+export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHighlighted, onAddGap }: TaskRowProps) => {
    const [menuPos, setMenuPos] = React.useState<{x: number, y: number} | null>(null);
    const [isHovered, setIsHovered] = React.useState(false);
    
@@ -35,50 +93,18 @@ export const TaskRow = ({ task, onUpdate, onDelete, isOverlay, isHighlighted, on
 
    // --- GAP RENDER ---
    if (task.task_type === 'gap') {
-       const gapClassName = clsx(
-          'group relative flex items-center justify-center h-[16px] w-full rounded outline-none transition-colors',
-          // Show background only on hover or when dragging something else (handled by parent/dnd ideally, but here local hover)
-          (isHovered || isDragging) ? 'bg-default-100/50' : 'bg-transparent',
-          isDragging && 'opacity-50 cursor-grabbing',
-          !isDragging && 'hover:cursor-grab'
-       );
-
-       if (isOverlay) {
-           return (
-               <div ref={setNodeRef} style={{...style, opacity: 1}} className={clsx(gapClassName, 'bg-default-200 border border-dashed border-default-400')}>
-                    <GripVertical size={14} className="text-default-400" />
-               </div>
-           );
-       }
-
-       return (
-          <motion.div
-             ref={setNodeRef}
-             style={style}
-             data-task-row={task.id}
-             className={gapClassName}
-             layout
-             initial={task.isNew ? { opacity: 0, height: 0 } : false}
-             animate={{ opacity: 1, height: 16 }}
-             exit={{ opacity: 0, height: 0 }}
-             transition={{ duration: 0.2 }}
-             {...attributes}
-             {...listeners}
-             onMouseEnter={() => setIsHovered(true)}
-             onMouseLeave={() => setIsHovered(false)}
-             onContextMenu={(e) => {
-                 e.preventDefault();
-                 onDelete(task.id); 
-             }}
-          >
-             {/* Icon positioned exactly like in standard task */}
-             {(isHovered || isDragging) && (
-                 <div className="absolute left-[7px]">
-                    <GripVertical size={16} className="text-default-400" />
-                 </div>
-             )}
-          </motion.div>
-       );
+       return <GapRow 
+            task={task} 
+            isOverlay={isOverlay} 
+            isDragging={isDragging} 
+            isHovered={isHovered} 
+            setIsHovered={setIsHovered}
+            style={style}
+            setNodeRef={setNodeRef}
+            attributes={attributes}
+            listeners={listeners}
+            onDelete={onDelete}
+       />;
    }
 
    // --- STANDARD TASK RENDER ---
@@ -219,4 +245,5 @@ export const TaskRow = ({ task, onUpdate, onDelete, isOverlay, isHighlighted, on
          </Dropdown>
       </motion.div>
    );
-};
+});
+TaskRow.displayName = 'TaskRow';
