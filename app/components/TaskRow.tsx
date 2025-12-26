@@ -28,16 +28,16 @@ const GapRow = ({ task, isOverlay, isDragging, isHovered, setIsHovered, style, s
     const [isIconHovered, setIsIconHovered] = React.useState(false); // New state for icon hover
 
     const gapClassName = clsx(
-        'group relative flex items-center justify-center h-[16px] w-full rounded outline-none transition-colors ',
+        'group relative flex items-center justify-center h-[16px] w-full rounded outline-none transition-colors',
         // Show background if hovered (icon area), dragging this gap, dragging ANY item, or menu is open
-        (isIconHovered || isDragging || isAnyDragging || !!menuPos) ? 'bg-default-100 ' : 'bg-transparent',
+        (isIconHovered || isDragging || isAnyDragging || !!menuPos) ? 'bg-default-100/50' : 'bg-transparent',
         // Cursor logic:
         isDragging ? 'cursor-grabbing' : 'cursor-default', 
     );
 
     if (isOverlay) {
         return (
-            <div ref={setNodeRef} style={{...style, opacity: 1, cursor: 'grabbing'}} className={clsx(gapClassName, 'bg-default-200/50 border border-dashed border-default-400 cursor-grabbing')}>
+            <div ref={setNodeRef} style={{...style, opacity: 1, cursor: 'grabbing'}} className={clsx(gapClassName, 'bg-default-200 border border-dashed border-default-400 cursor-grabbing')}>
                 <div className="absolute left-[2px] p-[2px]">
                     <GripVertical size={16} className="text-default-400" />
                 </div>
@@ -68,20 +68,20 @@ const GapRow = ({ task, isOverlay, isDragging, isHovered, setIsHovered, style, s
             {/* Icon visible ONLY on ICON AREA hover, dragging SELF, or menu open */}
             <div 
                 className={clsx(
-                    "absolute left-[2px] ml-[5px] cursor-grab active:cursor-grabbing hover:bg-default-100  rounded text-center outline-none transition-opacity duration-200 z-20", // Added z-20 to be clickable
-                    (isIconHovered || isDragging || !!menuPos) ? "opacity-100" : "opacity-0 pointer-events-none" // pointer-events-none hides it from mouse if invisible
+                    "absolute left-[2px] ml-[5px] cursor-grab active:cursor-grabbing hover:bg-default-100 rounded text-center outline-none transition-opacity duration-200 z-20 flex items-center justify-center h-[16px]", // Force 16px height
+                    (isIconHovered || isDragging || !!menuPos) ? "opacity-100" : "opacity-0 pointer-events-none" 
                 )}
                 {...attributes}
                 {...listeners}
-                onMouseEnter={() => setIsIconHovered(true)} // Keep icon visible if mouse moves from sensor zone to icon itself
+                onMouseEnter={() => setIsIconHovered(true)} 
                 onMouseLeave={() => setIsIconHovered(false)}
             >
-                <GripVertical size={16} className="text-default-400 hover:text-default-600" />
+                <GripVertical size={16} className="text-default-400 hover:text-default-600 block" />
             </div>
 
             {/* Invisible Hit Area for Icon (larger than icon itself) */}
             <div 
-                className="absolute left-0 top-0 bottom-0 w-[30px] z-10" // Lower z-index than icon
+                className="absolute left-0 top-0 bottom-0 w-[30px] z-10" // Sensor zone on the left
                 onMouseEnter={() => setIsIconHovered(true)}
                 onMouseLeave={() => setIsIconHovered(false)}
             />
