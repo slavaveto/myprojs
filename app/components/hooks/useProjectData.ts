@@ -449,9 +449,15 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
        
        // Switch selection if needed
        if (selectedFolderId === folderId) {
+           const currentIndex = oldFolders.findIndex(f => f.id === folderId);
            const remaining = oldFolders.filter(f => f.id !== folderId);
+           
            if (remaining.length > 0) {
-               setSelectedFolderId(remaining[0].id);
+               // Try left neighbor first, then right (new first)
+               const newId = currentIndex > 0 
+                   ? oldFolders[currentIndex - 1].id 
+                   : remaining[0].id;
+               setSelectedFolderId(newId);
            } else {
                setSelectedFolderId('');
            }

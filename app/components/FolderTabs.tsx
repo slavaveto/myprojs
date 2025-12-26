@@ -65,22 +65,11 @@ export const FolderTab = ({
           )}
        >
           <span className="relative z-10">{folder.title}</span>
-          <Chip 
-              size="sm" 
-              variant="flat" 
-              className={clsx(
-                  "h-5 min-w-5 px-1 text-[10px] relative z-10",
-                  isActive ? "bg-primary/20 text-primary" : "bg-default-100 text-default-500"
-              )}
-          >
-             {count}
-          </Chip>
-          
-          {/* Action Button */}
+
           {onUpdate && onDelete && !isDragging && (
               <div 
                   className={clsx(
-                      "opacity-100 group-hover/tab:opacity-100 transition-opacity z-20 ml-0",
+                      "opacity-0 group-hover/tab:opacity-100 transition-opacity z-20 ml-0",
                       "flex items-center"
                   )}
                   onPointerDown={(e) => e.stopPropagation()}
@@ -103,6 +92,20 @@ export const FolderTab = ({
                   </EditFolderPopover>
               </div>
           )}
+          
+          <Chip 
+              size="sm" 
+              variant="flat" 
+              className={clsx(
+                  "h-5 min-w-5 px-1 text-[10px] relative z-10",
+                  isActive ? "bg-primary/20 text-primary" : "bg-default-100 text-default-500"
+              )}
+          >
+             {count}
+          </Chip>
+          
+          {/* Action Button */}
+          
 
           {/* Active Indicator (Underline) with Framer Motion */}
           {isActive && !isDragging && (

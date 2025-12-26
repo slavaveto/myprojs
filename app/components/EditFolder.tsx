@@ -90,7 +90,7 @@ export const EditFolderPopover = ({
                     {children}
                 </PopoverTrigger>
                 <PopoverContent>
-3123                    <div className="px-3 py-3 w-[300px]">
+                    <div className="px-3 py-3 w-[300px]">
                         <p className="text-small font-bold text-foreground mb-2">
                             Edit Folder
                         </p>
