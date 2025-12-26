@@ -24,14 +24,14 @@ interface TaskRowProps {
 const GapRow = ({ task, isOverlay, isDragging, isHovered, setIsHovered, style, setNodeRef, attributes, listeners, onDelete }: any) => {
     const { active } = useDndContext(); 
     const isAnyDragging = !!active;
+    const [menuPos, setMenuPos] = React.useState<{x: number, y: number} | null>(null);
 
     const gapClassName = clsx(
         'group relative flex items-center justify-center h-[16px] w-full rounded outline-none transition-colors',
-        // Show background if hovered, dragging this gap, OR ANY drag is happening (to show drop target)
-        (isHovered || isDragging || isAnyDragging) ? 'bg-default-100/50' : 'bg-transparent',
+        // Show background if hovered, dragging this gap, dragging ANY item, or menu is open
+        (isHovered || isDragging || isAnyDragging || !!menuPos) ? 'bg-default-100/50' : 'bg-transparent',
         // Cursor logic:
-        isDragging ? 'cursor-grabbing' : 'cursor-default', // Default cursor on the gap itself
-        // !isDragging && 'hover:cursor-grab' // REMOVED: No grab cursor on full row hover
+        isDragging ? 'cursor-grabbing' : 'cursor-default', 
     );
 
     if (isOverlay) {
@@ -59,11 +59,14 @@ const GapRow = ({ task, isOverlay, isDragging, isHovered, setIsHovered, style, s
             onMouseLeave={() => setIsHovered(false)}
             onContextMenu={(e) => {
                 e.preventDefault();
-                onDelete(task.id); 
+                setMenuPos({
+                    x: e.clientX,
+                    y: e.clientY
+                });
             }}
         >
-            {/* Icon visible ONLY on hover or dragging SELF */}
-            {(isHovered || isDragging) && (
+            {/* Icon visible ONLY on hover, dragging SELF, or menu open */}
+            {(isHovered || isDragging || !!menuPos) && (
                 <div 
                     className="absolute left-[2px] ml-[5px] cursor-grab active:cursor-grabbing hover:bg-default-100 rounded text-center outline-none"
                     {...attributes}
@@ -72,6 +75,40 @@ const GapRow = ({ task, isOverlay, isDragging, isHovered, setIsHovered, style, s
                     <GripVertical size={16} className="text-default-400 hover:text-default-600" />
                 </div>
             )}
+
+            <Dropdown 
+                isOpen={!!menuPos} 
+                onOpenChange={(open) => {
+                    if (!open) setMenuPos(null);
+                }}
+                placement="bottom-start"
+                triggerScaleOnOpen={false}
+            >
+                <DropdownTrigger>
+                   <div 
+                       style={{ 
+                           position: 'fixed', 
+                           left: menuPos?.x ?? 0, 
+                           top: menuPos?.y ?? 0,
+                           width: 0,
+                           height: 0,
+                           pointerEvents: 'none',
+                           zIndex: 9999
+                       }} 
+                   />
+                </DropdownTrigger>
+                <DropdownMenu 
+                    aria-label="Gap Actions"
+                    onAction={(key) => {
+                        if (key === 'delete') {
+                            onDelete(task.id);
+                            setMenuPos(null);
+                        }
+                    }}
+                >
+                    <DropdownItem key="delete" className="text-danger" color="danger">Delete Gap</DropdownItem>
+                </DropdownMenu>
+            </Dropdown>
         </motion.div>
     );
 };
