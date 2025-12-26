@@ -38,7 +38,7 @@ const GapRow = ({ task, isOverlay, isDragging, isHovered, setIsHovered, style, s
     if (isOverlay) {
         return (
             <div ref={setNodeRef} style={{...style, opacity: 1, cursor: 'grabbing'}} className={clsx(gapClassName, 'bg-default-200 border border-dashed border-default-400 cursor-grabbing')}>
-                <div className="absolute left-[2px] p-[2px]">
+                <div className="absolute left-[6px] ">
                     <GripVertical size={16} className="text-default-400" />
                 </div>
             </div>
