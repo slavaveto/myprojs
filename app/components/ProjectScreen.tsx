@@ -562,7 +562,7 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
                       setSelectedFolderId(targetId);
                       globalStorage.setItem(`active_folder_${project.id}`, targetId);
                       // Don't reset background here, keep it highlighted as long as we hover
-                  }, 700);
+                  }, 300);
               }
           }
 
