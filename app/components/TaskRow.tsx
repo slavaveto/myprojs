@@ -31,8 +31,8 @@ export const TaskRow = ({ task, onUpdate, onDelete, isOverlay }: TaskRowProps) =
    const className = clsx(
       'group px-1 flex justify-between min-h-[30px] items-center rounded-lg border border-default-300 bg-content1 transition-colors outline-none overflow-hidden',
       !isDragging && !isOverlay && 'hover:bg-default-50',
-      (isDragging || isOverlay) &&
-         'z-50 bg-default-100 border-primary/50 pointer-events-none cursor-grabbing !opacity-50'
+      isDragging && '!opacity-50', // Placeholder (в списке) - прозрачный
+      isOverlay && 'z-50 bg-default-100 border-primary/50 pointer-events-none cursor-grabbing' // Overlay - непрозрачный
    );
 
    const content = (
