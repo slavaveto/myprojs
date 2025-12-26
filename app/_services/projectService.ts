@@ -345,6 +345,7 @@ export const projectService = {
             .from('tasks')
             .update({
                 is_completed: false,
+                is_deleted: false, // Ensure it's not deleted
                 sort_order: minOrder - 1000, // Put at the top
                 updated_at: new Date().toISOString()
             })

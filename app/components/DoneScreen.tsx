@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { createLogger } from '@/utils/logger/Logger';
 import { projectService } from '@/app/_services/projectService';
 import { clsx } from 'clsx';
-import { CheckCircle2, Trash2, Folder as FolderIcon, RefreshCw, GripVertical } from 'lucide-react';
+import { CheckCircle2, Trash2, Folder as FolderIcon, RefreshCw, GripVertical, RotateCcw } from 'lucide-react';
 import { Spinner, Chip, Button, Switch, Select, SelectItem, Checkbox } from '@heroui/react';
 import { format } from 'date-fns';
 import { useGlobalPersistentState } from '@/utils/storage';
@@ -40,25 +40,26 @@ const DoneTaskRow = ({ task, onRestore, onDelete }: { task: any, onRestore: (t: 
             )}
         >
              <div className="flex flex-1 gap-2 flex-row items-center pl-2">
-                <Checkbox
-                   isSelected={!task.is_deleted} // Always checked unless deleted (logic separation?)
-                   // Actually, for Done tasks, they ARE completed. 
-                   // So checkbox should be checked. Unchecking it restores the task.
-                   // For deleted tasks, maybe show differently? 
-                   // Let's assume this row is for DONE tasks mostly.
-                   defaultSelected={true}
-                   isDisabled={task.is_deleted} // Cannot restore deleted via checkbox?
-                   onValueChange={(isSelected) => {
-                       if (!isSelected) {
-                           onRestore(task);
-                       }
-                   }}
-                   classNames={{
-                      wrapper: 'after:bg-primary',
-                   }}
-                   className={clsx('p-0 m-0 text-center !w-[16px] mx-0')}
-                   size="sm"
-                />
+                {task.is_deleted ? (
+                    <div className="w-[16px] flex justify-center items-center text-danger" title="Deleted">
+                        <Trash2 size={16} />
+                    </div>
+                ) : (
+                    <Checkbox
+                        isSelected={true} 
+                        defaultSelected={true}
+                        onValueChange={(isSelected) => {
+                            if (!isSelected) {
+                                onRestore(task);
+                            }
+                        }}
+                        classNames={{
+                            wrapper: 'after:bg-primary',
+                        }}
+                        className={clsx('p-0 m-0 text-center !w-[16px] mx-0')}
+                        size="sm"
+                    />
+                )}
 
                 <div className="flex-grow min-w-0 pl-1 mr-2 flex flex-col justify-center py-1">
                     <div className={clsx(
@@ -99,7 +100,7 @@ const DoneTaskRow = ({ task, onRestore, onDelete }: { task: any, onRestore: (t: 
 
              {/* Actions */}
              <div className="p-0 text-center relative flex justify-center">
-                {!task.is_deleted && (
+                {!task.is_deleted ? (
                     <button
                         onClick={() => onDelete(task.id)}
                         className="opacity-0 p-[2px] group-hover:opacity-100 text-default-400 cursor-pointer hover:text-danger hover:bg-danger/10 rounded transition-all"
@@ -107,6 +108,15 @@ const DoneTaskRow = ({ task, onRestore, onDelete }: { task: any, onRestore: (t: 
                         title="Delete"
                     >
                         <Trash2 size={16} />
+                    </button>
+                ) : (
+                    <button
+                        onClick={() => onRestore(task)}
+                        className="opacity-0 p-[2px] group-hover:opacity-100 text-default-400 cursor-pointer hover:text-primary hover:bg-primary/10 rounded transition-all"
+                        aria-label="Restore task"
+                        title="Restore"
+                    >
+                        <RotateCcw size={16} />
                     </button>
                 )}
              </div>
