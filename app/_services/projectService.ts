@@ -91,19 +91,25 @@ export const projectService = {
     },
 
     async updateProjectOrder(updates: { id: string; sort_order: number }[]) {
-        // Log the reorder action (batch)
-        if (updates.length > 0) {
-             const batchId = crypto.randomUUID();
-             await logService.logAction('reorder', 'projects', batchId, { count: updates.length });
-        }
+        if (updates.length === 0) return;
+        
+        const batchId = crypto.randomUUID();
+        await logService.logAction('reorder', 'projects', batchId, { count: updates.length });
 
-        for (const u of updates) {
-           const { error } = await supabase.from('projects').update({
-               sort_order: u.sort_order,
-               updated_at: new Date().toISOString()
-           }).eq('id', u.id);
-           if (error) throw error;
-        }
+        // Batch update через Promise.all (параллельные запросы)
+        const now = new Date().toISOString();
+        
+        await Promise.all(
+            updates.map(u => 
+                supabase
+                    .from('projects')
+                    .update({
+                        sort_order: u.sort_order,
+                        updated_at: now
+                    })
+                    .eq('id', u.id)
+            )
+        );
     },
 
     // --- Folders ---
@@ -182,17 +188,25 @@ export const projectService = {
     },
 
     async updateFolderOrder(updates: { id: string; sort_order: number }[]) {
-        if (updates.length > 0) {
-             const batchId = crypto.randomUUID();
-             await logService.logAction('reorder', 'folders', batchId, { count: updates.length });
-        }
-        for (const u of updates) {
-            const { error } = await supabase.from('folders').update({
-                sort_order: u.sort_order,
-                updated_at: new Date().toISOString()
-            }).eq('id', u.id);
-            if (error) throw error;
-        }
+        if (updates.length === 0) return;
+        
+        const batchId = crypto.randomUUID();
+        await logService.logAction('reorder', 'folders', batchId, { count: updates.length });
+        
+        // Batch update через Promise.all (параллельные запросы)
+        const now = new Date().toISOString();
+        
+        await Promise.all(
+            updates.map(u => 
+                supabase
+                    .from('folders')
+                    .update({
+                        sort_order: u.sort_order,
+                        updated_at: now
+                    })
+                    .eq('id', u.id)
+            )
+        );
     },
 
     // --- Tasks ---
@@ -316,17 +330,25 @@ export const projectService = {
     },
 
     async updateTaskOrder(updates: { id: string; sort_order: number }[]) {
-        if (updates.length > 0) {
-             const batchId = crypto.randomUUID();
-             await logService.logAction('reorder', 'tasks', batchId, { count: updates.length });
-        }
-        for (const u of updates) {
-            const { error } = await supabase.from('tasks').update({
-                sort_order: u.sort_order,
-                updated_at: new Date().toISOString()
-            }).eq('id', u.id);
-            if (error) throw error;
-        }
+        if (updates.length === 0) return;
+        
+        const batchId = crypto.randomUUID();
+        await logService.logAction('reorder', 'tasks', batchId, { count: updates.length });
+        
+        // Batch update через Promise.all (параллельные запросы)
+        const now = new Date().toISOString();
+        
+        await Promise.all(
+            updates.map(u => 
+                supabase
+                    .from('tasks')
+                    .update({
+                        sort_order: u.sort_order,
+                        updated_at: now
+                    })
+                    .eq('id', u.id)
+            )
+        );
     }
 };
 
