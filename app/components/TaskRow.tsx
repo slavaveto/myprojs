@@ -160,7 +160,8 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
    
    // Group Color Logic
    // Use task.group_color or default project blue (#3b82f6) with 50% opacity (80 hex)
-   const groupBackgroundColor = isGroup ? `${task.group_color || '#3b82f6'}80` : undefined;
+   // Use empty string to reset background style (Framer Motion allows empty string to remove style)
+   const groupBackgroundColor = isGroup ? `${task.group_color || '#3b82f6'}80` : '';
 
    const className = clsx(
       'group px-1 flex justify-between min-h-[30px] items-center rounded-lg border border-default-300 bg-content1 transition-colors outline-none overflow-hidden',
@@ -298,13 +299,23 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
                     } else if (key === 'make-group') {
                         onUpdate(task.id, { 
                             task_type: 'group',
-                            group_color: projectColor
+                            group_color: '#3b82f6' // Default blue from palette
+                        });
+                        setMenuPos(null);
+                    } else if (key === 'revert-task') {
+                        onUpdate(task.id, { 
+                            task_type: 'task',
+                            group_color: null as any
                         });
                         setMenuPos(null);
                     }
                 }}
             >
-               <DropdownItem key="make-group">Make As Group</DropdownItem>
+               {isGroup ? (
+                   <DropdownItem key="revert-task">Revert To Task</DropdownItem>
+               ) : (
+                   <DropdownItem key="make-group">Make As Group</DropdownItem>
+               )}
                 <DropdownItem key="make-gap">Make Gap Below</DropdownItem>
                 
             </DropdownMenu>
