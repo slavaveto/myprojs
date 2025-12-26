@@ -29,7 +29,7 @@ const GapRow = ({ task, isOverlay, isDragging, isHovered, setIsHovered, style, s
     const [isIconHovered, setIsIconHovered] = React.useState(false); // New state for icon hover
 
     const gapClassName = clsx(
-        'group relative flex items-center justify-center h-[16px] w-full rounded outline-none transition-colors overflow-hidden',
+        'group relative flex items-center justify-center h-[16px] w-full rounded outline-none transition-colors ',
         // Show background if hovered (icon area), dragging this gap, dragging ANY item, or menu is open
         (isIconHovered || isDragging || isAnyDragging || !!menuPos) ? 'bg-default-100/50' : 'bg-transparent',
         // Cursor logic:
@@ -161,10 +161,10 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
    // Group Color Logic
    // Use task.group_color or default project blue (#3b82f6) with 50% opacity (80 hex)
    // Use empty string to reset background style (Framer Motion allows empty string to remove style)
-   const groupBackgroundColor = isGroup ? `${task.group_color || '#3b82f6'}80` : '';
+   const groupBackgroundColor = isGroup ? `${task.group_color || '#3b82f6'}20` : '';
 
    const className = clsx(
-      'group px-1 flex justify-between min-h-[30px] items-center rounded-lg border border-default-300 bg-content1 transition-colors outline-none overflow-hidden',
+      'group px-1 flex justify-between min-h-[30px] items-center rounded-lg border border-default-300 bg-content1 transition-colors outline-none ',
       !isDragging && !isOverlay && 'hover:bg-default-50',
       isDragging && '!opacity-50', 
       isOverlay && 'z-50 bg-default-100 border-primary/50 pointer-events-none cursor-grabbing', 
