@@ -92,6 +92,29 @@ export const useProjectDnD = ({
                     hoverTimeoutRef.current = setTimeout(() => {
                         setSelectedFolderId(targetId);
                         globalStorage.setItem(`active_folder_${project.id}`, targetId);
+                        
+                        // Move active task to the new folder immediately (to the top)
+                        if (isDraggingRef.current) {
+                             setTasks(prev => {
+                                 const activeTask = prev.find(t => t.id === active.id);
+                                 if (!activeTask) return prev;
+                                 
+                                 // Calculate min order in target folder
+                                 const targetTasks = prev.filter(t => t.folder_id === targetId);
+                                 const minOrder = targetTasks.length > 0 
+                                     ? Math.min(...targetTasks.map(t => t.sort_order)) 
+                                     : 0;
+                                     
+                                 const updatedTask = {
+                                     ...activeTask,
+                                     folder_id: targetId,
+                                     sort_order: minOrder - 1000, // Top
+                                     updated_at: new Date().toISOString()
+                                 };
+                                 
+                                 return prev.map(t => t.id === active.id ? updatedTask : t);
+                             });
+                        }
                     }, 300);
                 }
             }
@@ -172,6 +195,14 @@ export const useProjectDnD = ({
                      newSortOrder = overTask.sort_order;
                 } else {
                     // Put at the end if empty or not over a task
+                    // BUT wait, if we are here via customCollisionDetection/timer, we already put it at the top.
+                    // This logic handles dragOver on the LIST itself. 
+                    // Let's keep it consistent: if we drag over list but not over specific task, append? 
+                    // Or keep top? If it's already top from timer, this might override it if we are not careful.
+                    
+                    // If we just switched folder via timer, task is already at top.
+                    // If we drag over the list container, maybe we should respect current position?
+                    
                     newSortOrder = targetFolderTasks.length > 0 
                         ? targetFolderTasks[targetFolderTasks.length - 1].sort_order + 1 
                         : 0;
