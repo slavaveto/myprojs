@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Popover, PopoverTrigger, PopoverContent, Button, Input, PopoverProps } from '@heroui/react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, ArrowLeft, ArrowRight } from 'lucide-react';
 import { DeleteConfirmationModal } from '@/app/components/DeleteModal';
 
 interface EditFolderPopoverProps {
@@ -10,14 +10,20 @@ interface EditFolderPopoverProps {
     initialTitle: string;
     onUpdate: (title: string) => Promise<void> | void;
     onDelete: () => Promise<void> | void;
+    onMove?: (direction: 'left' | 'right') => void;
+    canMoveLeft?: boolean;
+    canMoveRight?: boolean;
     placement?: PopoverProps['placement'];
 }
 
 export const EditFolderPopover = ({ 
     children, 
-    initialTitle,
-    onUpdate,
+    initialTitle, 
+    onUpdate, 
     onDelete,
+    onMove,
+    canMoveLeft = true,
+    canMoveRight = true,
     placement = "bottom"
 }: EditFolderPopoverProps) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -106,18 +112,45 @@ export const EditFolderPopover = ({
                             />
 
                             <div className="flex gap-2 justify-between pt-2 border-t border-divider mt-1">
-                                <Button 
-                                    size="sm" 
-                                    color="danger" 
-                                    variant="light" 
-                                    isIconOnly
-                                    onPress={handleDeleteClick}
-                                    isLoading={isDeleting}
-                                    isDisabled={isLoading}
-                                    title="Delete Folder"
-                                >
-                                    <Trash2 size={18} />
-                                </Button>
+                                <div className="flex gap-1">
+                                    <Button 
+                                        size="sm" 
+                                        color="danger" 
+                                        variant="light" 
+                                        isIconOnly
+                                        onPress={handleDeleteClick}
+                                        isLoading={isDeleting}
+                                        isDisabled={isLoading}
+                                        title="Delete Folder"
+                                    >
+                                        <Trash2 size={18} />
+                                    </Button>
+                                    
+                                    {onMove && (
+                                        <>
+                                            <Button
+                                                size="sm"
+                                                variant="light"
+                                                isIconOnly
+                                                onPress={() => onMove('left')}
+                                                isDisabled={!canMoveLeft}
+                                                title="Move Left"
+                                            >
+                                                <ArrowLeft size={18} />
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="light"
+                                                isIconOnly
+                                                onPress={() => onMove('right')}
+                                                isDisabled={!canMoveRight}
+                                                title="Move Right"
+                                            >
+                                                <ArrowRight size={18} />
+                                            </Button>
+                                        </>
+                                    )}
+                                </div>
 
                                 <div className="flex gap-2">
                                     <Button size="sm" variant="light" onPress={() => setIsOpen(false)} isDisabled={isDeleting || isLoading}>

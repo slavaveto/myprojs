@@ -329,6 +329,30 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
        }
    };
 
+   const handleMoveFolder = async (folderId: string, direction: 'left' | 'right') => {
+       const currentIndex = folders.findIndex(f => f.id === folderId);
+       if (currentIndex === -1) return;
+
+       const newIndex = direction === 'left' ? currentIndex - 1 : currentIndex + 1;
+       if (newIndex < 0 || newIndex >= folders.length) return;
+
+       const newFolders = arrayMove(folders, currentIndex, newIndex);
+       setFolders(newFolders);
+
+       // Save to DB
+       const updates = newFolders.map((f, index) => ({ id: f.id, sort_order: index }));
+       
+       try {
+           await executeSave(async () => {
+               await projectService.updateFolderOrder(updates);
+           });
+       } catch (err) {
+           logger.error('Failed to move folder', err);
+           // Revert locally? Not strictly necessary for order, but good practice.
+           // For now we rely on optimistic UI.
+       }
+   };
+
    // --- Project Actions ---
    const handleEditProject = async (title: string, color: string) => {
        try {
@@ -354,7 +378,7 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
    const sensors = useSensors(
       useSensor(PointerSensor, {
           activationConstraint: {
-              delay: 150,
+              delay: 0,
               tolerance: 5,
           },
       }),
@@ -537,24 +561,7 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
       if (!over) return;
 
       if (active.data.current?.type === 'folder' && over.data.current?.type === 'folder') {
-           if (active.id !== over.id) {
-               setFolders((items) => {
-                   const oldIndex = items.findIndex((i) => `folder-${i.id}` === active.id);
-                   const newIndex = items.findIndex((i) => `folder-${i.id}` === over.id);
-                   const newItems = arrayMove(items, oldIndex, newIndex);
-                   
-                   // Save to DB
-                   const updates = newItems.map((f, index) => ({ id: f.id, sort_order: index }));
-                   
-                   executeSave(async () => {
-                       await projectService.updateFolderOrder(updates);
-                   }).catch(err => {
-                       logger.error('Failed to reorder folders', err);
-                   });
-                   
-                   return newItems;
-               });
-           }
+           // Folder reordering removed
            return;
       }
 
@@ -730,6 +737,7 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
                 onAddFolder={handleAddFolder}
                 onUpdateFolder={handleUpdateFolder}
                 onDeleteFolder={handleDeleteFolder}
+                onMoveFolder={handleMoveFolder}
                 getTaskCount={getFolderTaskCount}
                 projectId={project.id}
                 hoveredFolderId={hoveredFolderId}

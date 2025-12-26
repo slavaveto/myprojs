@@ -6,8 +6,7 @@ import { Button, Chip } from '@heroui/react';
 import { Plus, EllipsisVertical } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion } from 'framer-motion';
-import { useSortable, SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { useDroppable } from '@dnd-kit/core';
 import { CreateItemPopover } from '@/app/components/CreateItem';
 import { EditFolderPopover } from '@/app/components/EditFolder';
 
@@ -20,11 +19,9 @@ interface FolderTabProps {
     layoutIdPrefix: string;
     onUpdate?: (title: string) => void;
     onDelete?: () => void;
-    // DnD props
-    attributes?: any;
-    listeners?: any;
-    setNodeRef?: (node: HTMLElement | null) => void;
-    style?: React.CSSProperties;
+    onMove?: (direction: 'left' | 'right') => void;
+    canMoveLeft?: boolean;
+    canMoveRight?: boolean;
     isDragging?: boolean;
     isOver?: boolean;
 }
@@ -37,19 +34,20 @@ export const FolderTab = ({
     layoutIdPrefix,
     onUpdate,
     onDelete,
-    attributes,
-    listeners,
-    setNodeRef,
-    style,
+    onMove,
+    canMoveLeft,
+    canMoveRight,
     isDragging,
     isOver
 }: FolderTabProps) => {
+    const { setNodeRef } = useDroppable({
+        id: `folder-${folder.id}`,
+        data: { type: 'folder', folder }
+    });
+
     return (
        <div
           ref={setNodeRef}
-          style={style}
-          {...attributes}
-          {...listeners}
           onClick={onClick}
           className={clsx(
              'group/tab relative flex items-center gap-2 pl-1 h-[40px] select-none transition-colors min-w-fit outline-none rounded-lg border-2 border-transparent',
@@ -92,6 +90,9 @@ export const FolderTab = ({
                       initialTitle={folder.title}
                       onUpdate={onUpdate}
                       onDelete={onDelete}
+                      onMove={onMove}
+                      canMoveLeft={canMoveLeft}
+                      canMoveRight={canMoveRight}
                   >
                       <button 
                           type="button"
@@ -116,43 +117,6 @@ export const FolderTab = ({
     );
 };
 
-
-// --- Sortable Wrapper ---
-const SortableFolderTab = (props: FolderTabProps) => {
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging,
-        // isOver - we don't use DndKit's native isOver because it triggers when dragging folders too.
-        // We rely solely on props.isOver which is controlled by ProjectScreen for tasks only.
-    } = useSortable({
-        id: `folder-${props.folder.id}`,
-        data: { type: 'folder', folder: props.folder }
-    });
-
-    const style = {
-        transform: CSS.Translate.toString(transform),
-        transition,
-        opacity: isDragging ? 0.3 : 1,
-        zIndex: isDragging ? 10 : 1,
-    };
-
-    return (
-        <FolderTab 
-            {...props}
-            attributes={attributes}
-            listeners={listeners}
-            setNodeRef={setNodeRef}
-            style={style}
-            isDragging={isDragging}
-            isOver={props.isOver} 
-        />
-    );
-};
-
 // --- List Component ---
 interface FolderTabsProps {
     folders: Folder[];
@@ -161,6 +125,7 @@ interface FolderTabsProps {
     onAddFolder: (name: string, color?: string) => Promise<void> | void;
     onUpdateFolder?: (id: string, name: string) => Promise<void> | void;
     onDeleteFolder?: (id: string) => Promise<void> | void;
+    onMoveFolder?: (id: string, direction: 'left' | 'right') => void;
     getTaskCount: (folderId: string) => number;
     projectId: string;
     hoveredFolderId?: string | null;
@@ -173,6 +138,7 @@ export const FolderTabs = ({
     onAddFolder, 
     onUpdateFolder,
     onDeleteFolder,
+    onMoveFolder,
     getTaskCount,
     projectId,
     hoveredFolderId
@@ -180,24 +146,22 @@ export const FolderTabs = ({
     return (
         <div className="flex items-end gap-2 w-full ">
            <div className="flex-grow overflow-x-auto scrollbar-hide flex items-center gap-2">
-               <SortableContext 
-                    items={folders.map(f => `folder-${f.id}`)}
-                    strategy={horizontalListSortingStrategy}
-               >
-                   {folders.map((folder) => (
-                         <SortableFolderTab 
-                            key={folder.id}
-                            folder={folder}
-                            count={getTaskCount(folder.id)}
-                            isActive={selectedFolderId === folder.id}
-                            layoutIdPrefix={`project-${projectId}`}
-                            onClick={() => onSelect(folder.id)}
-                            isOver={hoveredFolderId === `folder-${folder.id}`}
-                            onUpdate={onUpdateFolder ? (title) => onUpdateFolder(folder.id, title) : undefined}
-                            onDelete={onDeleteFolder ? () => onDeleteFolder(folder.id) : undefined}
-                         />
-                   ))}
-               </SortableContext>
+               {folders.map((folder, index) => (
+                     <FolderTab 
+                        key={folder.id}
+                        folder={folder}
+                        count={getTaskCount(folder.id)}
+                        isActive={selectedFolderId === folder.id}
+                        layoutIdPrefix={`project-${projectId}`}
+                        onClick={() => onSelect(folder.id)}
+                        isOver={hoveredFolderId === `folder-${folder.id}`}
+                        onUpdate={onUpdateFolder ? (title) => onUpdateFolder(folder.id, title) : undefined}
+                        onDelete={onDeleteFolder ? () => onDeleteFolder(folder.id) : undefined}
+                        onMove={onMoveFolder ? (direction) => onMoveFolder(folder.id, direction) : undefined}
+                        canMoveLeft={index > 0}
+                        canMoveRight={index < folders.length - 1}
+                     />
+               ))}
            </div>
            <CreateItemPopover 
                title="New Folder" 
