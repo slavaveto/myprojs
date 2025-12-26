@@ -110,7 +110,7 @@ export const TaskRow = ({ task, onUpdate, onDelete, isOverlay }: TaskRowProps) =
          data-task-row={task.id}
          className={className}
          layout
-         initial={{ opacity: 0, height: 0 }}
+         initial={task.isNew ? { opacity: 0, height: 0 } : false}
          animate={{ opacity: isDragging ? 0.3 : 1, height: 'auto' }}
          exit={{ opacity: 0, height: 0 }}
          transition={{ duration: 0.2 }}

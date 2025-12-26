@@ -738,6 +738,7 @@ export const ProjectScreen = ({ project, isActive, onReady, globalStatus = 'idle
             <div className="mt-6 flex-grow flex flex-col min-h-0">
                 {selectedFolderId ? (
                    <TaskList 
+                        key={selectedFolderId}
                         tasks={filteredTasks}
                         onUpdateTask={handleUpdateTask}
                         onDeleteTask={handleDeleteTask}
