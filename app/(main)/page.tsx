@@ -315,6 +315,7 @@ function AppContent() {
          {/* Sidebar */}
          <aside className="w-64 flex-shrink-0 border-r border-default-200 bg-content1 flex flex-col z-20">
             <div className="p-4 border-b border-default-200 flex items-center justify-between">
+
                <div className="flex items-center gap-2 font-bold text-lg min-w-0">
                   <LayoutGrid size={24} className="text-primary flex-shrink-0" />
                   <span className="truncate">Projects</span>
@@ -336,7 +337,7 @@ function AppContent() {
             <div className="flex-grow overflow-y-auto p-2">
                 
                 {/* System Tabs Top */}
-                <div className="mb-4">
+                <div className="mb-5">
                     <SidebarItem 
                         icon={Inbox} 
                         label="Inbox" 
@@ -357,7 +358,7 @@ function AppContent() {
                     />
                 </div>
 
-                <div className="px-3 pb-2 text-xs font-semibold text-default-400 uppercase tracking-wider">
+                <div className="px-2 pb-2 text-xs font-semibold text-default-400 uppercase tracking-wider">
                     My Projects
                 </div>
 
@@ -399,9 +400,19 @@ function AppContent() {
                        ))}
                     </SortableContext>
                 </DndContext>
-            </div>
 
-            <div className="p-2">
+                <div className="pt-5">
+
+                <SidebarItem 
+                    icon={CheckCircle2} 
+                    label="Done" 
+                    isActive={activeSystemTab === 'done'}
+                    onClick={() => {
+                        setActiveSystemTab('done');
+                        setActiveProjectId(null);
+                    }} 
+                />
+
                  <SidebarItem 
                     icon={FileText} 
                     label="Logs" 
@@ -411,16 +422,11 @@ function AppContent() {
                         setActiveProjectId(null);
                     }} 
                 />
-                 <SidebarItem 
-                    icon={CheckCircle2} 
-                    label="Done" 
-                    isActive={activeSystemTab === 'done'}
-                    onClick={() => {
-                        setActiveSystemTab('done');
-                        setActiveProjectId(null);
-                    }} 
-                />
+                 
             </div>
+            </div>
+
+            
          </aside>
 
          {/* Main Content */}

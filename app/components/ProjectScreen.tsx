@@ -21,8 +21,8 @@ import { TaskList } from '@/app/components/TaskList';
 import { ActionStatus } from '@/utils/supabase/useAsyncAction';
 import { StatusBadge } from '@/utils/supabase/StatusBadge';
 import { EditProjectPopover } from '@/app/components/EditProject';
-import { useProjectData } from '@/app/components/ProjectScreen/hooks/useProjectData';
-import { useProjectDnD } from '@/app/components/ProjectScreen/hooks/useProjectDnD';
+import { useProjectData } from '@/app/components/hooks/useProjectData';
+import { useProjectDnD } from '@/app/components/hooks/useProjectDnD';
 
 const logger = createLogger('ProjectScreen');
 

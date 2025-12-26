@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { createLogger } from '@/utils/logger/Logger';
 import { projectService } from '@/app/_services/projectService';
 import { clsx } from 'clsx';
 import { CheckCircle2, Trash2, Folder as FolderIcon, RefreshCw, GripVertical, RotateCcw } from 'lucide-react';
 import { Spinner, Chip, Button, Switch, Select, SelectItem, Checkbox } from '@heroui/react';
-import { format } from 'date-fns';
+import { format, isToday, isYesterday, isThisWeek, isThisMonth } from 'date-fns';
 import { useGlobalPersistentState } from '@/utils/storage';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -215,6 +215,33 @@ export const DoneScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
         }
     };
 
+    const groupedTasks = useMemo(() => {
+        const groups = {
+            today: [] as any[],
+            yesterday: [] as any[],
+            thisWeek: [] as any[],
+            thisMonth: [] as any[],
+            older: [] as any[],
+        };
+
+        tasks.forEach(task => {
+            const date = new Date(task.updated_at);
+            if (isToday(date)) {
+                groups.today.push(task);
+            } else if (isYesterday(date)) {
+                groups.yesterday.push(task);
+            } else if (isThisWeek(date, { weekStartsOn: 1 })) { // Monday start
+                groups.thisWeek.push(task);
+            } else if (isThisMonth(date)) {
+                groups.thisMonth.push(task);
+            } else {
+                groups.older.push(task);
+            }
+        });
+
+        return groups;
+    }, [tasks]);
+
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-full">
@@ -222,6 +249,29 @@ export const DoneScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
             </div>
         );
     }
+
+    const renderGroup = (title: string, groupTasks: any[]) => {
+        if (groupTasks.length === 0) return null;
+        return (
+            <div key={title} className="mb-6">
+                <div className="text-xs font-semibold text-default-400 uppercase tracking-wider mb-2 px-1">
+                    {title}
+                </div>
+                <div className="flex flex-col gap-[3px]">
+                    <AnimatePresence initial={false} mode="popLayout">
+                        {groupTasks.map((task) => (
+                            <DoneTaskRow 
+                                key={task.id} 
+                                task={task} 
+                                onRestore={handleRestore}
+                                onDelete={handleDelete}
+                            />
+                        ))}
+                    </AnimatePresence>
+                </div>
+            </div>
+        );
+    };
 
     return (
         <div className="h-full flex flex-col p-6 max-w-5xl mx-auto w-full">
@@ -278,18 +328,13 @@ export const DoneScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
                         No completed or deleted tasks found.
                     </div>
                 ) : (
-                    <div className="flex flex-col gap-[3px]">
-                        <AnimatePresence initial={false} mode="popLayout">
-                            {tasks.map((task) => (
-                                <DoneTaskRow 
-                                    key={task.id} 
-                                    task={task} 
-                                    onRestore={handleRestore}
-                                    onDelete={handleDelete}
-                                />
-                            ))}
-                        </AnimatePresence>
-                    </div>
+                    <>
+                        {renderGroup('Today', groupedTasks.today)}
+                        {renderGroup('Yesterday', groupedTasks.yesterday)}
+                        {renderGroup('This Week', groupedTasks.thisWeek)}
+                        {renderGroup('This Month', groupedTasks.thisMonth)}
+                        {renderGroup('Older', groupedTasks.older)}
+                    </>
                 )}
             </div>
         </div>
