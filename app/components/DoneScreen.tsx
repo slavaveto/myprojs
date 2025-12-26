@@ -48,9 +48,10 @@ export const DoneScreen = ({ globalStatus = 'idle', canLoad = true }: DoneScreen
 
     useEffect(() => {
         if (canLoad) {
+            logger.info('DoneScreen became active or filters changed, fetching...');
             fetchTasks();
         }
-    }, [canLoad, showDeleted, timeFilter]); // Re-fetch on filter change
+    }, [canLoad, showDeleted, timeFilter]); // Re-fetch on filter change or tab activation
 
     return (
         <div className="h-full flex flex-col p-6 max-w-5xl mx-auto w-full">

@@ -79,11 +79,12 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true }: LogsScreen
 
     useEffect(() => {
         if (canLoad) {
+            logger.info('LogsScreen became active, fetching...');
             fetchLogs(!isLoaded);
         } else if (!canLoad) {
-            logger.info('Waiting for background load permission...');
+            // Optional: cancel pending requests or just log
         }
-    }, [canLoad, timeFilter]); // Re-fetch on filter change
+    }, [canLoad, timeFilter]); // Re-fetch on filter change or tab activation
 
     const getActionColor = (action: string) => {
         switch (action) {

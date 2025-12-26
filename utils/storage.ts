@@ -155,32 +155,33 @@ export function usePersistentState<T>(key: string, defaultValue: T | (() => T)) 
 
 // НОВЫЙ хук для глобальных настроек (ВСЕГДА local-Storage)
 export function useGlobalPersistentState<T>(key: string, defaultValue: T | (() => T)) {
-  const getValueForKey = (currentKey: string) => {
-    if (typeof window === 'undefined')
-      return typeof defaultValue === 'function' ? (defaultValue as () => T)() : defaultValue;
+  // Always initialize with default value to avoid hydration mismatch
+  const [state, setState] = useState<T>(defaultValue);
+  const [isHydrated, setIsHydrated] = useState(false);
 
-    try {
-      const savedValue = globalStorage.getItem(currentKey);
-      if (savedValue !== null) {
-        return JSON.parse(savedValue);
+  // Read from storage after mount
+  useEffect(() => {
+    const getValueForKey = (currentKey: string) => {
+      try {
+        const savedValue = globalStorage.getItem(currentKey);
+        if (savedValue !== null) {
+          return JSON.parse(savedValue);
+        }
+      } catch (err) {
+        // ignore
       }
-    } catch (err) {
-      globalStorage.removeItem(currentKey);
+      return typeof defaultValue === 'function' ? (defaultValue as () => T)() : defaultValue;
+    };
+
+    setState(getValueForKey(key));
+    setIsHydrated(true);
+  }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (isHydrated) {
+      globalStorage.setItem(key, JSON.stringify(state));
     }
-
-    return typeof defaultValue === 'function' ? (defaultValue as () => T)() : defaultValue;
-  };
-
-  const [state, setState] = useState<T>(() => getValueForKey(key));
-
-  useEffect(() => {
-    const newValue = getValueForKey(key);
-    setState(newValue);
-  }, [key]);
-
-  useEffect(() => {
-    globalStorage.setItem(key, JSON.stringify(state));
-  }, [key, state]);
+  }, [key, state, isHydrated]);
 
   // Синхронизация между компонентами через storage event
   useEffect(() => {
