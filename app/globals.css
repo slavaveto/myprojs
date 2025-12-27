@@ -20,6 +20,26 @@
     --breakpoint-xs500: 500px;
 }
 
+
+
+
+.tab-title {
+    @apply text-2xl font-bold flex items-center gap-2
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* Отключаем стандартное контекстное меню */
 /* {
   /*-webkit-touch-callout: none;*/
@@ -42,8 +62,6 @@ input, textarea, [contenteditable="true"] {
   -ms-user-select: text;
   user-select: text;
 }
-
-
 
 
 /* TEXT */

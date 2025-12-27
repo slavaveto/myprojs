@@ -5,7 +5,7 @@ import { logService, LogEntry } from '@/app/_services/logService';
 import { Spinner, Chip, Card, CardBody, Button, Select, SelectItem } from '@heroui/react';
 import { createLogger } from '@/utils/logger/Logger';
 import { clsx } from 'clsx';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw , FileText} from 'lucide-react';
 import { StatusBadge } from '@/utils/supabase/StatusBadge';
 import { ActionStatus } from '@/utils/supabase/useAsyncAction';
 import { useGlobalPersistentState } from '@/utils/storage';
@@ -91,7 +91,12 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
     return (
         <div className="h-full flex flex-col p-6 max-w-5xl mx-auto w-full">
             <div className="flex justify-between items-center mb-4 min-h-[40px]">
-                <h1 className="text-2xl font-bold">Activity Logs</h1>
+
+                <h1 className="tab-title">
+                    <FileText className="text-success" />
+                    Logs 
+                </h1>
+
                 <div className="flex items-center gap-4">
                     <Select 
                         size="sm"
@@ -135,7 +140,9 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
                     </div>
                 )}
                 
-                {logs.map((log) => (
+                {logs
+                    .filter(log => log.action !== BaseActions.REORDER)
+                    .map((log) => (
                     <Card key={log.id} shadow="sm" className="border border-default-200">
                         <CardBody className="p-3">
                             <div className="flex items-center justify-between">

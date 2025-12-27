@@ -282,7 +282,7 @@ export const DoneScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
     return (
         <div className="h-full flex flex-col p-6 max-w-5xl mx-auto w-full">
             <div className="flex justify-between items-center mb-4 min-h-[40px]">
-                <h1 className="text-2xl font-bold flex items-center gap-2">
+                <h1 className="tab-title">
                     <CheckCircle2 className="text-success" />
                     Done {showDeleted && "& Deleted"}
                 </h1>
