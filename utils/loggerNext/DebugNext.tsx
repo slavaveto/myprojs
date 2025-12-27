@@ -292,99 +292,100 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
                style={{
                   left: x,
                   top: y,
-                  width: width,
+                  width: showSettings ? width + 350 : width, // Dynamically expand width
                   height: isMinimized ? 40 : height,
                   transition:
-                     draggingRef.current || resizingRef.current ? 'none' : 'height 0.2s ease',
+                     draggingRef.current || resizingRef.current ? 'none' : 'width 0.2s ease, height 0.2s ease',
                }}
             >
-               {/* Header (Draggable) */}
-               <div
-                  className="flex items-center justify-between px-2 py-1 bg-content2 border-b border-default-200 rounded-t-lg cursor-grab active:cursor-grabbing select-none"
-                  onMouseDown={handleMouseDown}
-                  onDoubleClick={() =>
-                     setWindowState((prev) => ({ ...prev, isMinimized: !prev.isMinimized }))
-                  }
-               >
-                  <div className="flex items-center gap-2 pointer-events-none">
-                     <Bug size={14} className="text-secondary" /> {/* Secondary color */}
-                     <span className="text font-medium text-foreground">
-                        NextLogs ({logs.length})
-                     </span>
-                  </div>
-
-                  <div className="flex items-center gap-1">
-                     <button 
-                        onClick={toggleSettings} 
-                        className={`p-1 hover:bg-default-200 rounded transition-colors cursor-pointer ${showSettings ? 'text-primary' : 'text-default-400'}`}
-                        title="Settings"
-                     >
-                        <Settings size={14} />
-                     </button>
-                     <div className="w-[1px] h-[14px] bg-default-300 mx-1" />
-                     <button 
-                        onClick={() => setShowData(!showData)}
-                        className={`p-1 hover:bg-default-200 rounded transition-colors cursor-pointer ${showData ? 'text-primary' : 'text-default-400'}`}
-                        title={showData ? 'Hide Data' : 'Show Data'}
-                     >
-                        {showData ? <Eye size={14} /> : <EyeOff size={14} />}
-                     </button>
-                     <button
-                        onClick={() => {
-                           const text = logs
-                              .map((log) => {
-                                 const time = new Date(log.timestamp).toLocaleTimeString('ru-RU', {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    second: '2-digit',
-                                    fractionalSecondDigits: 3,
-                                 });
-                                 const countStr = log.count > 1 ? ` (x${log.count})` : '';
-                                 return `[${time}] [${log.componentName}] ${log.message}${countStr} ${log.data ? JSON.stringify(log.data) : ''}`;
-                              })
-                              .join('\n');
-                           navigator.clipboard.writeText(text);
-                           setIsCopiedAll(true);
-                           setTimeout(() => setIsCopiedAll(false), 1500);
-                        }}
-                        className="p-1 hover:bg-default-200 rounded text-default-400 hover:text-foreground transition-colors cursor-pointer"
-                        title="Copy All"
-                     >
-                        {isCopiedAll ? (
-                           <Check size={14} className="text-success" />
-                        ) : (
-                           <Copy size={14} />
-                        )}
-                     </button>
-                     <button
-                        onClick={() => clearLogs()}
-                        className="p-1 hover:bg-red-200 hover:text-red-500 rounded text-default-400 hover:text-foreground transition-colors cursor-pointer"
-                        title="Clear"
-                     >
-                        <Trash2 size={14} />
-                     </button>
-                     <button
-                        onClick={() =>
-                           setWindowState((prev) => ({ ...prev, isMinimized: !prev.isMinimized }))
-                        }
-                        className="hidden p-1 hover:bg-default-200 rounded text-default-400 hover:text-foreground transition-colors cursor-pointer"
-                     >
-                        {isMinimized ? <Maximize2 size={14} /> : <Minimize2 size={12} />}
-                     </button>
-                     <button
-                        onClick={toggleOpen}
-                        className="p-1 hover:bg-default-200 rounded text-default-400 hover:text-danger transition-colors cursor-pointer"
-                     >
-                        <X size={16} />
-                     </button>
-                  </div>
-               </div>
-
                {/* Content Container (Flex Row) */}
                {!isMinimized && (
                   <div className="flex flex-1 overflow-hidden h-full">
-                     {/* Logs Area */}
-                     <div className="flex flex-col flex-1 overflow-hidden relative">
+                     {/* Logs Area - Fixed width based on state */}
+                     <div 
+                        className="flex flex-col overflow-hidden relative border-r border-default-200 bg-content1"
+                        style={{ width: width, minWidth: width }}
+                     >
+                        {/* Header (Draggable) - Now inside left panel */}
+                        <div 
+                           className="flex items-center justify-between px-2 py-1 bg-content2 border-b border-default-200 cursor-grab active:cursor-grabbing select-none shrink-0"
+                           onMouseDown={handleMouseDown}
+                           onDoubleClick={() => setWindowState(prev => ({ ...prev, isMinimized: !prev.isMinimized }))}
+                        >
+                           <div className="flex items-center gap-2 pointer-events-none">
+                              <Bug size={14} className="text-secondary" />
+                              <span className="text font-medium text-foreground">
+                                 NextLogs ({logs.length})
+                              </span>
+                           </div>
+         
+                           <div className="flex items-center gap-1">
+                              <button 
+                                 onClick={toggleSettings} 
+                                 className={`p-1 hover:bg-default-200 rounded transition-colors cursor-pointer ${showSettings ? 'text-primary' : 'text-default-400'}`}
+                                 title="Settings"
+                              >
+                                 <Settings size={14} />
+                              </button>
+                              <div className="w-[1px] h-[14px] bg-default-300 mx-1" />
+                              <button 
+                                 onClick={() => setShowData(!showData)} 
+                                 className={`p-1 hover:bg-default-200 rounded transition-colors cursor-pointer ${showData ? 'text-primary' : 'text-default-400'}`}
+                                 title={showData ? 'Hide Data' : 'Show Data'}
+                              >
+                                 {showData ? <Eye size={14} /> : <EyeOff size={14} />}
+                              </button>
+                              <button
+                                 onClick={() => {
+                                    const text = logs
+                                       .map((log) => {
+                                          const time = new Date(log.timestamp).toLocaleTimeString('ru-RU', {
+                                             hour: '2-digit',
+                                             minute: '2-digit',
+                                             second: '2-digit',
+                                             fractionalSecondDigits: 3,
+                                          });
+                                          const countStr = log.count > 1 ? ` (x${log.count})` : '';
+                                          return `[${time}] [${log.componentName}] ${log.message}${countStr} ${log.data ? JSON.stringify(log.data) : ''}`;
+                                       })
+                                       .join('\n');
+                                    navigator.clipboard.writeText(text);
+                                    setIsCopiedAll(true);
+                                    setTimeout(() => setIsCopiedAll(false), 1500);
+                                 }}
+                                 className="p-1 hover:bg-default-200 rounded text-default-400 hover:text-foreground transition-colors cursor-pointer"
+                                 title="Copy All"
+                              >
+                                 {isCopiedAll ? (
+                                    <Check size={14} className="text-success" />
+                                 ) : (
+                                    <Copy size={14} />
+                                 )}
+                              </button>
+                              <button
+                                 onClick={() => clearLogs()}
+                                 className="p-1 hover:bg-red-200 hover:text-red-500 rounded text-default-400 hover:text-foreground transition-colors cursor-pointer"
+                                 title="Clear"
+                              >
+                                 <Trash2 size={14} />
+                              </button>
+                              <button
+                                 onClick={() =>
+                                    setWindowState((prev) => ({ ...prev, isMinimized: !prev.isMinimized }))
+                                 }
+                                 className="hidden p-1 hover:bg-default-200 rounded text-default-400 hover:text-foreground transition-colors cursor-pointer"
+                              >
+                                 {isMinimized ? <Maximize2 size={14} /> : <Minimize2 size={12} />}
+                              </button>
+                              <button
+                                 onClick={toggleOpen}
+                                 className="p-1 hover:bg-default-200 rounded text-default-400 hover:text-danger transition-colors cursor-pointer"
+                              >
+                                 <X size={16} />
+                              </button>
+                           </div>
+                        </div>
+
                         {/* Top Gradient Shadow - Fixed under header */}
                         <div className="w-full h-4 bg-gradient-to-b from-content1 to-transparent gap-1 z-10 pointer-events-none -mb-4 relative shrink-0" />
    
