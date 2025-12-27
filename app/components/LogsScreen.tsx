@@ -9,6 +9,7 @@ import { RefreshCw } from 'lucide-react';
 import { StatusBadge } from '@/utils/supabase/StatusBadge';
 import { ActionStatus } from '@/utils/supabase/useAsyncAction';
 import { useGlobalPersistentState } from '@/utils/storage';
+import { BaseActions } from '@/app/_services/actions';
 
 const logger = createLogger('LogsScreen');
 
@@ -17,25 +18,6 @@ const TIME_RANGES = [
     { key: 'today', label: 'Today' },
     { key: 'all', label: 'All Time' },
 ];
-
-const LogDetails = ({ details }: { details: any }) => {
-    if (!details || typeof details !== 'object' || Object.keys(details).length === 0) return null;
-
-    return (
-        <div className="mt-2 bg-default-50 rounded-lg p-2 border border-default-100">
-            <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
-                {Object.entries(details).map(([key, value]) => (
-                    <React.Fragment key={key}>
-                        <span className="text-default-400 font-medium text-right select-none">{key}:</span>
-                        <span className="text-foreground font-mono break-all">
-                            {typeof value === 'object' ? JSON.stringify(value) : String(value)}
-                        </span>
-                    </React.Fragment>
-                ))}
-            </div>
-        </div>
-    );
-};
 
 interface LogsScreenProps {
     globalStatus?: ActionStatus;
@@ -51,7 +33,6 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
     const [timeFilter, setTimeFilter] = useGlobalPersistentState<string>('logs_time_filter', 'all');
 
     const fetchLogs = async (showSpinner = true) => {
-        // If we shouldn't load, just return. 
         if (!canLoad && showSpinner) return;
 
         if (showSpinner) {
@@ -79,23 +60,22 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
     };
 
     useEffect(() => {
-        // Fetch if allowed to load AND (it's active OR filters changed)
         if (canLoad && isActive) {
             logger.info('LogsScreen became active, fetching...');
-            // Don't show full spinner if already loaded, just refresh icon spin
             fetchLogs(!isLoaded);
         } else if (canLoad && !isLoaded) {
-            // Initial background load
             fetchLogs(true);
         }
-    }, [canLoad, isActive, timeFilter]); // Re-fetch on filter change or tab activation
+    }, [canLoad, isActive, timeFilter]);
 
     const getActionColor = (action: string) => {
         switch (action) {
-            case 'create': return 'success';
-            case 'update': return 'warning';
-            case 'delete': return 'danger';
-            case 'move': return 'primary';
+            case BaseActions.CREATE: return 'success';
+            case BaseActions.COMPLETE: return 'success';
+            case BaseActions.RESTORE: return 'primary';
+            case BaseActions.UPDATE: return 'warning';
+            case BaseActions.REORDER: return 'secondary';
+            case BaseActions.DELETE: return 'danger';
             default: return 'default';
         }
     };
@@ -158,26 +138,48 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
                 {logs.map((log) => (
                     <Card key={log.id} shadow="sm" className="border border-default-200">
                         <CardBody className="p-3">
-                            <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center gap-2">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3 overflow-hidden">
+                                    {/* Action Chip */}
                                     <Chip 
                                         size="sm" 
                                         color={getActionColor(log.action)} 
                                         variant="flat"
-                                        className="uppercase font-bold text-[10px]"
+                                        className="uppercase font-bold text-[10px] min-w-fit"
                                     >
                                         {log.action}
                                     </Chip>
-                                    <span className="font-mono text-xs text-default-500">
-                                        {log.entity} / {log.entity_id.slice(0, 8)}
+
+                                    {/* Update Type Chip (if present and action is update) */}
+                                    {(log.update_type && log.action === BaseActions.UPDATE) && (
+                                        <Chip 
+                                            size="sm" 
+                                            color="default" 
+                                            variant="flat"
+                                            className="uppercase font-bold text-[10px] min-w-fit bg-default-100 text-default-500"
+                                        >
+                                            {log.update_type}
+                                        </Chip>
+                                    )}
+
+                                    {/* Entity Type */}
+                                    <span className="font-mono text-xs text-default-400 uppercase tracking-wider min-w-fit">
+                                        {log.entity}
+                                    </span>
+
+                                    {/* Entity Title */}
+                                    <span className="text-sm font-medium truncate" title={log.entity_title || log.entity_id}>
+                                        {log.entity_title || <span className="text-default-300 font-mono">{log.entity_id.slice(0, 8)}</span>}
                                     </span>
                                 </div>
-                                <div className="text-xs text-default-400">
+
+                                {/* Time */}
+                                <div className="text-xs text-default-400 whitespace-nowrap ml-4 tabular-nums">
                                     {new Date(log.created_at).toLocaleString()}
                                 </div>
                             </div>
                             
-                            {log.details && <LogDetails details={log.details} />}
+                            {/* Details hidden per request "И все!!! ditales потом подключим" */}
                         </CardBody>
                     </Card>
                 ))}
@@ -185,4 +187,3 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
         </div>
     );
 };
-
