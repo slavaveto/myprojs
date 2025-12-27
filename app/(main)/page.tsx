@@ -13,6 +13,7 @@ import { CreateItemPopover } from '@/app/components/CreateItem';
 import { LogsScreen } from '@/app/components/LogsScreen';
 import { DoneScreen } from '@/app/components/DoneScreen';
 import { TodayScreen } from '@/app/components/TodayScreen';
+import { InboxScreen } from '@/app/components/InboxScreen';
 import { SystemScreen } from '@/app/components/SystemScreen';
 import { globalStorage } from '@/utils/storage';
 import { useAsyncAction } from '@/utils/supabase/useAsyncAction';
@@ -453,7 +454,11 @@ function AppContent() {
                   activeSystemTab === 'inbox' ? "z-30 opacity-100 pointer-events-auto" : "z-0 opacity-0 pointer-events-none"
                )}
             >
-                <SystemScreen title="Inbox" globalStatus={sidebarStatus} canLoad={canLoadBackground || activeSystemTab === 'inbox'} />
+                <InboxScreen 
+                    globalStatus={sidebarStatus} 
+                    canLoad={canLoadBackground || activeSystemTab === 'inbox'} 
+                    isActive={activeSystemTab === 'inbox'}
+                />
             </div>
 
             <div 

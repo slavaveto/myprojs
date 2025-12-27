@@ -36,7 +36,7 @@ const DoneTaskRow = ({ task, onRestore, onDelete }: { task: any, onRestore: (t: 
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
             className={clsx(
-                'group px-1 flex justify-between min-h-[30px] items-center rounded-lg border border-default-300 bg-content1 transition-colors outline-none overflow-hidden mb-[3px]',
+                'group px-1 flex justify-between min-h-[30px] items-center rounded-lg border border-default-300 bg-content1 transition-colors outline-none overflow-hidden mb-[0px]',
                 'hover:bg-default-50'
             )}
         >
@@ -263,7 +263,7 @@ export const DoneScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
                  <div className="text font-semibold text-default-400 uppercase tracking-wider mb-2 px-1">
                     {title}
                 </div>
-                <div className="flex flex-col gap-[3px]">
+                <div className="flex flex-col gap-2">
                     <AnimatePresence initial={false} mode="popLayout">
                         {groupTasks.map((task) => (
                             <DoneTaskRow 

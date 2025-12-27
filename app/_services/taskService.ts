@@ -95,8 +95,21 @@ export const taskService = {
         return data as any[];
     },
 
+    async getInboxTasks() {
+        const { data, error } = await supabase
+            .from('tasks')
+            .select('*')
+            .is('folder_id', null)
+            .eq('is_completed', false)
+            .or('is_deleted.eq.false,is_deleted.is.null')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        return data as any[];
+    },
+
     // --- Writes ---
-    async createTask(folderId: string, content: string, sort_order: number) {
+    async createTask(folderId: string | null, content: string, sort_order: number) {
         const { data, error } = await supabase
             .from('tasks')
             .insert({
@@ -113,7 +126,7 @@ export const taskService = {
         if (error) throw error;
         
         await logService.logAction(
-            BaseActions.CREATE,
+            folderId ? BaseActions.CREATE : BaseActions.CREATE_INBOX,
             EntityTypes.TASK,
             data.id,
             { after: data },

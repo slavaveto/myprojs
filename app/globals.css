@@ -24,7 +24,7 @@
 
 
 .tab-title {
-    @apply text-2xl font-bold flex items-center gap-2
+    @apply pl-1 text-2xl font-bold flex items-center gap-2
 }
 
 

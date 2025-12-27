@@ -72,6 +72,7 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
     const getActionColor = (action: string) => {
         switch (action) {
             case BaseActions.CREATE: return 'success';
+            case BaseActions.CREATE_INBOX: return 'secondary';
             case BaseActions.COMPLETE: return 'success';
             case BaseActions.RESTORE: return 'primary';
             case BaseActions.UPDATE: return 'warning';
@@ -111,7 +112,7 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
     const renderGroup = (title: string, groupLogs: LogEntry[]) => {
         if (groupLogs.length === 0) return null;
         return (
-            <div key={title} className="mb-6">
+            <div key={title} className="mb-0">
                 <div className="text font-semibold text-default-400 uppercase tracking-wider mb-2 px-1">
                     {title}
                 </div>
@@ -140,16 +141,16 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
                                             </Chip>
                                         )}
 
-                                        <span className="font-mono text-xs text-default-400 uppercase tracking-wider min-w-fit">
+                                        <span className=" text text-default-400 uppercase tracking-wider min-w-fit">
                                             {log.entity}
                                         </span>
 
-                                        <span className="text-sm font-medium truncate" title={log.entity_title || log.entity_id}>
-                                            {log.entity_title || <span className="text-default-300 font-mono">{log.entity_id.slice(0, 8)}</span>}
+                                        <span className="text-xs font-medium truncate text-default-500" title={log.entity_title || log.entity_id}>
+                                            {log.entity_title || <span className="text-default-300">{log.entity_id.slice(0, 8)}</span>}
                                         </span>
                                     </div>
 
-                                    <div className="text-xs text-default-400 whitespace-nowrap ml-4 tabular-nums">
+                                    <div className="text text-default-400 whitespace-nowrap ml-4 tabular-nums">
                                         {new Date(log.created_at).toLocaleTimeString()}
                                     </div>
                                 </div>
@@ -213,7 +214,7 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
                 </div>
             </div>
             
-            <div className="flex-grow overflow-y-auto space-y-2 pb-10">
+            <div className="flex-grow overflow-y-auto space-y-0 pb-10">
                 {logs.length === 0 ? (
                     <div className="text-center text-default-400 py-10">
                         No logs found.

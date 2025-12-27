@@ -1,5 +1,6 @@
 export const BaseActions = {
     CREATE: 'create',
+    CREATE_INBOX: 'create_inbox',
     DELETE: 'delete',
     UPDATE: 'update',
     REORDER: 'reorder',
