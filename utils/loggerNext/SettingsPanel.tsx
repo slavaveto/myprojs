@@ -207,8 +207,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width }) => {
          transition={{ duration: 0.2 }}
          key={item.key}
          className={`
-             group flex items-center justify-between p-2 py-1 border rounded-md border-default-200 hover:bg-default-100 transition-colors
-             ${item.enabled ? 'bg-primary/5' : ''}
+             group flex items-center justify-between p-2 py-[2px] bg-content2 border rounded-md border-default-200 hover:bg-default-100 transition-colors
+             ${item.enabled ? '!bg-primary-100/50' : ''}
           `}
       >
          <div className="flex flex-col overflow-hidden mr-3 flex-1">
@@ -273,7 +273,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width }) => {
          style={{ width: width, minWidth: width }}
       >
          {/* Header & Search */}
-         <div className="px-2 py-1 border-b border-default-200 flex items-center gap-2 bg-content2 shrink-0 h-[36px]">
+         <div className="px-2 py-0 border-b border-default-200 flex items-center gap-2 bg-content2 shrink-0 h-[36px]">
             <SlidersHorizontal size={14} className="text-default-500 shrink-0" />
             <span className="font-medium text-sm shrink-0 mr-1">Settings</span>
             <Input
@@ -331,11 +331,11 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width }) => {
 
          {/* Pinned Section (Fixed) */}
          {pinned.length > 0 && (
-            <div className="flex flex-col p-2 gap-1 border-b border-default-200 bg-content2/50 shrink-0 z-10 max-h-[30%] overflow-y-auto">
-               <div className="flex items-center gap-2 px-1 pb-1">
+            <div className="flex flex-col p-2 gap-1 border-b border-default-200 bg-orange-50/50 shrink-0 z-10 max-h-[30%] overflow-y-auto">
+               {/* <div className="flex items-center gap-2 px-1 pb-1">
                   <Pin size={10} className="text-default-400" />
                   <span className="text-[10px] font-bold text-default-400 uppercase tracking-wider">Pinned</span>
-               </div>
+               </div> */}
                <AnimatePresence mode="popLayout" initial={false}>
                   {pinned.map(renderItem)}
                </AnimatePresence>

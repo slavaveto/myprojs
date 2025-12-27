@@ -410,11 +410,11 @@ const DebugContent = React.memo(function DebugContent({
          >
             {/* Header (Draggable) */}
             <div 
-               className="flex items-center justify-between px-2 py-1 bg-content2 border-b border-default-200 cursor-grab active:cursor-grabbing select-none shrink-0"
+               className="flex items-center justify-between h-[36px] px-2 py-1 bg-content2 border-b border-default-200 cursor-grab active:cursor-grabbing select-none shrink-0"
                onMouseDown={onHeaderMouseDown}
                onDoubleClick={onClose}
             >
-               <div className="flex items-center gap-2 pointer-events-none">
+               <div className="flex items-center gap-2  pointer-events-none">
                   <Bug size={14} className="text-secondary" />
                   <span className="text font-medium text-foreground">
                      NextLogs ({logs.length})
