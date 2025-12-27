@@ -19,6 +19,8 @@ import {
    ChevronUp,
    Eye,
    EyeOff,
+   ChevronsRight,
+   ChevronsLeft,
 } from 'lucide-react';
 import { storage, globalStorage } from '@/utils/storage';
 import { usePermission } from '@/app/admin/_services/usePermission';
@@ -377,9 +379,9 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
                               <button 
                                  onClick={toggleSettings} 
                                  className={`p-1 hover:bg-default-200 rounded transition-colors cursor-pointer ${showSettings ? 'text-primary' : 'text-default-400'}`}
-                                 title="Settings"
+                                 title={showSettings ? "Hide Settings" : "Show Settings"}
                               >
-                                 <Settings size={14} />
+                                 {showSettings ? <ChevronsLeft size={18} /> : <ChevronsRight size={18} />}
                               </button>
                               {/* <div className="w-[1px] h-[14px] bg-default-300 mx-1" /> */}
                            </div>
