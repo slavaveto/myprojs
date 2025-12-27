@@ -17,9 +17,12 @@ interface TaskListProps {
 }
 
 export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlightedTaskId, onAddGap, projectColor }: TaskListProps) => {
+    const pinnedTasks = React.useMemo(() => tasks.filter(t => t.is_pinned), [tasks]);
+    const unpinnedTasks = React.useMemo(() => tasks.filter(t => !t.is_pinned), [tasks]);
+
     const tasksWithGroupInfo = React.useMemo(() => {
         let currentGroupColor: string | null = null;
-        return tasks.map(task => {
+        return unpinnedTasks.map(task => {
             if (task.task_type === 'group') {
                 currentGroupColor = task.group_color || '#3b82f6';
                 return { task, activeGroupColor: null }; // Group itself doesn't get the border
@@ -30,12 +33,28 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlight
             }
             return { task, activeGroupColor: currentGroupColor };
         });
-    }, [tasks]);
+    }, [unpinnedTasks]);
 
     return (
         <div className="flex-grow overflow-y-auto pr-0 pb-10">
+             {pinnedTasks.length > 0 && (
+                 <div className="flex flex-col gap-[3px] mb-6 pb-2  outline-none">
+                     {pinnedTasks.map(task => (
+                         <TaskRow 
+                             key={task.id}
+                             task={task}
+                             onUpdate={onUpdateTask}
+                             onDelete={onDeleteTask}
+                             isHighlighted={highlightedTaskId === task.id}
+                             projectColor={projectColor}
+                             // Pinned tasks are not draggable, so onAddGap is not needed here or behaves differently
+                         />
+                     ))}
+                 </div>
+             )}
+
              <SortableContext
-                items={tasks.map(t => t.id)}
+                items={unpinnedTasks.map(t => t.id)}
                 strategy={verticalListSortingStrategy}
              >
                 <div className="flex flex-col gap-[3px] min-h-[50px] outline-none">

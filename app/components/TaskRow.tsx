@@ -145,6 +145,7 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
       id: task.id,
       data: task,
+      disabled: task.is_pinned,
    });
 
    const style = {
@@ -193,16 +194,22 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
       <>
          {/* Drag Handle + Checkbox Wrapper */}
          <div className="flex flex-1 gap-1 flex-row items-center">
-            <div
-               {...attributes}
-               {...listeners}
-               className={clsx(
-                  "cursor-grab p-[2px] active:cursor-grabbing text-default-400 hover:text-default-600 outline-none hover:bg-default-100 rounded text-center",
-               )}
-               style={{ color: (activeGroupColor || (isGroup ? currentGroupColor : undefined)) || undefined }}
-            >
-               <GripVertical size={16} />
-            </div>
+            {task.is_pinned ? (
+                <div className="w-[20px] flex justify-center text-primary">
+                    <Pin size={16} className="rotate-45" fill="currentColor" />
+                </div>
+            ) : (
+                <div
+                   {...attributes}
+                   {...listeners}
+                   className={clsx(
+                      "cursor-grab p-[2px] active:cursor-grabbing text-default-400 hover:text-default-600 outline-none hover:bg-default-100 rounded text-center",
+                   )}
+                   style={{ color: (activeGroupColor || (isGroup ? currentGroupColor : undefined)) || undefined }}
+                >
+                   <GripVertical size={16} />
+                </div>
+            )}
 
             {!isGroup && (
                 <Checkbox
