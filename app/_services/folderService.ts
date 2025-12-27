@@ -2,19 +2,28 @@ import { supabase } from '@/utils/supabase/supabaseClient';
 import { Folder } from '@/app/types';
 import { logService } from './logService';
 import { BaseActions, EntityTypes, FolderUpdateTypes } from './actions';
+import { createLogger } from '@/utils/logger/Logger';
+
+const logger = createLogger('FolderService');
 
 export const folderService = {
     async getFolders(projectId: string) {
+        logger.info('Fetching folders...', { projectId });
         const { data, error } = await supabase
             .from('folders')
             .select('*')
             .eq('project_id', projectId)
             .order('sort_order');
-        if (error) throw error;
+        if (error) {
+            logger.error('Failed to fetch folders', error);
+            throw error;
+        }
+        logger.info('Folders loaded', { count: data?.length });
         return data as Folder[];
     },
 
     async createFolder(projectId: string, title: string, sort_order: number) {
+        logger.info('Creating folder', { title, projectId });
         const { data, error } = await supabase
             .from('folders')
             .insert({
@@ -26,19 +35,25 @@ export const folderService = {
             })
             .select()
             .single();
-        if (error) throw error;
+        if (error) {
+            logger.error('Failed to create folder', error);
+            throw error;
+        }
         
         await logService.logAction(
             BaseActions.CREATE,
             EntityTypes.FOLDER,
             data.id,
-            { after: data }, // Full snapshot
+            { after: data },
             title
         );
+        logger.success('Folder created', { id: data.id });
         return data as Folder;
     },
 
     async updateFolder(id: string, updates: { title?: string }) {
+        logger.info('Updating folder', { id, updates });
+        
         // 1. Get state BEFORE update
         const { data: beforeState, error: fetchError } = await supabase
             .from('folders')
@@ -46,7 +61,10 @@ export const folderService = {
             .eq('id', id)
             .single();
             
-        if (fetchError) throw fetchError;
+        if (fetchError) {
+            logger.error('Failed to fetch folder before update', fetchError);
+            throw fetchError;
+        }
 
         // 2. Perform UPDATE
         const { data: afterState, error } = await supabase
@@ -56,10 +74,13 @@ export const folderService = {
                 updated_at: new Date().toISOString()
             })
             .eq('id', id)
-            .select() // Get state AFTER update
+            .select()
             .single();
 
-        if (error) throw error;
+        if (error) {
+            logger.error('Failed to update folder', error);
+            throw error;
+        }
         
         // 3. Log
         let updateType = undefined;
@@ -73,12 +94,15 @@ export const folderService = {
                 before: beforeState, 
                 after: afterState 
             },
-            afterState.title, // Current title
+            afterState.title,
             updateType
         );
+        logger.success('Folder updated', { id });
     },
 
     async deleteFolder(id: string) {
+        logger.info('Deleting folder', { id });
+        
         // 1. Get state BEFORE delete
         const { data: folder, error: fetchError } = await supabase
             .from('folders')
@@ -88,9 +112,7 @@ export const folderService = {
             
         if (fetchError) throw fetchError;
 
-        // 2. Soft delete tasks (logic moved from projectService)
-        // Note: Assuming we still want to soft delete tasks inside.
-        // We might want to move this logic to taskService later, but for now we do it directly via supabase.
+        // 2. Soft delete tasks
         const { error: taskError } = await supabase
             .from('tasks')
             .update({ 
@@ -100,29 +122,36 @@ export const folderService = {
             })
             .eq('folder_id', id);
             
-        if (taskError) throw taskError;
+        if (taskError) {
+             logger.error('Failed to soft delete tasks for folder', taskError);
+             throw taskError;
+        }
 
         // 3. Delete folder
         const { error } = await supabase
             .from('folders')
             .delete()
             .eq('id', id);
-        if (error) throw error;
+            
+        if (error) {
+            logger.error('Failed to delete folder', error);
+            throw error;
+        }
 
         await logService.logAction(
             BaseActions.DELETE,
             EntityTypes.FOLDER,
             id,
-            { before: folder }, // Full snapshot for restore
+            { before: folder },
             folder.title
         );
+        logger.success('Folder deleted', { id });
     },
 
     async updateFolderOrder(updates: { id: string; sort_order: number }[]) {
         if (updates.length === 0) return;
         
         const batchId = crypto.randomUUID();
-        // For reorder we don't log every single item change in detail, just the batch count
         await logService.logAction(
             BaseActions.REORDER,
             EntityTypes.FOLDER,
@@ -130,18 +159,19 @@ export const folderService = {
             { count: updates.length }
         );
         
-        // Batch update WITHOUT changing updated_at
+        // Batch update
         await Promise.all(
             updates.map(u => 
                 supabase
                     .from('folders')
                     .update({
                         sort_order: u.sort_order
-                        // updated_at: now // REMOVED to preserve history
+                        // updated_at: now // REMOVED
                     })
                     .eq('id', u.id)
             )
         );
+        logger.info('Folders reordered', { count: updates.length });
     },
 };
 

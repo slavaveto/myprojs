@@ -198,12 +198,30 @@ function AppContent() {
        const isActiveReady = readyProjects[activeProjectId];
        
        if (isActiveReady) {
-           setGlobalLoading(false);
-           setCanLoadBackground(true);
+           if (!canLoadBackground) {
+               logger.info('Active project ready. Starting background loading...');
+               logger.info('Waiting 200ms before background load...');
+               // Small delay to visually separate active load finish from background start
+               setTimeout(() => {
+                   setGlobalLoading(false);
+                   setCanLoadBackground(true);
+               }, 200);
+           }
        } else {
            setGlobalLoading(true);
+           setCanLoadBackground(false);
        }
-   }, [isInit, activeProjectId, readyProjects, setGlobalLoading]);
+   }, [isInit, activeProjectId, readyProjects, setGlobalLoading, canLoadBackground]);
+
+   // 3. Лог завершения загрузки всех проектов
+   useEffect(() => {
+       if (isInit && projects.length > 0) {
+           const readyCount = Object.keys(readyProjects).length;
+           if (readyCount === projects.length) {
+               logger.success(`All ${readyCount} projects loaded successfully`);
+           }
+       }
+   }, [readyProjects, projects.length, isInit]);
 
    const handleProjectReady = (projectId: string) => {
        setReadyProjects(prev => ({ ...prev, [projectId]: true }));

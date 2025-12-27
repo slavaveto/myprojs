@@ -2,10 +2,14 @@ import { supabase } from '@/utils/supabase/supabaseClient';
 import { Task } from '@/app/types';
 import { logService } from './logService';
 import { BaseActions, EntityTypes, TaskUpdateTypes, BaseActionType } from './actions';
+import { createLogger } from '@/utils/logger/Logger';
+
+const logger = createLogger('TaskService');
 
 export const taskService = {
     // --- Reads ---
     async getTasks(projectId: string) {
+        logger.info('Fetching tasks...', { projectId });
         const { data, error } = await supabase
             .from('tasks')
             .select('*, folders!inner(project_id)')
@@ -13,7 +17,11 @@ export const taskService = {
             .or('is_deleted.eq.false,is_deleted.is.null')
             .order('sort_order');
             
-        if (error) throw error;
+        if (error) {
+            logger.error('Failed to fetch tasks', error);
+            throw error;
+        }
+        logger.info('Tasks loaded', { count: data?.length });
         return (data || []).map((t: any) => {
             const { folders, ...task } = t;
             return task as Task;
@@ -21,6 +29,7 @@ export const taskService = {
     },
 
     async getDoneTasks(showDeleted = false, timeFilter = 'all') {
+        logger.info('Fetching done tasks...', { showDeleted, timeFilter });
         // ... (Logic from projectService, can be refined later to use logs if needed)
         // For now, keep as is, or use the LOGS approach?
         // User asked to use logs. But that's a UI/Query change.
@@ -67,11 +76,16 @@ export const taskService = {
             .order('created_at', { ascending: false })
             .limit(100);
 
-        if (error) throw error;
+        if (error) {
+            logger.error('Failed to fetch done tasks', error);
+            throw error;
+        }
+        logger.info('Done tasks loaded', { count: data?.length });
         return data;
     },
 
     async getTodayTasks() {
+        logger.info('Fetching today tasks...');
         const { data, error } = await supabase
             .from('tasks')
             .select(`
@@ -91,11 +105,16 @@ export const taskService = {
             .or('is_deleted.eq.false,is_deleted.is.null')
             .order('sort_order', { ascending: true });
 
-        if (error) throw error;
+        if (error) {
+             logger.error('Failed to fetch today tasks', error);
+             throw error;
+        }
+        logger.info('Today tasks loaded', { count: data?.length });
         return data as any[];
     },
 
     async getInboxTasks() {
+        logger.info('Fetching inbox tasks...');
         const { data, error } = await supabase
             .from('tasks')
             .select('*')
@@ -104,12 +123,17 @@ export const taskService = {
             .or('is_deleted.eq.false,is_deleted.is.null')
             .order('created_at', { ascending: false });
 
-        if (error) throw error;
+        if (error) {
+             logger.error('Failed to fetch inbox tasks', error);
+             throw error;
+        }
+        logger.info('Inbox tasks loaded', { count: data?.length });
         return data as any[];
     },
 
     // --- Writes ---
     async createTask(folderId: string | null, content: string, sort_order: number) {
+        logger.info('Creating task', { content, folderId });
         const { data, error } = await supabase
             .from('tasks')
             .insert({
@@ -123,7 +147,10 @@ export const taskService = {
             })
             .select()
             .single();
-        if (error) throw error;
+        if (error) {
+            logger.error('Failed to create task', error);
+            throw error;
+        }
         
         await logService.logAction(
             folderId ? BaseActions.CREATE : BaseActions.CREATE_INBOX,
@@ -132,10 +159,12 @@ export const taskService = {
             { after: data },
             content || 'New Task'
         );
+        logger.success('Task created', { id: data.id });
         return data as Task;
     },
 
     async updateTask(id: string, updates: Partial<Task>) {
+        logger.info('Updating task', { id, updates });
         // 1. Get BEFORE state
         const { data: beforeState, error: fetchError } = await supabase
             .from('tasks')
@@ -175,7 +204,10 @@ export const taskService = {
             .select()
             .single();
 
-        if (error) throw error;
+        if (error) {
+             logger.error('Failed to update task', error);
+             throw error;
+        }
         
         // 4. Log
         await logService.logAction(
@@ -190,9 +222,11 @@ export const taskService = {
             afterState.content || 'Task',
             updateType
         );
+        logger.success('Task updated', { id });
     },
 
     async restoreTask(id: string) {
+        logger.info('Restoring task', { id });
         // Special restore to top
         const { data: task, error: taskError } = await supabase
             .from('tasks')
@@ -229,7 +263,10 @@ export const taskService = {
             .select()
             .single();
             
-        if (error) throw error;
+        if (error) {
+             logger.error('Failed to restore task', error);
+             throw error;
+        }
         
         await logService.logAction(
             BaseActions.RESTORE,
@@ -238,9 +275,11 @@ export const taskService = {
             { before: beforeState, after: afterState },
             task.content
         );
+        logger.success('Task restored', { id });
     },
 
     async deleteTask(id: string) {
+        logger.info('Deleting task', { id });
         // Get BEFORE
         const { data: beforeState, error: fetchError } = await supabase
             .from('tasks')
@@ -260,7 +299,10 @@ export const taskService = {
             .select()
             .single();
 
-        if (error) throw error;
+        if (error) {
+             logger.error('Failed to delete task', error);
+             throw error;
+        }
         
         await logService.logAction(
             BaseActions.DELETE,
@@ -269,6 +311,7 @@ export const taskService = {
             { before: beforeState, after: afterState },
             beforeState.content
         );
+        logger.success('Task deleted', { id });
     },
 
     async updateTaskOrder(updates: { id: string; sort_order: number }[]) {
@@ -293,6 +336,7 @@ export const taskService = {
                     .eq('id', u.id)
             )
         );
+        logger.info('Tasks reordered', { count: updates.length });
     }
 };
 

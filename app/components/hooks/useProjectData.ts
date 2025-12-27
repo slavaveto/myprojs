@@ -86,6 +86,11 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
            try {
                await loadData();
                
+               // Artificial delay to separate active load from background load logs/process
+               if (isActive) {
+                   await new Promise(resolve => setTimeout(resolve, 100));
+               }
+               
                if (isActive) {
                    logger.success(`Active project loaded: ${project.title}`);
                } else {

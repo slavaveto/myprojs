@@ -2,19 +2,30 @@ import { supabase } from '@/utils/supabase/supabaseClient';
 import { Project } from '@/app/types';
 import { logService } from './logService';
 import { BaseActions, EntityTypes, ProjectUpdateTypes } from './actions';
+import { createLogger } from '@/utils/logger/Logger';
+
+const logger = createLogger('ProjectService');
 
 export const projectService = {
     // --- Projects ---
     async getProjects() {
+        logger.info('Fetching projects...');
         const { data, error } = await supabase
             .from('projects')
             .select('*')
             .order('sort_order', { ascending: true });
-        if (error) throw error;
+            
+        if (error) {
+            logger.error('Failed to fetch projects', error);
+            throw error;
+        }
+        
+        logger.info('Projects loaded', { count: data?.length });
         return data as Project[];
     },
 
     async createProject(title: string, color: string, sort_order: number) {
+        logger.info('Creating project', { title });
         const { data, error } = await supabase
             .from('projects')
             .insert({
@@ -26,7 +37,10 @@ export const projectService = {
             })
             .select()
             .single();
-        if (error) throw error;
+        if (error) {
+            logger.error('Failed to create project', error);
+            throw error;
+        }
         
         await logService.logAction(
             BaseActions.CREATE,
@@ -35,17 +49,24 @@ export const projectService = {
             { after: data },
             title
         );
+        logger.success('Project created', { id: data.id });
         return data as Project;
     },
 
     async updateProject(id: string, updates: { title?: string; color?: string }) {
+        logger.info('Updating project', { id, updates });
+        
         // 1. Get BEFORE
         const { data: beforeState, error: fetchError } = await supabase
             .from('projects')
             .select('*')
             .eq('id', id)
             .single();
-        if (fetchError) throw fetchError;
+            
+        if (fetchError) {
+            logger.error('Failed to fetch project before update', fetchError);
+            throw fetchError;
+        }
 
         // 2. Determine Type
         let updateType = undefined;
@@ -63,7 +84,10 @@ export const projectService = {
             .select()
             .single();
             
-        if (error) throw error;
+        if (error) {
+            logger.error('Failed to update project', error);
+            throw error;
+        }
         
         // 4. Log
         await logService.logAction(
@@ -74,9 +98,12 @@ export const projectService = {
             afterState.title,
             updateType
         );
+        logger.success('Project updated', { id });
     },
 
     async deleteProject(id: string) {
+        logger.info('Deleting project', { id });
+        
         // Get BEFORE
         const { data: beforeState, error: fetchError } = await supabase
             .from('projects')
@@ -120,7 +147,11 @@ export const projectService = {
             .from('projects')
             .delete()
             .eq('id', id);
-        if (error) throw error;
+            
+        if (error) {
+            logger.error('Failed to delete project', error);
+            throw error;
+        }
         
         await logService.logAction(
             BaseActions.DELETE,
@@ -129,6 +160,7 @@ export const projectService = {
             { before: beforeState },
             beforeState.title
         );
+        logger.success('Project deleted', { id });
     },
 
     async updateProjectOrder(updates: { id: string; sort_order: number }[]) {
@@ -154,5 +186,6 @@ export const projectService = {
                     .eq('id', u.id)
             )
         );
+        logger.info('Projects reordered', { count: updates.length });
     },
 };
