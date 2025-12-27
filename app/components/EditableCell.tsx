@@ -112,11 +112,10 @@ export const EditableCell = ({
             isOpen={!!error}
             isDisabled={!error}
          >
-            {/* Grid wrapper to auto-size based on content */}
-            <div className={clsx("inline-grid items-center relative", className)}>
-               {/* Hidden span controls the width. MUST match input styles exactly (padding, font). */}
+            <div className={clsx("inline-grid items-center relative min-w-0", className)}>
+               {/* Hidden span to define width based on content */}
                <span 
-                  className="col-start-1 row-start-1 invisible whitespace-pre px-1 pointer-events-none"
+                  className="col-start-1 row-start-1 invisible whitespace-pre px-1 pointer-events-none min-w-0"
                   aria-hidden="true"
                >
                   {localValue || "Empty"}
@@ -134,7 +133,7 @@ export const EditableCell = ({
                   onBlur={handleBlur}
                   onKeyDown={handleKeyDown}
                   className={clsx(
-                     "col-start-1 row-start-1 w-full h-full bg-transparent border-none outline-none m-0 px-1 rounded",
+                     "col-start-1 row-start-1 w-full h-full bg-transparent border-none outline-none m-0 px-1 rounded min-w-0",
                      "focus:ring-0 placeholder:text-default-300 transition-colors leading-inherit font-inherit",
                      error ? "bg-danger-50 text-danger focus:bg-danger-100 placeholder:text-danger-300" : "focus:bg-primary-50/50 dark:focus:bg-primary-900/20",
                   )}
