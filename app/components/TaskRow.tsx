@@ -5,7 +5,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useDndContext } from '@dnd-kit/core';
 import { Checkbox, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
-import { GripVertical, Trash2, MoreVertical, Check } from 'lucide-react';
+import { GripVertical, Trash2, MoreVertical, Check, Star } from 'lucide-react';
 import { Task } from '../types';
 import { EditableCell } from './EditableCell';
 import { clsx } from 'clsx';
@@ -242,6 +242,21 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
 
          {/* Actions */}
          <div className="p-0 text-center relative flex justify-center items-center gap-0.5">
+            {!isGroup && (
+                <button
+                   onClick={() => onUpdate(task.id, { is_today: !task.is_today })}
+                   className={clsx(
+                       "p-[2px] cursor-pointer rounded transition-all outline-none",
+                       task.is_today 
+                           ? "opacity-100 text-warning" 
+                           : "opacity-0 group-hover:opacity-100 text-default-300 hover:text-warning"
+                   )}
+                   aria-label="Toggle Today"
+                >
+                   <Star size={16} fill={task.is_today ? "currentColor" : "none"} />
+                </button>
+            )}
+
             <Dropdown placement="bottom-end">
                <DropdownTrigger>
                   <button
