@@ -15,6 +15,7 @@ import GlobalToggles from '@/utils/providers/GlobalToggles';
 import LoggerInitializer from '@/utils/providers/LoggerInitializer';
 import clsx from 'clsx';
 import { DebugConsole } from '@/utils/logger/DebugConsole';
+import { DebugNext } from '@/utils/loggerNext/DebugNext';
 import { DeviceFrame } from '@/utils/providers/DeviceFrame';
 
 const montserrat = Montserrat({
@@ -121,6 +122,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                            <DeviceFrame isLocal={isLocal}>{children}</DeviceFrame>
                            <GlobalToggles isLocal={isLocal} />
                            <DebugConsole isLocal={isLocal} />
+                           <DebugNext isLocal={isLocal} />
                            {isLocal && (
                               <div
                                  className={clsx(
