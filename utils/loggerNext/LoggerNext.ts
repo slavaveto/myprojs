@@ -20,49 +20,16 @@ export interface LogItem {
 export const LOGGER_NEXT_EVENT = 'logger-next:log';
 export const LOGGER_NEXT_CONFIG_KEY = 'logger-next-config'; // Exported now
 
-// --- Helper: Parse Stack Trace ---
-function getCallerFile(): string {
-   try {
-      const err = new Error();
-      const stack = err.stack;
-      if (!stack) return 'unknown';
-
-      // Разбираем стек
-      const lines = stack.split('\n');
-      
-      // Ищем первую строку, которая НЕ из этого файла (LoggerNext)
-      // Формат Chrome: "    at createLoggerNext (webpack-internal:///./utils/loggerNext/LoggerNext.ts:123:45)"
-      // Формат Firefox: "createLoggerNext@http://localhost:3000/..."
-      
-      for (let i = 0; i < lines.length; i++) {
-         const line = lines[i];
-         // Пропускаем строки с Error и самим логгером
-         if (line.includes('Error') || line.includes('LoggerNext')) continue;
-         
-         // Пытаемся вытащить имя файла
-         // Простая эвристика: ищем .tsx, .ts, .js
-         // Упрощенно: берем имя файла из пути
-         const match = line.match(/([a-zA-Z0-9_-]+\.(tsx|ts|js|jsx))/);
-         if (match) {
-            return match[1];
-         }
-      }
-      return 'unknown';
-   } catch {
-      return 'unknown';
-   }
-}
-
 // --- Logger Class ---
 
 class LoggerNext {
-   private componentName: string;
-   private fileName: string;
-   private enabled: boolean = false; // Default disabled
+   public componentName: string;
+   public fileName: string;
+   public enabled: boolean = false; // Default disabled
 
-   constructor(name: string, file: string) {
+   constructor(name: string) {
       this.componentName = name;
-      this.fileName = file;
+      this.fileName = '';
       
       this.updateConfig();
       
@@ -85,8 +52,8 @@ class LoggerNext {
          const configStr = globalStorage.getItem(LOGGER_NEXT_CONFIG_KEY);
          const config = configStr ? JSON.parse(configStr) : {};
          
-         // Ключ: "ComponentName:FileName"
-         const key = `${this.componentName}:${this.fileName}`;
+         // Ключ: "ComponentName" (без файла)
+         const key = this.componentName;
          
          if (config[key] === undefined) {
             // Новый компонент! Добавляем выключенным
@@ -137,16 +104,23 @@ class LoggerNext {
 
 const loggerCache = new Map<string, LoggerNext>();
 
+export function getAllLoggers() {
+   return Array.from(loggerCache.values()).map(l => ({ 
+      name: l.componentName, 
+      file: l.fileName, 
+      enabled: l.enabled 
+   }));
+}
+
 export function createLoggerNext(name: string) {
-   // Определяем файл вызова ОДИН РАЗ при создании
-   const file = getCallerFile();
-   const cacheKey = `${name}:${file}`;
+   // Cache Key = name (игнорируем файл)
+   const cacheKey = name;
 
    if (loggerCache.has(cacheKey)) {
       return loggerCache.get(cacheKey)!;
    }
    
-   const logger = new LoggerNext(name, file);
+   const logger = new LoggerNext(name);
    loggerCache.set(cacheKey, logger);
    return logger;
 }

@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { globalStorage } from '@/utils/storage';
-import { LOGGER_NEXT_CONFIG_KEY } from './LoggerNext';
+import { LOGGER_NEXT_CONFIG_KEY, getAllLoggers } from './LoggerNext';
+// Import updated from LoggerNext
 import { Button, Input, Switch, ScrollShadow } from '@heroui/react';
 import { Search, RotateCw, Trash2, SlidersHorizontal, ArrowUpDown } from 'lucide-react';
 
@@ -168,9 +169,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width }) => {
                            className={`font-medium text-sm truncate ${item.enabled ? 'text-foreground' : 'text-default-500'}`}
                         >
                            {item.name}
-                        </span>
-                        <span className="text-[10px] text-default-400 truncate font-mono">
-                           {item.file}
                         </span>
                      </div>
 
