@@ -174,7 +174,7 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
    const content = (
       <>
          {/* Drag Handle + Checkbox Wrapper */}
-         <div className="flex flex-1 gap-1 flex-row items-center justify-center">
+         <div className="flex flex-1 gap-1 flex-row items-center">
             <div
                {...attributes}
                {...listeners}
@@ -209,9 +209,11 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
                    }
                }}
                isMultiline
+               autoWidth={isGroup}
                className={clsx(
-                  'text-[16px]  w-full p-0 m-0 pl-1 mr-2 ',
-                  task.is_completed && 'text-default-400 line-through'
+                  'text-[16px] p-0 m-0 pl-1 mr-2',
+                  task.is_completed && 'text-default-400 line-through',
+                  isGroup && 'font-semibold'
                )}
             />
          </div>
