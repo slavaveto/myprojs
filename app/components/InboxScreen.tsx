@@ -10,6 +10,7 @@ import { format, isToday, isYesterday, isThisWeek, isThisMonth } from 'date-fns'
 import { useGlobalPersistentState } from '@/utils/storage';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CreateItemPopover } from '@/app/components/CreateItem';
+import { loadingService } from '@/app/_services/loadingService';
 
 const logger = createLogger('InboxScreen');
 
@@ -75,7 +76,7 @@ export const InboxScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
 
         if (showSpinner) {
             setIsLoading(true);
-            logger.start('Loading inbox tasks...');
+            loadingService.logSystemTabStart('Inbox');
         } else {
             setIsRefreshing(true);
             logger.info('Refreshing inbox tasks...');
@@ -87,7 +88,7 @@ export const InboxScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
             await new Promise(resolve => setTimeout(resolve, 500));
             
             setTasks(data || []);
-            logger.success('Inbox tasks loaded', { count: data?.length });
+            loadingService.logSystemTabFinish('Inbox', data?.length || 0);
             setIsLoaded(true);
         } catch (err) {
             logger.error('Failed to load inbox tasks', err);

@@ -8,6 +8,7 @@ import { CheckCircle2, Trash2, Folder as FolderIcon, RefreshCw, GripVertical, Ro
 import { Spinner, Chip, Button, Switch, Select, SelectItem, Checkbox } from '@heroui/react';
 import { format, isToday, isYesterday, isThisWeek, isThisMonth } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import { loadingService } from '@/app/_services/loadingService';
 import { useGlobalPersistentState } from '@/utils/storage';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -146,7 +147,7 @@ export const DoneScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
 
         if (showSpinner) {
             setIsLoading(true);
-            logger.start('Loading done tasks...');
+            loadingService.logSystemTabStart('Done');
         } else {
             setIsRefreshing(true);
             logger.info('Refreshing done tasks...');
@@ -158,7 +159,7 @@ export const DoneScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
                 new Promise(resolve => setTimeout(resolve, 1000)) // Min wait time for better UX
             ]);
             setTasks(data || []);
-            logger.success('Done tasks loaded', { count: data?.length });
+            loadingService.logSystemTabFinish('Done', data?.length || 0);
             setIsLoaded(true);
         } catch (err) {
             logger.error('Failed to load done tasks', err);

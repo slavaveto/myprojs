@@ -20,6 +20,7 @@ import { useAsyncAction } from '@/utils/supabase/useAsyncAction';
 import { StatusBadge } from '@/utils/supabase/StatusBadge';
 import { EditProjectPopover } from '@/app/components/EditProject';
 import { toast } from 'react-hot-toast';
+import { loadingService } from '@/app/_services/loadingService';
 
 // DnD Imports
 import {
@@ -179,11 +180,12 @@ function AppContent() {
             
             setIsInit(true);
          } catch (err) {
-            logger.error('Failed to load projects', err);
+            console.error('Failed to load projects', err);
             setGlobalLoading(false);
          }
       };
 
+      loadingService.logAppInit();
       init();
    }, []); // setGlobalLoading стабилен
 
@@ -199,8 +201,7 @@ function AppContent() {
        
        if (isActiveReady) {
            if (!canLoadBackground) {
-               logger.info('Active project ready. Starting background loading...');
-               logger.info('Waiting 200ms before background load...');
+               loadingService.logTransitionToBackground(200);
                // Small delay to visually separate active load finish from background start
                setTimeout(() => {
                    setGlobalLoading(false);
@@ -218,7 +219,7 @@ function AppContent() {
        if (isInit && projects.length > 0) {
            const readyCount = Object.keys(readyProjects).length;
            if (readyCount === projects.length) {
-               logger.success(`All ${readyCount} projects loaded successfully`);
+               loadingService.logAllFinished(readyCount);
            }
        }
    }, [readyProjects, projects.length, isInit]);

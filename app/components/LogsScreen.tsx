@@ -11,6 +11,7 @@ import { ActionStatus } from '@/utils/supabase/useAsyncAction';
 import { useGlobalPersistentState } from '@/utils/storage';
 import { BaseActions } from '@/app/_services/actions';
 import { isToday, isYesterday, isThisWeek, isThisMonth } from 'date-fns';
+import { loadingService } from '@/app/_services/loadingService';
 
 const logger = createLogger('LogsScreen');
 
@@ -38,7 +39,7 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
 
         if (showSpinner) {
             setIsLoading(true);
-            logger.start('Loading logs...');
+            loadingService.logSystemTabStart('Logs');
         } else {
             setIsRefreshing(true);
             logger.info('Refreshing logs...');
@@ -51,7 +52,7 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
             ]);
             setLogs(data || []);
             setIsLoaded(true);
-            logger.success('Logs loaded');
+            loadingService.logSystemTabFinish('Logs', data?.length || 0);
         } catch (err) {
             logger.error('Failed to load logs', err);
         } finally {

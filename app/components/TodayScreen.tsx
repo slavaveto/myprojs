@@ -9,6 +9,7 @@ import { Spinner, Chip, Button, Switch, Select, SelectItem, Checkbox } from '@he
 import { format, isToday, isYesterday, isThisWeek, isThisMonth } from 'date-fns';
 import { useGlobalPersistentState } from '@/utils/storage';
 import { AnimatePresence, motion } from 'framer-motion';
+import { loadingService } from '@/app/_services/loadingService';
 
 const logger = createLogger('TodayScreen');
 
@@ -114,7 +115,7 @@ export const TodayScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
 
         if (showSpinner) {
             setIsLoading(true);
-            logger.start('Loading today tasks...');
+            loadingService.logSystemTabStart('Today');
         } else {
             setIsRefreshing(true);
             logger.info('Refreshing today tasks...');
@@ -128,7 +129,7 @@ export const TodayScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
             await new Promise(resolve => setTimeout(resolve, 500));
             
             setTasks(data || []);
-            logger.success('Today tasks loaded', { count: data?.length });
+            loadingService.logSystemTabFinish('Today', data?.length || 0);
             setIsLoaded(true);
         } catch (err) {
             logger.error('Failed to load today tasks', err);

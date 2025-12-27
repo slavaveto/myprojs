@@ -7,6 +7,7 @@ import { useAsyncAction, ActionStatus } from '@/utils/supabase/useAsyncAction';
 import { createLogger } from '@/utils/logger/Logger';
 import { useFolderData } from './useFolderData';
 import { useTaskData } from './useTaskData';
+import { loadingService } from '@/app/_services/loadingService';
 
 const logger = createLogger('ProjectScreenHook');
 
@@ -78,9 +79,9 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
            loadStartedRef.current = true;
            
            if (isActive) {
-               logger.start(`Loading active project: ${project.title}`);
+               loadingService.logActiveProjectStart(project.title);
            } else {
-               logger.start(`Starting background load: ${project.title}`);
+               loadingService.logBackgroundProjectStart(project.title);
            }
            
            try {
@@ -92,9 +93,9 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
                }
                
                if (isActive) {
-                   logger.success(`Active project loaded: ${project.title}`);
+                   loadingService.logActiveProjectFinish(project.title);
                } else {
-                   logger.success(`Background project loaded: ${project.title}`);
+                   loadingService.logBackgroundProjectFinish(project.title);
                }
            } catch (err) {
                logger.error(`Failed to load project: ${project.title}`, err);
