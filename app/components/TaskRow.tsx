@@ -273,9 +273,9 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
                >
                   {isGroup ? (
                      <DropdownItem key="revert-task">Revert To Task</DropdownItem>
-                  ) : (
+                  ) : !activeGroupColor ? (
                      <DropdownItem key="make-group">Make As Group</DropdownItem>
-                  )}
+                  ) : null}
                   
                   {isGroup ? (
                       <DropdownItem key="group-color" isReadOnly className="cursor-default opacity-100" textValue="Group Color">
@@ -399,11 +399,11 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
                     }
                 }}
             >
-               {isGroup ? (
+               {/* {isGroup ? (
                    <DropdownItem key="revert-task">Revert To Task</DropdownItem>
                ) : (
                    <DropdownItem key="make-group">Make As Group</DropdownItem>
-               )}
+               )} */}
                 <DropdownItem key="make-gap">Make Gap Below</DropdownItem>
                 
             </DropdownMenu>
