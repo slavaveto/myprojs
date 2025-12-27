@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { createLogger } from '@/utils/logger/Logger';
-import { projectService } from '@/app/_services/projectService';
+import { taskService } from '@/app/_services/taskService';
 import { clsx } from 'clsx';
 import { CheckCircle2, Trash2, Folder as FolderIcon, RefreshCw, GripVertical, RotateCcw } from 'lucide-react';
 import { Spinner, Chip, Button, Switch, Select, SelectItem, Checkbox } from '@heroui/react';
@@ -154,7 +154,7 @@ export const DoneScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
 
         try {
             const [data] = await Promise.all([
-                projectService.getDoneTasks(showDeleted, timeFilter),
+                taskService.getDoneTasks(showDeleted, timeFilter),
                 new Promise(resolve => setTimeout(resolve, 1000)) // Min wait time for better UX
             ]);
             setTasks(data || []);
@@ -186,7 +186,7 @@ export const DoneScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
         
         try {
             // Update DB using special restore method (to put at top)
-            await projectService.restoreTask(task.id);
+            await taskService.restoreTask(task.id);
             
             // Notify parent to switch context
             if (onRestoreTask) {
@@ -214,7 +214,7 @@ export const DoneScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
         }
 
         try {
-            await projectService.deleteTask(id); // Soft delete (is_deleted = true)
+            await taskService.deleteTask(id); // Soft delete (is_deleted = true)
         } catch (err) {
             logger.error('Failed to delete task', err);
             fetchTasks(false);

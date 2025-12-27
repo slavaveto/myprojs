@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { createLogger } from '@/utils/logger/Logger';
-import { projectService } from '@/app/_services/projectService';
+import { taskService } from '@/app/_services/taskService';
 import { clsx } from 'clsx';
 import { CheckCircle2, Trash2, Folder as FolderIcon, RefreshCw, GripVertical, RotateCcw, Calendar, Star } from 'lucide-react';
 import { Spinner, Chip, Button, Switch, Select, SelectItem, Checkbox } from '@heroui/react';
@@ -122,7 +122,7 @@ export const TodayScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
 
         try {
             // Fetch tasks where is_today = true
-            const data = await projectService.getTodayTasks();
+            const data = await taskService.getTodayTasks();
             
             // Artificial delay for better UX (optional, matching DoneScreen)
             await new Promise(resolve => setTimeout(resolve, 500));
@@ -160,7 +160,7 @@ export const TodayScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
         }
 
         try {
-            await projectService.updateTask(id, updates);
+            await taskService.updateTask(id, updates);
         } catch (err) {
             logger.error('Failed to update task', err);
             fetchTasks(false); // Revert on error
@@ -172,7 +172,7 @@ export const TodayScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
         setTasks(prev => prev.filter(t => t.id !== id));
 
         try {
-            await projectService.deleteTask(id); // Soft delete
+            await taskService.deleteTask(id); // Soft delete
         } catch (err) {
             logger.error('Failed to delete task', err);
             fetchTasks(false);

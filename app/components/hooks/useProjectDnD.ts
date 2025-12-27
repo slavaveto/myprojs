@@ -18,7 +18,7 @@ import {
 import { Project, Task, Folder } from '@/app/types';
 import { createLogger } from '@/utils/logger/Logger';
 import { globalStorage } from '@/utils/storage';
-import { projectService } from '@/app/_services/projectService';
+import { taskService } from '@/app/_services/taskService';
 
 const logger = createLogger('ProjectScreenDnD');
 
@@ -333,11 +333,11 @@ export const useProjectDnD = ({
                 // Execute updates in parallel
                 await Promise.all([
                     // 1. If folder changed, update the task specifically
-                    projectService.updateTask(activeIdString, { 
+                    taskService.updateTask(activeIdString, { 
                         folder_id: selectedFolderId,
                     }),
                     // 2. Update order for ALL tasks in the folder
-                    projectService.updateTaskOrder(updates)
+                    taskService.updateTaskOrder(updates)
                 ]);
             });
         } catch (err) {
