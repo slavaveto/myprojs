@@ -260,7 +260,7 @@ export const DoneScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
         if (groupTasks.length === 0) return null;
         return (
             <div key={title} className="mb-6">
-                <div className="text-xs font-semibold text-default-400 uppercase tracking-wider mb-2 px-1">
+                 <div className="text font-semibold text-default-400 uppercase tracking-wider mb-2 px-1">
                     {title}
                 </div>
                 <div className="flex flex-col gap-[3px]">

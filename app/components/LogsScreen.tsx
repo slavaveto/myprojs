@@ -1,15 +1,16 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { logService, LogEntry } from '@/app/_services/logService';
 import { Spinner, Chip, Card, CardBody, Button, Select, SelectItem } from '@heroui/react';
 import { createLogger } from '@/utils/logger/Logger';
 import { clsx } from 'clsx';
-import { RefreshCw , FileText} from 'lucide-react';
+import { RefreshCw, FileText } from 'lucide-react';
 import { StatusBadge } from '@/utils/supabase/StatusBadge';
 import { ActionStatus } from '@/utils/supabase/useAsyncAction';
 import { useGlobalPersistentState } from '@/utils/storage';
 import { BaseActions } from '@/app/_services/actions';
+import { isToday, isYesterday, isThisWeek, isThisMonth } from 'date-fns';
 
 const logger = createLogger('LogsScreen');
 
@@ -80,6 +81,85 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
         }
     };
 
+    const groupedLogs = useMemo(() => {
+        const groups = {
+            today: [] as LogEntry[],
+            yesterday: [] as LogEntry[],
+            thisWeek: [] as LogEntry[],
+            thisMonth: [] as LogEntry[],
+            older: [] as LogEntry[],
+        };
+
+        logs.filter(log => log.action !== BaseActions.REORDER).forEach(log => {
+            const date = new Date(log.created_at);
+            if (isToday(date)) {
+                groups.today.push(log);
+            } else if (isYesterday(date)) {
+                groups.yesterday.push(log);
+            } else if (isThisWeek(date, { weekStartsOn: 1 })) {
+                groups.thisWeek.push(log);
+            } else if (isThisMonth(date)) {
+                groups.thisMonth.push(log);
+            } else {
+                groups.older.push(log);
+            }
+        });
+
+        return groups;
+    }, [logs]);
+
+    const renderGroup = (title: string, groupLogs: LogEntry[]) => {
+        if (groupLogs.length === 0) return null;
+        return (
+            <div key={title} className="mb-6">
+                <div className="text font-semibold text-default-400 uppercase tracking-wider mb-2 px-1">
+                    {title}
+                </div>
+                <div className="flex flex-col gap-2">
+                    {groupLogs.map((log) => (
+                        <div key={log.id} className="border border-default-200 rounded-medium p-3 bg-content1">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3 overflow-hidden">
+                                        <Chip 
+                                            size="sm" 
+                                            color={getActionColor(log.action)} 
+                                            variant="flat"
+                                            className="uppercase font-bold text-[10px] min-w-fit"
+                                        >
+                                            {log.action}
+                                        </Chip>
+
+                                        {(log.update_type && log.action === BaseActions.UPDATE) && (
+                                            <Chip 
+                                                size="sm" 
+                                                color="default" 
+                                                variant="flat"
+                                                className="uppercase font-bold text-[10px] min-w-fit bg-default-100 text-default-500"
+                                            >
+                                                {log.update_type}
+                                            </Chip>
+                                        )}
+
+                                        <span className="font-mono text-xs text-default-400 uppercase tracking-wider min-w-fit">
+                                            {log.entity}
+                                        </span>
+
+                                        <span className="text-sm font-medium truncate" title={log.entity_title || log.entity_id}>
+                                            {log.entity_title || <span className="text-default-300 font-mono">{log.entity_id.slice(0, 8)}</span>}
+                                        </span>
+                                    </div>
+
+                                    <div className="text-xs text-default-400 whitespace-nowrap ml-4 tabular-nums">
+                                        {new Date(log.created_at).toLocaleTimeString()}
+                                    </div>
+                                </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    };
+
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-full">
@@ -134,62 +214,19 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
             </div>
             
             <div className="flex-grow overflow-y-auto space-y-2 pb-10">
-                {logs.length === 0 && (
+                {logs.length === 0 ? (
                     <div className="text-center text-default-400 py-10">
                         No logs found.
                     </div>
+                ) : (
+                    <>
+                        {renderGroup('Today', groupedLogs.today)}
+                        {renderGroup('Yesterday', groupedLogs.yesterday)}
+                        {renderGroup('This Week', groupedLogs.thisWeek)}
+                        {renderGroup('This Month', groupedLogs.thisMonth)}
+                        {renderGroup('Older', groupedLogs.older)}
+                    </>
                 )}
-                
-                {logs
-                    .filter(log => log.action !== BaseActions.REORDER)
-                    .map((log) => (
-                    <Card key={log.id} shadow="sm" className="border border-default-200">
-                        <CardBody className="p-3">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3 overflow-hidden">
-                                    {/* Action Chip */}
-                                    <Chip 
-                                        size="sm" 
-                                        color={getActionColor(log.action)} 
-                                        variant="flat"
-                                        className="uppercase font-bold text-[10px] min-w-fit"
-                                    >
-                                        {log.action}
-                                    </Chip>
-
-                                    {/* Update Type Chip (if present and action is update) */}
-                                    {(log.update_type && log.action === BaseActions.UPDATE) && (
-                                        <Chip 
-                                            size="sm" 
-                                            color="default" 
-                                            variant="flat"
-                                            className="uppercase font-bold text-[10px] min-w-fit bg-default-100 text-default-500"
-                                        >
-                                            {log.update_type}
-                                        </Chip>
-                                    )}
-
-                                    {/* Entity Type */}
-                                    <span className="font-mono text-xs text-default-400 uppercase tracking-wider min-w-fit">
-                                        {log.entity}
-                                    </span>
-
-                                    {/* Entity Title */}
-                                    <span className="text-sm font-medium truncate" title={log.entity_title || log.entity_id}>
-                                        {log.entity_title || <span className="text-default-300 font-mono">{log.entity_id.slice(0, 8)}</span>}
-                                    </span>
-                                </div>
-
-                                {/* Time */}
-                                <div className="text-xs text-default-400 whitespace-nowrap ml-4 tabular-nums">
-                                    {new Date(log.created_at).toLocaleString()}
-                                </div>
-                            </div>
-                            
-                            {/* Details hidden per request "И все!!! ditales потом подключим" */}
-                        </CardBody>
-                    </Card>
-                ))}
             </div>
         </div>
     );

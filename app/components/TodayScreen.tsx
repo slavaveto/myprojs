@@ -190,6 +190,7 @@ export const TodayScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
     return (
         <div className="h-full flex flex-col p-6 max-w-5xl mx-auto w-full">
             <div className="flex justify-between items-center mb-4 min-h-[40px]">
+                
                 <h1 className="tab-title">
                     <Star className="text-warning" fill="currentColor" />
                     Today
