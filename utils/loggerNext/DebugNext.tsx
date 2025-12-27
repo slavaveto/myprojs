@@ -27,6 +27,8 @@ import { usePathname } from 'next/navigation';
 import MobDtToggle from '@/utils/providers/mobDtToggle';
 import { LogItem, LOGGER_NEXT_EVENT } from './LoggerNext';
 import { COLOR_MAP } from '@/utils/logger/services/loggerColors';
+import { SettingsPanel } from './SettingsPanel';
+import { Settings } from 'lucide-react';
 
 const MAX_LOGS = 200;
 
@@ -37,15 +39,17 @@ interface WindowState {
    height: number;
    isMinimized: boolean;
    isOpen: boolean;
+   showSettings: boolean; // Added showSettings
 }
 
 const DEFAULT_STATE: WindowState = {
-   x: 150, // Чуть сдвинем, чтобы не перекрывать старую панель
+   x: 150, 
    y: 100,
    width: 600,
    height: 400,
    isMinimized: false,
    isOpen: false,
+   showSettings: false,
 };
 
 export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
@@ -116,7 +120,7 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
       return () => window.removeEventListener(LOGGER_NEXT_EVENT, handleLog);
    }, [showDebugPanel]);
 
-   const { x, y, width, height, isMinimized, isOpen } = windowState;
+   const { x, y, width, height, isMinimized, isOpen, showSettings } = windowState;
 
    const [showData, setShowData] = useState(false);
    const [isCopiedAll, setIsCopiedAll] = useState(false);
@@ -132,6 +136,7 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
 
    const clearLogs = () => setLogs([]);
    const toggleOpen = () => setWindowState((prev) => ({ ...prev, isOpen: !prev.isOpen }));
+   const toggleSettings = () => setWindowState(prev => ({ ...prev, showSettings: !prev.showSettings }));
 
    useEffect(() => {
       // 1. Добавляем стили для body во время драга/ресайза
@@ -309,7 +314,15 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
                   </div>
 
                   <div className="flex items-center gap-1">
-                     <button
+                     <button 
+                        onClick={toggleSettings} 
+                        className={`p-1 hover:bg-default-200 rounded transition-colors cursor-pointer ${showSettings ? 'text-primary' : 'text-default-400'}`}
+                        title="Settings"
+                     >
+                        <Settings size={14} />
+                     </button>
+                     <div className="w-[1px] h-[14px] bg-default-300 mx-1" />
+                     <button 
                         onClick={() => setShowData(!showData)}
                         className={`p-1 hover:bg-default-200 rounded transition-colors cursor-pointer ${showData ? 'text-primary' : 'text-default-400'}`}
                         title={showData ? 'Hide Data' : 'Show Data'}
@@ -367,36 +380,47 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
                   </div>
                </div>
 
-               {/* Content */}
+               {/* Content Container (Flex Row) */}
                {!isMinimized && (
-                  <>
-                     {/* Top Gradient Shadow - Fixed under header */}
-                     <div className="w-full h-4 bg-gradient-to-b from-content1 to-transparent gap-1 z-10 pointer-events-none -mb-4 relative shrink-0" />
-
-                     <div
-                        className="flex-1 overflow-y-auto p-[6px] flex flex-col gap-1 bg-content1 relative"
-                        onScroll={(e) => {
-                           const target = e.target as HTMLDivElement;
-                           const isTop = target.scrollTop < 20;
-                           setIsAtTop(isTop);
-                        }}
-                     >
-                        <div ref={logsTopRef} />
-                        {logs.length === 0 && (
-                           <div className="text-center text-default-400 text-xs py-10 italic">
-                              No Next logs yet...
-                           </div>
-                        )}
-                        {logs.map((log, idx) => (
-                           <ConsoleLogItem
-                              key={`${log.timestamp}-${idx}`}
-                              log={log}
-                              showData={showData}
-                           />
-                        ))}
-                        <div ref={bottomRef} />
+                  <div className="flex flex-1 overflow-hidden h-full">
+                     {/* Logs Area */}
+                     <div className="flex flex-col flex-1 overflow-hidden relative">
+                        {/* Top Gradient Shadow - Fixed under header */}
+                        <div className="w-full h-4 bg-gradient-to-b from-content1 to-transparent gap-1 z-10 pointer-events-none -mb-4 relative shrink-0" />
+   
+                        <div 
+                           className="flex-1 overflow-y-auto p-[6px] flex flex-col gap-1 bg-content1 relative"
+                           onScroll={(e) => {
+                              const target = e.target as HTMLDivElement;
+                              const isTop = target.scrollTop < 20;
+                              setIsAtTop(isTop);
+                           }}
+                        >
+                           <div ref={logsTopRef} />
+                           {logs.length === 0 && (
+                              <div className="text-center text-default-400 text-xs py-10 italic">
+                                 No Next logs yet...
+                              </div>
+                           )}
+                           {logs.map((log, idx) => (
+                              <ConsoleLogItem
+                                 key={`${log.timestamp}-${idx}`}
+                                 log={log}
+                                 showData={showData}
+                              />
+                           ))}
+                           <div ref={bottomRef} />
+                        </div>
                      </div>
 
+                     {/* Settings Panel (Right Side) */}
+                     {showSettings && <SettingsPanel />}
+                  </div>
+               )}
+
+               {/* Resizers are outside the flex container but inside absolute */}
+               {!isMinimized && (
+                  <>
                      {/* Resize Handle (Right) */}
                      <div
                         className="absolute top-0 right-0 w-[6px] h-full z-20 bg-transparent hover:bg-primary/50 transition-colors"

@@ -11,99 +11,110 @@ export interface LogItem {
    data?: any;
    logColor?: string;
    componentName: string;
+   componentColor?: string; // restored for compatibility
+   fileName: string; 
    timestamp: number;
-   componentColor?: string;
    count: number;
 }
 
 export const LOGGER_NEXT_EVENT = 'logger-next:log';
+export const LOGGER_NEXT_CONFIG_KEY = 'logger-next-config'; // Exported now
+
+// --- Helper: Parse Stack Trace ---
+function getCallerFile(): string {
+   try {
+      const err = new Error();
+      const stack = err.stack;
+      if (!stack) return 'unknown';
+
+      // Разбираем стек
+      const lines = stack.split('\n');
+      
+      // Ищем первую строку, которая НЕ из этого файла (LoggerNext)
+      // Формат Chrome: "    at createLoggerNext (webpack-internal:///./utils/loggerNext/LoggerNext.ts:123:45)"
+      // Формат Firefox: "createLoggerNext@http://localhost:3000/..."
+      
+      for (let i = 0; i < lines.length; i++) {
+         const line = lines[i];
+         // Пропускаем строки с Error и самим логгером
+         if (line.includes('Error') || line.includes('LoggerNext')) continue;
+         
+         // Пытаемся вытащить имя файла
+         // Простая эвристика: ищем .tsx, .ts, .js
+         // Упрощенно: берем имя файла из пути
+         const match = line.match(/([a-zA-Z0-9_-]+\.(tsx|ts|js|jsx))/);
+         if (match) {
+            return match[1];
+         }
+      }
+      return 'unknown';
+   } catch {
+      return 'unknown';
+   }
+}
 
 // --- Logger Class ---
 
 class LoggerNext {
    private componentName: string;
-   private componentColor: string;
-   private enabled: boolean;
+   private fileName: string;
+   private enabled: boolean = false; // Default disabled
 
-   constructor(name: string) {
+   constructor(name: string, file: string) {
       this.componentName = name;
+      this.fileName = file;
       
-      // 1. Инициализация (читаем конфиги)
-      const config = this.readConfig();
-      this.componentColor = config.color;
-      this.enabled = config.enabled;
-   }
-
-   // Читаем конфиг (Только для инициализации цвета/статуса)
-   private readConfig() {
-      try {
-         // ПРОВЕРКА 1: Master Switch
-         const masterEnabled = globalStorage.getItem('logger-master-enabled');
-         if (masterEnabled === 'false') {
-            return { enabled: false, color: 'black' };
-         }
-
-         // ПРОВЕРКА 2: Pinned Components (Whitelist)
-         // Мы пока сохраняем старую логику: если нет в Pinned - молчим.
-         // Это безопасно для миграции.
-         const pinnedStr = globalStorage.getItem('logger-pinned-components');
-         const pinned = pinnedStr ? JSON.parse(pinnedStr) : [];
-         const isPinned = Array.isArray(pinned) && pinned.some((key: string) => key.startsWith(this.componentName + ':'));
-
-         if (!isPinned) {
-            // !!! ВАЖНО: Для удобства разработки пока ВРЕМЕННО включим всё по умолчанию в DEV режиме?
-            // Нет, следуем строгим правилам: сохраняем поведение. Не Pinned -> Выкл.
-            // Но мы добавим "авто-пин" если его нет? Нет, это опасно.
-            // Оставляем как есть: Выкл если не закреплен.
-            return { enabled: false, color: 'black' };
-         }
-
-         // ПРОВЕРКА 3: Switcher
-         const switchersStr = globalStorage.getItem('logger-pinned-switchers');
-         if (switchersStr) {
-            const switchers = JSON.parse(switchersStr);
-            const key = Object.keys(switchers).find(k => k.startsWith(this.componentName + ':'));
-            if (key && switchers[key] === false) {
-               return { enabled: false, color: 'black' };
+      this.updateConfig();
+      
+      // Подписываемся на изменения конфига (чтобы переключаться на лету)
+      if (typeof window !== 'undefined') {
+         window.addEventListener('storage', (e) => {
+            if (e.key === LOGGER_NEXT_CONFIG_KEY) {
+               this.updateConfig();
             }
-         }
-
-         // ЦВЕТ
-         const configsStr = globalStorage.getItem('logger-configs');
-         const configs = configsStr ? JSON.parse(configsStr) : {};
-         let color = 'black';
-         
-         // Ищем конфиг цвета
-         for (const key in configs) {
-            if (key.startsWith(this.componentName + ':') && key.endsWith(':component')) {
-               color = configs[key].color || 'black';
-               break;
-            }
-         }
-
-         return { enabled: true, color };
-
-      } catch (e) {
-         console.error('LoggerNext init error:', e);
-         return { enabled: false, color: 'black' };
+         });
+         // Для изменений в той же вкладке
+         window.addEventListener('logger-next-config-change', () => {
+             this.updateConfig();
+         });
       }
    }
 
-   private emit(level: LogLevel, message: string, data?: any, logColor?: string) {
+   private updateConfig() {
+      try {
+         const configStr = globalStorage.getItem(LOGGER_NEXT_CONFIG_KEY);
+         const config = configStr ? JSON.parse(configStr) : {};
+         
+         // Ключ: "ComponentName:FileName"
+         const key = `${this.componentName}:${this.fileName}`;
+         
+         if (config[key] === undefined) {
+            // Новый компонент! Добавляем выключенным
+            config[key] = false; 
+            globalStorage.setItem(LOGGER_NEXT_CONFIG_KEY, JSON.stringify(config));
+            this.enabled = false;
+         } else {
+            this.enabled = !!config[key];
+         }
+      } catch {
+         this.enabled = false;
+      }
+   }
+
+   private emit(level: LogLevel, message: string, data?: any) {
       if (!this.enabled) return;
 
       const logItem: LogItem = {
          level,
          message: typeof message === 'string' ? message : (message as any)?.message || String(message),
          data,
-         logColor,
          componentName: this.componentName,
-         componentColor: this.componentColor,
+         componentColor: 'blue', // Default color fixed to 'blue' (exists in COLOR_MAP)
+         fileName: this.fileName,
          timestamp: Date.now(),
          count: 1
       };
 
-      // 1. Отправляем событие для DebugNext
       if (typeof window !== 'undefined') {
          window.dispatchEvent(new CustomEvent(LOGGER_NEXT_EVENT, { detail: logItem }));
       }
@@ -127,12 +138,15 @@ class LoggerNext {
 const loggerCache = new Map<string, LoggerNext>();
 
 export function createLoggerNext(name: string) {
-   if (loggerCache.has(name)) {
-      return loggerCache.get(name)!;
+   // Определяем файл вызова ОДИН РАЗ при создании
+   const file = getCallerFile();
+   const cacheKey = `${name}:${file}`;
+
+   if (loggerCache.has(cacheKey)) {
+      return loggerCache.get(cacheKey)!;
    }
    
-   const logger = new LoggerNext(name);
-   loggerCache.set(name, logger);
+   const logger = new LoggerNext(name, file);
+   loggerCache.set(cacheKey, logger);
    return logger;
 }
-
