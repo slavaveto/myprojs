@@ -2,7 +2,24 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button, ScrollShadow, Popover, PopoverTrigger, PopoverContent } from '@heroui/react';
-import { Bug, X, Trash2, Maximize2, Minimize2, Copy, Check, Info, Rocket, CheckCircle, AlertCircle, AlertTriangle, FileJson, ChevronUp, Eye, EyeOff } from 'lucide-react';
+import {
+   Bug,
+   X,
+   Trash2,
+   Maximize2,
+   Minimize2,
+   Copy,
+   Check,
+   Info,
+   Rocket,
+   CheckCircle,
+   AlertCircle,
+   AlertTriangle,
+   FileJson,
+   ChevronUp,
+   Eye,
+   EyeOff,
+} from 'lucide-react';
 import { storage, globalStorage } from '@/utils/storage';
 import { usePermission } from '@/app/admin/_services/usePermission';
 import { PERMISSIONS } from '@/app/admin/_services/acl';
@@ -36,10 +53,10 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
    const logsTopRef = useRef<HTMLDivElement>(null);
    const [isAtTop, setIsAtTop] = useState(true);
    const [isMounted, setIsMounted] = useState(false);
-   
+
    // Состояние окна (позиция, размер и видимость)
    const [windowState, setWindowState] = useState<WindowState>(DEFAULT_STATE);
-   
+
    // Рефы для драга и ресайза
    const draggingRef = useRef(false);
    const resizingRef = useRef(false);
@@ -49,13 +66,13 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
 
    // Состояние видимости кнопки
    const permission = usePermission();
-   
+
    // State for Device Toggle Popover
    const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
    useEffect(() => {
       setIsMounted(true);
-      
+
       // Восстанавливаем позицию из session Storage
       try {
          const saved = storage.getItem('debug-next-state');
@@ -114,24 +131,54 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
    }, [logs, isOpen, isMinimized, showData]);
 
    const clearLogs = () => setLogs([]);
-   const toggleOpen = () => setWindowState(prev => ({ ...prev, isOpen: !prev.isOpen }));
+   const toggleOpen = () => setWindowState((prev) => ({ ...prev, isOpen: !prev.isOpen }));
+
+   useEffect(() => {
+      // 1. Добавляем стили для body во время драга/ресайза
+      if (draggingRef.current) {
+         document.body.style.userSelect = 'none';
+         document.body.style.cursor = 'grabbing';
+      } else if (resizingRef.current) {
+         document.body.style.userSelect = 'none';
+         // Ставим курсор в зависимости от того, за какую грань тянем
+         if (resizeDirectionRef.current === 'right') {
+            document.body.style.cursor = 'ew-resize';
+         } else if (resizeDirectionRef.current === 'bottom') {
+            document.body.style.cursor = 'ns-resize';
+         } else {
+            document.body.style.cursor = 'nwse-resize';
+         }
+      } else {
+         document.body.style.userSelect = '';
+         document.body.style.cursor = '';
+      }
+
+      // Cleanup при размонтировании
+      return () => {
+         document.body.style.userSelect = '';
+         document.body.style.cursor = '';
+      };
+   }, [windowState]); // Перерисовываемся при изменении стейта (он меняется при драге)
 
    // --- Логика перемещения (Drag) ---
    const handleMouseDown = (e: React.MouseEvent) => {
-      if (e.target instanceof Element && e.target.closest('button')) return; 
-      
+      if (e.target instanceof Element && e.target.closest('button')) return;
+
       draggingRef.current = true;
       dragOffsetRef.current = {
          x: e.clientX - windowState.x,
          y: e.clientY - windowState.y,
       };
-      
+
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
    };
 
    // --- Логика изменения размера (Resize) ---
-   const handleResizeMouseDown = (e: React.MouseEvent, direction: 'right' | 'bottom' | 'bottom-right') => {
+   const handleResizeMouseDown = (
+      e: React.MouseEvent,
+      direction: 'right' | 'bottom' | 'bottom-right'
+   ) => {
       e.stopPropagation();
       resizingRef.current = true;
       resizeDirectionRef.current = direction;
@@ -141,14 +188,14 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
          x: e.clientX,
          y: e.clientY,
       };
-      
+
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
    };
 
    const handleMouseMove = useCallback((e: MouseEvent) => {
       if (draggingRef.current) {
-         setWindowState(prev => ({
+         setWindowState((prev) => ({
             ...prev,
             x: e.clientX - dragOffsetRef.current.x,
             y: e.clientY - dragOffsetRef.current.y,
@@ -156,22 +203,28 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
       } else if (resizingRef.current) {
          const deltaX = e.clientX - startResizeRef.current.x;
          const deltaY = e.clientY - startResizeRef.current.y;
-         
-         setWindowState(prev => {
+
+         setWindowState((prev) => {
             let newWidth = prev.width;
             let newHeight = prev.height;
 
-            if (resizeDirectionRef.current === 'right' || resizeDirectionRef.current === 'bottom-right') {
-                newWidth = Math.max(300, startResizeRef.current.w + deltaX);
+            if (
+               resizeDirectionRef.current === 'right' ||
+               resizeDirectionRef.current === 'bottom-right'
+            ) {
+               newWidth = Math.max(300, startResizeRef.current.w + deltaX);
             }
-            if (resizeDirectionRef.current === 'bottom' || resizeDirectionRef.current === 'bottom-right') {
-                newHeight = Math.max(100, startResizeRef.current.h + deltaY);
+            if (
+               resizeDirectionRef.current === 'bottom' ||
+               resizeDirectionRef.current === 'bottom-right'
+            ) {
+               newHeight = Math.max(100, startResizeRef.current.h + deltaY);
             }
-            
+
             return {
-                ...prev,
-                width: newWidth,
-                height: newHeight
+               ...prev,
+               width: newWidth,
+               height: newHeight,
             };
          });
       }
@@ -185,96 +238,98 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
       document.removeEventListener('mouseup', handleMouseUp);
    }, [handleMouseMove]);
 
-
    if (!isMounted) return null;
    if (!showDebugPanel) return null;
 
    return (
       <>
-          {/* Main Floating Button Group - СМЕСТИЛИ ЧУТЬ ВПРАВО (left-[50px]) */}
-          <div 
-             className="fixed bottom-[70px] left-[50px] z-[9999] flex items-center shadow-lg rounded-full bg-content1 border border-default-200 opacity-50 hover:opacity-100 transition-opacity"
-          >
-             {/* 1. Main Toggle Button */}
-          <Button
-            isIconOnly
+         {/* Main Floating Button Group - СМЕСТИЛИ ЧУТЬ ВПРАВО (left-[50px]) */}
+         <div className="fixed bottom-[70px] left-[50px] z-[9999] flex items-center shadow-lg rounded-full bg-content1 border border-default-200 opacity-50 hover:opacity-100 transition-opacity">
+            {/* 1. Main Toggle Button */}
+            <Button
+               isIconOnly
                className={`bg-transparent min-w-0 w-[32px] h-[32px]`}
-            onPress={toggleOpen}
-            size="sm"
-         >
-            <Bug size={18} className="text-secondary" /> {/* Сменили цвет на secondary (фиолетовый) чтобы отличался */}
-         </Button>
-
-      
-                  <div className="w-[1px] h-[20px] bg-default-200" /> {/* Divider */}
-                  <Popover 
-                     placement="top" 
-                     isOpen={isPopoverOpen} 
-                     onOpenChange={(open) => setIsPopoverOpen(open)}
-                     shouldCloseOnInteractOutside={() => false}
+               onPress={toggleOpen}
+               size="sm"
+            >
+               <Bug size={18} className="text-secondary" />{' '}
+               {/* Сменили цвет на secondary (фиолетовый) чтобы отличался */}
+            </Button>
+            <div className="w-[1px] h-[20px] bg-default-200" /> {/* Divider */}
+            <Popover
+               placement="top"
+               isOpen={isPopoverOpen}
+               onOpenChange={(open) => setIsPopoverOpen(open)}
+               shouldCloseOnInteractOutside={() => false}
+            >
+               <PopoverTrigger>
+                  <Button
+                     isIconOnly
+                     className="bg-transparent min-w-0 w-[32px] h-[32px] rounded-r-full rounded-l-none pl-0 pr-0"
+                     size="sm"
                   >
-                     <PopoverTrigger>
-                        <Button
-                           isIconOnly
-                           className="bg-transparent min-w-0 w-[32px] h-[32px] rounded-r-full rounded-l-none pl-0 pr-0"
-                           size="sm"
-                        >
-                           <ChevronUp 
-                              size={18} 
-                              className={`text-default-500 transition-transform duration-200 ${isPopoverOpen ? 'rotate-180' : ''}`} 
-                           />
-                        </Button>
-                     </PopoverTrigger>
-                     <PopoverContent className="p-1">
-                        <MobDtToggle />
-                     </PopoverContent>
-                  </Popover>
-  
-          </div>
+                     <ChevronUp
+                        size={18}
+                        className={`text-default-500 transition-transform duration-200 ${isPopoverOpen ? 'rotate-180' : ''}`}
+                     />
+                  </Button>
+               </PopoverTrigger>
+               <PopoverContent className="p-1">
+                  <MobDtToggle />
+               </PopoverContent>
+            </Popover>
+         </div>
 
          {/* Window is rendered if isOpen is true */}
          {isOpen && (
-            <div 
+            <div
                className="fixed z-[9999] bg-content1 border border-default-200 shadow-2xl rounded-lg flex flex-col font-mono overflow-hidden"
                style={{
                   left: x,
                   top: y,
                   width: width,
                   height: isMinimized ? 40 : height,
-                  transition: draggingRef.current || resizingRef.current ? 'none' : 'height 0.2s ease', 
+                  transition:
+                     draggingRef.current || resizingRef.current ? 'none' : 'height 0.2s ease',
                }}
             >
                {/* Header (Draggable) */}
-               <div 
+               <div
                   className="flex items-center justify-between px-2 py-1 bg-content2 border-b border-default-200 rounded-t-lg cursor-grab active:cursor-grabbing select-none"
                   onMouseDown={handleMouseDown}
-                  onDoubleClick={() => setWindowState(prev => ({ ...prev, isMinimized: !prev.isMinimized }))}
+                  onDoubleClick={() =>
+                     setWindowState((prev) => ({ ...prev, isMinimized: !prev.isMinimized }))
+                  }
                >
                   <div className="flex items-center gap-2 pointer-events-none">
                      <Bug size={14} className="text-secondary" /> {/* Secondary color */}
-                     <span className="text font-medium text-foreground">NextLogs ({logs.length})</span>
+                     <span className="text font-medium text-foreground">
+                        NextLogs ({logs.length})
+                     </span>
                   </div>
 
                   <div className="flex items-center gap-1">
-                     <button 
-                        onClick={() => setShowData(!showData)} 
+                     <button
+                        onClick={() => setShowData(!showData)}
                         className={`p-1 hover:bg-default-200 rounded transition-colors cursor-pointer ${showData ? 'text-primary' : 'text-default-400'}`}
-                        title={showData ? "Hide Data" : "Show Data"}
+                        title={showData ? 'Hide Data' : 'Show Data'}
                      >
                         {showData ? <Eye size={14} /> : <EyeOff size={14} />}
                      </button>
-                     <button 
+                     <button
                         onClick={() => {
-                           const text = logs.map(log => {
-                              const time = new Date(log.timestamp).toLocaleTimeString('ru-RU', {
-                                 hour: '2-digit',
-                                 minute: '2-digit',
-                                 second: '2-digit',
-                                 fractionalSecondDigits: 3,
-                              });
-                              const countStr = log.count > 1 ? ` (x${log.count})` : '';
-                              return `[${time}] [${log.componentName}] ${log.message}${countStr} ${log.data ? JSON.stringify(log.data) : ''}`;
-                           }).join('\n');
+                           const text = logs
+                              .map((log) => {
+                                 const time = new Date(log.timestamp).toLocaleTimeString('ru-RU', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    second: '2-digit',
+                                    fractionalSecondDigits: 3,
+                                 });
+                                 const countStr = log.count > 1 ? ` (x${log.count})` : '';
+                                 return `[${time}] [${log.componentName}] ${log.message}${countStr} ${log.data ? JSON.stringify(log.data) : ''}`;
+                              })
+                              .join('\n');
                            navigator.clipboard.writeText(text);
                            setIsCopiedAll(true);
                            setTimeout(() => setIsCopiedAll(false), 1500);
@@ -282,23 +337,29 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
                         className="p-1 hover:bg-default-200 rounded text-default-400 hover:text-foreground transition-colors cursor-pointer"
                         title="Copy All"
                      >
-                        {isCopiedAll ? <Check size={14} className="text-success" /> : <Copy size={14} />}
+                        {isCopiedAll ? (
+                           <Check size={14} className="text-success" />
+                        ) : (
+                           <Copy size={14} />
+                        )}
                      </button>
-                     <button 
-                        onClick={() => clearLogs()} 
-                        className="p-1 hover:bg-default-200 rounded text-default-400 hover:text-foreground transition-colors cursor-pointer"
+                     <button
+                        onClick={() => clearLogs()}
+                        className="p-1 hover:bg-red-200 hover:text-red-500 rounded text-default-400 hover:text-foreground transition-colors cursor-pointer"
                         title="Clear"
                      >
                         <Trash2 size={14} />
                      </button>
-                     <button 
-                        onClick={() => setWindowState(prev => ({ ...prev, isMinimized: !prev.isMinimized }))} 
+                     <button
+                        onClick={() =>
+                           setWindowState((prev) => ({ ...prev, isMinimized: !prev.isMinimized }))
+                        }
                         className="hidden p-1 hover:bg-default-200 rounded text-default-400 hover:text-foreground transition-colors cursor-pointer"
                      >
                         {isMinimized ? <Maximize2 size={14} /> : <Minimize2 size={12} />}
                      </button>
-                     <button 
-                        onClick={toggleOpen} 
+                     <button
+                        onClick={toggleOpen}
                         className="p-1 hover:bg-default-200 rounded text-default-400 hover:text-danger transition-colors cursor-pointer"
                      >
                         <X size={16} />
@@ -310,10 +371,10 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
                {!isMinimized && (
                   <>
                      {/* Top Gradient Shadow - Fixed under header */}
-                     <div className="w-full h-4 bg-gradient-to-b from-content1 to-transparent z-10 pointer-events-none -mb-4 relative shrink-0" />
+                     <div className="w-full h-4 bg-gradient-to-b from-content1 to-transparent gap-1 z-10 pointer-events-none -mb-4 relative shrink-0" />
 
-                     <div 
-                        className="flex-1 overflow-y-auto p-[5px] space-y-1 bg-content1 relative"
+                     <div
+                        className="flex-1 overflow-y-auto p-[6px] flex flex-col gap-1 bg-content1 relative"
                         onScroll={(e) => {
                            const target = e.target as HTMLDivElement;
                            const isTop = target.scrollTop < 20;
@@ -327,35 +388,42 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
                            </div>
                         )}
                         {logs.map((log, idx) => (
-                           <ConsoleLogItem key={`${log.timestamp}-${idx}`} log={log} showData={showData} />
+                           <ConsoleLogItem
+                              key={`${log.timestamp}-${idx}`}
+                              log={log}
+                              showData={showData}
+                           />
                         ))}
                         <div ref={bottomRef} />
                      </div>
 
                      {/* Resize Handle (Right) */}
                      <div
-                        className="absolute top-0 right-0 w-[6px] h-full cursor-e-resize z-20 hover:bg-default-200/50"
+                        className="absolute top-0 right-0 w-[6px] h-full z-20 bg-transparent hover:bg-primary/50 transition-colors"
+                        style={{ cursor: 'ew-resize' }}
                         onMouseDown={(e) => handleResizeMouseDown(e, 'right')}
                      />
 
                      {/* Resize Handle (Bottom) */}
                      <div
-                        className="absolute bottom-0 left-0 w-full h-[6px] cursor-s-resize z-20 hover:bg-default-200/50"
+                        className="absolute bottom-0 left-0 w-full h-[6px] z-20 bg-transparent hover:bg-primary/50 transition-colors"
+                        style={{ cursor: 'ns-resize' }}
                         onMouseDown={(e) => handleResizeMouseDown(e, 'bottom')}
                      />
 
                      {/* Resize Handle (Bottom Right) */}
                      <div
-                        className="absolute bottom-0 right-0 w-[20px] h-[20px] cursor-nwse-resize z-30 group/bottom-right"
+                        className="absolute bottom-0 right-0 w-[20px] h-[20px] z-30 group/bottom-right"
+                        style={{ cursor: 'nwse-resize' }}
                         onMouseDown={(e) => handleResizeMouseDown(e, 'bottom-right')}
                      >
-                         <div 
-                           className="absolute bottom-0 right-0 w-[20px] h-[20px] bg-transparent group-hover/bottom-right:bg-default-400/20 transition-colors"
+                        <div
+                           className="absolute bottom-0 right-0 w-[20px] h-[20px] bg-transparent group-hover/bottom-right:bg-primary/50 transition-colors"
                            style={{
                               clipPath: 'polygon(100% 100%, 0 100%, 100% 0)',
                               borderBottomRightRadius: '8px',
                            }}
-                         />
+                        />
                      </div>
                   </>
                )}
@@ -365,7 +433,7 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
    );
 }
 
-function ConsoleLogItem({ log, showData }: { log: LogItem, showData: boolean }) {
+function ConsoleLogItem({ log, showData }: { log: LogItem; showData: boolean }) {
    const [isCopied, setIsCopied] = useState(false);
    const [localShowData, setLocalShowData] = useState(false);
 
@@ -386,7 +454,7 @@ function ConsoleLogItem({ log, showData }: { log: LogItem, showData: boolean }) 
       error: AlertCircle,
       warning: AlertTriangle,
    };
-   
+
    const methodColors = {
       info: 'text-default-500',
       start: 'text-orange-400',
@@ -400,8 +468,8 @@ function ConsoleLogItem({ log, showData }: { log: LogItem, showData: boolean }) 
    const iconColor = methodColors[log.level] || 'text-default-500';
 
    // Цвета
-   const logColorHex = log.logColor ? (COLOR_MAP[log.logColor] || '#ccc') : '#444';
-   const componentColorHex = log.componentColor ? (COLOR_MAP[log.componentColor] || '#ccc') : '#888';
+   const logColorHex = log.logColor ? COLOR_MAP[log.logColor] || '#ccc' : '#444';
+   const componentColorHex = log.componentColor ? COLOR_MAP[log.componentColor] || '#ccc' : '#888';
 
    const copyLog = (e: React.MouseEvent) => {
       e.stopPropagation();
@@ -414,24 +482,26 @@ function ConsoleLogItem({ log, showData }: { log: LogItem, showData: boolean }) 
 
    // Основной контент лога (Compact View)
    const logContent = (
-      <div 
+      <div
          className={`relative rounded-lg p-1 transition-colors text-left group bg-content2 ${
             !log.logColor || log.logColor === 'black' ? '' : ''
          } ${log.data ? 'cursor-pointer hover:bg-default-100' : ''}`}
          onClick={() => log.data && setLocalShowData(!localShowData)}
-         style={{ 
+         style={{
             fontSize: '12px',
             borderStyle: 'solid',
             borderWidth: '1px',
             borderColor: log.logColor && log.logColor !== 'black' ? logColorHex : '#e5e7eb',
-            ...(log.logColor && log.logColor !== 'black' ? {
-                borderLeftWidth: '1px',
-                borderLeftColor: logColorHex
-            } : {})
+            ...(log.logColor && log.logColor !== 'black'
+               ? {
+                    borderLeftWidth: '1px',
+                    borderLeftColor: logColorHex,
+                 }
+               : {}),
          }}
       >
          {/* Copy Button (on hover) */}
-         <button 
+         <button
             onClick={copyLog}
             className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-default-200/50 hover:bg-default-300 rounded text-default-500 hover:text-foreground z-10 cursor-pointer"
          >
@@ -440,15 +510,14 @@ function ConsoleLogItem({ log, showData }: { log: LogItem, showData: boolean }) 
 
          {/* Первая строка: [Component] Icon (line) (count) [data icon] */}
          <div className="flex items-center gap-1">
-            <span 
-               className="font-medium" 
-               style={{ color: componentColorHex }}
-            >
+            <span className="font-medium" style={{ color: componentColorHex }}>
                [{log.componentName}]
             </span>
             <Icon size={14} className={iconColor} style={{ marginTop: '0px' }} />
             {log.count > 1 && (
-               <span className="bg-default-100 text-default-600 px-1 rounded text-[9px] font-bold">x{log.count}</span>
+               <span className="bg-default-100 text-default-600 px-1 rounded text-[9px] font-bold">
+                  x{log.count}
+               </span>
             )}
             {log.data && !shouldShowData && (
                <FileJson size={14} className="text-default-400 ml-1" />
@@ -456,18 +525,18 @@ function ConsoleLogItem({ log, showData }: { log: LogItem, showData: boolean }) 
          </div>
 
          {/* Вторая строка: Message */}
-         <div className="text-default-700">
-            {log.message}
-         </div>
+         <div className="text-default-700">{log.message}</div>
 
          {/* Третья строка: Data (если включено или развернуто) */}
          {shouldShowData && log.data && (
-            <div className="mt-1 font-mono text-[10px] whitespace-pre-wrap overflow-x-auto text-default-500" onClick={(e) => e.stopPropagation()}>
+            <div
+               className="mt-1 font-mono text-[10px] whitespace-pre-wrap overflow-x-auto text-default-500"
+               onClick={(e) => e.stopPropagation()}
+            >
                {JSON.stringify(log.data, null, 2)
-                  .replace(/^\{\n/, '') 
-                  .replace(/\n\}$/, '') 
-                  .replace(/^  /gm, '') 
-               }
+                  .replace(/^\{\n/, '')
+                  .replace(/\n\}$/, '')
+                  .replace(/^  /gm, '')}
             </div>
          )}
       </div>
@@ -475,4 +544,3 @@ function ConsoleLogItem({ log, showData }: { log: LogItem, showData: boolean }) 
 
    return logContent;
 }
-
