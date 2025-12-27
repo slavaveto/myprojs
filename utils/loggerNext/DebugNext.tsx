@@ -81,7 +81,8 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
       try {
          const saved = storage.getItem('debug-next-state');
          if (saved) {
-            setWindowState({ ...DEFAULT_STATE, ...JSON.parse(saved) });
+            // Force isMinimized to false
+            setWindowState({ ...DEFAULT_STATE, ...JSON.parse(saved), isMinimized: false });
          }
       } catch (e) {
          // ignore
@@ -241,6 +242,10 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
       resizeDirectionRef.current = null;
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
+
+      // Сбрасываем курсор и выделение принудительно
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
    }, [handleMouseMove]);
 
    if (!isMounted) return null;
@@ -306,11 +311,11 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
                         className="flex flex-col overflow-hidden relative border-r border-default-200 bg-content1"
                         style={{ width: width, minWidth: width }}
                      >
-                        {/* Header (Draggable) - Now inside left panel */}
+                        {/* Заголовок (Draggable) */}
                         <div 
                            className="flex items-center justify-between px-2 py-1 bg-content2 border-b border-default-200 cursor-grab active:cursor-grabbing select-none shrink-0"
                            onMouseDown={handleMouseDown}
-                           onDoubleClick={() => setWindowState(prev => ({ ...prev, isMinimized: !prev.isMinimized }))}
+                           onDoubleClick={() => setWindowState(prev => ({ ...prev, isOpen: false }))}
                         >
                            <div className="flex items-center gap-2 pointer-events-none">
                               <Bug size={14} className="text-secondary" />
@@ -320,21 +325,14 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
                            </div>
          
                            <div className="flex items-center gap-1">
-                              <button 
-                                 onClick={toggleSettings} 
-                                 className={`p-1 hover:bg-default-200 rounded transition-colors cursor-pointer ${showSettings ? 'text-primary' : 'text-default-400'}`}
-                                 title="Settings"
-                              >
-                                 <Settings size={14} />
-                              </button>
-                              <div className="w-[1px] h-[14px] bg-default-300 mx-1" />
-                              <button 
+                             
+                              {/* <button 
                                  onClick={() => setShowData(!showData)} 
                                  className={`p-1 hover:bg-default-200 rounded transition-colors cursor-pointer ${showData ? 'text-primary' : 'text-default-400'}`}
                                  title={showData ? 'Hide Data' : 'Show Data'}
                               >
                                  {showData ? <Eye size={14} /> : <EyeOff size={14} />}
-                              </button>
+                              </button> */}
                               <button
                                  onClick={() => {
                                     const text = logs
@@ -369,20 +367,21 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
                               >
                                  <Trash2 size={14} />
                               </button>
-                              <button
-                                 onClick={() =>
-                                    setWindowState((prev) => ({ ...prev, isMinimized: !prev.isMinimized }))
-                                 }
-                                 className="hidden p-1 hover:bg-default-200 rounded text-default-400 hover:text-foreground transition-colors cursor-pointer"
-                              >
-                                 {isMinimized ? <Maximize2 size={14} /> : <Minimize2 size={12} />}
-                              </button>
-                              <button
+                              {/* <button
                                  onClick={toggleOpen}
                                  className="p-1 hover:bg-default-200 rounded text-default-400 hover:text-danger transition-colors cursor-pointer"
                               >
                                  <X size={16} />
+                              </button> */}
+
+                              <button 
+                                 onClick={toggleSettings} 
+                                 className={`p-1 hover:bg-default-200 rounded transition-colors cursor-pointer ${showSettings ? 'text-primary' : 'text-default-400'}`}
+                                 title="Settings"
+                              >
+                                 <Settings size={14} />
                               </button>
+                              {/* <div className="w-[1px] h-[14px] bg-default-300 mx-1" /> */}
                            </div>
                         </div>
 
