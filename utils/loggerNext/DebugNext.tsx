@@ -312,7 +312,7 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
          {/* Window is rendered if isOpen is true */}
          {isOpen && (
             <div
-               className="fixed z-[9999] bg-content1 border border-default-200 shadow-2xl rounded-lg flex flex-col font-mono overflow-hidden"
+               className="fixed z-[9999] bg-content1  border border-default-200 shadow-2xl rounded-lg flex flex-col font-mono overflow-hidden"
                style={{
                   left: x,
                   top: y,
@@ -332,7 +332,7 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
                      >
                         {/* Заголовок (Draggable) */}
                         <div 
-                           className="flex items-center justify-between px-2 py-1 bg-content2 border-b border-default-200 cursor-grab active:cursor-grabbing select-none shrink-0"
+                           className="flex items-center justify-between px-2 py-1 h-[36px] bg-content2 border-b border-default-200 cursor-grab active:cursor-grabbing select-none shrink-0"
                            onMouseDown={handleMouseDown}
                            onDoubleClick={() => setWindowState(prev => ({ ...prev, isOpen: false }))}
                         >

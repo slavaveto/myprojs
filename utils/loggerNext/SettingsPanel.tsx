@@ -103,14 +103,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width }) => {
    }, [configs, search]);
 
    return (
-      <div
+      <div 
          className="flex flex-col h-full bg-content1 border-l border-default-200"
          style={{ width: width, minWidth: width }}
       >
          {/* Header & Search */}
-         <div className="px-2 py-1 border-b border-default-200 flex items-center gap-2 bg-content2 shrink-0 h-[35px]">
+         <div className="px-2 py-1 border-b border-default-200 flex items-center gap-2 bg-content2 shrink-0 h-[36px]">
             <SlidersHorizontal size={14} className="text-default-500 shrink-0" />
-            <span className="font-medium text-sm shrink-0">Settings</span>
+            <span className="font-medium text-sm shrink-0 mr-1">Settings</span>
             <Input
                placeholder="Search..."
                size="sm"
@@ -119,12 +119,28 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width }) => {
                onValueChange={setSearch}
                isClearable
                classNames={{
-                  base: "h-[26px]",
-                  mainWrapper: "h-[26px]",
-                  inputWrapper: "h-[26px] min-h-[26px]",
-                  input: "text",
+                  base: "h-[28px] flex-1",
+                  mainWrapper: "h-[28px]",
+                  inputWrapper: "h-[28px] min-h-[28px] px-2",
+                  input: "text-xs",
+                  innerWrapper: "pb-0",
                }}
             />
+            <Button
+               isIconOnly
+               size="sm"
+               variant="light"
+               className="min-w-6 w-6 h-[28px] text-default-400 hover:text-danger"
+               onPress={() => {
+                  if (confirm('Reset all settings?')) {
+                     globalStorage.removeItem(LOGGER_NEXT_CONFIG_KEY);
+                     window.dispatchEvent(new Event('logger-next-config-change'));
+                  }
+               }}
+               title="Reset Config"
+            >
+               <Trash2 size={14} />
+            </Button>
          </div>
 
          {/* List */}
@@ -166,24 +182,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width }) => {
                   </div>
                ))}
             </div>
-         </div>
-
-         {/* Footer Actions */}
-         <div className="p-2 border-t border-default-200 bg-content2 flex justify-end">
-            <Button
-               size="sm"
-               variant="light"
-               color="danger"
-               startContent={<Trash2 size={14} />}
-               onPress={() => {
-                  if (confirm('Reset all settings?')) {
-                     globalStorage.removeItem(LOGGER_NEXT_CONFIG_KEY);
-                     window.dispatchEvent(new Event('logger-next-config-change'));
-                  }
-               }}
-            >
-               Reset Config
-            </Button>
          </div>
       </div>
    );
