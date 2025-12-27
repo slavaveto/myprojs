@@ -7,6 +7,7 @@ import { LOGGER_NEXT_CONFIG_KEY, getAllLoggers } from './LoggerNext';
 import { Button, Input, Switch, ScrollShadow, Popover, PopoverTrigger, PopoverContent } from '@heroui/react';
 import { Search, RotateCw, Trash2, SlidersHorizontal, ArrowUpDown, ArrowDownAz, ListChecks } from 'lucide-react';
 import { AVAILABLE_COLORS, COLOR_MAP } from '@/utils/logger/services/loggerColors';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface ConfigItem {
    key: string;
@@ -215,66 +216,76 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width }) => {
 
          {/* List */}
          <div className="flex-1 overflow-y-auto relative">
+            
             {/* Gradient top */}
-            <div className="sticky top-0 left-0 right-0 h-4 bg-gradient-to-b from-content1 to-transparent z-10 pointer-events-none" />
+            {/* <div className="sticky top-0 left-0 right-0 h-4 bg-gradient-to-b from-content1 to-transparent z-10 pointer-events-none" /> */}
 
-            <div className="flex flex-col p-2 gap-2">
+            <div className="flex flex-col p-2 gap-1">
                {filteredConfigs.length === 0 && (
                   <div className="text-center text-default-400 text-xs py-8">
                      No components found
                   </div>
                )}
 
-               {filteredConfigs.map((item) => (
-                  <div
-                     key={item.key}
-                     className={`
-                         flex items-center justify-between p-3 border rounded-md border-default-100 hover:bg-default-100 transition-colors
-                         ${item.enabled ? 'bg-primary/5' : ''}
-                      `}
-                  >
-                     <div className="flex flex-col overflow-hidden mr-3 flex-1">
-                        <span
-                           className={`font-medium text-sm truncate ${item.enabled ? 'text-foreground' : 'text-default-500'}`}
-                           title={item.name}
-                        >
-                           {item.name}
-                        </span>
-                     </div>
+               <AnimatePresence mode="popLayout" initial={false}>
+                  {filteredConfigs.map((item) => (
+                     <motion.div
+                        layout
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.2 }}
+                        key={item.key}
+                        className={`
+                            flex items-center justify-between p-2 py-1 border rounded-md border-default-200 hover:bg-default-100 transition-colors
+                            ${item.enabled ? 'bg-primary/5' : ''}
+                         `}
+                     >
+                        <div className="flex flex-col overflow-hidden mr-3 flex-1">
+                           <span
+                              className={`font-medium text-sm truncate ${item.enabled ? 'text-foreground' : 'text-default-500'}`}
+                              title={item.name}
+                           >
+                              {item.name}
+                           </span>
+                        </div>
 
-                     <div className="flex items-center gap-2">
-                        <Popover placement="left">
-                           <PopoverTrigger>
-                              <div
-                                 className="w-3 h-3 rounded-full cursor-pointer hover:scale-125 transition-transform border border-default-200"
-                                 style={{ backgroundColor: item.color === 'black' ? '#52525b' : (COLOR_MAP[item.color] || COLOR_MAP['blue']) }}
-                                 title="Change Color"
-                              />
-                           </PopoverTrigger>
-                           <PopoverContent className="p-2">
-                              <div className="grid grid-cols-5 gap-1 w-[120px]">
-                                 {AVAILABLE_COLORS.map((c) => (
-                                    <button
-                                       key={c.key}
-                                       className={`w-5 h-5 rounded-full border border-transparent hover:scale-110 transition-transform ${item.color === c.key ? 'ring-2 ring-offset-1 ring-default-400' : ''}`}
-                                       style={{ backgroundColor: c.key === 'black' ? '#52525b' : c.hex }}
-                                       onClick={() => changeColor(item.key, c.key, item.enabled)}
-                                       title={c.label}
-                                    />
-                                 ))}
-                              </div>
-                           </PopoverContent>
-                        </Popover>
+                        <div className="flex items-center gap-2">
+                           <Popover placement="left">
+                              <PopoverTrigger>
+                                 <motion.div
+                                    whileHover={{ scale: 1.2 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    className="w-3 h-3 rounded-full cursor-pointer border border-default-200"
+                                    style={{ backgroundColor: item.color === 'black' ? '#52525b' : (COLOR_MAP[item.color] || COLOR_MAP['blue']) }}
+                                    title="Change Color"
+                                 />
+                              </PopoverTrigger>
+                              <PopoverContent className="p-2">
+                                 <div className="grid grid-cols-5 gap-1 w-[120px]">
+                                    {AVAILABLE_COLORS.map((c) => (
+                                       <button
+                                          key={c.key}
+                                          className={`w-5 h-5 rounded-full border border-transparent hover:scale-110 transition-transform ${item.color === c.key ? 'ring-2 ring-offset-1 ring-default-400' : ''}`}
+                                          style={{ backgroundColor: c.key === 'black' ? '#52525b' : c.hex }}
+                                          onClick={() => changeColor(item.key, c.key, item.enabled)}
+                                          title={c.label}
+                                       />
+                                    ))}
+                                 </div>
+                              </PopoverContent>
+                           </Popover>
 
-                        <Switch
-                           size="sm"
-                           className="scale-75"
-                           isSelected={item.enabled}
-                           onValueChange={() => toggleLogger(item.key, item.enabled, item.color)}
-                        />
-                     </div>
-                  </div>
-               ))}
+                           <Switch
+                              size="sm"
+                              className="scale-75"
+                              isSelected={item.enabled}
+                              onValueChange={() => toggleLogger(item.key, item.enabled, item.color)}
+                           />
+                        </div>
+                     </motion.div>
+                  ))}
+               </AnimatePresence>
             </div>
          </div>
       </div>
