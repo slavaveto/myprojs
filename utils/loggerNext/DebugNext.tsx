@@ -46,7 +46,7 @@ interface WindowState {
 }
 
 const DEFAULT_STATE: WindowState = {
-   x: 150, 
+   x: 150,
    y: 100,
    width: 300,
    height: 600,
@@ -57,9 +57,6 @@ const DEFAULT_STATE: WindowState = {
 };
 
 export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
-   const [logs, setLogs] = useState<LogItem[]>([]);
-   const logsTopRef = useRef<HTMLDivElement>(null);
-   const [isAtTop, setIsAtTop] = useState(true);
    const [isMounted, setIsMounted] = useState(false);
 
    // Состояние окна (позиция, размер и видимость)
@@ -104,44 +101,17 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
 
    const showDebugPanel = isLocal || permission.can(PERMISSIONS.SHOW_DEBUG_PANEL);
 
-   // --- ПОДКЛЮЧЕНИЕ К НОВОМУ ЛОГГЕРУ ---
-   useEffect(() => {
-      if (!showDebugPanel) return;
-
-      const handleLog = (event: Event) => {
-         const customEvent = event as CustomEvent<LogItem>;
-         const log = customEvent.detail;
-
-         setLogs((prev) => {
-            const newLogs = [...prev, log]; // Новые снизу
-            if (newLogs.length > MAX_LOGS) {
-               return newLogs.slice(newLogs.length - MAX_LOGS);
-            }
-            return newLogs;
-         });
-      };
-
-      window.addEventListener(LOGGER_NEXT_EVENT, handleLog);
-      return () => window.removeEventListener(LOGGER_NEXT_EVENT, handleLog);
-   }, [showDebugPanel]);
-
    const { x, y, width, height, isMinimized, isOpen, showSettings, settingsWidth } = windowState;
 
-   const [showData, setShowData] = useState(false);
-   const [isCopiedAll, setIsCopiedAll] = useState(false);
-
-   // Auto-scroll to bottom
-   const bottomRef = useRef<HTMLDivElement>(null);
-
-   useEffect(() => {
-      if (isOpen && !isMinimized && bottomRef.current) {
-         bottomRef.current.scrollIntoView({ behavior: 'smooth' });
-      }
-   }, [logs, isOpen, isMinimized, showData]);
-
-   const clearLogs = () => setLogs([]);
    const toggleOpen = () => setWindowState((prev) => ({ ...prev, isOpen: !prev.isOpen }));
-   const toggleSettings = () => setWindowState(prev => ({ ...prev, showSettings: !prev.showSettings }));
+   const toggleSettings = useCallback(
+      () => setWindowState((prev) => ({ ...prev, showSettings: !prev.showSettings })),
+      []
+   );
+   const onClose = useCallback(
+      () => setWindowState((prev) => ({ ...prev, isOpen: false })),
+      []
+   );
 
    useEffect(() => {
       // 1. Добавляем стили для body во время драга/ресайза
@@ -171,10 +141,20 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
    }, [windowState]); // Перерисовываемся при изменении стейта (он меняется при драге)
 
    // --- Логика перемещения (Drag) ---
-   const handleMouseDown = (e: React.MouseEvent) => {
+   const handleMouseDown = useCallback((e: React.MouseEvent) => {
       if (e.target instanceof Element && e.target.closest('button')) return;
 
       draggingRef.current = true;
+      // Используем ref для актуальных координат, чтобы не зависеть от замыкания,
+      // но координаты берем из windowState (который в рендере).
+      // Проблема: handleMouseDown мемоизирован? Нет.
+      // Лучше брать актуальные координаты из event и offset.
+      // Но нам нужно знать текущий X окна.
+      // Мы передадим этот handler в Content, но вызывать будем с e.
+      
+      // ВАЖНО: Мы используем functional update в handleMouseMove, так что start drag offset
+      // нужно вычислить правильно.
+      // windowState доступен в замыкании (пересоздается при рендере).
       dragOffsetRef.current = {
          x: e.clientX - windowState.x,
          y: e.clientY - windowState.y,
@@ -182,7 +162,7 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
 
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
-   };
+   }, [windowState.x, windowState.y]);
 
    // --- Логика изменения размера (Resize) ---
    const handleResizeMouseDown = (
@@ -234,7 +214,7 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
                   resizeDirectionRef.current === 'right' ||
                   resizeDirectionRef.current === 'bottom-right'
                ) {
-                  newWidth = Math.min(600, Math.max(150, startResizeRef.current.w + deltaX));
+                  newWidth = Math.min(300, Math.max(150, startResizeRef.current.w + deltaX));
                }
             }
 
@@ -272,19 +252,17 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
 
    return (
       <>
-         {/* Main Floating Button Group - СМЕСТИЛИ ЧУТЬ ВПРАВО (left-[50px]) */}
+         {/* Main Floating Button Group */}
          <div className="fixed bottom-[70px] left-[50px] z-[9999] flex items-center shadow-lg rounded-full bg-content1 border border-default-200 opacity-50 hover:opacity-100 transition-opacity">
-            {/* 1. Main Toggle Button */}
             <Button
                isIconOnly
                className={`bg-transparent min-w-0 w-[32px] h-[32px]`}
                onPress={toggleOpen}
                size="sm"
             >
-               <Bug size={18} className="text-secondary" />{' '}
-               {/* Сменили цвет на secondary (фиолетовый) чтобы отличался */}
+               <Bug size={18} className="text-secondary" />
             </Button>
-            <div className="w-[1px] h-[20px] bg-default-200" /> {/* Divider */}
+            <div className="w-[1px] h-[20px] bg-default-200" />
             <Popover
                placement="top"
                isOpen={isPopoverOpen}
@@ -309,152 +287,42 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
             </Popover>
          </div>
 
-         {/* Window is rendered if isOpen is true */}
+         {/* Window Container */}
          {isOpen && (
             <div
-               className="fixed z-[9999] bg-content1  border border-default-200 shadow-2xl rounded-lg flex flex-col font-mono overflow-hidden"
+               className="fixed z-[9999] bg-content1 border border-default-200 shadow-2xl rounded-lg flex flex-col font-mono overflow-hidden"
                style={{
                   left: x,
                   top: y,
-                  width: showSettings ? width + settingsWidth : width, // Dynamically expand width
+                  width: showSettings ? width + settingsWidth : width,
                   height: isMinimized ? 40 : height,
                   transition:
                      draggingRef.current || resizingRef.current ? 'none' : 'width 0.2s ease, height 0.2s ease',
                }}
             >
-               {/* Content Container (Flex Row) */}
-               {!isMinimized && (
-                  <div className="flex flex-1 overflow-hidden h-full">
-                     {/* Logs Area - Fixed width based on state */}
-                     <div 
-                        className="flex flex-col overflow-hidden relative border-r border-default-200 bg-content1"
-                        style={{ width: width, minWidth: width }}
-                     >
-                        {/* Заголовок (Draggable) */}
-                        <div 
-                           className="flex items-center justify-between px-2 py-1 h-[36px] bg-content2 border-b border-default-200 cursor-grab active:cursor-grabbing select-none shrink-0"
-                           onMouseDown={handleMouseDown}
-                           onDoubleClick={() => setWindowState(prev => ({ ...prev, isOpen: false }))}
-                        >
-                           <div className="flex items-center gap-2 pointer-events-none">
-                              <Bug size={14} className="text-secondary" />
-                              <span className="text font-medium text-foreground">
-                                 NextLogs ({logs.length})
-                              </span>
-                           </div>
-         
-                           <div className="flex items-center gap-1">
-                             
-                              {/* <button 
-                                 onClick={() => setShowData(!showData)} 
-                                 className={`p-1 hover:bg-default-200 rounded transition-colors cursor-pointer ${showData ? 'text-primary' : 'text-default-400'}`}
-                                 title={showData ? 'Hide Data' : 'Show Data'}
-                              >
-                                 {showData ? <Eye size={14} /> : <EyeOff size={14} />}
-                              </button> */}
-                              <button
-                                 onClick={() => {
-                                    const text = logs
-                                       .map((log) => {
-                                          const time = new Date(log.timestamp).toLocaleTimeString('ru-RU', {
-                                             hour: '2-digit',
-                                             minute: '2-digit',
-                                             second: '2-digit',
-                                             fractionalSecondDigits: 3,
-                                          });
-                                          const countStr = log.count > 1 ? ` (x${log.count})` : '';
-                                          return `[${time}] [${log.componentName}] ${log.message}${countStr} ${log.data ? JSON.stringify(log.data) : ''}`;
-                                       })
-                                       .join('\n');
-                                    navigator.clipboard.writeText(text);
-                                    setIsCopiedAll(true);
-                                    setTimeout(() => setIsCopiedAll(false), 1500);
-                                 }}
-                                 className="p-1 hover:bg-default-200 rounded text-default-400 hover:text-foreground transition-colors cursor-pointer"
-                                 title="Copy All"
-                              >
-                                 {isCopiedAll ? (
-                                    <Check size={14} className="text-success" />
-                                 ) : (
-                                    <Copy size={14} />
-                                 )}
-                              </button>
-                              <button
-                                 onClick={() => clearLogs()}
-                                 className="p-1 hover:bg-red-200 hover:text-red-500 rounded text-default-400 hover:text-foreground transition-colors cursor-pointer"
-                                 title="Clear"
-                              >
-                                 <Trash2 size={14} />
-                              </button>
-                              {/* <button
-                                 onClick={toggleOpen}
-                                 className="p-1 hover:bg-default-200 rounded text-default-400 hover:text-danger transition-colors cursor-pointer"
-                              >
-                                 <X size={16} />
-                              </button> */}
+               <DebugContent 
+                  width={width}
+                  isMinimized={isMinimized}
+                  showSettings={showSettings}
+                  settingsWidth={settingsWidth}
+                  onClose={onClose}
+                  onToggleSettings={toggleSettings}
+                  onHeaderMouseDown={handleMouseDown}
+               />
 
-                              <button 
-                                 onClick={toggleSettings} 
-                                 className={`p-1 hover:bg-default-200 rounded transition-colors cursor-pointer ${showSettings ? 'text-primary' : 'text-default-400'}`}
-                                 title={showSettings ? "Hide Settings" : "Show Settings"}
-                              >
-                                 {showSettings ? <ChevronsLeft size={18} /> : <ChevronsRight size={18} />}
-                              </button>
-                              {/* <div className="w-[1px] h-[14px] bg-default-300 mx-1" /> */}
-                           </div>
-                        </div>
-
-                        {/* Top Gradient Shadow - Fixed under header */}
-                        <div className="w-full h-4 bg-gradient-to-b from-content1 to-transparent gap-1 z-10 pointer-events-none -mb-4 relative shrink-0" />
-   
-                        <div 
-                           className="flex-1 overflow-y-auto p-[6px] flex flex-col gap-1 bg-content1 relative"
-                           onScroll={(e) => {
-                              const target = e.target as HTMLDivElement;
-                              const isTop = target.scrollTop < 20;
-                              setIsAtTop(isTop);
-                           }}
-                        >
-                           <div ref={logsTopRef} />
-                           {logs.length === 0 && (
-                              <div className="text-center text-default-400 text-xs py-10 italic">
-                                 No Next logs yet...
-                              </div>
-                           )}
-                           {logs.map((log, idx) => (
-                              <ConsoleLogItem
-                                 key={`${log.timestamp}-${idx}`}
-                                 log={log}
-                                 showData={showData}
-                              />
-                           ))}
-                           <div ref={bottomRef} />
-                        </div>
-                     </div>
-
-                     {/* Settings Panel (Right Side) */}
-                     {showSettings && <SettingsPanel width={settingsWidth} />}
-                  </div>
-               )}
-
-               {/* Resizers are outside the flex container but inside absolute */}
+               {/* Resizers (Position depends on container size) */}
                {!isMinimized && (
                   <>
-                     {/* Resize Handle (Right) */}
                      <div
                         className="absolute top-0 right-0 w-[6px] h-full z-20 bg-transparent hover:bg-primary/50 transition-colors"
                         style={{ cursor: 'ew-resize' }}
                         onMouseDown={(e) => handleResizeMouseDown(e, 'right')}
                      />
-
-                     {/* Resize Handle (Bottom) */}
                      <div
                         className="absolute bottom-0 left-0 w-full h-[6px] z-20 bg-transparent hover:bg-primary/50 transition-colors"
                         style={{ cursor: 'ns-resize' }}
                         onMouseDown={(e) => handleResizeMouseDown(e, 'bottom')}
                      />
-
-                     {/* Resize Handle (Bottom Right) */}
                      <div
                         className="absolute bottom-0 right-0 w-[20px] h-[20px] z-30 group/bottom-right"
                         style={{ cursor: 'nwse-resize' }}
@@ -476,7 +344,168 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
    );
 }
 
-function ConsoleLogItem({ log, showData }: { log: LogItem; showData: boolean }) {
+// --- Inner Content Component (Memoized) ---
+
+interface DebugContentProps {
+   width: number;
+   isMinimized: boolean;
+   showSettings: boolean;
+   settingsWidth: number;
+   onClose: () => void;
+   onToggleSettings: () => void;
+   onHeaderMouseDown: (e: React.MouseEvent) => void;
+}
+
+const DebugContent = React.memo(function DebugContent({
+   width,
+   isMinimized,
+   showSettings,
+   settingsWidth,
+   onClose,
+   onToggleSettings,
+   onHeaderMouseDown
+}: DebugContentProps) {
+   const [logs, setLogs] = useState<LogItem[]>([]);
+   const [showData, setShowData] = useState(false);
+   const [isCopiedAll, setIsCopiedAll] = useState(false);
+   const [isAtTop, setIsAtTop] = useState(true);
+   
+   const logsTopRef = useRef<HTMLDivElement>(null);
+   const bottomRef = useRef<HTMLDivElement>(null);
+
+   // Подписка на логи
+   useEffect(() => {
+      const handleLog = (event: Event) => {
+         const customEvent = event as CustomEvent<LogItem>;
+         const log = customEvent.detail;
+
+         setLogs((prev) => {
+            const newLogs = [...prev, log];
+            if (newLogs.length > MAX_LOGS) {
+               return newLogs.slice(newLogs.length - MAX_LOGS);
+            }
+            return newLogs;
+         });
+      };
+
+      window.addEventListener(LOGGER_NEXT_EVENT, handleLog);
+      return () => window.removeEventListener(LOGGER_NEXT_EVENT, handleLog);
+   }, []);
+
+   // Auto-scroll
+   useEffect(() => {
+      if (!isMinimized && bottomRef.current) {
+         bottomRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
+   }, [logs, isMinimized, showData]);
+
+   const clearLogs = () => setLogs([]);
+
+   return (
+      <div className="flex flex-1 overflow-hidden h-full">
+         {/* Logs Area */}
+         <div 
+            className="flex flex-col overflow-hidden relative border-r border-default-200 bg-content1"
+            style={{ width: width, minWidth: width }}
+         >
+            {/* Header (Draggable) */}
+            <div 
+               className="flex items-center justify-between px-2 py-1 bg-content2 border-b border-default-200 cursor-grab active:cursor-grabbing select-none shrink-0"
+               onMouseDown={onHeaderMouseDown}
+               onDoubleClick={onClose}
+            >
+               <div className="flex items-center gap-2 pointer-events-none">
+                  <Bug size={14} className="text-secondary" />
+                  <span className="text font-medium text-foreground">
+                     NextLogs ({logs.length})
+                  </span>
+               </div>
+
+               <div className="flex items-center gap-1">
+                  <button
+                     onClick={() => {
+                        const text = logs
+                           .map((log) => {
+                              const time = new Date(log.timestamp).toLocaleTimeString('ru-RU', {
+                                 hour: '2-digit',
+                                 minute: '2-digit',
+                                 second: '2-digit',
+                                 fractionalSecondDigits: 3,
+                              });
+                              const countStr = log.count > 1 ? ` (x${log.count})` : '';
+                              return `[${time}] [${log.componentName}] ${log.message}${countStr} ${log.data ? JSON.stringify(log.data) : ''}`;
+                           })
+                           .join('\n');
+                        navigator.clipboard.writeText(text);
+                        setIsCopiedAll(true);
+                        setTimeout(() => setIsCopiedAll(false), 1500);
+                     }}
+                     className="p-1 hover:bg-default-200 rounded text-default-400 hover:text-foreground transition-colors cursor-pointer"
+                     title="Copy All"
+                  >
+                     {isCopiedAll ? (
+                        <Check size={14} className="text-success" />
+                     ) : (
+                        <Copy size={14} />
+                     )}
+                  </button>
+                  <button
+                     onClick={clearLogs}
+                     className="p-1 hover:bg-red-200 hover:text-red-500 rounded text-default-400 hover:text-foreground transition-colors cursor-pointer"
+                     title="Clear"
+                  >
+                     <Trash2 size={14} />
+                  </button>
+
+                  <button 
+                     onClick={onToggleSettings} 
+                     className={`p-1 hover:bg-default-200 rounded transition-colors cursor-pointer ${showSettings ? 'text-primary' : 'text-default-400'}`}
+                     title={showSettings ? "Hide Settings" : "Show Settings"}
+                  >
+                     {showSettings ? <ChevronsLeft size={18} /> : <ChevronsRight size={18} />}
+                  </button>
+               </div>
+            </div>
+
+            {/* Content */}
+            {!isMinimized && (
+               <>
+                  <div className="w-full h-4 bg-gradient-to-b from-content1 to-transparent gap-1 z-10 pointer-events-none -mb-4 relative shrink-0" />
+
+                  <div 
+                     className="flex-1 overflow-y-auto p-[6px] flex flex-col gap-1 bg-content1 relative"
+                     onScroll={(e) => {
+                        const target = e.target as HTMLDivElement;
+                        const isTop = target.scrollTop < 20;
+                        setIsAtTop(isTop);
+                     }}
+                  >
+                     <div ref={logsTopRef} />
+                     {logs.length === 0 && (
+                        <div className="text-center text-default-400 text-xs py-10 italic">
+                           No Next logs yet...
+                        </div>
+                     )}
+                     {logs.map((log, idx) => (
+                        <ConsoleLogItem
+                           key={`${log.timestamp}-${idx}`}
+                           log={log}
+                           showData={showData}
+                        />
+                     ))}
+                     <div ref={bottomRef} />
+                  </div>
+               </>
+            )}
+         </div>
+
+         {/* Settings Panel */}
+         {!isMinimized && showSettings && <SettingsPanel width={settingsWidth} />}
+      </div>
+   );
+});
+
+const ConsoleLogItem = React.memo(function ConsoleLogItem({ log, showData }: { log: LogItem; showData: boolean }) {
    const [isCopied, setIsCopied] = useState(false);
    const [localShowData, setLocalShowData] = useState(false);
 
@@ -510,7 +539,6 @@ function ConsoleLogItem({ log, showData }: { log: LogItem; showData: boolean }) 
    const Icon = methodIcons[log.level] || Info;
    const iconColor = methodColors[log.level] || 'text-default-500';
 
-   // Цвета
    const logColorHex = log.logColor ? COLOR_MAP[log.logColor] || '#ccc' : '#444';
    const componentColorHex = log.componentColor ? COLOR_MAP[log.componentColor] || '#ccc' : '#888';
 
@@ -523,7 +551,6 @@ function ConsoleLogItem({ log, showData }: { log: LogItem; showData: boolean }) 
       setTimeout(() => setIsCopied(false), 1500);
    };
 
-   // Основной контент лога (Compact View)
    const logContent = (
       <div
          className={`relative rounded-lg p-1 transition-colors text-left group bg-content2 ${
@@ -543,7 +570,6 @@ function ConsoleLogItem({ log, showData }: { log: LogItem; showData: boolean }) 
                : {}),
          }}
       >
-         {/* Copy Button (on hover) */}
          <button
             onClick={copyLog}
             className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-default-200/50 hover:bg-default-300 rounded text-default-500 hover:text-foreground z-10 cursor-pointer"
@@ -551,7 +577,6 @@ function ConsoleLogItem({ log, showData }: { log: LogItem; showData: boolean }) 
             {isCopied ? <Check size={12} className="text-success" /> : <Copy size={12} />}
          </button>
 
-         {/* Первая строка: [Component] Icon (line) (count) [data icon] */}
          <div className="flex items-center gap-1">
             <span className="font-medium" style={{ color: componentColorHex }}>
                [{log.componentName}]
@@ -567,10 +592,8 @@ function ConsoleLogItem({ log, showData }: { log: LogItem; showData: boolean }) 
             )}
          </div>
 
-         {/* Вторая строка: Message */}
          <div className="text-default-700">{log.message}</div>
 
-         {/* Третья строка: Data (если включено или развернуто) */}
          {shouldShowData && log.data && (
             <div
                className="mt-1 font-mono text-[10px] whitespace-pre-wrap overflow-x-auto text-default-500"
@@ -586,4 +609,4 @@ function ConsoleLogItem({ log, showData }: { log: LogItem; showData: boolean }) 
    );
 
    return logContent;
-}
+});
