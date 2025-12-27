@@ -119,7 +119,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width }) => {
                onValueChange={setSearch}
                isClearable
                classNames={{
-        
+                  base: "h-[26px]",
+                  mainWrapper: "h-[26px]",
+                  inputWrapper: "h-[26px] min-h-[26px]",
+                  input: "text",
                }}
             />
          </div>
