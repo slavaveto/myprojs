@@ -5,7 +5,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useDndContext } from '@dnd-kit/core';
 import { Checkbox, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
-import { GripVertical, Trash2 } from 'lucide-react';
+import { GripVertical, Trash2, MoreVertical } from 'lucide-react';
 import { Task } from '../types';
 import { EditableCell } from './EditableCell';
 import { clsx } from 'clsx';
@@ -217,7 +217,43 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
          </div>
 
          {/* Actions */}
-         <div className="p-0 text-center relative flex justify-center">
+         <div className="p-0 text-center relative flex justify-center items-center gap-0.5">
+            <Dropdown placement="bottom-end">
+               <DropdownTrigger>
+                  <button
+                     className="opacity-0 p-[2px] group-hover:opacity-100 text-default-400 cursor-pointer hover:text-default-600 rounded transition-all outline-none"
+                     aria-label="Task settings"
+                  >
+                     <MoreVertical size={16} />
+                  </button>
+               </DropdownTrigger>
+               <DropdownMenu
+                  aria-label="Task Actions"
+                  onAction={(key) => {
+                     if (key === 'make-gap') {
+                        onAddGap?.();
+                     } else if (key === 'make-group') {
+                        onUpdate(task.id, {
+                           task_type: 'group',
+                           group_color: '#3b82f6', // Default blue from palette
+                        });
+                     } else if (key === 'revert-task') {
+                        onUpdate(task.id, {
+                           task_type: 'task',
+                           group_color: null as any,
+                        });
+                     }
+                  }}
+               >
+                  {isGroup ? (
+                     <DropdownItem key="revert-task">Revert To Task</DropdownItem>
+                  ) : (
+                     <DropdownItem key="make-group">Make As Group</DropdownItem>
+                  )}
+                  <DropdownItem key="make-gap">Make Gap Below</DropdownItem>
+               </DropdownMenu>
+            </Dropdown>
+
             {!isGroup && (
                 <button
                    onClick={() => onDelete(task.id)}
