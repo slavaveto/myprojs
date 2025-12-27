@@ -186,7 +186,7 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
                className={clsx(
                   "cursor-grab p-[2px] active:cursor-grabbing text-default-400 hover:text-default-600 outline-none hover:bg-default-100 rounded text-center",
                )}
-               style={{ color: activeGroupColor ? activeGroupColor : undefined }}
+               style={{ color: (activeGroupColor || (isGroup ? task.group_color : undefined)) || undefined }}
             >
                <GripVertical size={16} />
             </div>
