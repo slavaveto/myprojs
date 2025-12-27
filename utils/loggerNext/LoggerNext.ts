@@ -26,6 +26,7 @@ class LoggerNext {
    public componentName: string;
    public fileName: string;
    public enabled: boolean = false; // Default disabled
+   public color: string = 'blue'; // Default color
 
    constructor(name: string) {
       this.componentName = name;
@@ -60,11 +61,20 @@ class LoggerNext {
             config[key] = false; 
             globalStorage.setItem(LOGGER_NEXT_CONFIG_KEY, JSON.stringify(config));
             this.enabled = false;
+            this.color = 'blue';
          } else {
-            this.enabled = !!config[key];
+            const val = config[key];
+            if (typeof val === 'object' && val !== null) {
+               this.enabled = !!val.enabled;
+               this.color = val.color || 'blue';
+            } else {
+               this.enabled = !!val;
+               this.color = 'blue';
+            }
          }
       } catch {
          this.enabled = false;
+         this.color = 'blue';
       }
    }
 
@@ -76,7 +86,7 @@ class LoggerNext {
          message: typeof message === 'string' ? message : (message as any)?.message || String(message),
          data,
          componentName: this.componentName,
-         componentColor: 'blue', // Default color fixed to 'blue' (exists in COLOR_MAP)
+         componentColor: this.color, 
          fileName: this.fileName,
          timestamp: Date.now(),
          count: 1
@@ -108,7 +118,8 @@ export function getAllLoggers() {
    return Array.from(loggerCache.values()).map(l => ({ 
       name: l.componentName, 
       file: l.fileName, 
-      enabled: l.enabled 
+      enabled: l.enabled,
+      color: l.color
    }));
 }
 
