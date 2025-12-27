@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
-import { Folder, Task, Project } from '@/app/types';
+import { Task, Project } from '@/app/types';
 import { globalStorage } from '@/utils/storage';
 import { toast } from 'react-hot-toast';
 import { projectService } from '@/app/_services/projectService';
 import { useAsyncAction, ActionStatus } from '@/utils/supabase/useAsyncAction';
 import { createLogger } from '@/utils/logger/Logger';
-import { arrayMove } from '@dnd-kit/sortable';
+import { useFolderData } from './useFolderData';
 
 const logger = createLogger('ProjectScreenHook');
 
@@ -20,7 +20,6 @@ interface UseProjectDataProps {
 }
 
 export const useProjectData = ({ project, isActive, onReady, canLoad = true, onUpdateProject, onDeleteProject, globalStatus = 'idle' }: UseProjectDataProps) => {
-   const [folders, setFolders] = useState<Folder[]>([]);
    const [tasks, setTasks] = useState<Task[]>([]);
    const [selectedFolderId, setSelectedFolderId] = useState<string>('');
    const [isDataLoaded, setIsDataLoaded] = useState(false);
@@ -46,6 +45,17 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
    });
 
    const displayStatus = globalStatus !== 'idle' ? globalStatus : (saveStatus !== 'idle' ? saveStatus : quickSaveStatus);
+
+   // --- Use Sub-Hooks ---
+   const { 
+       folders, 
+       setFolders, // Expose for DND if needed
+       loadFolders,
+       handleAddFolder: addFolderApi,
+       handleUpdateFolder,
+       handleDeleteFolder: deleteFolderApi,
+       handleMoveFolder
+   } = useFolderData(project.id, executeSave);
 
    useEffect(() => {
        // If already loaded or load initiated, do nothing
@@ -130,13 +140,11 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
 
 
    const loadData = async () => {
-      // Parallel loading
+      // Parallel loading using sub-hook method
       const [foldersData, tasksData] = await Promise.all([
-          projectService.getFolders(project.id),
-          projectService.getTasks(project.id)
+          loadFolders(), // Use sub-hook loader
+          projectService.getTasks(project.id) // Still using projectService for tasks directly for now
       ]);
-
-      setFolders(foldersData);
 
       if (foldersData.length > 0) {
          const savedFolderId = globalStorage.getItem(`active_folder_${project.id}`);
@@ -432,62 +440,23 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
       }
    };
 
+   // --- Folder Coordination ---
    const handleAddFolder = async (title: string) => {
-       const newOrder = folders.length > 0 
-          ? Math.max(...folders.map(f => f.sort_order)) + 1 
-          : 0;
-       
-       const tempId = crypto.randomUUID();
-       const newFolder = {
-           id: tempId,
-           project_id: project.id,
-           title,
-           sort_order: newOrder,
-           created_at: new Date().toISOString(),
-           updated_at: new Date().toISOString(),
-       };
-       
-       setFolders(prev => [...prev, newFolder]);
-       
-       try {
-           await executeSave(async () => {
-               const data = await projectService.createFolder(project.id, title, newOrder);
-               setFolders(prev => prev.map(f => f.id === tempId ? data : f));
-               setSelectedFolderId(data.id);
-           });
-       } catch (err) {
-           logger.error('Failed to create folder', err);
-           setFolders(prev => prev.filter(f => f.id !== tempId));
-       }
-   };
-
-   const handleUpdateFolder = async (folderId: string, title: string) => {
-       setFolders(prev => prev.map(f => f.id === folderId ? { ...f, title, updated_at: new Date().toISOString() } : f));
-       try {
-           await executeSave(async () => {
-               await projectService.updateFolder(folderId, { title });
-           });
-       } catch (err) {
-           logger.error('Failed to update folder', err);
-           // Rollback could be added here
+       const createdFolder = await addFolderApi(title);
+       if (createdFolder) {
+           setSelectedFolderId(createdFolder.id);
        }
    };
 
    const handleDeleteFolder = async (folderId: string) => {
        const oldFolders = [...folders];
-       const oldTasks = [...tasks];
        
-       // Optimistic delete
-       setFolders(prev => prev.filter(f => f.id !== folderId));
-       setTasks(prev => prev.filter(t => t.folder_id !== folderId)); // Assume tasks deleted/moved
-       
-       // Switch selection if needed
+       // Coordinate selection change BEFORE delete happens
        if (selectedFolderId === folderId) {
            const currentIndex = oldFolders.findIndex(f => f.id === folderId);
            const remaining = oldFolders.filter(f => f.id !== folderId);
            
            if (remaining.length > 0) {
-               // Try left neighbor first, then right (new first)
                const newId = currentIndex > 0 
                    ? oldFolders[currentIndex - 1].id 
                    : remaining[0].id;
@@ -497,40 +466,15 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
            }
        }
 
-       try {
-           await executeSave(async () => {
-               await projectService.deleteFolder(folderId);
-           });
-           toast.success('Folder deleted');
-       } catch (err) {
-           logger.error('Failed to delete folder', err);
-           toast.error('Failed to delete folder');
-           setFolders(oldFolders);
-           setTasks(oldTasks);
-       }
-   };
+       // Assume tasks logic: remove local tasks for this folder
+       const oldTasks = [...tasks];
+       setTasks(prev => prev.filter(t => t.folder_id !== folderId));
 
-   const handleMoveFolder = async (folderId: string, direction: 'left' | 'right') => {
-       const currentIndex = folders.findIndex(f => f.id === folderId);
-       if (currentIndex === -1) return;
-
-       const newIndex = direction === 'left' ? currentIndex - 1 : currentIndex + 1;
-       if (newIndex < 0 || newIndex >= folders.length) return;
-
-       const newFolders = arrayMove(folders, currentIndex, newIndex);
-       setFolders(newFolders);
-
-       // Save to DB
-       const updates = newFolders.map((f, index) => ({ id: f.id, sort_order: index }));
+       const success = await deleteFolderApi(folderId);
        
-       try {
-           await executeSave(async () => {
-               await projectService.updateFolderOrder(updates);
-           });
-       } catch (err) {
-           logger.error('Failed to move folder', err);
-           // Revert locally? Not strictly necessary for order, but good practice.
-           // For now we rely on optimistic UI.
+       if (!success) {
+           // Rollback tasks if folder delete failed
+           setTasks(oldTasks);
        }
    };
 
@@ -558,11 +502,7 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
             isNew: true,
-            isDraft: false // Gaps are saved immediately usually, or behave like drafts? 
-                           // You said "create task type gap". Let's assume immediate save for now 
-                           // or draft if you want to edit it? 
-                           // "у него нет чекбокса title - ничего нет КРОМЕ иконки drag" -> so nothing to edit.
-                           // So it must be saved immediately.
+            isDraft: false 
         };
 
         // Optimistic update
@@ -576,21 +516,6 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
 
         try {
             await executeSave(async () => {
-                // Create in DB
-                // We need to support task_type in create.
-                // Assuming projectService.createTask will be updated or we use a generic create.
-                // For now, let's assume we pass it in content or special field?
-                // Actually, I should check projectService. 
-                // Since I cannot change projectService signature easily without seeing it,
-                // I will assume I can update the task immediately after creation or 
-                // use a new method if I see projectService.
-                
-                // Let's look at projectService first or just create generic task and update it.
-                // But better to have create support it.
-                
-                // Temporary hack: Create task -> Update type immediately.
-                // ideally: await projectService.createTask(..., type='gap')
-                
                 const data = await projectService.createTask(selectedFolderId, '', insertIndex);
                 await projectService.updateTask(data.id, { task_type: 'gap' });
                 
@@ -652,14 +577,14 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
        handleAddTask,
        handleUpdateTask,
        handleDeleteTask,
-       handleAddFolder,
-       handleUpdateFolder,
-       handleDeleteFolder,
-       handleMoveFolder,
+       handleAddFolder,   // NEW from hook
+       handleUpdateFolder,// NEW from hook
+       handleDeleteFolder,// NEW from hook (wrapped)
+       handleMoveFolder,  // NEW from hook
        handleEditProject,
        handleRemoveProject,
        getFolderTaskCount,
-       highlightedTaskId, // Added
+       highlightedTaskId, 
        handleAddGap
    };
 };
