@@ -173,7 +173,8 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
       activeGroupColor && 'ml-[20px] -rounded-l-[4px]'
    );
 
-   const borderStyle = activeGroupColor ? { borderLeft: `1px solid ${activeGroupColor}50` } : undefined; // 33 is approx 20% opacity in hex
+   // const borderStyle = activeGroupColor ? { borderLeft: `1px solid ${activeGroupColor}50` } : undefined; // 33 is approx 20% opacity in hex
+   const borderStyle = undefined;
 
    const content = (
       <>
