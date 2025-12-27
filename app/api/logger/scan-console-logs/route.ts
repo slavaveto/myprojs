@@ -25,7 +25,7 @@ function scanConsoleLogs(dir: string, results: ConsoleResult[] = []): ConsoleRes
             const lines = content.split('\n');
             
             lines.forEach((line, index) => {
-                const consoleMatch = line.match(/console\.(log|warn|error|info|debug)\s*\(/);
+                const consoleMatch = line.match(/console\.(log|warn|info|debug)\s*\(/);
                 if (consoleMatch) {
                     results.push({
                         file: fullPath.replace(process.cwd(), ''),
