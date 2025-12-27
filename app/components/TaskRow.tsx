@@ -256,7 +256,7 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
                   <button
                      onClick={() => onUpdate(task.id, { is_pinned: !task.is_pinned })}
                      className={clsx(
-                        "p-[2px] cursor-pointer rounded transition-all outline-none",
+                        "p-[2px] hidden cursor-pointer rounded transition-all outline-none",
                         task.is_pinned 
                            ? "opacity-100 text-primary rotate-45" 
                            : "opacity-0 group-hover:opacity-100 text-default-300 hover:text-primary"
@@ -309,7 +309,7 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
                      }
                   }}
                >
-                  {!isGroup && (
+                  {!isGroup ? (
                       <DropdownItem key="text-style" isReadOnly className="cursor-default opacity-100" textValue="Text Style">
                           <div className="flex flex-col gap-2 py-1">
                               <span className="text-tiny text-default-500 font-semibold">Text Style</span>
@@ -349,7 +349,7 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
                               </div>
                           </div>
                       </DropdownItem>
-                  )}
+                  ) : null}
 
                   {isGroup ? (
                      <DropdownItem key="revert-task">Revert To Task</DropdownItem>
