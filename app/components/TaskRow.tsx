@@ -19,6 +19,7 @@ interface TaskRowProps {
    isHighlighted?: boolean;
    onAddGap?: () => void;
    projectColor?: string;
+   activeGroupColor?: string | null;
 }
 
 // Separate component for Gap to keep logic clean and handle hooks
@@ -125,7 +126,7 @@ const GapRow = ({ task, isOverlay, isDragging, isHovered, setIsHovered, style, s
 };
 
 // Use React.memo to prevent unnecessary re-renders of all rows during drag
-export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHighlighted, onAddGap, projectColor }: TaskRowProps) => {
+export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHighlighted, onAddGap, projectColor, activeGroupColor }: TaskRowProps) => {
    const [menuPos, setMenuPos] = React.useState<{x: number, y: number} | null>(null);
    const [isHovered, setIsHovered] = React.useState(false);
    
@@ -168,8 +169,11 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
       !isDragging && !isOverlay && 'hover:bg-default-50',
       isDragging && '!opacity-50', 
       isOverlay && 'z-50 bg-default-100 border-primary/50 pointer-events-none cursor-grabbing', 
-      isHighlighted && 'border-orange-500/50'
+      isHighlighted && 'border-orange-500/50',
+      activeGroupColor && 'ml-[20px] -rounded-l-[4px]'
    );
+
+   const borderStyle = activeGroupColor ? { borderLeft: `1px solid ${activeGroupColor}50` } : undefined; // 33 is approx 20% opacity in hex
 
    const content = (
       <>
@@ -267,7 +271,7 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
       return (
          <div
             ref={setNodeRef}
-            style={{ ...style, opacity: 1 }}
+            style={{ ...style, opacity: 1, ...borderStyle }}
             className={className}
          >
             {content}
@@ -278,7 +282,7 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
    return (
       <motion.div
          ref={setNodeRef}
-         style={style}
+         style={{ ...style, ...borderStyle }}
          data-task-row={task.id}
          className={className}
          layout

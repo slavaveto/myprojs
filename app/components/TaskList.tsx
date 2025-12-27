@@ -17,6 +17,21 @@ interface TaskListProps {
 }
 
 export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlightedTaskId, onAddGap, projectColor }: TaskListProps) => {
+    const tasksWithGroupInfo = React.useMemo(() => {
+        let currentGroupColor: string | null = null;
+        return tasks.map(task => {
+            if (task.task_type === 'group') {
+                currentGroupColor = task.group_color || '#3b82f6';
+                return { task, activeGroupColor: null }; // Group itself doesn't get the border
+            }
+            if (task.task_type === 'gap') {
+                currentGroupColor = null;
+                return { task, activeGroupColor: null };
+            }
+            return { task, activeGroupColor: currentGroupColor };
+        });
+    }, [tasks]);
+
     return (
         <div className="flex-grow overflow-y-auto pr-0 pb-10">
              <SortableContext
@@ -25,7 +40,7 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlight
              >
                 <div className="flex flex-col gap-[3px] min-h-[50px] outline-none">
                    <AnimatePresence initial={false} mode="popLayout">
-                       {tasks.map((task, index) => (
+                       {tasksWithGroupInfo.map(({ task, activeGroupColor }, index) => (
                           <TaskRow
                              key={task._tempId || task.id}
                              task={task}
@@ -34,6 +49,7 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlight
                              isHighlighted={highlightedTaskId === task.id}
                              onAddGap={() => onAddGap?.(index)}
                              projectColor={projectColor}
+                             activeGroupColor={activeGroupColor}
                           />
                        ))}
                    </AnimatePresence>
