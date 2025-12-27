@@ -6,6 +6,7 @@ import {
    isComponentPinned, 
    isPinnedSwitcherEnabled 
 } from './services/loggerUtils';
+import { createLoggerNext } from '../loggerNext/LoggerNext'; // Import NEW logger factory
 
 // Инициализируем кеш
 const loggerCache = new Map<string, LoggerFunction>();
@@ -84,9 +85,16 @@ export function createLogger(pageName: string): LoggerFunction {
       pageColor: config.color,
    });
 
+   // Create NEW logger instance (PARALLEL EXECUTION)
+   const nextLogger = createLoggerNext(pageName);
+
    // Создаем объект логгера БЕЗ прямого вызова logger()
    const logger: LoggerFunction = {
       info: (message: string, data?: any) => {
+         // 1. Call NEW logger (always attempt to log, it handles its own enabled state)
+         nextLogger.info(message, data);
+
+         // 2. Call OLD logger
          if (!isMasterLoggerEnabled()) return;
          const cfg = getLoggerConfig('info', message);
          if (!cfg.enabled) return;
@@ -95,6 +103,10 @@ export function createLogger(pageName: string): LoggerFunction {
          return result;
       },
       start: (message: string, data?: any) => {
+         // 1. Call NEW logger
+         nextLogger.start(message, data);
+
+         // 2. Call OLD logger
          if (!isMasterLoggerEnabled()) return;
          const cfg = getLoggerConfig('start', message);
          if (!cfg.enabled) return;
@@ -103,6 +115,10 @@ export function createLogger(pageName: string): LoggerFunction {
          return result;
       },
       end: (message: string, data?: any) => {
+         // 1. Call NEW logger
+         nextLogger.end(message, data);
+
+         // 2. Call OLD logger
          if (!isMasterLoggerEnabled()) return;
          const cfg = getLoggerConfig('end', message);
          if (!cfg.enabled) return;
@@ -111,6 +127,10 @@ export function createLogger(pageName: string): LoggerFunction {
          return result;
       },
       success: (message: string, data?: any) => {
+         // 1. Call NEW logger
+         nextLogger.success(message, data);
+
+         // 2. Call OLD logger
          if (!isMasterLoggerEnabled()) return;
          const cfg = getLoggerConfig('success', message);
          if (!cfg.enabled) return;
@@ -119,6 +139,10 @@ export function createLogger(pageName: string): LoggerFunction {
          return result;
       },
       error: (message: string | Error, data?: any) => {
+         // 1. Call NEW logger
+         nextLogger.error(message, data);
+
+         // 2. Call OLD logger
          if (!isMasterLoggerEnabled()) return;
          const messageStr = typeof message === 'string' ? message : message.message;
          const cfg = getLoggerConfig('error', messageStr);
@@ -128,6 +152,10 @@ export function createLogger(pageName: string): LoggerFunction {
          return result;
       },
       warning: (message: string, data?: any) => {
+         // 1. Call NEW logger
+         nextLogger.warning(message, data);
+
+         // 2. Call OLD logger
          if (!isMasterLoggerEnabled()) return;
          const cfg = getLoggerConfig('warning', message);
          if (!cfg.enabled) return;
@@ -158,4 +186,3 @@ export function clearAllToasts(): void {
 }
 
 export type { LogLevel, LoggerConfig, LoggerFunction } from './PageLogger';
-
