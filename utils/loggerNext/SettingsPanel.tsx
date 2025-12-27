@@ -5,7 +5,7 @@ import { globalStorage } from '@/utils/storage';
 import { LOGGER_NEXT_CONFIG_KEY, getAllLoggers } from './LoggerNext';
 // Import updated from LoggerNext
 import { Button, Input, Switch, ScrollShadow, Popover, PopoverTrigger, PopoverContent } from '@heroui/react';
-import { Search, RotateCw, Trash2, SlidersHorizontal, ArrowUpDown } from 'lucide-react';
+import { Search, RotateCw, Trash2, SlidersHorizontal, ArrowUpDown, ArrowDownAz, ListChecks } from 'lucide-react';
 import { AVAILABLE_COLORS, COLOR_MAP } from '@/utils/logger/services/loggerColors';
 
 interface ConfigItem {
@@ -14,7 +14,7 @@ interface ConfigItem {
    file: string;
    enabled: boolean;
    color: string;
-   lastActive?: number; // TODO: Implement last active tracking
+   lastActive?: number;
 }
 
 interface SettingsPanelProps {
@@ -24,6 +24,7 @@ interface SettingsPanelProps {
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width }) => {
    const [configs, setConfigs] = useState<ConfigItem[]>([]);
    const [search, setSearch] = useState('');
+   const [sortMode, setSortMode] = useState<'enabled' | 'name'>('enabled');
 
    // Загрузка конфигов
    const loadConfigs = () => {
@@ -137,14 +138,18 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width }) => {
          );
       }
 
-      // Сортировка: Сначала включенные, потом по имени
       return result.sort((a, b) => {
-         if (a.enabled === b.enabled) {
-            return a.name.localeCompare(b.name);
+         // 1. Sort by enabled state (if active)
+         if (sortMode === 'enabled') {
+            if (a.enabled !== b.enabled) {
+               return a.enabled ? -1 : 1;
+            }
          }
-         return a.enabled ? -1 : 1;
+         
+         // 2. Sort by name
+         return a.name.localeCompare(b.name);
       });
-   }, [configs, search]);
+   }, [configs, search, sortMode]);
 
    return (
       <div 
@@ -170,6 +175,27 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width }) => {
                   innerWrapper: "pb-0",
                }}
             />
+            
+            {/* Sort Buttons */}
+            <div className="flex bg-default-100 rounded-md p-0.5 gap-0.5 shrink-0 border border-default-200/50">
+               <Button 
+                  isIconOnly size="sm" variant={sortMode === 'name' ? 'solid' : 'light'} 
+                  onPress={() => setSortMode('name')}
+                  title="Sort by Name (A-Z)"
+                  className={`w-6 h-6 min-w-6 ${sortMode === 'name' ? 'bg-background shadow-sm' : 'text-default-400'}`}
+               >
+                  <ArrowDownAz size={14} />
+               </Button>
+               <Button 
+                  isIconOnly size="sm" variant={sortMode === 'enabled' ? 'solid' : 'light'}
+                  onPress={() => setSortMode('enabled')}
+                  title="Sort by Enabled (Active First)"
+                  className={`w-6 h-6 min-w-6 ${sortMode === 'enabled' ? 'bg-background shadow-sm' : 'text-default-400'}`}
+               >
+                  <ListChecks size={14} />
+               </Button>
+            </div>
+
             <Button
                isIconOnly
                size="sm"
