@@ -192,7 +192,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width }) => {
             {/* Gradient top */}
             <div className="sticky top-0 left-0 right-0 h-4 bg-gradient-to-b from-content1 to-transparent z-10 pointer-events-none" />
 
-            <div className="flex flex-col">
+            <div className="flex flex-col p-2 gap-2">
                {filteredConfigs.length === 0 && (
                   <div className="text-center text-default-400 text-xs py-8">
                      No components found
@@ -203,7 +203,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width }) => {
                   <div
                      key={item.key}
                      className={`
-                         flex items-center justify-between p-3 border-b border-default-100 hover:bg-default-100 transition-colors
+                         flex items-center justify-between p-3 border rounded-md border-default-100 hover:bg-default-100 transition-colors
                          ${item.enabled ? 'bg-primary/5' : ''}
                       `}
                   >
