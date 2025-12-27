@@ -53,10 +53,10 @@ const GapRow = ({
    const [isIconHovered, setIsIconHovered] = React.useState(false); // New state for icon hover
 
    const gapClassName = clsx(
-      'group relative flex items-center justify-center h-[12px] w-full rounded outline-none transition-colors ',
+      'group relative flex items-center justify-center h-[12px] w-full rounded  outline-none transition-colors ',
       // Show background if hovered (icon area), dragging this gap, dragging ANY item, or menu is open
       isIconHovered || isDragging || isAnyDragging || !!menuPos
-         ? 'bg-default-100/50'
+         ? 'bg-default-100'
          : 'bg-transparent',
       // Cursor logic:
       isDragging ? 'cursor-grabbing' : 'cursor-default'
@@ -72,8 +72,8 @@ const GapRow = ({
                'bg-default-200 border border-dashed border-default-400 cursor-grabbing'
             )}
          >
-            <div className="absolute left-[6px] ">
-               <GripVertical size={16} className="text-default-400" />
+            <div className="absolute left-[7px] ">
+               <GripVertical size={14} className="text-default-400" />
             </div>
          </div>
       );
@@ -102,7 +102,7 @@ const GapRow = ({
          {/* Icon visible ONLY on ICON AREA hover, dragging SELF, or menu open */}
          <div
             className={clsx(
-               'absolute left-[2px] ml-[5px] cursor-grab active:cursor-grabbing hover:bg-default-100 rounded text-center outline-none transition-opacity duration-200 z-20 flex items-center justify-center h-[12px]', // Force 16px height
+               'absolute left-[2px] ml-[6px] cursor-grab active:cursor-grabbing hover:bg-default-100 rounded text-center outline-none transition-opacity duration-200 z-20 flex items-center justify-center h-[12px]', // Force 16px height
                isIconHovered || isDragging || !!menuPos
                   ? 'opacity-100'
                   : 'opacity-0 pointer-events-none'
@@ -112,7 +112,7 @@ const GapRow = ({
             onMouseEnter={() => setIsIconHovered(true)}
             onMouseLeave={() => setIsIconHovered(false)}
          >
-            <GripVertical size={16} className="text-default-400 hover:text-default-600 " />
+            <GripVertical size={14} className="text-default-400 hover:text-default-600 " />
          </div>
 
          {/* Invisible Hit Area for Icon (larger than icon itself) */}
@@ -215,7 +215,7 @@ export const TaskRow = React.memo(
       const groupBackgroundColor = isGroup ? `${currentGroupColor}20` : '';
 
       const className = clsx(
-         'group px-1 flex justify-between min-h-[30px] items-center rounded-lg border border-default-300 bg-content1 transition-colors outline-none ',
+         'group px-1 flex justify-between min-h-[30px] items-center rounded border border-default-300 bg-content1 transition-colors outline-none ',
          !isDragging && !isOverlay && 'hover:bg-default-50',
          isDragging && '!opacity-50',
          isOverlay && 'z-50 bg-default-100 border-primary/50 pointer-events-none cursor-grabbing',
