@@ -230,7 +230,9 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
                <DropdownMenu
                   aria-label="Task Actions"
                   onAction={(key) => {
-                     if (key === 'make-gap') {
+                     if (key === 'delete') {
+                        onDelete(task.id);
+                     } else if (key === 'make-gap') {
                         onAddGap?.();
                      } else if (key === 'make-group') {
                         onUpdate(task.id, {
@@ -251,18 +253,9 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
                      <DropdownItem key="make-group">Make As Group</DropdownItem>
                   )}
                   <DropdownItem key="make-gap">Make Gap Below</DropdownItem>
+                  <DropdownItem key="delete" className="text-danger" color="danger">Delete</DropdownItem>
                </DropdownMenu>
             </Dropdown>
-
-            {!isGroup && (
-                <button
-                   onClick={() => onDelete(task.id)}
-                   className="opacity-0 p-[2px] group-hover:opacity-100  text-default-400 cursor-pointer hover:text-danger hover:bg-danger/10 rounded transition-all"
-                   aria-label="Delete task"
-                >
-                   <Trash2 size={16} />
-                </button>
-            )}
          </div>
       </>
    );
