@@ -241,7 +241,7 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
          </div>
 
          {/* Actions */}
-         <div className="p-0 text-center relative flex justify-center items-center gap-0.5">
+         <div className="p-0 text-center relative flex justify-center items-center gap-0">
             {!isGroup && (
                 <button
                    onClick={() => onUpdate(task.id, { is_today: !task.is_today })}
@@ -260,7 +260,7 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
             <Dropdown placement="bottom-end">
                <DropdownTrigger>
                   <button
-                     className="opacity-0 p-[2px] group-hover:opacity-100 text-default-400 cursor-pointer hover:text-default-600 rounded transition-all outline-none"
+                     className="opacity-100 p-[0px] group-hover:opacity-100 text-default-400 cursor-pointer hover:text-default-600 rounded transition-all outline-none"
                      aria-label="Task settings"
                   >
                      <MoreVertical size={16} />

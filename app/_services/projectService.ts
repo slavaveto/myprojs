@@ -283,6 +283,31 @@ export const projectService = {
         return data;
     },
 
+    async getTodayTasks() {
+        // Fetch active tasks marked as is_today
+        const { data, error } = await supabase
+            .from('tasks')
+            .select(`
+                *,
+                folders (
+                    id,
+                    title,
+                    projects (
+                        id,
+                        title,
+                        color
+                    )
+                )
+            `)
+            .eq('is_today', true)
+            .eq('is_completed', false) // Only incomplete tasks
+            .or('is_deleted.eq.false,is_deleted.is.null') // Not deleted
+            .order('sort_order', { ascending: true }); // Keep natural order
+
+        if (error) throw error;
+        return data as any[];
+    },
+
     async createTask(folderId: string, content: string, sort_order: number) {
         const { data, error } = await supabase
             .from('tasks')
