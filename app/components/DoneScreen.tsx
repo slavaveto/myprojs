@@ -7,6 +7,7 @@ import { clsx } from 'clsx';
 import { CheckCircle2, Trash2, Folder as FolderIcon, RefreshCw, GripVertical, RotateCcw } from 'lucide-react';
 import { Spinner, Chip, Button, Switch, Select, SelectItem, Checkbox } from '@heroui/react';
 import { format, isToday, isYesterday, isThisWeek, isThisMonth } from 'date-fns';
+import { ru } from 'date-fns/locale';
 import { useGlobalPersistentState } from '@/utils/storage';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -96,6 +97,11 @@ const DoneTaskRow = ({ task, onRestore, onDelete }: { task: any, onRestore: (t: 
                         )}
                     </div>
                 </div>
+             </div>
+
+             {/* Date Column */}
+             <div className="text-[11px] text-default-400 whitespace-nowrap mr-3 tabular-nums opacity-70">
+                {format(new Date(task.updated_at), 'd MMM HH:mm:ss', { locale: ru }).replace('.', '')}
              </div>
 
              {/* Actions */}

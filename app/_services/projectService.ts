@@ -105,7 +105,7 @@ export const projectService = {
                     .from('projects')
                     .update({
                         sort_order: u.sort_order,
-                        updated_at: now
+                        // updated_at: now
                     })
                     .eq('id', u.id)
             )
@@ -202,7 +202,7 @@ export const projectService = {
                     .from('folders')
                     .update({
                         sort_order: u.sort_order,
-                        updated_at: now
+                        // updated_at: now
                     })
                     .eq('id', u.id)
             )
@@ -410,7 +410,7 @@ export const projectService = {
                     .from('tasks')
                     .update({
                         sort_order: u.sort_order,
-                        updated_at: now
+                        // updated_at: now
                     })
                     .eq('id', u.id)
             )
