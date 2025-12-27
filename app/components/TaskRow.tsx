@@ -251,7 +251,36 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
          </div>
 
          {/* Actions */}
-         <div className="p-0 text-center relative flex justify-center items-center gap-0">
+         <div className="p-0 text-center relative flex justify-center items-center gap-1">
+                  {/* Style Button */}
+                  <Dropdown placement="bottom-start">
+                      <DropdownTrigger>
+                          <button
+                             className={clsx(
+                                "p-[2px] cursor-pointer rounded transition-all outline-none opacity-0 group-hover:opacity-100 text-default-300 hover:text-foreground",
+                                task.title_text_style && "opacity-100 text-foreground"
+                             )}
+                             aria-label="Text Style"
+                          >
+                             <Type size={16} />
+                          </button>
+                      </DropdownTrigger>
+                      <DropdownMenu aria-label="Text Style Selection" variant="flat">
+                          <DropdownItem key="bold" startContent={<Bold size={16} />} onPress={() => onUpdate(task.id, { title_text_style: 'bold' })}>
+                              Bold
+                          </DropdownItem>
+                          <DropdownItem key="red" startContent={<Type size={16} className="text-danger" />} className="text-danger" color="danger" onPress={() => onUpdate(task.id, { title_text_style: 'red' })}>
+                              Red
+                          </DropdownItem>
+                          <DropdownItem key="red-bold" startContent={<Bold size={16} className="text-danger" />} className="text-danger font-bold" color="danger" onPress={() => onUpdate(task.id, { title_text_style: 'red-bold' })}>
+                              Red Bold
+                          </DropdownItem>
+                          <DropdownItem key="reset" startContent={<X size={16} />} onPress={() => onUpdate(task.id, { title_text_style: null })}>
+                              Reset Style
+                          </DropdownItem>
+                      </DropdownMenu>
+                  </Dropdown>
+
                   {/* Pinned Button */}
                   <button
                      onClick={() => onUpdate(task.id, { is_pinned: !task.is_pinned })}
@@ -310,45 +339,7 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
                   }}
                >
                   {!isGroup ? (
-                      <DropdownItem key="text-style" isReadOnly className="cursor-default opacity-100" textValue="Text Style">
-                          <div className="flex flex-col gap-2 py-1">
-                              <span className="text-tiny text-default-500 font-semibold">Text Style</span>
-                              <div className="flex flex-wrap gap-1">
-                                  <button
-                                      type="button"
-                                      onClick={(e) => { e.stopPropagation(); onUpdate(task.id, { title_text_style: 'bold' }); }}
-                                      className={clsx("w-8 h-8 rounded hover:bg-default-100 flex items-center justify-center transition-colors", task.title_text_style === 'bold' && "bg-default-200 text-foreground")}
-                                      title="Bold"
-                                  >
-                                      <Bold size={16} />
-                                  </button>
-                                  <button
-                                      type="button"
-                                      onClick={(e) => { e.stopPropagation(); onUpdate(task.id, { title_text_style: 'red' }); }}
-                                      className={clsx("w-8 h-8 rounded hover:bg-default-100 flex items-center justify-center transition-colors text-danger", task.title_text_style === 'red' && "bg-danger/10")}
-                                      title="Red"
-                                  >
-                                      <Type size={16} />
-                                  </button>
-                                  <button
-                                      type="button"
-                                      onClick={(e) => { e.stopPropagation(); onUpdate(task.id, { title_text_style: 'red-bold' }); }}
-                                      className={clsx("w-8 h-8 rounded hover:bg-default-100 flex items-center justify-center transition-colors text-danger font-bold", task.title_text_style === 'red-bold' && "bg-danger/10")}
-                                      title="Red Bold"
-                                  >
-                                      <Bold size={16} />
-                                  </button>
-                                  <button
-                                      type="button"
-                                      onClick={(e) => { e.stopPropagation(); onUpdate(task.id, { title_text_style: null }); }}
-                                      className={clsx("w-8 h-8 rounded hover:bg-default-100 flex items-center justify-center transition-colors text-default-400")}
-                                      title="Reset"
-                                  >
-                                      <X size={16} />
-                                  </button>
-                              </div>
-                          </div>
-                      </DropdownItem>
+                      null // Style options moved to separate button
                   ) : null}
 
                   {isGroup ? (
