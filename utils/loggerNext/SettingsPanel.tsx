@@ -22,10 +22,23 @@ interface SettingsPanelProps {
    width: number;
 }
 
+const SORT_MODE_KEY = 'logger-next-sort-mode';
+
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width }) => {
    const [configs, setConfigs] = useState<ConfigItem[]>([]);
    const [search, setSearch] = useState('');
-   const [sortMode, setSortMode] = useState<'enabled' | 'name'>('enabled');
+   const [sortMode, setSortMode] = useState<'enabled' | 'name'>(() => {
+      if (typeof window !== 'undefined') {
+         const saved = globalStorage.getItem(SORT_MODE_KEY);
+         return (saved === 'name' || saved === 'enabled') ? saved : 'enabled';
+      }
+      return 'enabled';
+   });
+
+   const updateSortMode = (mode: 'enabled' | 'name') => {
+      setSortMode(mode);
+      globalStorage.setItem(SORT_MODE_KEY, mode);
+   };
 
    // Загрузка конфигов
    const loadConfigs = () => {
@@ -181,7 +194,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width }) => {
             <div className="flex bg-default-100 rounded-md p-0.5 gap-0.5 shrink-0 border border-default-200/50">
                <Button 
                   isIconOnly size="sm" variant={sortMode === 'name' ? 'solid' : 'light'} 
-                  onPress={() => setSortMode('name')}
+                  onPress={() => updateSortMode('name')}
                   title="Sort by Name (A-Z)"
                   className={`w-6 h-6 min-w-6 ${sortMode === 'name' ? 'bg-background shadow-sm' : 'text-default-400'}`}
                >
@@ -189,7 +202,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width }) => {
                </Button>
                <Button 
                   isIconOnly size="sm" variant={sortMode === 'enabled' ? 'solid' : 'light'}
-                  onPress={() => setSortMode('enabled')}
+                  onPress={() => updateSortMode('enabled')}
                   title="Sort by Enabled (Active First)"
                   className={`w-6 h-6 min-w-6 ${sortMode === 'enabled' ? 'bg-background shadow-sm' : 'text-default-400'}`}
                >
