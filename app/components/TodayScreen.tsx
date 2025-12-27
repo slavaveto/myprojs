@@ -75,7 +75,7 @@ const TodayTaskRow = ({ task, onUpdate, onDelete }: { task: any, onUpdate: (id: 
              </div>
 
              {/* Actions */}
-             <div className="p-0 text-center relative flex justify-center items-center gap-1">
+             <div className="p-0 text-center relative flex justify-center items-center gap-0">
                  {/* Remove from Today button */}
                  <button
                     onClick={() => onUpdate(task.id, { is_today: false })}
@@ -86,14 +86,14 @@ const TodayTaskRow = ({ task, onUpdate, onDelete }: { task: any, onUpdate: (id: 
                      <Star size={16} fill="currentColor" />
                  </button>
 
-                <button
+                {/* <button
                     onClick={() => onDelete(task.id)}
                     className="opacity-0 p-[2px] group-hover:opacity-100 text-default-400 cursor-pointer hover:text-danger hover:bg-danger/10 rounded transition-all"
                     aria-label="Delete task"
                     title="Delete"
                 >
                     <Trash2 size={16} />
-                </button>
+                </button> */}
              </div>
         </motion.div>
     );
