@@ -23,6 +23,7 @@ export interface Task {
    sort_order: number;
    is_completed: boolean;
    is_today?: boolean;
+   is_pinned?: boolean;
    is_deleted?: boolean;
    created_at: string;
    updated_at: string;
