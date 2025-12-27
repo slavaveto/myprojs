@@ -211,11 +211,12 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
                isMultiline
                autoWidth={isGroup}
                className={clsx(
-                  'text-[16px] p-0 m-0 pl-1 mr-2',
+                  'text-[16px] p-0 m-0 pl-0 mr-0',
                   task.is_completed && 'text-default-400 line-through',
                   isGroup && 'font-semibold'
                )}
             />
+            {isGroup && <div className="flex-1" />}
          </div>
 
          {/* Actions */}
