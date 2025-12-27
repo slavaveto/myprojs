@@ -5,7 +5,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useDndContext } from '@dnd-kit/core';
 import { Checkbox, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
-import { GripVertical, Trash2, MoreVertical } from 'lucide-react';
+import { GripVertical, Trash2, MoreVertical, Check } from 'lucide-react';
 import { Task } from '../types';
 import { EditableCell } from './EditableCell';
 import { clsx } from 'clsx';
@@ -22,6 +22,18 @@ interface TaskRowProps {
    activeGroupColor?: string | null;
 }
 
+// Group Colors Palette
+const COLORS = [
+    { name: 'Blue', value: '#3b82f6' },      // blue-500
+    { name: 'Green', value: '#22c55e' },     // green-500
+    { name: 'Orange', value: '#f97316' },    // orange-500
+    { name: 'Red', value: '#ef4444' },       // red-500
+    { name: 'Purple', value: '#a855f7' },    // purple-500
+    { name: 'Cyan', value: '#06b6d4' },      // cyan-500
+    { name: 'Pink', value: '#ec4899' },      // pink-500
+    { name: 'Gray', value: '#6b7280' },      // gray-500
+];
+
 // Separate component for Gap to keep logic clean and handle hooks
 const GapRow = ({ task, isOverlay, isDragging, isHovered, setIsHovered, style, setNodeRef, attributes, listeners, onDelete }: any) => {
     const { active } = useDndContext(); 
@@ -30,7 +42,7 @@ const GapRow = ({ task, isOverlay, isDragging, isHovered, setIsHovered, style, s
     const [isIconHovered, setIsIconHovered] = React.useState(false); // New state for icon hover
 
     const gapClassName = clsx(
-        'group relative flex items-center justify-center h-[16px] w-full rounded outline-none transition-colors ',
+        'group relative flex items-center justify-center h-[12px] w-full rounded outline-none transition-colors ',
         // Show background if hovered (icon area), dragging this gap, dragging ANY item, or menu is open
         (isIconHovered || isDragging || isAnyDragging || !!menuPos) ? 'bg-default-100/50' : 'bg-transparent',
         // Cursor logic:
@@ -55,7 +67,7 @@ const GapRow = ({ task, isOverlay, isDragging, isHovered, setIsHovered, style, s
             className={gapClassName}
             layout
             initial={task.isNew ? { opacity: 0, height: 0 } : false}
-            animate={{ opacity: 1, height: 16 }}
+            animate={{ opacity: 1, height: 12 }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
             // Removed global hover handlers
@@ -70,7 +82,7 @@ const GapRow = ({ task, isOverlay, isDragging, isHovered, setIsHovered, style, s
             {/* Icon visible ONLY on ICON AREA hover, dragging SELF, or menu open */}
             <div 
                 className={clsx(
-                    "absolute left-[2px] ml-[5px] cursor-grab active:cursor-grabbing hover:bg-default-100 rounded text-center outline-none transition-opacity duration-200 z-20 flex items-center justify-center h-[16px]", // Force 16px height
+                    "absolute left-[2px] ml-[5px] cursor-grab active:cursor-grabbing hover:bg-default-100 rounded text-center outline-none transition-opacity duration-200 z-20 flex items-center justify-center h-[12px]", // Force 16px height
                     (isIconHovered || isDragging || !!menuPos) ? "opacity-100" : "opacity-0 pointer-events-none" 
                 )}
                 {...attributes}
@@ -162,7 +174,8 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
    // Group Color Logic
    // Use task.group_color or default project blue (#3b82f6) with 50% opacity (80 hex)
    // Use empty string to reset background style (Framer Motion allows empty string to remove style)
-   const groupBackgroundColor = isGroup ? `${task.group_color || '#3b82f6'}20` : '';
+   const currentGroupColor = task.group_color || '#3b82f6';
+   const groupBackgroundColor = isGroup ? `${currentGroupColor}20` : '';
 
    const className = clsx(
       'group px-1 flex justify-between min-h-[30px] items-center rounded-lg border border-default-300 bg-content1 transition-colors outline-none ',
@@ -174,7 +187,7 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
    );
 
    // const borderStyle = activeGroupColor ? { borderLeft: `1px solid ${activeGroupColor}50` } : undefined; // 33 is approx 20% opacity in hex
-   const borderStyle = undefined;
+   const borderStyle: React.CSSProperties | undefined = undefined;
 
    const content = (
       <>
@@ -186,7 +199,7 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
                className={clsx(
                   "cursor-grab p-[2px] active:cursor-grabbing text-default-400 hover:text-default-600 outline-none hover:bg-default-100 rounded text-center",
                )}
-               style={{ color: (activeGroupColor || (isGroup ? task.group_color : undefined)) || undefined }}
+               style={{ color: (activeGroupColor || (isGroup ? currentGroupColor : undefined)) || undefined }}
             >
                <GripVertical size={16} />
             </div>
@@ -263,6 +276,37 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
                   ) : (
                      <DropdownItem key="make-group">Make As Group</DropdownItem>
                   )}
+                  
+                  {isGroup ? (
+                      <DropdownItem key="group-color" isReadOnly className="cursor-default opacity-100" textValue="Group Color">
+                          <div className="flex flex-col gap-2 py-1">
+                              <span className="text-tiny text-default-500 font-semibold">Group Color</span>
+                              <div className="flex flex-wrap gap-1">
+                                  {COLORS.map((color) => (
+                                      <button
+                                          key={color.value}
+                                          type="button"
+                                          onClick={(e) => {
+                                              e.stopPropagation(); // Prevent dropdown from closing immediately if desired, or let it close
+                                              onUpdate(task.id, { group_color: color.value });
+                                          }}
+                                          className={clsx(
+                                              "w-5 h-5 rounded-full cursor-pointer transition-transform hover:scale-110 flex items-center justify-center outline-none ",
+                                              currentGroupColor.toLowerCase() === color.value.toLowerCase() && "ring-0 ring-primary scale-110"
+                                          )}
+                                          style={{ backgroundColor: color.value }}
+                                          title={color.name}
+                                      >
+                                          {currentGroupColor.toLowerCase() === color.value.toLowerCase() && (
+                                              <Check size={12} className="text-white drop-shadow-sm" />
+                                          )}
+                                      </button>
+                                  ))}
+                              </div>
+                          </div>
+                      </DropdownItem>
+                  ) : null}
+
                   <DropdownItem key="make-gap">Make Gap Below</DropdownItem>
                   <DropdownItem key="delete" className="text-danger" color="danger">Delete</DropdownItem>
                </DropdownMenu>
@@ -275,7 +319,9 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
       return (
          <div
             ref={setNodeRef}
-            style={{ ...style, opacity: 1, ...borderStyle }}
+            // style={{ ...style, opacity: 1, ...borderStyle }}
+            style={{ ...style, opacity: 1 }}
+
             className={className}
          >
             {content}
@@ -286,7 +332,9 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
    return (
       <motion.div
          ref={setNodeRef}
-         style={{ ...style, ...borderStyle }}
+         // style={{ ...style, ...borderStyle }}
+                  style={{ ...style }}
+
          data-task-row={task.id}
          className={className}
          layout
