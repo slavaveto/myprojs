@@ -6,7 +6,7 @@ import { projectService } from '@/app/_services/projectService';
 import { Project } from '@/app/types';
 import { clsx } from 'clsx';
 import { Button, Spinner } from '@heroui/react';
-import { Plus, LayoutGrid, GripVertical, Inbox, Calendar, CheckCircle2, FileText, EllipsisVertical } from 'lucide-react';
+import { Plus, LayoutGrid, GripVertical, Inbox, Calendar, CheckCircle2, FileText, EllipsisVertical, Star } from 'lucide-react';
 import { AppLoaderProvider, useAppLoader } from '@/app/AppLoader';
 import { ProjectScreen } from '@/app/components/ProjectScreen';
 import { CreateItemPopover } from '@/app/components/CreateItem';
@@ -349,7 +349,7 @@ function AppContent() {
                         }} 
                     />
                     <SidebarItem 
-                        icon={Calendar} 
+                        icon={Star} 
                         label="Today" 
                         isActive={activeSystemTab === 'today'}
                         onClick={() => {

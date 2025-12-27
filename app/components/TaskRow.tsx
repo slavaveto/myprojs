@@ -254,7 +254,7 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
          <div className="p-0 text-center relative flex justify-center items-center gap-1">
                   {/* Style Button */}
                   {!isGroup && (
-                      <Dropdown placement="bottom-start">
+                      <Dropdown placement="bottom-start" className="min-w-0 w-auto">
                           <DropdownTrigger>
                               <button
                                  className={clsx(
@@ -266,9 +266,9 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
                                  <Type size={16} />
                               </button>
                           </DropdownTrigger>
-                          <DropdownMenu aria-label="Text Style Selection" variant="flat" className="p-1 ">
-                              <DropdownItem key="style-row" isReadOnly className="cursor-default opacity-100 data-[hover=true]:bg-transparent p-0" textValue="Style Options">
-                                  <div className="flex flex-wrap gap-1 p-1">
+                          <DropdownMenu aria-label="Text Style Selection" variant="flat" className="p-0 min-w-0 w-fit">
+                              <DropdownItem key="style-row" isReadOnly className="cursor-default opacity-100 data-[hover=true]:bg-transparent p-1 w-fit min-w-0" textValue="Style Options">
+                                  <div className="flex flex-wrap gap-1">
                                       <button
                                           type="button"
                                           onClick={(e) => { e.stopPropagation(); onUpdate(task.id, { title_text_style: 'bold' }); }}

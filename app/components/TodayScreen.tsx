@@ -191,7 +191,7 @@ export const TodayScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
         <div className="h-full flex flex-col p-6 max-w-5xl mx-auto w-full">
             <div className="flex justify-between items-center mb-4 min-h-[40px]">
                 <h1 className="text-2xl font-bold flex items-center gap-2">
-                    <Calendar className="text-warning" />
+                    <Star className="text-warning" fill="currentColor" />
                     Today
                 </h1>
                 
