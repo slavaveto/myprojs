@@ -14,7 +14,11 @@ interface ConfigItem {
    lastActive?: number; // TODO: Implement last active tracking
 }
 
-export function SettingsPanel() {
+interface SettingsPanelProps {
+   width: number;
+}
+
+export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width }) => {
    const [configs, setConfigs] = useState<ConfigItem[]>([]);
    const [search, setSearch] = useState('');
    
@@ -100,7 +104,10 @@ export function SettingsPanel() {
    }, [configs, search]);
 
    return (
-      <div className="flex flex-col h-full bg-content1 border-l border-default-200 w-[350px]">
+      <div 
+         className="flex flex-col h-full bg-content1 border-l border-default-200"
+         style={{ width: width, minWidth: width }}
+      >
          {/* Header */}
          <div className="p-3 border-b border-default-200 flex items-center justify-between bg-content2">
             <div className="flex items-center gap-2 font-medium">

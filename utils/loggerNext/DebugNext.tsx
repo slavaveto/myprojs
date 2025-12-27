@@ -42,16 +42,18 @@ interface WindowState {
    isMinimized: boolean;
    isOpen: boolean;
    showSettings: boolean; // Added showSettings
+   settingsWidth: number; // Width of settings panel
 }
 
 const DEFAULT_STATE: WindowState = {
    x: 150, 
    y: 100,
-   width: 600,
-   height: 400,
+   width: 300,
+   height: 600,
    isMinimized: false,
    isOpen: false,
    showSettings: false,
+   settingsWidth: 350,
 };
 
 export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
@@ -68,7 +70,7 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
    const resizingRef = useRef(false);
    const resizeDirectionRef = useRef<'right' | 'bottom' | 'bottom-right' | null>(null);
    const dragOffsetRef = useRef({ x: 0, y: 0 });
-   const startResizeRef = useRef({ w: 0, h: 0, x: 0, y: 0 });
+   const startResizeRef = useRef({ w: 0, h: 0, x: 0, y: 0, sw: 0 });
 
    // Состояние видимости кнопки
    const permission = usePermission();
@@ -123,7 +125,7 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
       return () => window.removeEventListener(LOGGER_NEXT_EVENT, handleLog);
    }, [showDebugPanel]);
 
-   const { x, y, width, height, isMinimized, isOpen, showSettings } = windowState;
+   const { x, y, width, height, isMinimized, isOpen, showSettings, settingsWidth } = windowState;
 
    const [showData, setShowData] = useState(false);
    const [isCopiedAll, setIsCopiedAll] = useState(false);
@@ -195,6 +197,7 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
          h: windowState.height,
          x: e.clientX,
          y: e.clientY,
+         sw: windowState.settingsWidth,
       };
 
       document.addEventListener('mousemove', handleMouseMove);
@@ -215,24 +218,38 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
          setWindowState((prev) => {
             let newWidth = prev.width;
             let newHeight = prev.height;
+            let newSettingsWidth = prev.settingsWidth;
 
+            // Если открыты настройки и тянем вправо - меняем ширину настроек
             if (
-               resizeDirectionRef.current === 'right' ||
-               resizeDirectionRef.current === 'bottom-right'
+               prev.showSettings &&
+               (resizeDirectionRef.current === 'right' ||
+                  resizeDirectionRef.current === 'bottom-right')
             ) {
-               newWidth = Math.max(300, startResizeRef.current.w + deltaX);
+               newSettingsWidth = Math.max(250, startResizeRef.current.sw + deltaX);
+               // newWidth (Logs) не меняется
+            } else {
+               // Иначе меняем ширину логов (как раньше)
+               if (
+                  resizeDirectionRef.current === 'right' ||
+                  resizeDirectionRef.current === 'bottom-right'
+               ) {
+                  newWidth = Math.min(300, Math.max(150, startResizeRef.current.w + deltaX));
+               }
             }
+
             if (
                resizeDirectionRef.current === 'bottom' ||
                resizeDirectionRef.current === 'bottom-right'
             ) {
-               newHeight = Math.max(100, startResizeRef.current.h + deltaY);
+               newHeight = Math.min(600, Math.max(300, startResizeRef.current.h + deltaY));
             }
 
             return {
                ...prev,
                width: newWidth,
                height: newHeight,
+               settingsWidth: newSettingsWidth,
             };
          });
       }
@@ -299,7 +316,7 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
                style={{
                   left: x,
                   top: y,
-                  width: showSettings ? width + 350 : width, // Dynamically expand width
+                  width: showSettings ? width + settingsWidth : width, // Dynamically expand width
                   height: isMinimized ? 40 : height,
                   transition:
                      draggingRef.current || resizingRef.current ? 'none' : 'width 0.2s ease, height 0.2s ease',
@@ -416,7 +433,7 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
                      </div>
 
                      {/* Settings Panel (Right Side) */}
-                     {showSettings && <SettingsPanel />}
+                     {showSettings && <SettingsPanel width={settingsWidth} />}
                   </div>
                )}
 
