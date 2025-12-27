@@ -25,6 +25,7 @@ export interface Task {
    is_today?: boolean;
    is_pinned?: boolean;
    is_deleted?: boolean;
+   title_text_style?: 'bold' | 'red' | 'red-bold' | null;
    created_at: string;
    updated_at: string;
    task_type: 'task' | 'gap' | 'group'; // New field

@@ -5,7 +5,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useDndContext } from '@dnd-kit/core';
 import { Checkbox, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
-import { GripVertical, Trash2, MoreVertical, Check, Star, Pin } from 'lucide-react';
+import { GripVertical, Trash2, MoreVertical, Check, Star, Pin, Bold, Type, X } from 'lucide-react';
 import { Task } from '../types';
 import { EditableCell } from './EditableCell';
 import { clsx } from 'clsx';
@@ -241,7 +241,10 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
                className={clsx(
                   'text-[16px] p-0 m-0 pl-0 mr-0',
                   task.is_completed && 'text-default-400 line-through',
-                  isGroup && 'font-semibold'
+                  isGroup && 'font-semibold',
+                  task.title_text_style === 'bold' && 'font-medium',
+                  task.title_text_style === 'red' && 'text-danger',
+                  task.title_text_style === 'red-bold' && 'text-danger font-medium'
                )}
             />
             {isGroup && <div className="flex-1" />}
@@ -306,6 +309,48 @@ export const TaskRow = React.memo(({ task, onUpdate, onDelete, isOverlay, isHigh
                      }
                   }}
                >
+                  {!isGroup && (
+                      <DropdownItem key="text-style" isReadOnly className="cursor-default opacity-100" textValue="Text Style">
+                          <div className="flex flex-col gap-2 py-1">
+                              <span className="text-tiny text-default-500 font-semibold">Text Style</span>
+                              <div className="flex flex-wrap gap-1">
+                                  <button
+                                      type="button"
+                                      onClick={(e) => { e.stopPropagation(); onUpdate(task.id, { title_text_style: 'bold' }); }}
+                                      className={clsx("w-8 h-8 rounded hover:bg-default-100 flex items-center justify-center transition-colors", task.title_text_style === 'bold' && "bg-default-200 text-foreground")}
+                                      title="Bold"
+                                  >
+                                      <Bold size={16} />
+                                  </button>
+                                  <button
+                                      type="button"
+                                      onClick={(e) => { e.stopPropagation(); onUpdate(task.id, { title_text_style: 'red' }); }}
+                                      className={clsx("w-8 h-8 rounded hover:bg-default-100 flex items-center justify-center transition-colors text-danger", task.title_text_style === 'red' && "bg-danger/10")}
+                                      title="Red"
+                                  >
+                                      <Type size={16} />
+                                  </button>
+                                  <button
+                                      type="button"
+                                      onClick={(e) => { e.stopPropagation(); onUpdate(task.id, { title_text_style: 'red-bold' }); }}
+                                      className={clsx("w-8 h-8 rounded hover:bg-default-100 flex items-center justify-center transition-colors text-danger font-bold", task.title_text_style === 'red-bold' && "bg-danger/10")}
+                                      title="Red Bold"
+                                  >
+                                      <Bold size={16} />
+                                  </button>
+                                  <button
+                                      type="button"
+                                      onClick={(e) => { e.stopPropagation(); onUpdate(task.id, { title_text_style: null }); }}
+                                      className={clsx("w-8 h-8 rounded hover:bg-default-100 flex items-center justify-center transition-colors text-default-400")}
+                                      title="Reset"
+                                  >
+                                      <X size={16} />
+                                  </button>
+                              </div>
+                          </div>
+                      </DropdownItem>
+                  )}
+
                   {isGroup ? (
                      <DropdownItem key="revert-task">Revert To Task</DropdownItem>
                   ) : !activeGroupColor ? (
