@@ -7,7 +7,7 @@ import { useAsyncAction, ActionStatus } from '@/utils/supabase/useAsyncAction';
 import { createLogger } from '@/utils/logger/Logger';
 import { arrayMove } from '@dnd-kit/sortable';
 
-const logger = createLogger('ProjectScreen');
+const logger = createLogger('ProjectScreenHook');
 
 interface UseProjectDataProps {
     project: Project;
