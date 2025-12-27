@@ -4,7 +4,7 @@ export interface LogEntry {
     id: string;
     created_at: string;
     action: string;
-    entity_table: string;
+    entity: string;
     entity_id: string;
     details?: any;
 }
@@ -12,7 +12,7 @@ export interface LogEntry {
 export const logService = {
     async logAction(
         action: string,
-        entity_table: string,
+        entity: string,
         entity_id: string,
         details?: any
     ) {
@@ -20,7 +20,7 @@ export const logService = {
             .from('logs')
             .insert({
                 action,
-                entity_table,
+                entity,
                 entity_id,
                 details,
                 created_at: new Date().toISOString()

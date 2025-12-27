@@ -169,7 +169,7 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
                                         {log.action}
                                     </Chip>
                                     <span className="font-mono text-xs text-default-500">
-                                        {log.entity_table} / {log.entity_id.slice(0, 8)}
+                                        {log.entity} / {log.entity_id.slice(0, 8)}
                                     </span>
                                 </div>
                                 <div className="text-xs text-default-400">
