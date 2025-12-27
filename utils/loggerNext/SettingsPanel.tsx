@@ -161,7 +161,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width }) => {
    };
 
    // Сортировка и фильтрация
-   const filteredConfigs = useMemo(() => {
+   const { pinned, others } = useMemo(() => {
       let result = configs;
 
       if (search) {
@@ -171,12 +171,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width }) => {
          );
       }
 
-      return result.sort((a, b) => {
-         // 0. Pinned first!
-         if (a.pinned !== b.pinned) {
-            return a.pinned ? -1 : 1;
-         }
-
+      // Helper sort function
+      const sortFn = (a: ConfigItem, b: ConfigItem) => {
          // 1. Sort by enabled state (if active)
          if (sortMode === 'enabled') {
             if (a.enabled !== b.enabled) {
@@ -186,8 +182,90 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width }) => {
          
          // 2. Sort by name
          return a.name.localeCompare(b.name);
-      });
+      };
+
+      const pinnedItems: ConfigItem[] = [];
+      const otherItems: ConfigItem[] = [];
+
+      for (const item of result) {
+         if (item.pinned) pinnedItems.push(item);
+         else otherItems.push(item);
+      }
+
+      return {
+         pinned: pinnedItems.sort(sortFn),
+         others: otherItems.sort(sortFn)
+      };
    }, [configs, search, sortMode]);
+
+   const renderItem = (item: ConfigItem) => (
+      <motion.div
+         layout
+         initial={{ opacity: 0, y: 10 }}
+         animate={{ opacity: 1, y: 0 }}
+         exit={{ opacity: 0, scale: 0.95 }}
+         transition={{ duration: 0.2 }}
+         key={item.key}
+         className={`
+             group flex items-center justify-between p-2 py-1 border rounded-md border-default-200 hover:bg-default-100 transition-colors
+             ${item.enabled ? 'bg-primary/5' : ''}
+          `}
+      >
+         <div className="flex flex-col overflow-hidden mr-3 flex-1">
+            <span
+               className={`font-medium text-sm truncate ${item.enabled ? 'text-foreground' : 'text-default-500'}`}
+               title={item.name}
+            >
+               {item.name}
+            </span>
+         </div>
+
+         <div className="flex items-center gap-2">
+            <Button
+               isIconOnly
+               size="sm"
+               variant="light"
+               className={`min-w-6 w-6 h-6 ${item.pinned ? 'text-warning' : 'text-default-300'}`}
+               onPress={() => togglePin(item.key, item.pinned, item.enabled, item.color)}
+               title={item.pinned ? "Unpin" : "Pin to top"}
+            >
+               {item.pinned ? <Pin size={14} fill="currentColor" /> : <Pin size={14} />}
+            </Button>
+
+            <Popover placement="left">
+               <PopoverTrigger>
+                  <motion.div
+                     whileHover={{ scale: 1.2 }}
+                     whileTap={{ scale: 0.9 }}
+                     className="w-3 h-3 rounded-full cursor-pointer border border-default-200"
+                     style={{ backgroundColor: item.color === 'black' ? '#52525b' : (COLOR_MAP[item.color] || COLOR_MAP['blue']) }}
+                     title="Change Color"
+                  />
+               </PopoverTrigger>
+               <PopoverContent className="p-2">
+                  <div className="grid grid-cols-5 gap-1 w-[120px]">
+                     {AVAILABLE_COLORS.map((c) => (
+                        <button
+                           key={c.key}
+                           className={`w-5 h-5 rounded-full border border-transparent hover:scale-110 transition-transform ${item.color === c.key ? 'ring-2 ring-offset-1 ring-default-400' : ''}`}
+                           style={{ backgroundColor: c.key === 'black' ? '#52525b' : c.hex }}
+                           onClick={() => changeColor(item.key, c.key, item.enabled, item.pinned)}
+                           title={c.label}
+                        />
+                     ))}
+                  </div>
+               </PopoverContent>
+            </Popover>
+
+            <Switch
+               size="sm"
+               className="scale-75"
+               isSelected={item.enabled}
+               onValueChange={() => toggleLogger(item.key, item.enabled, item.color, item.pinned)}
+            />
+         </div>
+      </motion.div>
+   );
 
    return (
       <div 
@@ -251,88 +329,30 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width }) => {
             </Button>
          </div>
 
-         {/* List */}
-         <div className="flex-1 overflow-y-auto relative">
-            
-            {/* Gradient top */}
-            {/* <div className="sticky top-0 left-0 right-0 h-4 bg-gradient-to-b from-content1 to-transparent z-10 pointer-events-none" /> */}
+         {/* Pinned Section (Fixed) */}
+         {pinned.length > 0 && (
+            <div className="flex flex-col p-2 gap-1 border-b border-default-200 bg-content2/50 shrink-0 z-10 max-h-[30%] overflow-y-auto">
+               <div className="flex items-center gap-2 px-1 pb-1">
+                  <Pin size={10} className="text-default-400" />
+                  <span className="text-[10px] font-bold text-default-400 uppercase tracking-wider">Pinned</span>
+               </div>
+               <AnimatePresence mode="popLayout" initial={false}>
+                  {pinned.map(renderItem)}
+               </AnimatePresence>
+            </div>
+         )}
 
+         {/* Scrollable List */}
+         <div className="flex-1 overflow-y-auto relative">
             <div className="flex flex-col p-2 gap-1">
-               {filteredConfigs.length === 0 && (
+               {pinned.length === 0 && others.length === 0 && (
                   <div className="text-center text-default-400 text-xs py-8">
                      No components found
                   </div>
                )}
 
                <AnimatePresence mode="popLayout" initial={false}>
-                  {filteredConfigs.map((item) => (
-                     <motion.div
-                        layout
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{ duration: 0.2 }}
-                        key={item.key}
-                        className={`
-                            group flex items-center justify-between p-2 py-1 border rounded-md border-default-200 hover:bg-default-100 transition-colors
-                            ${item.enabled ? 'bg-primary/5' : ''}
-                         `}
-                     >
-                        <div className="flex flex-col overflow-hidden mr-3 flex-1">
-                           <span
-                              className={`font-medium text-sm truncate ${item.enabled ? 'text-foreground' : 'text-default-500'}`}
-                              title={item.name}
-                           >
-                              {item.name}
-                           </span>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                           <Button
-                              isIconOnly
-                              size="sm"
-                              variant="light"
-                              className={`min-w-6 w-6 h-6 ${item.pinned ? 'text-warning' : 'text-default-300'}`}
-                              onPress={() => togglePin(item.key, item.pinned, item.enabled, item.color)}
-                              title={item.pinned ? "Unpin" : "Pin to top"}
-                           >
-                              {item.pinned ? <Pin size={14} fill="currentColor" /> : <Pin size={14} />}
-                           </Button>
-
-                           <Popover placement="left">
-                              <PopoverTrigger>
-                                 <motion.div
-                                    whileHover={{ scale: 1.2 }}
-                                    whileTap={{ scale: 0.9 }}
-                                    className="w-3 h-3 rounded-full cursor-pointer border border-default-200"
-                                    style={{ backgroundColor: item.color === 'black' ? '#52525b' : (COLOR_MAP[item.color] || COLOR_MAP['blue']) }}
-                                    title="Change Color"
-                                 />
-                              </PopoverTrigger>
-                              <PopoverContent className="p-2">
-                                 <div className="grid grid-cols-5 gap-1 w-[120px]">
-                                    {AVAILABLE_COLORS.map((c) => (
-                                       <button
-                                          key={c.key}
-                                          className={`w-5 h-5 rounded-full border border-transparent hover:scale-110 transition-transform ${item.color === c.key ? 'ring-2 ring-offset-1 ring-default-400' : ''}`}
-                                          style={{ backgroundColor: c.key === 'black' ? '#52525b' : c.hex }}
-                                          onClick={() => changeColor(item.key, c.key, item.enabled, item.pinned)}
-                                          title={c.label}
-                                       />
-                                    ))}
-                                 </div>
-                              </PopoverContent>
-                           </Popover>
-
-                           <Switch
-                              size="sm"
-                              className="scale-75"
-                              isSelected={item.enabled}
-                              onValueChange={() => toggleLogger(item.key, item.enabled, item.color, item.pinned)}
-                           />
-                        </div>
-                     </motion.div>
-                  ))}
+                  {others.map(renderItem)}
                </AnimatePresence>
             </div>
          </div>
