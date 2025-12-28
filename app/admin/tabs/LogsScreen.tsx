@@ -11,7 +11,7 @@ import { StatusBadge } from '@/utils/supabase/StatusBadge';
 import { useAsyncAction } from '@/utils/supabase/useAsyncAction';
 import { AdminUserMenu } from '@/app/admin/AdminUserMenu';
 
-const logger = createLogger('LogsScreen');
+const logger = createLogger('AdminLogsScreen');
 
 interface LogEntry {
   id: number;

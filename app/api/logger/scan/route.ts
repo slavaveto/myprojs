@@ -42,7 +42,6 @@ export async function GET() {
 
         allFiles.forEach(file => {
             const content = fs.readFileSync(file, 'utf-8');
-            // Regex to find createLogger('Name') or createLogger("Name")
             const regex = /createLogger\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
             let match;
 
