@@ -21,34 +21,26 @@ import {
 import { clsx } from 'clsx';
 import { Task } from '../types';
 
-interface TaskContextMenuProps {
+export interface TaskContextMenuProps {
    children: React.ReactNode;
-   task: Task | any; // Accept full task object to check current state (styles, groups etc)
-   
-   // Toggle available menu items
+   task: Task | any;
    items?: {
       delete?: boolean;
       move?: boolean;
       makeGap?: boolean;
       makeGroup?: boolean;
-      styles?: boolean; // Text styles (Bold, Red)
-      today?: boolean; // Toggle today status
+      styles?: boolean; 
+      today?: boolean; 
    };
-
-   // Callbacks
    onDelete?: (id: string) => void;
    onUpdate?: (id: string, updates: any) => void;
    onAddGap?: () => void;
    onMove?: (taskId: string, projectId: string, folderId: string) => void;
-   
-   // Data needed for Move menu
    projectsStructure?: any[];
-   
-   // Context info
    isInsideGroup?: boolean;
 }
 
-// Group Colors Palette (duplicated here or import from constants)
+// Group Colors Palette
 const COLORS = [
    { name: 'Blue', value: '#3b82f6' },
    { name: 'Green', value: '#22c55e' },
@@ -60,85 +52,27 @@ const COLORS = [
    { name: 'Gray', value: '#6b7280' },
 ];
 
-export const TaskContextMenu = ({
-   children,
-   task,
-   items = { delete: true },
-   onDelete,
-   onUpdate,
-   onAddGap,
-   onMove,
-   projectsStructure = [],
-   isInsideGroup = false
-}: TaskContextMenuProps) => {
-   const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
+interface TaskMenuItemsProps extends Omit<TaskContextMenuProps, 'children'> {
+    closeMenu?: () => void;
+}
 
-   const handleContextMenu = (e: React.MouseEvent) => {
-      e.preventDefault();
-      // Remove focus from input if any (prevents keyboard from popping up or cursor blinking)
-      if (document.activeElement instanceof HTMLElement) {
-         document.activeElement.blur();
-      }
-      e.stopPropagation(); // Prevent bubbling if nested
-      setMenuPos({ x: e.clientX, y: e.clientY });
-   };
+export const TaskMenuItems = ({
+    task,
+    items = { delete: true },
+    onDelete,
+    onUpdate,
+    onAddGap,
+    onMove,
+    projectsStructure = [],
+    isInsideGroup = false,
+    closeMenu
+}: TaskMenuItemsProps) => {
+    const isGroup = task.task_type === 'group';
+    const currentGroupColor = task.group_color || '#3b82f6';
+    const handleClose = () => closeMenu?.();
 
-   const isGroup = task.task_type === 'group';
-   const currentGroupColor = task.group_color || '#3b82f6';
-
-   return (
-      <div onContextMenu={handleContextMenu} className="contents">
-         {children}
-
-         <Dropdown
-            isOpen={!!menuPos}
-            onOpenChange={(open) => {
-               if (!open) setMenuPos(null);
-            }}
-            placement="bottom-start"
-            triggerScaleOnOpen={false}
-         >
-            <DropdownTrigger>
-               <div
-                  style={{
-                     position: 'fixed',
-                     left: menuPos?.x ?? 0,
-                     top: menuPos?.y ?? 0,
-                     width: 0,
-                     height: 0,
-                     pointerEvents: 'none',
-                     zIndex: 9999,
-                  }}
-               />
-            </DropdownTrigger>
-            <DropdownMenu
-               aria-label="Task Actions"
-               className="overflow-visible"
-               onAction={(key) => {
-                  if (key === 'delete') {
-                     onDelete?.(task.id);
-                     setMenuPos(null);
-                  } else if (key === 'make-gap') {
-                     onAddGap?.();
-                     setMenuPos(null);
-                  } else if (key === 'make-group') {
-                     onUpdate?.(task.id, {
-                        task_type: 'group',
-                        group_color: '#3b82f6',
-                     });
-                     setMenuPos(null);
-                  } else if (key === 'revert-task') {
-                     onUpdate?.(task.id, {
-                        task_type: 'task',
-                        group_color: null as any,
-                     });
-                     setMenuPos(null);
-                  } else if (key === 'toggle-today') {
-                     onUpdate?.(task.id, { is_today: !task.is_today });
-                     setMenuPos(null);
-                  }
-               }}
-            >
+    return (
+        <>
                {/* --- TODAY --- */}
                {items.today && !isGroup ? (
                   <DropdownItem
@@ -150,6 +84,10 @@ export const TaskContextMenu = ({
                            className={task.is_today ? 'text-warning' : 'text-default-500'}
                         />
                      }
+                     onPress={() => {
+                        onUpdate?.(task.id, { is_today: !task.is_today });
+                        handleClose();
+                     }}
                   >
                      {task.is_today ? 'Remove from Today' : 'Add to Today'}
                   </DropdownItem>
@@ -169,7 +107,7 @@ export const TaskContextMenu = ({
                             onClick={(e) => {
                                e.stopPropagation();
                                onUpdate?.(task.id, { title_text_style: 'bold' });
-                               setMenuPos(null); // Close or keep open? Usually close is better for quick actions
+                               handleClose();
                             }}
                             className={clsx(
                                'w-7 h-7 rounded hover:bg-default-200 flex items-center justify-center transition-colors',
@@ -184,7 +122,7 @@ export const TaskContextMenu = ({
                             onClick={(e) => {
                                e.stopPropagation();
                                onUpdate?.(task.id, { title_text_style: 'red' });
-                               setMenuPos(null);
+                               handleClose();
                             }}
                             className={clsx(
                                'w-7 h-7 rounded hover:bg-default-200 flex items-center justify-center transition-colors text-danger',
@@ -199,7 +137,7 @@ export const TaskContextMenu = ({
                             onClick={(e) => {
                                e.stopPropagation();
                                onUpdate?.(task.id, { title_text_style: 'red-bold' });
-                               setMenuPos(null);
+                               handleClose();
                             }}
                             className={clsx(
                                'w-7 h-7 rounded hover:bg-default-200 flex items-center justify-center transition-colors text-danger font-bold',
@@ -214,7 +152,7 @@ export const TaskContextMenu = ({
                             onClick={(e) => {
                                e.stopPropagation();
                                onUpdate?.(task.id, { title_text_style: null });
-                               setMenuPos(null);
+                               handleClose();
                             }}
                             className="w-7 h-7 rounded hover:bg-default-200 flex items-center justify-center transition-colors text-default-400"
                             title="Reset"
@@ -266,6 +204,7 @@ export const TaskContextMenu = ({
                                                 e.stopPropagation();
                                                 document.body.click(); // Close menus
                                                 onMove?.(task.id, project.id, folder.id);
+                                                // No handleClose needed if we assume move navigates away or logic handles it
                                              }}
                                              className="flex items-center gap-2 px-2 py-1.5 rounded-small hover:bg-default-100 cursor-pointer transition-colors w-full text-left outline-none"
                                           >
@@ -285,9 +224,27 @@ export const TaskContextMenu = ({
                {/* --- GROUP / GAP --- */}
                {items.makeGroup ? (
                   isGroup ? (
-                      <DropdownItem key="revert-task">Revert To Task</DropdownItem>
+                      <DropdownItem 
+                        key="revert-task"
+                        onPress={() => {
+                            onUpdate?.(task.id, {
+                                task_type: 'task',
+                                group_color: null as any,
+                             });
+                             handleClose();
+                        }}
+                      >Revert To Task</DropdownItem>
                   ) : !isInsideGroup ? (
-                      <DropdownItem key="make-group">Make As Group</DropdownItem>
+                      <DropdownItem 
+                        key="make-group"
+                        onPress={() => {
+                            onUpdate?.(task.id, {
+                                task_type: 'group',
+                                group_color: '#3b82f6',
+                             });
+                             handleClose();
+                        }}
+                      >Make As Group</DropdownItem>
                   ) : null
                ) : null}
 
@@ -308,6 +265,7 @@ export const TaskContextMenu = ({
                                    onClick={(e) => {
                                       e.stopPropagation();
                                       onUpdate?.(task.id, { group_color: color.value });
+                                      // don't close menu to allow trying colors
                                    }}
                                    className={clsx(
                                       'w-5 h-5 rounded-full cursor-pointer transition-transform hover:scale-110 flex items-center justify-center outline-none ',
@@ -326,7 +284,15 @@ export const TaskContextMenu = ({
                    </DropdownItem>
                ) : null}
 
-               {items.makeGap ? <DropdownItem key="make-gap">Make Gap Below</DropdownItem> : null}
+               {items.makeGap ? (
+                   <DropdownItem 
+                        key="make-gap"
+                        onPress={() => {
+                            onAddGap?.();
+                            handleClose();
+                        }}
+                    >Make Gap Below</DropdownItem>
+                ) : null}
 
                {/* --- DELETE --- */}
                {items.delete ? (
@@ -335,13 +301,63 @@ export const TaskContextMenu = ({
                         className="text-danger" 
                         color="danger"
                         startContent={<Trash2 size={16} />}
+                        onPress={() => {
+                            onDelete?.(task.id);
+                            handleClose();
+                        }}
                    >
                       {task.task_type === 'gap' ? 'Delete Gap' : 'Delete Task'}
                    </DropdownItem>
                ) : null}
+        </>
+    );
+};
+
+export const TaskContextMenu = (props: TaskContextMenuProps) => {
+   const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
+
+   const handleContextMenu = (e: React.MouseEvent) => {
+      e.preventDefault();
+      // Remove focus from input if any (prevents keyboard from popping up or cursor blinking)
+      if (document.activeElement instanceof HTMLElement) {
+         document.activeElement.blur();
+      }
+      e.stopPropagation(); 
+      setMenuPos({ x: e.clientX, y: e.clientY });
+   };
+
+   return (
+      <div onContextMenu={handleContextMenu} className="contents">
+         {props.children}
+
+         <Dropdown
+            isOpen={!!menuPos}
+            onOpenChange={(open) => {
+               if (!open) setMenuPos(null);
+            }}
+            placement="bottom-start"
+            triggerScaleOnOpen={false}
+         >
+            <DropdownTrigger>
+               <div
+                  style={{
+                     position: 'fixed',
+                     left: menuPos?.x ?? 0,
+                     top: menuPos?.y ?? 0,
+                     width: 0,
+                     height: 0,
+                     pointerEvents: 'none',
+                     zIndex: 9999,
+                  }}
+               />
+            </DropdownTrigger>
+            <DropdownMenu
+               aria-label="Task Actions"
+               className="overflow-visible"
+            >
+               {TaskMenuItems({ ...props, closeMenu: () => setMenuPos(null) })}
             </DropdownMenu>
          </Dropdown>
       </div>
    );
 };
-

@@ -10,7 +10,7 @@ import { Task } from '../types';
 import { EditableCell } from './EditableCell';
 import { clsx } from 'clsx';
 import { motion } from 'framer-motion';
-import { TaskContextMenu } from './TaskContextMenu';
+import { TaskContextMenu, TaskMenuItems } from './TaskContextMenu';
 
 interface TaskRowProps {
    task: Task;
@@ -21,6 +21,8 @@ interface TaskRowProps {
    onAddGap?: () => void;
    projectColor?: string;
    activeGroupColor?: string | null;
+   projectsStructure?: any[];
+   onMove?: (taskId: string, projectId: string, folderId: string) => void;
 }
 
 // Group Colors Palette (Restored for More menu)
@@ -134,6 +136,8 @@ export const TaskRow = React.memo(
       onAddGap,
       projectColor,
       activeGroupColor,
+      projectsStructure,
+      onMove,
    }: TaskRowProps) => {
       const [isHovered, setIsHovered] = React.useState(false);
 
@@ -381,80 +385,24 @@ export const TaskRow = React.memo(
                         <MoreVertical size={16} />
                      </button>
                   </DropdownTrigger>
-                  <DropdownMenu
-                     aria-label="Task Actions"
-                     onAction={(key) => {
-                        if (key === 'delete') {
-                           onDelete(task.id);
-                        } else if (key === 'make-gap') {
-                           onAddGap?.();
-                        } else if (key === 'make-group') {
-                           onUpdate(task.id, {
-                              task_type: 'group',
-                              group_color: '#3b82f6', // Default blue from palette
-                           });
-                        } else if (key === 'revert-task') {
-                           onUpdate(task.id, {
-                              task_type: 'task',
-                              group_color: null as any,
-                           });
+                  <DropdownMenu aria-label="Task Actions">
+                     {TaskMenuItems({
+                        task,
+                        onUpdate,
+                        onDelete,
+                        onAddGap,
+                        onMove,
+                        projectsStructure,
+                        isInsideGroup: !!activeGroupColor,
+                        items: {
+                           delete: true,
+                           makeGap: true,
+                           makeGroup: true,
+                           today: true,
+                           move: true,
+                           styles: true
                         }
-                     }}
-                  >
-                     {!isGroup
-                        ? null // Style options moved to separate button
-                        : null}
-
-                     {isGroup ? (
-                        <DropdownItem key="revert-task">Revert To Task</DropdownItem>
-                     ) : !activeGroupColor ? (
-                        <DropdownItem key="make-group">Make As Group</DropdownItem>
-                     ) : null}
-
-                     {isGroup ? (
-                        <DropdownItem
-                           key="group-color"
-                           isReadOnly
-                           className="cursor-default opacity-100"
-                           textValue="Group Color"
-                        >
-                           <div className="flex flex-col gap-2 py-1">
-                              <span className="text-tiny text-default-500 font-semibold">
-                                 Group Color
-                              </span>
-                              <div className="flex flex-wrap gap-1">
-                                 {COLORS.map((color) => (
-                                    <button
-                                       key={color.value}
-                                       type="button"
-                                       onClick={(e) => {
-                                          e.stopPropagation(); // Prevent dropdown from closing immediately if desired, or let it close
-                                          onUpdate(task.id, { group_color: color.value });
-                                       }}
-                                       className={clsx(
-                                          'w-5 h-5 rounded-full cursor-pointer transition-transform hover:scale-110 flex items-center justify-center outline-none ',
-                                          currentGroupColor.toLowerCase() ===
-                                             color.value.toLowerCase() &&
-                                             'ring-0 ring-primary scale-110'
-                                       )}
-                                       style={{ backgroundColor: color.value }}
-                                       title={color.name}
-                                    >
-                                       {currentGroupColor.toLowerCase() ===
-                                          color.value.toLowerCase() && (
-                                          <Check size={12} className="text-white drop-shadow-sm" />
-                                       )}
-                                    </button>
-                                 ))}
-                              </div>
-                           </div>
-                        </DropdownItem>
-                     ) : null}
-
-                     <DropdownItem key="make-gap">Make Gap Below</DropdownItem>
-                     <DropdownItem key="delete" className="text-danger" color="danger">
-                        Delete
-                     </DropdownItem>
+                     })}
                   </DropdownMenu>
                </Dropdown>
             </div>
@@ -480,13 +428,16 @@ export const TaskRow = React.memo(
             onDelete={onDelete}
             onAddGap={onAddGap}
             onUpdate={onUpdate}
+            onMove={onMove}
+            projectsStructure={projectsStructure}
             isInsideGroup={!!activeGroupColor}
             items={{
                delete: true,
                makeGap: true,
                makeGroup: true,
                styles: true,
-               today: true
+               today: true,
+               move: true
             }}
          >
             <motion.div

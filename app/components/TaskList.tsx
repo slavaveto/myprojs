@@ -14,9 +14,11 @@ interface TaskListProps {
     highlightedTaskId?: string | null;
     onAddGap?: (index: number) => void;
     projectColor?: string;
+    projectsStructure?: any[];
+    onMoveTask?: (taskId: string, projectId: string, folderId: string) => void;
 }
 
-export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlightedTaskId, onAddGap, projectColor }: TaskListProps) => {
+export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlightedTaskId, onAddGap, projectColor, projectsStructure, onMoveTask }: TaskListProps) => {
     const pinnedTasks = React.useMemo(() => tasks.filter(t => t.is_pinned), [tasks]);
     const unpinnedTasks = React.useMemo(() => tasks.filter(t => !t.is_pinned), [tasks]);
 
@@ -69,6 +71,8 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlight
                              onAddGap={() => onAddGap?.(index)}
                              projectColor={projectColor}
                              activeGroupColor={activeGroupColor}
+                             projectsStructure={projectsStructure}
+                             onMove={onMoveTask}
                           />
                        ))}
                    </AnimatePresence>

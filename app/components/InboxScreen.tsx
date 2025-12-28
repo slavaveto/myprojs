@@ -13,7 +13,7 @@ import { projectService } from '@/app/_services/projectService';
 import { CreateItemPopover } from '@/app/components/CreateItem';
 import { loadingService } from '@/app/_services/loadingService';
 import { EditableCell } from './EditableCell';
-import { TaskContextMenu } from './TaskContextMenu';
+import { TaskContextMenu, TaskMenuItems } from './TaskContextMenu';
 
 const logger = createLogger('InboxScreen');
 
@@ -205,71 +205,20 @@ const InboxTaskRow = ({
                             <MoreVertical size={16} />
                         </button>
                     </DropdownTrigger>
-                    <DropdownMenu
-                        aria-label="Task Actions"
-                        className="overflow-visible"
-                        onAction={(key) => {
-                            if (key === 'delete') {
-                                onDelete(task.id);
+                    <DropdownMenu aria-label="Task Actions">
+                        {TaskMenuItems({
+                            task,
+                            onUpdate,
+                            onDelete,
+                            onMove,
+                            projectsStructure,
+                            items: {
+                                delete: true,
+                                move: true,
+                                today: true,
+                                styles: true
                             }
-                        }}
-                    >
-                        <DropdownItem
-                            key="move-custom"
-                            isReadOnly
-                            className="p-0 opacity-100 data-[hover=true]:bg-transparent cursor-default overflow-visible"
-                            textValue="Move to Project"
-                        >
-                            <div className="relative group/move w-full">
-                                <div className="flex items-center justify-between px-2 py-1.5 rounded-small hover:bg-default-100 cursor-default transition-colors w-full">
-                                    <div className="flex items-center gap-2">
-                                        <MoveRight size={16} className="text-default-500" />
-                                        <span>Move to...</span>
-                                    </div>
-                                    <ArrowRight size={14} className="text-default-400" />
-                                </div>
-
-                                <div className="absolute right-[100%] top-[-4px] mr-1 w-[200px] hidden group-hover/move:flex flex-col bg-content1 rounded-medium shadow-small border-small border-default-200 p-1 z-50 overflow-visible">
-                                    {projectsStructure.map((project) => (
-                                        <div key={project.id} className="relative group/project w-full">
-                                            <div className="flex items-center justify-between px-2 py-1.5 rounded-small hover:bg-default-100 cursor-default transition-colors w-full">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: project.color || '#3b82f6' }} />
-                                                    <span className="text-small truncate max-w-[140px]">{project.title}</span>
-                                                </div>
-                                                {project.folders && project.folders.length > 0 && (
-                                                    <ArrowRight size={12} className="text-default-400" />
-                                                )}
-                                            </div>
-
-                                            {/* FOLDER LIST (Level 2) */}
-                                            {project.folders && project.folders.length > 0 && (
-                                                <div className="absolute left-[100%] top-[-4px] ml-1 w-[180px] hidden group-hover/project:flex flex-col bg-content1 rounded-medium shadow-small border-small border-default-200 p-1 z-50">
-                                                    {project.folders.map((folder: any) => (
-                                                        <button
-                                                            key={folder.id}
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                document.body.click();
-                                                                onMove?.(task.id, project.id, folder.id);
-                                                            }}
-                                                            className="flex items-center gap-2 px-2 py-1.5 rounded-small hover:bg-default-100 cursor-pointer transition-colors w-full text-left outline-none"
-                                                        >
-                                                            <FolderIcon size={14} className="text-default-400" />
-                                                            <span className="text-small truncate">{folder.title}</span>
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </DropdownItem>
-
-                        <DropdownItem key="delete" className="text-danger" color="danger" startContent={<Trash2 size={16} />}>
-                            Delete
-                        </DropdownItem>
+                        })}
                     </DropdownMenu>
                 </Dropdown>
              </div>
