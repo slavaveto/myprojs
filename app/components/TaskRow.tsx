@@ -480,6 +480,7 @@ export const TaskRow = React.memo(
             onDelete={onDelete}
             onAddGap={onAddGap}
             onUpdate={onUpdate}
+            isInsideGroup={!!activeGroupColor}
             items={{
                delete: true,
                makeGap: true,

@@ -41,6 +41,9 @@ interface TaskContextMenuProps {
    
    // Data needed for Move menu
    projectsStructure?: any[];
+   
+   // Context info
+   isInsideGroup?: boolean;
 }
 
 // Group Colors Palette (duplicated here or import from constants)
@@ -63,12 +66,17 @@ export const TaskContextMenu = ({
    onUpdate,
    onAddGap,
    onMove,
-   projectsStructure = []
+   projectsStructure = [],
+   isInsideGroup = false
 }: TaskContextMenuProps) => {
    const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
 
    const handleContextMenu = (e: React.MouseEvent) => {
       e.preventDefault();
+      // Remove focus from input if any (prevents keyboard from popping up or cursor blinking)
+      if (document.activeElement instanceof HTMLElement) {
+         document.activeElement.blur();
+      }
       e.stopPropagation(); // Prevent bubbling if nested
       setMenuPos({ x: e.clientX, y: e.clientY });
    };
@@ -257,9 +265,9 @@ export const TaskContextMenu = ({
                {items.makeGroup ? (
                   isGroup ? (
                       <DropdownItem key="revert-task">Revert To Task</DropdownItem>
-                  ) : (
+                  ) : !isInsideGroup ? (
                       <DropdownItem key="make-group">Make As Group</DropdownItem>
-                  )
+                  ) : null
                ) : null}
 
                {items.makeGroup && isGroup ? (
