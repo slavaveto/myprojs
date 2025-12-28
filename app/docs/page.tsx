@@ -271,7 +271,9 @@ export default function FlowPage({ projectId, projectLocalPath }: FlowPageProps)
                                          
                                          <div className="flex-grow min-w-0">
                                              <div className="font-medium text-gray-700 truncate" title={ref.description}>
-                                                 {ref.description || <span className="italic text-gray-400">No description</span>}
+                                                 {ref.description || (
+                                                     <span className="italic text-gray-400 text-[10px]">{ref.debug || "No description"}</span>
+                                                 )}
                                              </div>
                                              <div className="flex items-center gap-1.5 text-gray-400 text-[10px] font-mono mt-0.5 truncate" title={ref.fileName}>
                                                  <FileCode size={10} />
@@ -387,12 +389,58 @@ export default function FlowPage({ projectId, projectLocalPath }: FlowPageProps)
                                      <p className="text-sm text-gray-600 mb-2">{step.description}</p>
                                  )}
 
-                                 {/* Ref Badge */}
-                                 <div className="flex items-center gap-2 mt-2">
-                                     <span className="text-xs text-gray-400 font-mono">Ref:</span>
-                                     <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-xs font-mono">
-                                         {step.ref_id}
-                                     </span>
+                                 {/* Ref Badge and Actions */}
+                                 <div className="flex items-center justify-between mt-2">
+                                     <div className="flex items-center gap-2">
+                                         <span className="text-xs text-gray-400 font-mono">Ref:</span>
+                                         <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-xs font-mono">
+                                             {step.ref_id}
+                                         </span>
+                                     </div>
+
+                                     <div className="flex items-center gap-1">
+                                         {/* View Code Snippet */}
+                                         {step.code_snippet && (
+                                             <Popover placement="left">
+                                                 <PopoverTrigger>
+                                                     <button className="p-1 text-gray-400 hover:text-blue-600 rounded flex items-center gap-1 text-xs transition-colors" title="View Saved Snippet">
+                                                         <FileCode size={14} />
+                                                         <span className="font-mono">Snippet</span>
+                                                     </button>
+                                                 </PopoverTrigger>
+                                                 <PopoverContent className="p-0 border border-gray-700 rounded overflow-hidden shadow-2xl">
+                                                     <div className="bg-[#1e1e1e] p-3 text-[10px] font-mono text-gray-300 max-w-[500px] overflow-x-auto">
+                                                         <div className="text-gray-500 select-none">{'//'} @ref:{step.ref_id}</div>
+                                                         {step.title && step.title !== step.ref_id && (
+                                                             <div className="text-gray-500 mb-2 select-none">{'//'} {step.title}</div>
+                                                         )}
+                                                         <pre>{step.code_snippet}</pre>
+                                                     </div>
+                                                 </PopoverContent>
+                                             </Popover>
+                                         )}
+
+                                         {/* Open in Editor (only if scanned) */}
+                                         {(() => {
+                                             const liveRef = scannedRefs.find(r => r.id === step.ref_id);
+                                             return (
+                                                 <button 
+                                                    onClick={() => liveRef && openInEditor(liveRef.absolutePath, liveRef.lineNumber)}
+                                                    disabled={!liveRef}
+                                                    className={clsx(
+                                                        "p-1 rounded flex items-center gap-1 text-xs transition-colors",
+                                                        liveRef 
+                                                            ? "text-blue-500 hover:text-blue-700 hover:bg-blue-50" 
+                                                            : "text-gray-300 cursor-not-allowed"
+                                                    )}
+                                                    title={liveRef ? "Open in Editor" : "Scan code to enable linking"}
+                                                 >
+                                                     <Code2 size={14} />
+                                                     <span>Open</span>
+                                                 </button>
+                                             );
+                                         })()}
+                                     </div>
                                  </div>
                              </div>
                          </div>

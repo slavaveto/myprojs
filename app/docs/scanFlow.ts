@@ -11,6 +11,7 @@ export interface CodeRef {
   absolutePath: string; // Absolute path for linking
   lineNumber: number; // Line number where @ref is found
   snippet: string; // Next 5 lines of code
+  debug?: string; // Debug info
 }
 
 export async function scanFlowRefs(projectFolderName?: string): Promise<CodeRef[]> {
@@ -38,10 +39,10 @@ export async function scanFlowRefs(projectFolderName?: string): Promise<CodeRef[
   
   const refs: CodeRef[] = [];
   
-  // Regex: // @ref:ID followed optionally by /Description
+  // Regex: // @ref:ID followed optionally by /LinesCount
   // Capture group 1: ID
-  // Capture group 2: Description (optional)
-  const refRegex = /\/\/\s*@ref:([a-zA-Z0-9_-]+)(?:\/(.*))?/g;
+  // Capture group 2: LinesCount (optional, default 10)
+  const refRegex = /\/\/\s*@ref:([a-zA-Z0-9_-]+)(?:\/(\d+))?/g;
   
   for (const file of files) {
       // HARD STOP: ALWAYS skip docs folder to prevent self-scanning
@@ -63,12 +64,37 @@ export async function scanFlowRefs(projectFolderName?: string): Promise<CodeRef[
           
           if (match) {
               const id = match[1].trim();
-              const description = match[2] ? match[2].trim() : undefined;
+              const linesCount = match[2] ? parseInt(match[2], 10) : 10;
+              let description: string | undefined;
+              let debugInfo = `Found ID: ${id}. `;
               
-              // Get snippet (next 10 lines)
-              const snippetLines = lines.slice(i + 1, i + 11);
-              // Clean up snippet (remove indentation based on first line?)
-              // For now raw is fine.
+              // Debug log
+              // console.log(`Found ref: ${id}, checking next line...`);
+
+              // Always check next line for description comment
+              if (lines[i + 1]) {
+                  const nextLine = lines[i + 1].trim();
+                  // console.log(`Next line trimmed: "${nextLine}"`);
+                  debugInfo += `Next line: "${nextLine}". `;
+                  
+                  // Check for // comment
+                  const commentMatch = nextLine.match(/^\/\/\s*(.*)/);
+                  if (commentMatch) {
+                      description = commentMatch[1].trim();
+                      // console.log(`Description found: "${description}"`);
+                      debugInfo += `Desc matched: "${description}".`;
+                  } else {
+                      debugInfo += `No comment match.`;
+                  }
+              }
+
+              // Determine snippet start line. 
+              // If we consumed the next line as description, start snippet from i+2
+              // Otherwise i+1
+              const snippetStartOffset = description ? 2 : 1;
+              
+              // Get snippet
+              const snippetLines = lines.slice(i + snippetStartOffset, i + snippetStartOffset + linesCount);
               const snippet = snippetLines.join('\n');
 
               refs.push({
@@ -77,7 +103,8 @@ export async function scanFlowRefs(projectFolderName?: string): Promise<CodeRef[
                   fileName: file,
                   absolutePath,
                   lineNumber: i + 1, // 1-based index
-                  snippet
+                  snippet,
+                  debug: debugInfo
               });
           }
       }
