@@ -4,7 +4,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { createLogger } from '@/utils/logger/Logger';
 import { taskService } from '@/app/_services/taskService';
 import { clsx } from 'clsx';
-import { CheckCircle2, Trash2, Folder as FolderIcon, RefreshCw, GripVertical, RotateCcw, Calendar, Inbox, Plus, Bold, Type, Star, X, MoreVertical, MoveRight, ArrowRight } from 'lucide-react';
+import { CheckCircle2, Trash2, Folder as FolderIcon, RefreshCw, GripVertical, RotateCcw, Calendar, Inbox, Plus, MoreVertical, MoveRight, ArrowRight } from 'lucide-react';
 import { Spinner, Chip, Button, Switch, Select, SelectItem, Checkbox, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, DropdownSection } from '@heroui/react';
 import { format, isToday, isYesterday, isThisWeek, isThisMonth } from 'date-fns';
 import { useGlobalPersistentState } from '@/utils/storage';
@@ -15,6 +15,7 @@ import { loadingService } from '@/app/_services/loadingService';
 import { EditableCell } from './EditableCell';
 import { TaskContextMenu, TaskMenuItems } from './TaskContextMenu';
 import { TaskStyleControl } from './TaskStyleControl';
+import { TaskTodayControl } from './TaskTodayControl';
 
 const logger = createLogger('InboxScreen');
 
@@ -100,18 +101,7 @@ const InboxTaskRow = ({
                  <TaskStyleControl task={task} onUpdate={onUpdate} />
 
                  {/* Today Button */}
-                 <button
-                    onClick={() => onUpdate(task.id, { is_today: !task.is_today })}
-                    className={clsx(
-                       'p-[2px] cursor-pointer rounded transition-all outline-none',
-                       task.is_today
-                          ? 'opacity-100 text-warning'
-                          : 'opacity-0 group-hover:opacity-100 text-default-300 hover:text-warning'
-                    )}
-                    aria-label="Toggle Today"
-                 >
-                    <Star size={16} fill={task.is_today ? 'currentColor' : 'none'} />
-                 </button>
+                 <TaskTodayControl task={task} onUpdate={onUpdate} />
 
                 {/* More Menu */}
                 <Dropdown placement="bottom-end">

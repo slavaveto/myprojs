@@ -5,13 +5,15 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useDndContext } from '@dnd-kit/core';
 import { Checkbox, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
-import { GripVertical, Trash2, MoreVertical, Check, Star, Pin, Bold, Type, X } from 'lucide-react';
+import { GripVertical, Trash2, MoreVertical, Check, Pin } from 'lucide-react';
 import { Task } from '../types';
 import { EditableCell } from './EditableCell';
 import { clsx } from 'clsx';
 import { motion } from 'framer-motion';
 import { TaskContextMenu, TaskMenuItems } from './TaskContextMenu';
 import { TaskStyleControl } from './TaskStyleControl';
+import { TaskPinControl } from './TaskPinControl';
+import { TaskTodayControl } from './TaskTodayControl';
 
 interface TaskRowProps {
    task: Task;
@@ -267,32 +269,10 @@ export const TaskRow = React.memo(
                      <TaskStyleControl task={task} onUpdate={onUpdate} />
 
                      {/* Pinned Button */}
-                     <button
-                        onClick={() => onUpdate(task.id, { is_pinned: !task.is_pinned })}
-                        className={clsx(
-                           'p-[2px] hidden cursor-pointer rounded transition-all outline-none',
-                           task.is_pinned
-                              ? 'opacity-100 text-primary rotate-45'
-                              : 'opacity-0 group-hover:opacity-100 text-default-300 hover:text-primary'
-                        )}
-                        aria-label="Toggle Pin"
-                     >
-                        <Pin size={16} fill={task.is_pinned ? 'currentColor' : 'none'} />
-                     </button>
+                     <TaskPinControl task={task} onUpdate={onUpdate} />
 
                      {/* Today Button */}
-                     <button
-                        onClick={() => onUpdate(task.id, { is_today: !task.is_today })}
-                        className={clsx(
-                           'p-[2px] cursor-pointer rounded transition-all outline-none',
-                           task.is_today
-                              ? 'opacity-100 text-warning'
-                              : 'opacity-0 group-hover:opacity-100 text-default-300 hover:text-warning'
-                        )}
-                        aria-label="Toggle Today"
-                     >
-                        <Star size={16} fill={task.is_today ? 'currentColor' : 'none'} />
-                     </button>
+                     <TaskTodayControl task={task} onUpdate={onUpdate} />
                   </>
                )}
 

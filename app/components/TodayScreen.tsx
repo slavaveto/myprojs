@@ -4,7 +4,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { createLogger } from '@/utils/logger/Logger';
 import { taskService } from '@/app/_services/taskService';
 import { clsx } from 'clsx';
-import { CheckCircle2, Trash2, Folder as FolderIcon, RefreshCw, GripVertical, RotateCcw, Calendar, Star, Bold, Type, X, MoreVertical, MoveRight, ArrowRight } from 'lucide-react';
+import { CheckCircle2, Trash2, Folder as FolderIcon, RefreshCw, GripVertical, RotateCcw, Calendar, MoreVertical, MoveRight, ArrowRight, Star } from 'lucide-react';
 import { Spinner, Chip, Button, Switch, Select, SelectItem, Checkbox, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, DropdownSection } from '@heroui/react';
 import { format, isToday, isYesterday, isThisWeek, isThisMonth } from 'date-fns';
 import { useGlobalPersistentState } from '@/utils/storage';
@@ -14,6 +14,7 @@ import { loadingService } from '@/app/_services/loadingService';
 import { EditableCell } from './EditableCell';
 import { TaskContextMenu, TaskMenuItems } from './TaskContextMenu';
 import { TaskStyleControl } from './TaskStyleControl';
+import { TaskTodayControl } from './TaskTodayControl';
 
 const logger = createLogger('TodayScreen');
 
@@ -118,14 +119,7 @@ const TodayTaskRow = ({
                  <TaskStyleControl task={task} onUpdate={onUpdate} />
 
                  {/* Remove from Today button */}
-                 <button
-                    onClick={() => onUpdate(task.id, { is_today: false })}
-                    className="opacity-100 p-[2px] text-warning cursor-pointer hover:bg-warning/10 rounded transition-all outline-none"
-                    aria-label="Remove from Today"
-                    title="Remove from Today"
-                 >
-                     <Star size={16} fill="currentColor" />
-                 </button>
+                 <TaskTodayControl task={task} onUpdate={onUpdate} />
 
                  <Dropdown placement="bottom-end">
                     <DropdownTrigger>

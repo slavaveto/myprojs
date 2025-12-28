@@ -22,11 +22,11 @@ interface TaskStyleControlProps {
 
 export const TaskStyleControl = ({ task, onUpdate }: TaskStyleControlProps) => {
    return (
-       <Dropdown placement="bottom-start" className="min-w-0 w-auto">
+       <Dropdown placement="bottom-start" className=" min-w-0 w-auto">
           <DropdownTrigger>
              <button
                 className={clsx(
-                   'p-[2px] cursor-pointer rounded transition-all outline-none opacity-0 group-hover:opacity-100 text-default-300 hover:text-foreground',
+                   'hidden p-[2px] cursor-pointer rounded transition-all outline-none opacity-0 group-hover:opacity-100 text-default-300 hover:text-foreground',
                    task.title_text_style && 'opacity-0 text-foreground'
                 )}
                 aria-label="Text Style"
