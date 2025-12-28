@@ -30,11 +30,43 @@ export const taskService = {
 
     async getDoneTasks(showDeleted = false, timeFilter = 'all') {
         logger.info('Fetching done tasks...', { showDeleted, timeFilter });
-        // ... (Logic from projectService, can be refined later to use logs if needed)
-        // For now, keep as is, or use the LOGS approach?
-        // User asked to use logs. But that's a UI/Query change.
-        // Let's implement standard DB query first, then we can add separate method for "Done with Logs".
+
+        // 1. Fetch Logs first to get accurate completion times
+        // We only care about logs for 'task' entity where action is 'complete' or 'delete' (if showDeleted)
+        let logQuery = supabase
+            .from('logs')
+            .select('entity_id, created_at, action')
+            .eq('entity', 'task')
+            .order('created_at', { ascending: false }); // Newest logs first
+
+        if (!showDeleted) {
+            logQuery = logQuery.eq('action', 'complete');
+        } else {
+            logQuery = logQuery.in('action', ['complete', 'delete']);
+        }
         
+        // Limit logs to reasonable amount to map back to tasks. 
+        // Note: This approach implies we rely on logs for "recent" items.
+        // If we have thousands of logs, we might miss some if we limit too early, 
+        // but for "Done" screen usually we care about recent history or finite set.
+        const { data: logs, error: logError } = await logQuery.limit(500);
+        
+        if (logError) {
+             logger.error('Failed to fetch task logs', logError);
+             // Fallback to old method if logs fail
+        }
+
+        const logMap = new Map<string, string>(); // taskId -> finishedAt (ISO string)
+        if (logs) {
+            logs.forEach(log => {
+                // If multiple logs exist (e.g. completed multiple times), latest one wins because of sort order
+                if (!logMap.has(log.entity_id)) {
+                    logMap.set(log.entity_id, log.created_at);
+                }
+            });
+        }
+
+        // 2. Fetch Tasks
         let query = supabase
             .from('tasks')
             .select(`
@@ -56,32 +88,51 @@ export const taskService = {
             query = query.eq('is_completed', true).or('is_deleted.eq.false,is_deleted.is.null');
         }
 
-        if (timeFilter !== 'all') {
-            const now = new Date();
-            let fromTime;
-            if (timeFilter === 'hour') {
-                fromTime = new Date(now.getTime() - 60 * 60 * 1000).toISOString();
-            } else if (timeFilter === 'today') {
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                fromTime = today.toISOString();
-            }
-            if (fromTime) {
-                query = query.gte('updated_at', fromTime);
-            }
-        }
-
-        const { data, error } = await query
-            .order('updated_at', { ascending: false })
-            .order('created_at', { ascending: false })
-            .limit(100);
+        // We can't easily filter by time using logs + tasks in one SQL query without join.
+        // So we'll fetch tasks and filter in JS using the log timestamps if available, or updated_at as fallback.
+        
+        const { data, error } = await query.limit(200); // Fetch enough tasks
 
         if (error) {
             logger.error('Failed to fetch done tasks', error);
             throw error;
         }
-        logger.info('Done tasks loaded', { count: data?.length });
-        return data;
+
+        // 3. Merge and Sort
+        let mergedTasks = (data || []).map((task: any) => {
+            // Use log time if available, otherwise fallback to updated_at
+            const realCompletedAt = logMap.get(task.id) || task.updated_at;
+            return {
+                ...task,
+                updated_at: realCompletedAt // Override for UI sorting
+            };
+        });
+
+        // 4. Apply Time Filter in Memory
+        if (timeFilter !== 'all') {
+            const now = new Date();
+            let fromTimeTime = 0;
+            
+            if (timeFilter === 'hour') {
+                fromTimeTime = now.getTime() - 60 * 60 * 1000;
+            } else if (timeFilter === 'today') {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                fromTimeTime = today.getTime();
+            }
+
+            if (fromTimeTime > 0) {
+                mergedTasks = mergedTasks.filter((t: any) => new Date(t.updated_at).getTime() >= fromTimeTime);
+            }
+        }
+
+        // 5. Final Sort (Newest completed first)
+        mergedTasks.sort((a: any, b: any) => {
+            return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+        });
+
+        logger.info('Done tasks loaded', { count: mergedTasks.length });
+        return mergedTasks;
     },
 
     async getTodayTasks() {

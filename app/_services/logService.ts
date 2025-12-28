@@ -37,10 +37,15 @@ export const logService = {
         }
     },
 
-    async getLogs(limit = 100, timeFilter = 'all') {
+    async getLogs(limit = 100, timeFilter = 'all', actionFilter = 'all') {
         let query = supabase
             .from('logs')
             .select('*');
+
+        // Filter by Action
+        if (actionFilter !== 'all') {
+            query = query.eq('action', actionFilter);
+        }
 
         // Filter by Time
         if (timeFilter !== 'all') {
