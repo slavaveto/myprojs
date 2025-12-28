@@ -21,6 +21,13 @@ const TIME_RANGES = [
     { key: 'all', label: 'All Time' },
 ];
 
+const LIMIT_OPTIONS = [
+    { key: '50', label: '50 items' },
+    { key: '100', label: '100 items' },
+    { key: '200', label: '200 items' },
+    { key: '500', label: '500 items' },
+];
+
 interface LogsScreenProps {
     globalStatus?: ActionStatus;
     canLoad?: boolean;
@@ -33,6 +40,8 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
     const [timeFilter, setTimeFilter] = useGlobalPersistentState<string>('logs_time_filter', 'all');
+    const [actionFilter, setActionFilter] = useGlobalPersistentState<string>('logs_action_filter', 'all');
+    const [limitFilter, setLimitFilter] = useGlobalPersistentState<string>('logs_limit_filter', '50');
 
     const fetchLogs = async (showSpinner = true) => {
         if (!canLoad && showSpinner) return;
@@ -46,8 +55,9 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
         }
         
         try {
+            const limit = parseInt(limitFilter) || 50;
             const [data] = await Promise.all([
-                logService.getLogs(50, timeFilter),
+                logService.getLogs(limit, timeFilter, actionFilter),
                 new Promise(resolve => setTimeout(resolve, 1000))
             ]);
             setLogs(data || []);
@@ -68,7 +78,7 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
         } else if (canLoad && !isLoaded) {
             fetchLogs(true);
         }
-    }, [canLoad, isActive, timeFilter]);
+    }, [canLoad, isActive, timeFilter, actionFilter, limitFilter]);
 
     const getActionColor = (action: string) => {
         switch (action) {
@@ -80,6 +90,18 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
             case BaseActions.REORDER: return 'secondary';
             case BaseActions.DELETE: return 'danger';
             default: return 'default';
+        }
+    };
+
+    const handleRepair = async () => {
+        const toast = (await import('react-hot-toast')).default;
+        const toastId = toast.loading('Repairing logs...');
+        try {
+            const result = await logService.fixMissingLogs();
+            toast.success(`Repaired ${result.count} logs`, { id: toastId });
+            fetchLogs(false);
+        } catch (e) {
+            toast.error('Failed to repair', { id: toastId });
         }
     };
 
@@ -170,6 +192,16 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
         );
     }
 
+    const ACTION_FILTERS = [
+        { key: 'all', label: 'All Actions' },
+        { key: BaseActions.CREATE, label: 'Create' },
+        { key: BaseActions.COMPLETE, label: 'Complete' },
+        { key: BaseActions.UPDATE, label: 'Update' },
+        { key: BaseActions.DELETE, label: 'Delete' },
+        { key: BaseActions.RESTORE, label: 'Restore' },
+        { key: BaseActions.REORDER, label: 'Reorder' },
+    ];
+
     return (
         <div className="h-full flex flex-col p-6 max-w-5xl mx-auto w-full">
             <div className="flex justify-between items-center mb-4 min-h-[40px]">
@@ -182,15 +214,45 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
                 <div className="flex items-center gap-4">
                     <Select 
                         size="sm"
+                        selectedKeys={[actionFilter]}
+                        onChange={(e) => setActionFilter(e.target.value)}
+                        className="w-[150px]"
+                        aria-label="Action Filter"
+                        disallowEmptySelection
+                    >
+                        {ACTION_FILTERS.map((filter) => (
+                            <SelectItem key={filter.key}>
+                                {filter.label}
+                            </SelectItem>
+                        ))}
+                    </Select>
+
+                    <Select 
+                        size="sm"
                         selectedKeys={[timeFilter]}
                         onChange={(e) => setTimeFilter(e.target.value)}
-                        className="w-[200px]"
+                        className="w-[150px]"
                         aria-label="Time Range"
                         disallowEmptySelection
                     >
                         {TIME_RANGES.map((range) => (
                             <SelectItem key={range.key}>
                                 {range.label}
+                            </SelectItem>
+                        ))}
+                    </Select>
+
+                    <Select 
+                        size="sm"
+                        selectedKeys={[limitFilter]}
+                        onChange={(e) => setLimitFilter(e.target.value)}
+                        className="w-[150px]"
+                        aria-label="Limit"
+                        disallowEmptySelection
+                    >
+                        {LIMIT_OPTIONS.map((opt) => (
+                            <SelectItem key={opt.key}>
+                                {opt.label}
                             </SelectItem>
                         ))}
                     </Select>
@@ -210,6 +272,15 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
                             isLoading={isRefreshing}
                         >
                             <RefreshCw size={18} />
+                        </Button>
+                        <Button 
+                            size="sm" 
+                            variant="flat" 
+                            color="warning"
+                            onPress={handleRepair}
+                            className="min-w-0 px-3"
+                        >
+                            Fix Data
                         </Button>
                     </div>
                 </div>

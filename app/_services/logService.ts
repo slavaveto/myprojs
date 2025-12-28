@@ -71,5 +71,77 @@ export const logService = {
 
         if (error) throw error;
         return data as LogEntry[];
+    },
+
+    // --- Temporary Repair Script ---
+    async fixMissingLogs(): Promise<{ count: number; error?: any }> {
+        // 1. Get all completed or deleted tasks
+        const { data: tasks, error } = await supabase
+            .from('tasks')
+            .select('id, content, is_completed, is_deleted, updated_at, folder_id')
+            .or('is_completed.eq.true,is_deleted.eq.true');
+
+        if (error || !tasks) {
+            console.error('Failed to fetch tasks for repair', error);
+            return { count: 0, error };
+        }
+
+        // 2. Get existing logs for these tasks
+        const { data: existingLogs } = await supabase
+            .from('logs')
+            .select('entity_id, action')
+            .eq('entity', 'task')
+            .in('entity_id', tasks.map(t => t.id));
+
+        const existingLogMap = new Set(existingLogs?.map(l => l.entity_id + '_' + l.action));
+
+        let fixedCount = 0;
+        const fixDate = new Date();
+        fixDate.setDate(fixDate.getDate() - 1); // Yesterday
+        fixDate.setHours(12, 0, 0, 0); // 12:00
+
+        const newLogs = [];
+
+        for (const task of tasks) {
+            // Determine expected action
+            // If deleted -> check for delete log
+            // If completed -> check for complete log
+            // Priority to DELETE if both true (usually deleted implies finished context)
+            
+            let neededAction = null;
+            if (task.is_deleted) neededAction = 'delete';
+            else if (task.is_completed) neededAction = 'complete';
+
+            if (!neededAction) continue;
+
+            const hasLog = existingLogMap.has(task.id + '_' + neededAction);
+            
+            if (!hasLog) {
+                // Check if maybe we have the OTHER action? 
+                // E.g. task is deleted, do we have 'complete'? If so, maybe that's enough for sorting?
+                // But user wants to fix MISSING logs.
+                // Let's create the missing log.
+                
+                newLogs.push({
+                    action: neededAction,
+                    entity: 'task',
+                    entity_id: task.id,
+                    entity_title: task.content || 'Unknown Task',
+                    created_at: fixDate.toISOString(),
+                    details: { note: 'Auto-repaired missing log' }
+                });
+                fixedCount++;
+            }
+        }
+
+        if (newLogs.length > 0) {
+            // Insert in batches of 100
+            for (let i = 0; i < newLogs.length; i += 100) {
+                const batch = newLogs.slice(i, i + 100);
+                await supabase.from('logs').insert(batch);
+            }
+        }
+
+        return { count: fixedCount };
     }
 };
