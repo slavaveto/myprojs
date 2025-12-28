@@ -23,6 +23,7 @@ interface TaskRowProps {
    activeGroupColor?: string | null;
    projectsStructure?: any[];
    onMove?: (taskId: string, projectId: string, folderId: string) => void;
+   currentProjectId?: string;
 }
 
 // Group Colors Palette (Restored for More menu)
@@ -138,6 +139,7 @@ export const TaskRow = React.memo(
       activeGroupColor,
       projectsStructure,
       onMove,
+      currentProjectId
    }: TaskRowProps) => {
       const [isHovered, setIsHovered] = React.useState(false);
 
@@ -394,6 +396,7 @@ export const TaskRow = React.memo(
                         onMove,
                         projectsStructure,
                         isInsideGroup: !!activeGroupColor,
+                        currentProjectId,
                         items: {
                            delete: true,
                            makeGap: true,
@@ -431,6 +434,7 @@ export const TaskRow = React.memo(
             onMove={onMove}
             projectsStructure={projectsStructure}
             isInsideGroup={!!activeGroupColor}
+            currentProjectId={currentProjectId}
             items={{
                delete: true,
                makeGap: true,

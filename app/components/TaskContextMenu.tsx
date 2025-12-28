@@ -38,6 +38,7 @@ export interface TaskContextMenuProps {
    onMove?: (taskId: string, projectId: string, folderId: string) => void;
    projectsStructure?: any[];
    isInsideGroup?: boolean;
+   currentProjectId?: string; // Explicitly passed project context
 }
 
 // Group Colors Palette
@@ -65,6 +66,7 @@ export const TaskMenuItems = ({
     onMove,
     projectsStructure = [],
     isInsideGroup = false,
+    currentProjectId,
     closeMenu
 }: TaskMenuItemsProps) => {
     const isGroup = task.task_type === 'group';
@@ -182,40 +184,52 @@ export const TaskMenuItems = ({
 
                         {/* Project List */}
                         <div className="absolute right-[100%] top-[-4px] mr-1 w-[200px] hidden group-hover/move:flex flex-col bg-content1 rounded-medium shadow-small border-small border-default-200 p-1 z-50 overflow-visible">
-                           {projectsStructure.map((project) => (
-                              <div key={project.id} className="relative group/project w-full">
-                                 <div className="flex items-center justify-between px-2 py-1.5 rounded-small hover:bg-default-100 cursor-default transition-colors w-full">
-                                    <div className="flex items-center gap-2">
-                                       <div className="w-2 h-2 rounded-full" style={{ backgroundColor: project.color || '#3b82f6' }} />
-                                       <span className="text-small truncate max-w-[140px]">{project.title}</span>
+                           {projectsStructure.map((project) => {
+                              // Check passed context ID first, then fallback to task property (if exists)
+                              const isCurrentProject = currentProjectId 
+                                 ? String(project.id) === String(currentProjectId)
+                                 : String(project.id) === String(task.project_id);
+                                 
+                              return (
+                                 <div 
+                                    key={project.id} 
+                                    className={clsx(
+                                       "relative group/project w-full",
+                                       isCurrentProject && "opacity-50 pointer-events-none"
+                                    )}
+                                 >
+                                    <div className="flex items-center justify-between px-2 py-1.5 rounded-small hover:bg-default-100 cursor-default transition-colors w-full">
+                                       <div className="flex items-center gap-2">
+                                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: project.color || '#3b82f6' }} />
+                                          <span className="text-small truncate max-w-[140px]">{project.title}</span>
+                                       </div>
+                                       {project.folders && project.folders.length > 0 && !isCurrentProject && (
+                                          <ArrowRight size={12} className="text-default-400" />
+                                       )}
                                     </div>
-                                    {project.folders && project.folders.length > 0 && (
-                                       <ArrowRight size={12} className="text-default-400" />
+
+                                    {/* Folder List */}
+                                    {project.folders && project.folders.length > 0 && !isCurrentProject && (
+                                       <div className="absolute left-[100%] top-[-4px] ml-1 w-[180px] hidden group-hover/project:flex flex-col bg-content1 rounded-medium shadow-small border-small border-default-200 p-1 z-50">
+                                          {project.folders.map((folder: any) => (
+                                             <button
+                                                key={folder.id}
+                                                onClick={(e) => {
+                                                   e.stopPropagation();
+                                                   document.body.click(); // Close menus
+                                                   onMove?.(task.id, project.id, folder.id);
+                                                }}
+                                                className="flex items-center gap-2 px-2 py-1.5 rounded-small hover:bg-default-100 cursor-pointer transition-colors w-full text-left outline-none"
+                                             >
+                                                <FolderIcon size={14} className="text-default-400" />
+                                                <span className="text-small truncate">{folder.title}</span>
+                                             </button>
+                                          ))}
+                                       </div>
                                     )}
                                  </div>
-
-                                 {/* Folder List */}
-                                 {project.folders && project.folders.length > 0 && (
-                                    <div className="absolute left-[100%] top-[-4px] ml-1 w-[180px] hidden group-hover/project:flex flex-col bg-content1 rounded-medium shadow-small border-small border-default-200 p-1 z-50">
-                                       {project.folders.map((folder: any) => (
-                                          <button
-                                             key={folder.id}
-                                             onClick={(e) => {
-                                                e.stopPropagation();
-                                                document.body.click(); // Close menus
-                                                onMove?.(task.id, project.id, folder.id);
-                                                // No handleClose needed if we assume move navigates away or logic handles it
-                                             }}
-                                             className="flex items-center gap-2 px-2 py-1.5 rounded-small hover:bg-default-100 cursor-pointer transition-colors w-full text-left outline-none"
-                                          >
-                                             <FolderIcon size={14} className="text-default-400" />
-                                             <span className="text-small truncate">{folder.title}</span>
-                                          </button>
-                                       ))}
-                                    </div>
-                                 )}
-                              </div>
-                           ))}
+                              );
+                           })}
                         </div>
                      </div>
                   </DropdownItem>

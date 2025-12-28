@@ -199,6 +199,7 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
                         projectColor={project.color} // Pass project color
                         projectsStructure={projectsStructure}
                         onMoveTask={handleMoveTask}
+                        currentProjectId={project.id}
                    />
                 ) : (
                     <div className="text-center py-20 text-default-400">
