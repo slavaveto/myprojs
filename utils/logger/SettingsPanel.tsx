@@ -191,12 +191,21 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
          return a.name.localeCompare(b.name);
       };
 
+      // Helper to check if item is new
+      const isNew = (item: ConfigItem) => {
+         return item.createdAt && (Date.now() - item.createdAt < 180000);
+      };
+
       const pinnedItems: ConfigItem[] = [];
       const otherItems: ConfigItem[] = [];
 
       for (const item of result) {
-         if (item.pinned) pinnedItems.push(item);
-         else otherItems.push(item);
+         // Add to pinned if pinned OR new
+         if (item.pinned || isNew(item)) {
+            pinnedItems.push(item);
+         } else {
+            otherItems.push(item);
+         }
       }
 
       return {
@@ -206,7 +215,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
    }, [configs, search, sortMode]);
 
    const renderItem = (item: ConfigItem) => {
-      const isNew = item.createdAt && (Date.now() - item.createdAt < 60000);
+      const isNew = item.createdAt && (Date.now() - item.createdAt < 180000);
 
       return (
       <motion.div
