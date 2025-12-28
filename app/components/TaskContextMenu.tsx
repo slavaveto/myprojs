@@ -320,7 +320,7 @@ export const TaskMenuItems = ({
                             handleClose();
                         }}
                    >
-                      {task.task_type === 'gap' ? 'Delete Gap' : 'Delete Task'}
+                      {task.task_type === 'gap' ? 'Delete Gap' : isGroup ? 'Delete Group' : 'Delete Task'}
                    </DropdownItem>
                ) : null}
         </>
