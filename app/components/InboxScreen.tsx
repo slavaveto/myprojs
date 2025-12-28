@@ -4,8 +4,8 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { createLogger } from '@/utils/logger/Logger';
 import { taskService } from '@/app/_services/taskService';
 import { clsx } from 'clsx';
-import { CheckCircle2, Trash2, Folder as FolderIcon, RefreshCw, GripVertical, RotateCcw, Calendar, Inbox, Plus } from 'lucide-react';
-import { Spinner, Chip, Button, Switch, Select, SelectItem, Checkbox } from '@heroui/react';
+import { CheckCircle2, Trash2, Folder as FolderIcon, RefreshCw, GripVertical, RotateCcw, Calendar, Inbox, Plus, Bold, Type, Star, X } from 'lucide-react';
+import { Spinner, Chip, Button, Switch, Select, SelectItem, Checkbox, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
 import { format, isToday, isYesterday, isThisWeek, isThisMonth } from 'date-fns';
 import { useGlobalPersistentState } from '@/utils/storage';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -55,15 +55,127 @@ const InboxTaskRow = ({ task, onUpdate, onDelete }: { task: any, onUpdate: (id: 
                         isMultiline
                         className={clsx(
                             "text-[16px] leading-normal break-words whitespace-pre-wrap",
-                            task.is_completed && "text-default-400 line-through"
+                            task.is_completed && "text-default-400 line-through",
+                            task.title_text_style === 'bold' && 'font-medium',
+                            task.title_text_style === 'red' && 'text-danger',
+                            task.title_text_style === 'red-bold' && 'text-danger font-medium'
                         )}
                     />
                 </div>
              </div>
 
              {/* Actions */}
-             <div className="p-0 text-center relative flex justify-center items-center gap-0">
-                 {/* No specific actions for Inbox yet */}
+             <div className="p-0 text-center relative flex justify-center items-center gap-1">
+                 
+                 {/* Style Button */}
+                 <Dropdown placement="bottom-start" className="min-w-0 w-auto">
+                    <DropdownTrigger>
+                       <button
+                          className={clsx(
+                             'p-[2px] cursor-pointer rounded transition-all outline-none opacity-0 group-hover:opacity-100 text-default-300 hover:text-foreground',
+                             task.title_text_style && 'opacity-0 text-foreground'
+                          )}
+                          aria-label="Text Style"
+                       >
+                          <Type size={16} />
+                       </button>
+                    </DropdownTrigger>
+                    <DropdownMenu
+                       aria-label="Text Style Selection"
+                       variant="flat"
+                       className="p-0 min-w-0 w-fit"
+                    >
+                       <DropdownItem
+                          key="style-row"
+                          isReadOnly
+                          className="cursor-default opacity-100 data-[hover=true]:bg-transparent p-1 w-fit min-w-0"
+                          textValue="Style Options"
+                       >
+                          <div className="flex flex-wrap gap-1">
+                             <button
+                                type="button"
+                                onClick={(e) => {
+                                   e.stopPropagation();
+                                   onUpdate(task.id, { title_text_style: 'bold' });
+                                }}
+                                className={clsx(
+                                   'w-7 h-7 rounded hover:bg-default-200 flex items-center justify-center transition-colors',
+                                   task.title_text_style === 'bold' &&
+                                      'bg-default-300 text-foreground'
+                                )}
+                                title="Bold"
+                             >
+                                <Bold size={16} />
+                             </button>
+                             <button
+                                type="button"
+                                onClick={(e) => {
+                                   e.stopPropagation();
+                                   onUpdate(task.id, { title_text_style: 'red' });
+                                }}
+                                className={clsx(
+                                   'w-7 h-7 rounded hover:bg-default-200 flex items-center justify-center transition-colors text-danger',
+                                   task.title_text_style === 'red' && 'bg-danger/20'
+                                )}
+                                title="Red"
+                             >
+                                <Type size={16} />
+                             </button>
+                             <button
+                                type="button"
+                                onClick={(e) => {
+                                   e.stopPropagation();
+                                   onUpdate(task.id, { title_text_style: 'red-bold' });
+                                }}
+                                className={clsx(
+                                   'w-7 h-7 rounded hover:bg-default-200 flex items-center justify-center transition-colors text-danger font-bold',
+                                   task.title_text_style === 'red-bold' && 'bg-danger/20'
+                                )}
+                                title="Red Bold"
+                             >
+                                <Bold size={16} />
+                             </button>
+                             <button
+                                type="button"
+                                onClick={(e) => {
+                                   e.stopPropagation();
+                                   onUpdate(task.id, { title_text_style: null });
+                                }}
+                                className={clsx(
+                                   'w-7 h-7 rounded hover:bg-default-200 flex items-center justify-center transition-colors text-default-400'
+                                )}
+                                title="Reset"
+                             >
+                                <X size={16} />
+                             </button>
+                          </div>
+                       </DropdownItem>
+                    </DropdownMenu>
+                 </Dropdown>
+
+                 {/* Today Button */}
+                 <button
+                    onClick={() => onUpdate(task.id, { is_today: !task.is_today })}
+                    className={clsx(
+                       'p-[2px] cursor-pointer rounded transition-all outline-none',
+                       task.is_today
+                          ? 'opacity-100 text-warning'
+                          : 'opacity-0 group-hover:opacity-100 text-default-300 hover:text-warning'
+                    )}
+                    aria-label="Toggle Today"
+                 >
+                    <Star size={16} fill={task.is_today ? 'currentColor' : 'none'} />
+                 </button>
+
+                {/* Delete Button */}
+                <button
+                    onClick={() => onDelete(task.id)}
+                    className="opacity-0 p-[2px] group-hover:opacity-100 text-default-400 cursor-pointer hover:text-danger hover:bg-danger/10 rounded transition-all"
+                    aria-label="Delete task"
+                    title="Delete"
+                >
+                    <Trash2 size={16} />
+                </button>
              </div>
         </motion.div>
     );
