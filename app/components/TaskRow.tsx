@@ -567,6 +567,9 @@ export const TaskRow = React.memo(
                      if (key === 'make-gap') {
                         onAddGap?.();
                         setMenuPos(null);
+                     } else if (key === 'delete') {
+                        onDelete(task.id);
+                        setMenuPos(null);
                      } else if (key === 'make-group') {
                         onUpdate(task.id, {
                            task_type: 'group',
@@ -588,6 +591,14 @@ export const TaskRow = React.memo(
                    <DropdownItem key="make-group">Make As Group</DropdownItem>
                )} */}
                   <DropdownItem key="make-gap">Make Gap Below</DropdownItem>
+                  <DropdownItem
+                     key="delete"
+                     className="text-danger"
+                     color="danger"
+                     startContent={<Trash2 size={16} />}
+                  >
+                     Delete
+                  </DropdownItem>
                </DropdownMenu>
             </Dropdown>
          </motion.div>
