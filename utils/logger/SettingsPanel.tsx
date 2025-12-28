@@ -140,8 +140,27 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
              current = { enabled: false, color: 'blue', pinned: false, hidden: false };
          }
 
-         // Mark as seen on interaction, preserve createdAt
-         raw[key] = { ...current, ...updates, seen: true };
+         // Unhide on interaction (unless explicitly changing hidden state)
+         const nextHidden = 'hidden' in updates ? updates.hidden : false;
+         
+         // If hiding -> disable and unpin
+         let nextEnabled = updates.hasOwnProperty('enabled') ? updates.enabled : current.enabled;
+         let nextPinned = updates.hasOwnProperty('pinned') ? updates.pinned : current.pinned;
+
+         if (nextHidden) {
+             nextEnabled = false;
+             nextPinned = false;
+         }
+
+         // Mark as seen on interaction, preserve createdAt, update hidden/enabled/pinned
+         raw[key] = { 
+             ...current, 
+             ...updates, 
+             hidden: nextHidden, 
+             enabled: nextEnabled,
+             pinned: nextPinned,
+             seen: true 
+         };
          
          globalStorage.setItem(LOGGER_NEXT_CONFIG_KEY, JSON.stringify(raw));
          window.dispatchEvent(new Event('logger-next-config-change'));
