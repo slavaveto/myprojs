@@ -10,6 +10,7 @@ import { format, isToday, isYesterday, isThisWeek, isThisMonth } from 'date-fns'
 import { useGlobalPersistentState } from '@/utils/storage';
 import { AnimatePresence, motion } from 'framer-motion';
 import { loadingService } from '@/app/_services/loadingService';
+import { EditableCell } from './EditableCell';
 
 const logger = createLogger('TodayScreen');
 
@@ -48,12 +49,15 @@ const TodayTaskRow = ({ task, onUpdate, onDelete }: { task: any, onUpdate: (id: 
                 />
 
                 <div className="flex-grow min-w-0 pl-1 mr-2 flex flex-col justify-center py-1">
-                    <div className={clsx(
-                        "text-[16px] leading-normal break-words whitespace-pre-wrap",
-                        task.is_completed && "text-default-400 line-through"
-                    )}>
-                        {task.content || "Empty task"}
-                    </div>
+                    <EditableCell
+                        value={task.content}
+                        onSave={(val) => onUpdate(task.id, { content: val })}
+                        isMultiline
+                        className={clsx(
+                            "text-[16px] leading-normal break-words whitespace-pre-wrap",
+                            task.is_completed && "text-default-400 line-through"
+                        )}
+                    />
                     
                     {/* Metadata line (hidden per user request) */}
                     <div className="hidden flex items-center gap-2 text-xs text-default-400 mt-0.5">
