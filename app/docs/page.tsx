@@ -22,7 +22,10 @@ export default function FlowPage({ projectId, projectLocalPath }: FlowPageProps)
   // --- DB State ---
   const [flows, setFlows] = useState<DocFlow[]>([]);
   const [selectedFlowId, setSelectedFlowId] = useState<string | null>(null);
+  
   const [steps, setSteps] = useState<DocStep[]>([]);
+  const [selectedStepId, setSelectedStepId] = useState<string | null>(null); // New state for 3rd column
+
   const [dbLoading, setDbLoading] = useState(false);
   const [stepsLoading, setStepsLoading] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
@@ -64,6 +67,7 @@ export default function FlowPage({ projectId, projectLocalPath }: FlowPageProps)
   useEffect(() => {
       if (!selectedFlowId) {
           setSteps([]);
+          setSelectedStepId(null);
           return;
       }
       
@@ -72,6 +76,12 @@ export default function FlowPage({ projectId, projectLocalPath }: FlowPageProps)
           try {
               const data = await docsService.getSteps(selectedFlowId);
               setSteps(data);
+              // Auto-select first step if available
+              if (data.length > 0) {
+                  setSelectedStepId(data[0].id);
+              } else {
+                  setSelectedStepId(null);
+              }
           } catch (e) {
               console.error(e);
           } finally {
@@ -89,7 +99,6 @@ export default function FlowPage({ projectId, projectLocalPath }: FlowPageProps)
           return;
       }
 
-      // Check if already exists in this flow
       if (steps.some(s => s.ref_id === ref.id)) {
           toast.error('Step with this Ref ID already exists');
           return;
@@ -103,14 +112,15 @@ export default function FlowPage({ projectId, projectLocalPath }: FlowPageProps)
           const newStep = await docsService.addStep({
               flow_id: selectedFlowId,
               ref_id: ref.id,
-              title: ref.description || ref.id, // Use description or ID as title
+              title: ref.description || ref.id,
               description: '',
               step_order: nextOrder,
-              role: 'action', // Default to action
+              role: 'action',
               snippet: ref.snippet
           });
 
           setSteps(prev => [...prev, newStep]);
+          setSelectedStepId(newStep.id); // Auto select new step
           toast.success('Step added');
       } catch (e) {
           console.error(e);
@@ -124,6 +134,9 @@ export default function FlowPage({ projectId, projectLocalPath }: FlowPageProps)
         try {
             await docsService.deleteStep(stepId);
             setSteps(prev => prev.filter(s => s.id !== stepId));
+            if (selectedStepId === stepId) {
+                setSelectedStepId(null);
+            }
         } catch (e) {
             console.error(e);
             toast.error('Failed to delete step');
@@ -144,7 +157,6 @@ export default function FlowPage({ projectId, projectLocalPath }: FlowPageProps)
     }
   }, [projectLocalPath]);
 
-  // Lazy load scan refs
   useEffect(() => {
       if (isScanOpen && scannedRefs.length === 0) {
           loadRefs();
@@ -157,46 +169,41 @@ export default function FlowPage({ projectId, projectLocalPath }: FlowPageProps)
   };
 
   const selectedFlow = flows.find(f => f.id === selectedFlowId);
+  const selectedStep = steps.find(s => s.id === selectedStepId);
 
   return (
     <div className="h-full flex font-sans bg-white overflow-hidden">
       
-      {/* Left Sidebar: Flows List */}
+      {/* COLUMN 1: Flows List (200px) */}
       <div className="w-[200px] border-r bg-gray-50 flex flex-col flex-shrink-0">
-         <div className="h-12 border-b flex items-center justify-between px-4 flex-shrink-0">
-             <h2 className="text-xs font-bold text-gray-500 uppercase">Flows</h2>
+         <div className="h-10 border-b flex items-center justify-between px-3 flex-shrink-0 bg-gray-100">
+             <h2 className="text-[10px] font-bold text-gray-500 uppercase">Flows</h2>
              <Button 
                 size="sm" isIconOnly variant="light" 
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 h-6 w-6 min-w-0"
                 onPress={handleCreateFlow}
                 isLoading={createLoading}
              >
-                 <Plus size={16} />
+                 <Plus size={14} />
              </Button>
          </div>
          
          <div className="flex-grow p-2 overflow-y-auto">
-            {dbLoading && <div className="flex justify-center p-4"><Spinner size="sm"/></div>}
+            {dbLoading && <div className="flex justify-center p-2"><Spinner size="sm"/></div>}
             
-            {!dbLoading && flows.length === 0 && (
-                <div className="text-sm text-gray-400 italic text-center py-8 border-2 border-dashed border-gray-200 rounded-lg mx-2">
-                    No flows yet
-                </div>
-            )}
-
-            <div className="space-y-1">
+            <div className="space-y-0.5">
                 {flows.map(flow => (
                     <button
                         key={flow.id}
                         onClick={() => setSelectedFlowId(flow.id)}
                         className={clsx(
-                            "w-full text-left px-3 py-2 rounded-md text-sm transition-colors flex items-center gap-2",
+                            "w-full text-left px-2 py-1.5 rounded text-xs transition-colors flex items-center gap-2 truncate",
                             selectedFlowId === flow.id 
-                                ? "bg-white shadow-sm text-blue-600 font-medium ring-1 ring-gray-200" 
+                                ? "bg-white shadow-sm text-blue-700 font-medium ring-1 ring-gray-200" 
                                 : "text-gray-600 hover:bg-gray-100"
                         )}
                     >
-                        <Share2 size={14} className={selectedFlowId === flow.id ? "text-blue-500" : "text-gray-400"} />
+                        <Share2 size={12} className={selectedFlowId === flow.id ? "text-blue-500" : "text-gray-400"} />
                         <span className="truncate">{flow.title}</span>
                     </button>
                 ))}
@@ -204,30 +211,21 @@ export default function FlowPage({ projectId, projectLocalPath }: FlowPageProps)
          </div>
       </div>
 
-      {/* Right Content: Flow Details & Scanner */}
-      <div className="flex-grow flex flex-col min-w-0 bg-white">
-         
-         {/* Right Header */}
-         <div className="h-12 border-b flex items-center justify-between px-6 flex-shrink-0">
-             <div className="flex items-center gap-2">
-                 {selectedFlow ? (
-                     <>
-                        <h1 className="font-bold text-gray-800">{selectedFlow.title}</h1>
-                        <span className="text-gray-300 text-sm">/ Steps</span>
-                     </>
-                 ) : (
-                     <h1 className="font-bold text-gray-400">No Flow Selected</h1>
-                 )}
-             </div>
-
-             {/* Scan Button with Popover */}
-             <Popover placement="bottom-end" isOpen={isScanOpen} onOpenChange={setIsScanOpen} shouldFlip>
+      {/* COLUMN 2: Steps List (250px) */}
+      <div className="w-[250px] border-r flex flex-col flex-shrink-0 bg-white">
+         <div className="h-10 border-b flex items-center justify-between px-3 flex-shrink-0 bg-white">
+             <h2 className="text-[10px] font-bold text-gray-500 uppercase truncate">
+                 {selectedFlow ? selectedFlow.title : 'Steps'}
+             </h2>
+             {/* Scan Button (Tiny) */}
+             <Popover placement="bottom-start" isOpen={isScanOpen} onOpenChange={setIsScanOpen} shouldFlip>
                 <PopoverTrigger>
-                    <Button size="sm" variant="flat" color="primary" startContent={<ScanSearch size={16} />}>
-                        Scan Code
+                    <Button size="sm" isIconOnly variant="light" className="h-6 w-6 min-w-0 text-blue-600">
+                        <ScanSearch size={14} />
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent className="p-0 w-[450px] max-h-[600px] overflow-hidden flex flex-col shadow-xl border border-gray-200">
+                <PopoverContent className="p-0 w-[400px] max-h-[500px] flex flex-col shadow-xl border border-gray-200">
+                    {/* ... Scan Content Same as Before ... */}
                     <div className="flex items-center justify-between p-3 border-b bg-gray-50">
                         <div className="flex flex-col">
                             <span className="font-bold text-sm text-gray-800">Scan Results</span>
@@ -241,82 +239,23 @@ export default function FlowPage({ projectId, projectLocalPath }: FlowPageProps)
                             <RefreshCw size={14} />
                         </Button>
                     </div>
-                    
                     <div className="overflow-y-auto flex-grow min-h-0 bg-white">
-                        {scanLoading && (
-                            <div className="flex justify-center py-10">
-                                <Spinner size="sm" />
-                     </div>
-                 )}
-
                         {!scanLoading && (
                             <div className="divide-y divide-gray-100">
-                                 {scannedRefs.length === 0 && (
-                                     <div className="text-center py-10 text-xs text-gray-400 px-4">
-                                         No tags found. Add <code>// @ref:my_id</code> in your code.
-                                     </div>
-                                 )}
                                  {scannedRefs.map((ref) => {
-                                     // Check if already added
                                      const isAdded = steps.some(s => s.ref_id === ref.id);
-                                     
-                                     // Hide if already added to current flow
                                      if (isAdded) return null;
-
                                      return (
-                                     <div key={`${ref.id}-${ref.fileName}`} className="group flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors text-xs">
-                                         <span className="bg-blue-50 text-blue-600 border border-blue-100 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold flex-shrink-0 select-all">
-                                             {ref.id}
-                                         </span>
-                                         
+                                     <div key={ref.id} className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-xs">
                                          <div className="flex-grow min-w-0">
-                                             <div className="font-medium text-gray-700 truncate" title={ref.description}>
-                                                 {ref.description || (
-                                                     <span className="italic text-gray-400 text-[10px]">{ref.debug || "No description"}</span>
-                                                 )}
-                                             </div>
-                                             <div className="flex items-center gap-1.5 text-gray-400 text-[10px] font-mono mt-0.5 truncate" title={ref.fileName}>
-                                                 <FileCode size={10} />
-                                                 <span className="truncate">{ref.fileName.split('/').pop()}:{ref.lineNumber}</span>
-                                             </div>
+                                             <div className="font-bold text-gray-700 truncate">{ref.id}</div>
+                                             <div className="text-gray-500 truncate text-[10px]">{ref.description || ref.debug}</div>
                                          </div>
-
-                                         <div className="flex-shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                              {/* Add to Flow Button */}
-                                              {selectedFlowId && (
-                                                  <button 
-                                                    onClick={() => handleAddRefToFlow(ref)}
-                                                    disabled={isAdded}
-                                                    className={clsx(
-                                                        "p-1.5 rounded transition-colors",
-                                                        isAdded 
-                                                            ? "text-green-500 cursor-default" 
-                                                            : "text-gray-400 hover:text-green-600 hover:bg-green-50"
-                                                    )}
-                                                    title={isAdded ? "Already added" : "Add to current flow"}
-                                                  >
-                                                      {isAdded ? <CheckSquare size={14} /> : <Plus size={14} />}
-                                                  </button>
-                                              )}
-
-                                              <Popover placement="left">
-                                                 <PopoverTrigger>
-                                                     <button className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded transition-colors"><ChevronRight size={14} /></button>
-                                                 </PopoverTrigger>
-                                                 <PopoverContent className="p-0 border border-gray-700 rounded overflow-hidden shadow-2xl">
-                                                     <div className="bg-[#1e1e1e] p-3 text-[10px] font-mono text-gray-300 max-w-[400px] overflow-x-auto">
-                                                         <pre>{ref.snippet}</pre>
-                                                     </div>
-                                                 </PopoverContent>
-                                              </Popover>
-                                             <button 
-                                                onClick={() => openInEditor(ref.absolutePath, ref.lineNumber)} 
-                                                className="p-1.5 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
-                                                title="Open in Editor"
-                                             >
-                                                 <Code2 size={14} />
-                                             </button>
-                                         </div>
+                                         {selectedFlowId && (
+                                              <button onClick={() => handleAddRefToFlow(ref)} className="text-blue-500 hover:text-blue-700 p-1">
+                                                  <Plus size={14} />
+                                              </button>
+                                          )}
                                      </div>
                                  );})}
                             </div>
@@ -326,128 +265,139 @@ export default function FlowPage({ projectId, projectLocalPath }: FlowPageProps)
              </Popover>
          </div>
 
-         {/* Main Content Area: Steps List */}
-         <div className="flex-grow overflow-y-auto p-8 bg-gray-50/30">
-             {!selectedFlow && (
-                 <div className="h-full flex flex-col items-center justify-center text-gray-300">
-                     <Share2 size={48} className="mb-4 text-gray-200" />
-                     <h3 className="text-lg font-medium text-gray-400 mb-2">Select a Flow</h3>
-                     <p className="text-sm text-gray-400 max-w-xs mx-auto text-center">Choose a flow from the sidebar to view its documentation and steps.</p>
+         <div className="flex-grow overflow-y-auto p-0">
+             {stepsLoading && <div className="flex justify-center p-4"><Spinner size="sm"/></div>}
+             
+             {!stepsLoading && selectedFlow && steps.length === 0 && (
+                 <div className="text-center py-8 px-4 text-xs text-gray-400">
+                     No steps. Use the scan icon above to add refs.
                  </div>
              )}
 
-             {selectedFlow && stepsLoading && (
-                 <div className="flex justify-center py-20">
-                     <Spinner />
+             <div className="divide-y divide-gray-50">
+                 {steps.map((step, index) => (
+                     <div 
+                        key={step.id} 
+                        onClick={() => setSelectedStepId(step.id)}
+                        className={clsx(
+                            "px-3 py-2 cursor-pointer hover:bg-gray-50 transition-colors border-l-2",
+                            selectedStepId === step.id 
+                                ? "bg-blue-50 border-blue-500" 
+                                : "border-transparent"
+                        )}
+                     >
+                         <div className="flex items-center justify-between mb-0.5">
+                             <div className="flex items-center gap-2 min-w-0">
+                                 <span className="text-[10px] font-mono text-gray-400 w-4 text-right">{index + 1}</span>
+                                 <span className={clsx(
+                                     "text-[9px] px-1 py-0 rounded uppercase font-bold tracking-wider",
+                                     step.role === 'trigger' ? "bg-purple-100 text-purple-600" : "bg-green-100 text-green-600"
+                                 )}>
+                                     {step.role}
+                                 </span>
+                             </div>
+                             {/* Delete (only visible on hover or selected) */}
+                             <button 
+                                onClick={(e) => { e.stopPropagation(); handleDeleteStep(step.id); }}
+                                className={clsx("text-gray-300 hover:text-red-500", selectedStepId === step.id ? "opacity-100" : "opacity-0 hover:opacity-100")}
+                             >
+                                 <Trash2 size={12} />
+                             </button>
+                         </div>
+                         <div className="font-medium text-xs text-gray-800 truncate pl-6" title={step.title}>
+                             {step.title}
+                         </div>
+                         <div className="text-[10px] text-gray-400 font-mono truncate pl-6">
+                             {step.ref_id}
+                         </div>
+                     </div>
+                 ))}
+             </div>
+         </div>
+      </div>
+
+      {/* COLUMN 3: Step Details (Flex Grow) */}
+      <div className="flex-grow bg-white flex flex-col min-w-0 overflow-y-auto">
+         {selectedStep ? (
+             <div className="max-w-3xl mx-auto w-full p-8">
+                 {/* Header */}
+                 <div className="mb-6">
+                     <div className="flex items-center gap-2 mb-2">
+                         <span className="text-sm font-mono text-blue-500 bg-blue-50 px-2 py-0.5 rounded">
+                             {selectedStep.ref_id}
+                         </span>
+                         <span className={clsx(
+                             "text-xs px-2 py-0.5 rounded uppercase font-bold tracking-wider",
+                             selectedStep.role === 'trigger' ? "bg-purple-100 text-purple-600" : "bg-green-100 text-green-600"
+                         )}>
+                             {selectedStep.role}
+                         </span>
+                     </div>
+                     <h1 className="text-2xl font-bold text-gray-900">{selectedStep.title}</h1>
                  </div>
-             )}
 
-             {selectedFlow && !stepsLoading && (
-                 <div className="max-w-3xl mx-auto space-y-4">
-                     {steps.length === 0 && (
-                         <div className="text-center py-10 border-2 border-dashed border-gray-200 rounded-xl bg-white">
-                             <p className="text-gray-400">No steps in this flow yet.</p>
-                             <div className="mt-2 text-xs text-gray-400">
-                                 Open <b>Scan Code</b> to add steps from codebase.
+                 {/* Description */}
+                 <div className="mb-8">
+                     <h3 className="text-xs font-bold text-gray-400 uppercase mb-2">Description</h3>
+                     <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                         {selectedStep.description || <span className="text-gray-400 italic">No additional description.</span>}
+                     </div>
+                 </div>
+
+                 {/* Code Snippet */}
+                 <div className="mb-8">
+                     <div className="flex items-center justify-between mb-2">
+                         <h3 className="text-xs font-bold text-gray-400 uppercase">Implementation</h3>
+                         {/* Open in Editor Button */}
+                         {(() => {
+                             const liveRef = scannedRefs.find(r => r.id === selectedStep.ref_id);
+                             return (
+                                 <button 
+                                    onClick={() => liveRef && openInEditor(liveRef.absolutePath, liveRef.lineNumber)}
+                                    disabled={!liveRef}
+                                    className={clsx(
+                                        "flex items-center gap-1 text-xs transition-colors px-2 py-1 rounded",
+                                        liveRef 
+                                            ? "text-blue-600 hover:bg-blue-50" 
+                                            : "text-gray-300 cursor-not-allowed"
+                                    )}
+                                    title={liveRef ? "Open in Cursor" : "Run scan to enable linking"}
+                                 >
+                                     <Code2 size={12} />
+                                     <span>Open in Editor</span>
+                                 </button>
+                             );
+                         })()}
+                     </div>
+                     
+                     <div className="bg-[#1e1e1e] rounded-lg overflow-hidden border border-gray-800 shadow-sm">
+                         <div className="px-4 py-2 bg-[#2d2d2d] border-b border-gray-800 flex items-center gap-2">
+                             <div className="flex gap-1.5">
+                                 <div className="w-2.5 h-2.5 rounded-full bg-red-500/20"></div>
+                                 <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/20"></div>
+                                 <div className="w-2.5 h-2.5 rounded-full bg-green-500/20"></div>
                              </div>
+                             <span className="text-[10px] text-gray-500 font-mono ml-2">{'//'} @ref:{selectedStep.ref_id}</span>
                          </div>
-                     )}
-
-                     {steps.map((step, index) => (
-                         <div key={step.id} className="bg-white border rounded-lg p-4 shadow-sm flex gap-4 group">
-                             {/* Order / Connector */}
-                             <div className="flex flex-col items-center pt-1">
-                                 <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold font-mono">
-                                     {index + 1}
-                                 </div>
-                                 {index < steps.length - 1 && (
-                                     <div className="w-px h-full bg-gray-200 my-1"></div>
-                                 )}
-                             </div>
-                             
-                             {/* Content */}
-                             <div className="flex-grow">
-                                 <div className="flex items-center justify-between mb-1">
-                                     <h3 className="font-bold text-gray-800">{step.title}</h3>
-                                     <div className="flex items-center gap-2">
-                                         <span className={clsx(
-                                             "text-[10px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider",
-                                             step.role === 'trigger' ? "bg-purple-100 text-purple-600" : "bg-green-100 text-green-600"
-                                         )}>
-                                             {step.role}
-                                         </span>
-                                         <button 
-                                            onClick={() => handleDeleteStep(step.id)}
-                                            className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                                         >
-                                             <Trash2 size={14} />
-                                         </button>
-                                     </div>
-                                 </div>
-                                 
-                                 {step.description && (
-                                     <p className="text-sm text-gray-600 mb-2">{step.description}</p>
-                                 )}
-
-                                 {/* Ref Badge and Actions */}
-                                 <div className="flex items-center justify-between mt-2">
-                                     <div className="flex items-center gap-2">
-                                         <span className="text-xs text-gray-400 font-mono">Ref:</span>
-                                         <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-xs font-mono">
-                                             {step.ref_id}
-                                         </span>
-                                     </div>
-
-                                     <div className="flex items-center gap-1">
-                                         {/* View Code Snippet */}
-                                         {step.code_snippet && (
-                                             <Popover placement="left">
-                                                 <PopoverTrigger>
-                                                     <button className="p-1 text-gray-400 hover:text-blue-600 rounded flex items-center gap-1 text-xs transition-colors" title="View Saved Snippet">
-                                                         <FileCode size={14} />
-                                                         <span className="font-mono">Snippet</span>
-                                                     </button>
-                                                 </PopoverTrigger>
-                                                 <PopoverContent className="p-0 border border-gray-700 rounded overflow-hidden shadow-2xl">
-                                                     <div className="bg-[#1e1e1e] p-3 text-[10px] font-mono text-gray-300 max-w-[500px] overflow-x-auto">
-                                                         <div className="text-gray-500 select-none">{'//'} @ref:{step.ref_id}</div>
-                                                         {step.title && step.title !== step.ref_id && (
-                                                             <div className="text-gray-500 mb-2 select-none">{'//'} {step.title}</div>
-                                                         )}
-                                                         <pre>{step.code_snippet}</pre>
-                                                     </div>
-                                                 </PopoverContent>
-                                             </Popover>
-                                         )}
-
-                                         {/* Open in Editor (only if scanned) */}
-                                         {(() => {
-                                             const liveRef = scannedRefs.find(r => r.id === step.ref_id);
-                                             return (
-                                                 <button 
-                                                    onClick={() => liveRef && openInEditor(liveRef.absolutePath, liveRef.lineNumber)}
-                                                    disabled={!liveRef}
-                                                    className={clsx(
-                                                        "p-1 rounded flex items-center gap-1 text-xs transition-colors",
-                                                        liveRef 
-                                                            ? "text-blue-500 hover:text-blue-700 hover:bg-blue-50" 
-                                                            : "text-gray-300 cursor-not-allowed"
-                                                    )}
-                                                    title={liveRef ? "Open in Editor" : "Scan code to enable linking"}
-                                                 >
-                                                     <Code2 size={14} />
-                                                     <span>Open</span>
-                                                 </button>
-                                             );
-                                         })()}
-                                     </div>
-                                 </div>
-                             </div>
+                         <div className="p-4 overflow-x-auto">
+                             <pre className="text-xs font-mono text-gray-300 leading-5">
+{`// @ref:${selectedStep.ref_id}
+// ${selectedStep.title}
+${selectedStep.code_snippet || '// No snippet saved'}`}
+                             </pre>
                          </div>
-                     ))}
+                     </div>
+                 </div>
+
+             </div>
+         ) : (
+             <div className="flex-grow flex flex-col items-center justify-center text-gray-300">
+                 <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                     <LayoutList size={24} className="text-gray-300" />
+                 </div>
+                 <p className="text-sm">Select a step to view details</p>
              </div>
          )}
-         </div>
       </div>
     </div>
   );
