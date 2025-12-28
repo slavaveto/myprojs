@@ -12,6 +12,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { projectService } from '@/app/_services/projectService';
 import { loadingService } from '@/app/_services/loadingService';
 import { EditableCell } from './EditableCell';
+import { TaskContextMenu } from './TaskContextMenu';
 
 const logger = createLogger('TodayScreen');
 
@@ -37,26 +38,32 @@ const TodayTaskRow = ({
     projectsStructure: any[],
     onMove?: (taskId: string, projectId: string, folderId: string) => void
 }) => {
-    const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
-
     return (
-        <motion.div
-            layout
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
-            onContextMenu={(e) => {
-               e.preventDefault();
-               setMenuPos({ x: e.clientX, y: e.clientY });
+        <TaskContextMenu
+            task={task}
+            onUpdate={onUpdate}
+            onDelete={onDelete}
+            onMove={onMove}
+            projectsStructure={projectsStructure}
+            items={{
+                delete: true,
+                move: true,
+                styles: true
             }}
-            className={clsx(
-                'group px-1 flex justify-between min-h-[30px] items-center rounded-lg border border-default-300 bg-content1 transition-colors outline-none overflow-hidden mb-[0px]',
-                'hover:bg-default-50'
-            )}
         >
-             <div className="flex flex-1 gap-2 flex-row items-center pl-2">
-                <Checkbox
+            <motion.div
+                layout
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+                className={clsx(
+                    'group px-1 flex justify-between min-h-[30px] items-center rounded-lg border border-default-300 bg-content1 transition-colors outline-none overflow-hidden mb-[0px]',
+                    'hover:bg-default-50'
+                )}
+            >
+                 <div className="flex flex-1 gap-2 flex-row items-center pl-2">
+                    <Checkbox
                     isSelected={task.is_completed} 
                     onValueChange={(isSelected) => {
                          onUpdate(task.id, { is_completed: isSelected });
@@ -278,48 +285,8 @@ const TodayTaskRow = ({
                     </DropdownMenu>
                 </Dropdown>
              </div>
-
-             <Dropdown
-                isOpen={!!menuPos}
-                onOpenChange={(open) => {
-                   if (!open) setMenuPos(null);
-                }}
-                placement="bottom-start"
-                triggerScaleOnOpen={false}
-             >
-                <DropdownTrigger>
-                   <div
-                      style={{
-                         position: 'fixed',
-                         left: menuPos?.x ?? 0,
-                         top: menuPos?.y ?? 0,
-                         width: 0,
-                         height: 0,
-                         pointerEvents: 'none',
-                         zIndex: 9999,
-                      }}
-                   />
-                </DropdownTrigger>
-                <DropdownMenu
-                   aria-label="Context Actions"
-                   onAction={(key) => {
-                      if (key === 'delete') {
-                         onDelete(task.id);
-                         setMenuPos(null);
-                      }
-                   }}
-                >
-                   <DropdownItem
-                      key="delete"
-                      className="text-danger"
-                      color="danger"
-                      startContent={<Trash2 size={16} />}
-                   >
-                      Delete
-                   </DropdownItem>
-                </DropdownMenu>
-             </Dropdown>
         </motion.div>
+        </TaskContextMenu>
     );
 }
 

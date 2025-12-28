@@ -10,6 +10,7 @@ import { Task } from '../types';
 import { EditableCell } from './EditableCell';
 import { clsx } from 'clsx';
 import { motion } from 'framer-motion';
+import { TaskContextMenu } from './TaskContextMenu';
 
 interface TaskRowProps {
    task: Task;
@@ -22,16 +23,16 @@ interface TaskRowProps {
    activeGroupColor?: string | null;
 }
 
-// Group Colors Palette
+// Group Colors Palette (Restored for More menu)
 const COLORS = [
-   { name: 'Blue', value: '#3b82f6' }, // blue-500
-   { name: 'Green', value: '#22c55e' }, // green-500
-   { name: 'Orange', value: '#f97316' }, // orange-500
-   { name: 'Red', value: '#ef4444' }, // red-500
-   { name: 'Purple', value: '#a855f7' }, // purple-500
-   { name: 'Cyan', value: '#06b6d4' }, // cyan-500
-   { name: 'Pink', value: '#ec4899' }, // pink-500
-   { name: 'Gray', value: '#6b7280' }, // gray-500
+   { name: 'Blue', value: '#3b82f6' },
+   { name: 'Green', value: '#22c55e' },
+   { name: 'Orange', value: '#f97316' },
+   { name: 'Red', value: '#ef4444' },
+   { name: 'Purple', value: '#a855f7' },
+   { name: 'Cyan', value: '#06b6d4' },
+   { name: 'Pink', value: '#ec4899' },
+   { name: 'Gray', value: '#6b7280' },
 ];
 
 // Separate component for Gap to keep logic clean and handle hooks
@@ -49,13 +50,12 @@ const GapRow = ({
 }: any) => {
    const { active } = useDndContext();
    const isAnyDragging = !!active;
-   const [menuPos, setMenuPos] = React.useState<{ x: number; y: number } | null>(null);
    const [isIconHovered, setIsIconHovered] = React.useState(false); // New state for icon hover
 
    const gapClassName = clsx(
       'group relative flex items-center justify-center h-[12px] w-full rounded  outline-none transition-colors ',
-      // Show background if hovered (icon area), dragging this gap, dragging ANY item, or menu is open
-      isIconHovered || isDragging || isAnyDragging || !!menuPos
+      // Show background if hovered (icon area), dragging this gap, dragging ANY item
+      isIconHovered || isDragging || isAnyDragging
          ? 'bg-default-100'
          : 'bg-transparent',
       // Cursor logic:
@@ -80,84 +80,46 @@ const GapRow = ({
    }
 
    return (
-      <motion.div
-         ref={setNodeRef}
-         style={style}
-         data-task-row={task.id}
-         className={gapClassName}
-         layout
-         initial={task.isNew ? { opacity: 0, height: 0 } : false}
-         animate={{ opacity: 1, height: 12 }}
-         exit={{ opacity: 0, height: 0 }}
-         transition={{ duration: 0.2 }}
-         // Removed global hover handlers
-         onContextMenu={(e) => {
-            e.preventDefault();
-            setMenuPos({
-               x: e.clientX,
-               y: e.clientY,
-            });
-         }}
+      <TaskContextMenu 
+         task={task} 
+         onDelete={onDelete} 
+         items={{ delete: true }}
       >
-         {/* Icon visible ONLY on ICON AREA hover, dragging SELF, or menu open */}
-         <div
-            className={clsx(
-               'absolute left-[2px] ml-[6px] cursor-grab active:cursor-grabbing hover:bg-default-100 rounded text-center outline-none transition-opacity duration-200 z-20 flex items-center justify-center h-[12px]', // Force 16px height
-               isIconHovered || isDragging || !!menuPos
-                  ? 'opacity-100'
-                  : 'opacity-0 pointer-events-none'
-            )}
-            {...attributes}
-            {...listeners}
-            onMouseEnter={() => setIsIconHovered(true)}
-            onMouseLeave={() => setIsIconHovered(false)}
+         <motion.div
+            ref={setNodeRef}
+            style={style}
+            data-task-row={task.id}
+            className={gapClassName}
+            layout
+            initial={task.isNew ? { opacity: 0, height: 0 } : false}
+            animate={{ opacity: 1, height: 12 }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
          >
-            <GripVertical size={14} className="text-default-400 hover:text-default-600 " />
-         </div>
-
-         {/* Invisible Hit Area for Icon (larger than icon itself) */}
-         <div
-            className="absolute left-0 top-0 bottom-0 w-[30px] z-10" // Sensor zone on the left
-            onMouseEnter={() => setIsIconHovered(true)}
-            onMouseLeave={() => setIsIconHovered(false)}
-         />
-
-         <Dropdown
-            isOpen={!!menuPos}
-            onOpenChange={(open) => {
-               if (!open) setMenuPos(null);
-            }}
-            placement="bottom-start"
-            triggerScaleOnOpen={false}
-         >
-            <DropdownTrigger>
-               <div
-                  style={{
-                     position: 'fixed',
-                     left: menuPos?.x ?? 0,
-                     top: menuPos?.y ?? 0,
-                     width: 0,
-                     height: 0,
-                     pointerEvents: 'none',
-                     zIndex: 9999,
-                  }}
-               />
-            </DropdownTrigger>
-            <DropdownMenu
-               aria-label="Gap Actions"
-               onAction={(key) => {
-                  if (key === 'delete') {
-                     onDelete(task.id);
-                     setMenuPos(null);
-                  }
-               }}
+            {/* Icon visible ONLY on ICON AREA hover, dragging SELF */}
+            <div
+               className={clsx(
+                  'absolute left-[2px] ml-[6px] cursor-grab active:cursor-grabbing hover:bg-default-100 rounded text-center outline-none transition-opacity duration-200 z-20 flex items-center justify-center h-[12px]', // Force 16px height
+                  isIconHovered || isDragging
+                     ? 'opacity-100'
+                     : 'opacity-0 pointer-events-none'
+               )}
+               {...attributes}
+               {...listeners}
+               onMouseEnter={() => setIsIconHovered(true)}
+               onMouseLeave={() => setIsIconHovered(false)}
             >
-               <DropdownItem key="delete" className="text-danger" color="danger">
-                  Delete Gap
-               </DropdownItem>
-            </DropdownMenu>
-         </Dropdown>
-      </motion.div>
+               <GripVertical size={14} className="text-default-400 hover:text-default-600 " />
+            </div>
+
+            {/* Invisible Hit Area for Icon (larger than icon itself) */}
+            <div
+               className="absolute left-0 top-0 bottom-0 w-[30px] z-10" // Sensor zone on the left
+               onMouseEnter={() => setIsIconHovered(true)}
+               onMouseLeave={() => setIsIconHovered(false)}
+            />
+         </motion.div>
+      </TaskContextMenu>
    );
 };
 
@@ -173,7 +135,6 @@ export const TaskRow = React.memo(
       projectColor,
       activeGroupColor,
    }: TaskRowProps) => {
-      const [menuPos, setMenuPos] = React.useState<{ x: number; y: number } | null>(null);
       const [isHovered, setIsHovered] = React.useState(false);
 
       const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -514,94 +475,39 @@ export const TaskRow = React.memo(
       }
 
       return (
-         <motion.div
-            ref={setNodeRef}
-            // style={{ ...style, ...borderStyle }}
-            style={{ ...style }}
-            data-task-row={task.id}
-            className={className}
-            layout
-            initial={task.isNew ? { opacity: 0, height: 0 } : false}
-            animate={{
-               opacity: 1,
-               height: 'auto',
-               backgroundColor: isHighlighted ? 'var(--heroui-primary-100)' : groupBackgroundColor,
-            }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
-            onContextMenu={(e) => {
-               e.preventDefault();
-               // Using e.clientX/Y for absolute position on screen
-               setMenuPos({
-                  x: e.clientX,
-                  y: e.clientY,
-               });
+         <TaskContextMenu
+            task={task}
+            onDelete={onDelete}
+            onAddGap={onAddGap}
+            onUpdate={onUpdate}
+            items={{
+               delete: true,
+               makeGap: true,
+               makeGroup: true,
+               styles: true
             }}
          >
-            {content}
-
-            <Dropdown
-               isOpen={!!menuPos}
-               onOpenChange={(open) => {
-                  if (!open) setMenuPos(null);
+            <motion.div
+               ref={setNodeRef}
+               // style={{ ...style, ...borderStyle }}
+               style={{ ...style }}
+               data-task-row={task.id}
+               className={className}
+               layout
+               initial={task.isNew ? { opacity: 0, height: 0 } : false}
+               animate={{
+                  opacity: 1,
+                  height: 'auto',
+                  backgroundColor: isHighlighted ? 'var(--heroui-primary-100)' : groupBackgroundColor,
                }}
-               placement="bottom-start"
-               triggerScaleOnOpen={false}
+               exit={{ opacity: 0, height: 0 }}
+               transition={{ duration: 0.2 }}
             >
-               <DropdownTrigger>
-                  <div
-                     style={{
-                        position: 'fixed',
-                        left: menuPos?.x ?? 0,
-                        top: menuPos?.y ?? 0,
-                        width: 0,
-                        height: 0,
-                        pointerEvents: 'none',
-                        zIndex: 9999,
-                     }}
-                  />
-               </DropdownTrigger>
-               <DropdownMenu
-                  aria-label="Task Actions"
-                  onAction={(key) => {
-                     if (key === 'make-gap') {
-                        onAddGap?.();
-                        setMenuPos(null);
-                     } else if (key === 'delete') {
-                        onDelete(task.id);
-                        setMenuPos(null);
-                     } else if (key === 'make-group') {
-                        onUpdate(task.id, {
-                           task_type: 'group',
-                           group_color: '#3b82f6', // Default blue from palette
-                        });
-                        setMenuPos(null);
-                     } else if (key === 'revert-task') {
-                        onUpdate(task.id, {
-                           task_type: 'task',
-                           group_color: null as any,
-                        });
-                        setMenuPos(null);
-                     }
-                  }}
-               >
-                  {/* {isGroup ? (
-                   <DropdownItem key="revert-task">Revert To Task</DropdownItem>
-               ) : (
-                   <DropdownItem key="make-group">Make As Group</DropdownItem>
-               )} */}
-                  <DropdownItem key="make-gap">Make Gap Below</DropdownItem>
-                  <DropdownItem
-                     key="delete"
-                     className="text-danger"
-                     color="danger"
-                     startContent={<Trash2 size={16} />}
-                  >
-                     Delete
-                  </DropdownItem>
-               </DropdownMenu>
-            </Dropdown>
-         </motion.div>
+               {content}
+
+               {/* Dropdown removed, moved to TaskContextMenu */}
+            </motion.div>
+         </TaskContextMenu>
       );
    }
 );
