@@ -332,6 +332,15 @@ export const TaskContextMenu = (props: TaskContextMenuProps) => {
 
    const handleContextMenu = (e: React.MouseEvent) => {
       e.preventDefault();
+
+      // Force close other menus (emulate click outside)
+      // HeroUI listens for mousedown/pointerdown to close overlays
+      if (typeof document !== 'undefined') {
+          document.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+          document.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+          document.body.click();
+      }
+
       // Remove focus from input if any (prevents keyboard from popping up or cursor blinking)
       if (document.activeElement instanceof HTMLElement) {
          document.activeElement.blur();
