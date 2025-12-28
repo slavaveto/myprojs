@@ -4,95 +4,59 @@ import fs from 'fs';
 import path from 'path';
 import { glob } from 'glob';
 
-export interface FlowNode {
-  id: string;
-  type: string;
-  label: string;
-  description?: string;
-  position: { x: number; y: number };
-  data: { 
-      label: string;
-      description?: string;
-      step_order: number;
-      locations: {
-          role: string;
-          fileName: string;
-          absolutePath: string;
-          lineNumber: number;
-      }[];
-  };
+export interface CodeRef {
+  id: string; // The unique ID (8a2b3c)
+  description?: string; // Optional description from the comment line
+  fileName: string; // Relative path
+  absolutePath: string; // Absolute path for linking
+  lineNumber: number; // Line number where @ref is found
+  snippet: string; // Next 5 lines of code
 }
 
-export interface FlowGraph {
-  nodes: FlowNode[];
-}
-
-export async function scanFlow(): Promise<FlowGraph> {
-  const files = await glob('app/**/*.{ts,tsx}', { ignore: 'node_modules/**' });
+export async function scanFlowRefs(): Promise<CodeRef[]> {
+  // Ignore node_modules AND the docs folder itself to prevent self-scanning
+  const files = await glob('app/**/*.{ts,tsx}', { ignore: ['node_modules/**', 'app/docs/**'] });
+  const refs: CodeRef[] = [];
   
-  const nodesMap = new Map<string, FlowNode>();
-  const flowBlockRegex = /\/\*\*([\s\S]*?)\*\//g;
+  // Regex: // @ref:ID followed optionally by /Description
+  // Capture group 1: ID
+  // Capture group 2: Description (optional)
+  const refRegex = /\/\/\s*@ref:([a-zA-Z0-9_-]+)(?:\/(.*))?/g;
   
   for (const file of files) {
       const absolutePath = path.join(process.cwd(), file);
       const content = fs.readFileSync(absolutePath, 'utf-8');
+      const lines = content.split('\n');
       
-      let match;
-      while ((match = flowBlockRegex.exec(content)) !== null) {
-          const commentBlock = match[1];
+      // Iterate line by line to easily get line numbers and snippets
+      for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
           
-          const flowIdMatch = commentBlock.match(/@flow_id\s+([^\n\r]+)/);
-          if (!flowIdMatch) continue;
+          // Reset regex state for each line just in case
+          refRegex.lastIndex = 0;
+          const match = refRegex.exec(line);
           
-          const stepIdMatch = commentBlock.match(/@step_id\s+([^\n\r]+)/);
-          if (!stepIdMatch) continue;
-          
-          const id = stepIdMatch[1].trim();
-          const titleMatch = commentBlock.match(/@title\s+([^\n\r]+)/);
-          const descMatch = commentBlock.match(/@description\s+([^\n\r]+)/);
-          // Changed from @order to @step_order
-          const orderMatch = commentBlock.match(/@step_order\s+(\d+)/); 
-          const roleMatch = commentBlock.match(/@role\s+([^\n\r]+)/);
-          
-          const title = titleMatch ? titleMatch[1].trim() : id;
-          const description = descMatch ? descMatch[1].trim() : undefined;
-          const step_order = orderMatch ? parseInt(orderMatch[1]) : 999;
-          const role = roleMatch ? roleMatch[1].trim() : 'Unknown';
+          if (match) {
+              const id = match[1].trim();
+              const description = match[2] ? match[2].trim() : undefined;
+              
+              // Get snippet (next 10 lines)
+              const snippetLines = lines.slice(i + 1, i + 11);
+              // Clean up snippet (remove indentation based on first line?)
+              // For now raw is fine.
+              const snippet = snippetLines.join('\n');
 
-          const upToMatch = content.substring(0, match.index);
-          const lineNumber = upToMatch.split('\n').length + 1;
-
-          if (!nodesMap.has(id)) {
-              nodesMap.set(id, {
+              refs.push({
                   id,
-                  type: 'default',
-                  label: title,
                   description,
-                  position: { x: 0, y: 0 },
-                  data: {
-                      label: title,
-                      description,
-                      step_order,
-                      locations: []
-                  }
+                  fileName: file,
+                  absolutePath,
+                  lineNumber: i + 1, // 1-based index
+                  snippet
               });
           }
-          
-          const node = nodesMap.get(id)!;
-          
-          node.data.locations.push({
-              role,
-              fileName: file,
-              absolutePath,
-              lineNumber
-          });
-          
-          if (step_order < node.data.step_order) node.data.step_order = step_order;
       }
   }
 
-  const nodes = Array.from(nodesMap.values());
-  nodes.sort((a, b) => a.data.step_order - b.data.step_order);
-
-  return { nodes };
+  return refs;
 }
