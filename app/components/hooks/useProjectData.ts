@@ -122,6 +122,27 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
         }
     }, [isActive, isDataLoaded, project.id, folders, selectedFolderId]);
 
+    // --- Check for highlighted task ---
+    useEffect(() => {
+        if (isActive && isDataLoaded) {
+            const highlightKey = `highlight_task_${project.id}`;
+            const taskIdToHighlight = globalStorage.getItem(highlightKey);
+
+            if (taskIdToHighlight) {
+                logger.info('Highlighting restored task', { taskId: taskIdToHighlight });
+                setHighlightedTaskId(taskIdToHighlight);
+                
+                // Clear storage immediately so it doesn't highlight again on refresh
+                globalStorage.removeItem(highlightKey);
+
+                // Clear highlight after delay
+                setTimeout(() => {
+                    setHighlightedTaskId(null);
+                }, 2000); // 2 seconds highlight
+            }
+        }
+    }, [isActive, isDataLoaded, project.id]);
+
     // --- Silent Refresh when becoming active ---
     useEffect(() => {
         if (isActive && isDataLoaded) {
