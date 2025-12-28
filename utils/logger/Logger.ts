@@ -28,6 +28,7 @@ class Logger {
    public fileName: string;
    public enabled: boolean = false; // Default disabled
    public color: string = 'blue'; // Default color
+   public createdAt?: number; // Added createdAt
 
    constructor(name: string) {
       this.componentName = name;
@@ -59,15 +60,18 @@ class Logger {
          
          if (config[key] === undefined) {
             // Новый компонент! Добавляем выключенным
-            config[key] = false; 
+            const now = Date.now();
+            config[key] = { enabled: false, color: 'blue', createdAt: now }; 
             globalStorage.setItem(LOGGER_NEXT_CONFIG_KEY, JSON.stringify(config));
             this.enabled = false;
             this.color = 'blue';
+            this.createdAt = now;
          } else {
             const val = config[key];
             if (typeof val === 'object' && val !== null) {
                this.enabled = !!val.enabled;
                this.color = val.color || 'blue';
+               this.createdAt = val.createdAt;
             } else {
                this.enabled = !!val;
                this.color = 'blue';
@@ -129,7 +133,8 @@ export function getAllLoggers() {
       name: l.componentName, 
       file: l.fileName, 
       enabled: l.enabled,
-      color: l.color
+      color: l.color,
+      createdAt: l.createdAt
    }));
 }
 

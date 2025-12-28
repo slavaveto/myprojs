@@ -15,7 +15,8 @@ interface ConfigItem {
    file: string;
    enabled: boolean;
    color: string;
-   pinned: boolean; // Added pinned property
+   pinned: boolean; 
+   createdAt?: number;
    lastActive?: number;
 }
 
@@ -57,6 +58,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
             let enabled = false;
             let color = 'blue';
             let pinned = false;
+            let createdAt: number | undefined;
 
             // Приоритет: конфиг > дефолт
             if (savedVal !== undefined) {
@@ -64,15 +66,17 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
                   enabled = !!savedVal.enabled;
                   color = savedVal.color || 'blue';
                   pinned = !!savedVal.pinned;
+                  createdAt = savedVal.createdAt;
                } else {
                   enabled = !!savedVal;
                }
             } else {
-               // Если нет в конфиге, берем из зарегистрированного (но там обычно false/blue по дефолту)
-               // Можно найти в registered
+               // Если нет в конфиге, берем из зарегистрированного
                const reg = registered.find(r => r.name === name);
                if (reg) {
                   color = reg.color;
+                  // @ts-ignore
+                  createdAt = reg.createdAt;
                }
             }
             
@@ -82,7 +86,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
                file: '', 
                enabled,
                color,
-               pinned
+               pinned,
+               createdAt
             };
          });
          
@@ -119,7 +124,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
          const raw = str ? JSON.parse(str) : {};
          
          // Сохраняем как объект, чтобы сохранить цвет и пин
-         raw[key] = { enabled: !currentState, color: currentColor, pinned: currentPinned };
+         // Сбрасываем createdAt при взаимодействии
+         raw[key] = { enabled: !currentState, color: currentColor, pinned: currentPinned, createdAt: undefined };
          
          globalStorage.setItem(LOGGER_NEXT_CONFIG_KEY, JSON.stringify(raw));
          
@@ -136,7 +142,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
          const str = globalStorage.getItem(LOGGER_NEXT_CONFIG_KEY);
          const raw = str ? JSON.parse(str) : {};
          
-         raw[key] = { enabled: currentEnabled, color: newColor, pinned: currentPinned };
+         raw[key] = { enabled: currentEnabled, color: newColor, pinned: currentPinned, createdAt: undefined };
          
          globalStorage.setItem(LOGGER_NEXT_CONFIG_KEY, JSON.stringify(raw));
          window.dispatchEvent(new Event('logger-next-config-change'));
@@ -151,7 +157,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
          const str = globalStorage.getItem(LOGGER_NEXT_CONFIG_KEY);
          const raw = str ? JSON.parse(str) : {};
          
-         raw[key] = { enabled: currentEnabled, color: currentColor, pinned: !currentPinned };
+         raw[key] = { enabled: currentEnabled, color: currentColor, pinned: !currentPinned, createdAt: undefined };
          
          globalStorage.setItem(LOGGER_NEXT_CONFIG_KEY, JSON.stringify(raw));
          window.dispatchEvent(new Event('logger-next-config-change'));
@@ -199,7 +205,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
       };
    }, [configs, search, sortMode]);
 
-   const renderItem = (item: ConfigItem) => (
+   const renderItem = (item: ConfigItem) => {
+      const isNew = item.createdAt && (Date.now() - item.createdAt < 60000);
+
+      return (
       <motion.div
          layout={!isDragging}
          initial={{ opacity: 0, y: 10 }}
@@ -208,8 +217,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
          transition={{ duration: 0.2 }}
          key={item.key}
          className={`
-             group flex items-center justify-between p-2 py-[2px] bg-content2 border rounded-md border-default-200 hover:bg-default-100 transition-colors
+             group flex items-center justify-between p-2 py-[2px] bg-content2 border rounded-md border-default-200 hover:bg-default-100 transition-all
              ${item.enabled ? '!bg-primary-100/50' : ''}
+             ${isNew ? 'ring-1 ring-warning ring-offset-1 ring-offset-content1 z-10' : ''}
           `}
       >
          <div className="flex flex-col overflow-hidden mr-3 flex-1">
@@ -266,7 +276,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
             />
          </div>
       </motion.div>
-   );
+      );
+   };
 
    return (
       <div 
