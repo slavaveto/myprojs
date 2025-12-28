@@ -145,11 +145,11 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
           )}
           onDoubleClick={handleDoubleClick}
       >
-         <div className="flex-grow w-full max-w-5xl mx-auto flex flex-col px-[50px] py-6 min-h-0">
+         <div className="flex-grow w-full max-w-5xl mx-auto flex flex-col px-6 py-6 min-h-0">
              <div className="grid grid-cols-[1fr_auto_1fr] items-center mb-5 min-h-[40px] gap-4">
-            <div className="flex items-center gap-3 justify-self-start">
+            <div className="flex items-center gap-2 justify-self-start  pl-1">
                 <div 
-                    className="w-5 h-5 rounded-full flex-shrink-0 shadow-sm border border-white/10" 
+                    className="w-4 h-4 rounded-full flex-shrink-0 shadow-sm border border-white/10 " 
                     style={{ backgroundColor: project.color || '#3b82f6' }}
                 />
                 <h1 className="text-2xl font-bold">{project.title}</h1>

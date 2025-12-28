@@ -16,7 +16,8 @@ export interface DocStep {
   description?: string;
   step_order: number;
   role: 'trigger' | 'action';
-  snippet?: string;
+  snippet?: string; // For input/transfer
+  code_snippet?: string; // From DB column
 }
 
 export const docsService = {

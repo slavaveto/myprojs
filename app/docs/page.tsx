@@ -162,7 +162,7 @@ export default function FlowPage({ projectId, projectLocalPath }: FlowPageProps)
     <div className="h-full flex font-sans bg-white overflow-hidden">
       
       {/* Left Sidebar: Flows List */}
-      <div className="w-64 border-r bg-gray-50 flex flex-col flex-shrink-0">
+      <div className="w-[200px] border-r bg-gray-50 flex flex-col flex-shrink-0">
          <div className="h-12 border-b flex items-center justify-between px-4 flex-shrink-0">
              <h2 className="text-xs font-bold text-gray-500 uppercase">Flows</h2>
              <Button 
