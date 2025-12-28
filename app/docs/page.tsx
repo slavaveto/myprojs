@@ -229,7 +229,14 @@ export default function FlowPage({ projectId, projectLocalPath }: FlowPageProps)
                 </PopoverTrigger>
                 <PopoverContent className="p-0 w-[450px] max-h-[600px] overflow-hidden flex flex-col shadow-xl border border-gray-200">
                     <div className="flex items-center justify-between p-3 border-b bg-gray-50">
-                        <span className="font-bold text-sm text-gray-700">Scanned References ({scannedRefs.length})</span>
+                        <div className="flex flex-col">
+                            <span className="font-bold text-sm text-gray-800">Scan Results</span>
+                            <div className="flex gap-3 text-[10px] uppercase font-bold tracking-wider mt-0.5">
+                                <span className="text-gray-500">Total: {scannedRefs.length}</span>
+                                <span className="text-green-600">New: {scannedRefs.filter(r => !steps.some(s => s.ref_id === r.id)).length}</span>
+                                <span className="text-blue-600">Added: {scannedRefs.filter(r => steps.some(s => s.ref_id === r.id)).length}</span>
+                            </div>
+                        </div>
                         <Button size="sm" isIconOnly variant="light" onPress={loadRefs} isLoading={scanLoading}>
                             <RefreshCw size={14} />
                         </Button>
