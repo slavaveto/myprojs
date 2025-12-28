@@ -140,8 +140,8 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
           onDoubleClick={handleDoubleClick}
       >
          <div className="flex-grow w-full max-w-5xl mx-auto flex flex-col px-[50px] py-6 min-h-0">
-             <div className="flex justify-between items-center mb-4 min-h-[40px]">
-            <div className="flex items-center gap-3">
+             <div className="grid grid-cols-[1fr_auto_1fr] items-center mb-4 min-h-[40px] gap-4">
+            <div className="flex items-center gap-3 justify-self-start">
                 <div 
                     className="w-5 h-5 rounded-full flex-shrink-0 shadow-sm border border-white/10" 
                     style={{ backgroundColor: project.color || '#3b82f6' }}
@@ -159,7 +159,7 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
                 </EditProjectPopover>
             </div>
             
-            <div className="flex items-center gap-2">
+            <div className="w-full max-w-[240px] justify-self-center">
                 {onNavigate && (
                     <GlobalSearch 
                         onNavigate={onNavigate} 
@@ -167,6 +167,9 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
                         currentFolderId={selectedFolderId}
                     />
                 )}
+            </div>
+
+            <div className="flex items-center gap-2 justify-self-end">
                 <StatusBadge 
                     status={displayStatus}
                     loadingText="Saving..."

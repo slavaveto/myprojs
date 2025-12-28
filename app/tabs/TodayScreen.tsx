@@ -367,16 +367,18 @@ export const TodayScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
 
     return (
         <div className="h-full flex flex-col p-6 max-w-5xl mx-auto w-full">
-            <div className="flex justify-between items-center mb-4 min-h-[40px]">
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center mb-4 min-h-[40px] gap-4">
 
-                <h1 className="tab-title">
+                <h1 className="tab-title justify-self-start">
                     <Star className="text-warning" fill="currentColor" />
                     Today
                 </h1>
 
-                <div className="flex items-center gap-4">
+                <div className="w-full max-w-[240px] justify-self-center">
                     {onNavigate && <GlobalSearch onNavigate={onNavigate} />}
+                </div>
 
+                <div className="flex items-center gap-4 justify-self-end">
                     <StatusBadge 
                         status={saveStatus}
                         errorMessage={saveError?.message}
