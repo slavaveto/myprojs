@@ -27,8 +27,8 @@ import { usePermission } from '@/app/admin/_services/usePermission';
 import { PERMISSIONS } from '@/app/admin/_services/acl';
 import { usePathname } from 'next/navigation';
 import MobDtToggle from '@/utils/providers/mobDtToggle';
-import { LogItem, LOGGER_NEXT_EVENT } from './LoggerNext';
-import { COLOR_MAP } from '@/utils/logger/services/loggerColors';
+import { LogItem, LOGGER_NEXT_EVENT } from './Logger';
+import { COLOR_MAP } from '@/utils/logger/loggerColors';
 import { SettingsPanel } from './SettingsPanel';
 import { Settings } from 'lucide-react';
 
@@ -56,7 +56,7 @@ const DEFAULT_STATE: WindowState = {
    settingsWidth: 350,
 };
 
-export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
+export function DebugPanel({ isLocal = false }: { isLocal?: boolean }) {
    const [isMounted, setIsMounted] = useState(false);
 
    // Состояние окна (позиция, размер и видимость)
@@ -253,7 +253,7 @@ export function DebugNext({ isLocal = false }: { isLocal?: boolean }) {
    return (
       <>
          {/* Main Floating Button Group */}
-         <div className="fixed bottom-[70px] left-[50px] z-[9999] flex items-center shadow-lg rounded-full bg-content1 border border-default-200 opacity-50 hover:opacity-100 transition-opacity">
+         <div className="fixed bottom-[60px] left-[5px] z-[9999] flex items-center shadow-lg rounded-full bg-content1 border border-default-200 opacity-50 hover:opacity-100 transition-opacity">
             <Button
                isIconOnly
                className={`bg-transparent min-w-0 w-[32px] h-[32px]`}

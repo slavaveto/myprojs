@@ -8,7 +8,6 @@ import { RoomsScreen } from './tabs/RoomsScreen';
 import { LocalizScreen } from './tabs/LocalizScreen';
 import { UsersScreen } from './tabs/UsersScreen';
 import { LogsScreen } from './tabs/LogsScreen';
-import { LoggerScreen } from './tabs/LoggerScreen';
 import { ProfileScreen } from './tabs/ProfileScreen';
 import { LayoutGrid, Languages, Users, FileText, Bug, UserCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -82,13 +81,6 @@ export default function AdminPage() {
             icon: FileText,
             component: (props) => <LogsScreen {...props} texts={ADMIN_TABS_DATA.logs.texts} showToast={ADMIN_SETTINGS.showToast} />,
             isVisible: (can) => can(PERMISSIONS.VIEW_AUDIT_LOGS),
-         },
-         {
-            id: 'logger',
-            label: 'Logger',
-            icon: Bug,
-            component: (props) => <LoggerScreen {...props} texts={ADMIN_TABS_DATA.logger.texts} showToast={ADMIN_SETTINGS.showToast} />,
-            isVisible: (can) => can(PERMISSIONS.MANAGE_LOGGER),
          },
       ],
       []

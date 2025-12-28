@@ -6,16 +6,13 @@ import { themeScript } from '@/utils/providers/themeScript';
 import { DeviceProvider } from '@/utils/providers/MobileDetect';
 import { ThemeProvider } from '@/utils/providers/ThemeProvider';
 import { MyClerkProvider } from '@/utils/providers/ClerkProvider';
-import '@/utils/logger/fastRefreshFilter'; // Фильтр логов Fast Refresh
 import { Toaster } from 'react-hot-toast';
 import { headers } from 'next/headers';
 import { supabase } from '@/utils/supabase/supabaseClient'; // Добавлено
 import { LocalizationProvider } from '@/utils/providers/localization/LocalizationProvider';
 import GlobalToggles from '@/utils/providers/GlobalToggles';
-import LoggerInitializer from '@/utils/providers/LoggerInitializer';
 import clsx from 'clsx';
-import { DebugConsole } from '@/utils/logger/DebugConsole';
-import { DebugNext } from '@/utils/loggerNext/DebugNext';
+import { DebugPanel } from '@/utils/logger/DebugPanel';
 import { DeviceFrame } from '@/utils/providers/DeviceFrame';
 
 const montserrat = Montserrat({
@@ -118,11 +115,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <ThemeProvider>
                      <DeviceProvider>
                         <LocalizationProvider>
-                           <LoggerInitializer />
                            <DeviceFrame isLocal={isLocal}>{children}</DeviceFrame>
                            <GlobalToggles isLocal={isLocal} />
-                           <DebugConsole isLocal={isLocal} />
-                           <DebugNext isLocal={isLocal} />
+                           <DebugPanel isLocal={isLocal} />
                            {isLocal && (
                               <div
                                  className={clsx(

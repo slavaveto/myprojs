@@ -1,5 +1,6 @@
-// utils/loggerNext/LoggerNext.ts
+// utils/logger/Logger.ts
 import { globalStorage } from '@/utils/storage';
+import { useMemo } from 'react';
 
 // --- Types ---
 
@@ -18,11 +19,11 @@ export interface LogItem {
 }
 
 export const LOGGER_NEXT_EVENT = 'logger-next:log';
-export const LOGGER_NEXT_CONFIG_KEY = 'logger-next-config'; // Exported now
+export const LOGGER_NEXT_CONFIG_KEY = 'logger-next-config';
 
 // --- Logger Class ---
 
-class LoggerNext {
+class Logger {
    public componentName: string;
    public fileName: string;
    public enabled: boolean = false; // Default disabled
@@ -108,11 +109,20 @@ class LoggerNext {
    }
    start(message: string, data?: any) { this.emit('start', message, data); }
    end(message: string, data?: any) { this.emit('end', message, data); }
+
+   // --- Compatibility Stubs (Legacy API) ---
+   
+   group(label: string) { return this; }
+   groupEnd() {}
+   child(name: string) { return this; } // Returns self to avoid breaking chains
+   setToasts(toasts: any) {}
+   clearToasts() {}
+   hasActiveToasts() { return false; }
 }
 
 // --- Factory & Cache ---
 
-const loggerCache = new Map<string, LoggerNext>();
+const loggerCache = new Map<string, Logger>();
 
 export function getAllLoggers() {
    return Array.from(loggerCache.values()).map(l => ({ 
@@ -123,7 +133,7 @@ export function getAllLoggers() {
    }));
 }
 
-export function createLoggerNext(name: string) {
+export function createLogger(name: string) {
    // Cache Key = name (игнорируем файл)
    const cacheKey = name;
 
@@ -131,7 +141,14 @@ export function createLoggerNext(name: string) {
       return loggerCache.get(cacheKey)!;
    }
    
-   const logger = new LoggerNext(name);
+   const logger = new Logger(name);
    loggerCache.set(cacheKey, logger);
    return logger;
 }
+
+export function useLogger(name: string) {
+    return useMemo(() => createLogger(name), [name]);
+}
+
+// Stub for global helper
+export function clearAllToasts() {}

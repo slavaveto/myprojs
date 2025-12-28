@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { globalStorage } from '@/utils/storage';
-import { LOGGER_NEXT_CONFIG_KEY, getAllLoggers } from './LoggerNext';
+import { LOGGER_NEXT_CONFIG_KEY, getAllLoggers } from './Logger';
 // Import updated from LoggerNext
 import { Button, Input, Switch, ScrollShadow, Popover, PopoverTrigger, PopoverContent } from '@heroui/react';
 import { Search, RotateCw, Trash2, SlidersHorizontal, ArrowUpDown, ArrowDownAz, ListChecks, Pin, PinOff } from 'lucide-react';
-import { AVAILABLE_COLORS, COLOR_MAP } from '@/utils/logger/services/loggerColors';
+import { AVAILABLE_COLORS, COLOR_MAP } from '@/utils/logger/loggerColors';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface ConfigItem {
