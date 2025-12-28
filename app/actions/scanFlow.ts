@@ -2,78 +2,85 @@
 
 import fs from 'fs';
 import path from 'path';
+import { glob } from 'glob';
 
 export interface FlowNode {
   id: string;
-  parentId?: string;
   type: string;
   label: string;
+  subtitle?: string;
   position: { x: number; y: number };
-  data: { label: string; type: string };
-}
-
-export interface FlowEdge {
-  id: string;
-  source: string;
-  target: string;
-  type?: string;
-  animated?: boolean;
+  data: { 
+      label: string;
+      subtitle?: string;
+      type: string;
+      source: string; 
+      target: string;
+      fileName: string; // Relative for display
+      absolutePath: string; // Absolute for linking
+      lineNumber: number;
+      order: number;
+  };
 }
 
 export interface FlowGraph {
   nodes: FlowNode[];
-  edges: FlowEdge[];
 }
 
 export async function scanFlow(): Promise<FlowGraph> {
-  const filePath = path.join(process.cwd(), 'app/_services/loadingService.ts');
-  const content = fs.readFileSync(filePath, 'utf-8');
-
+  const files = await glob('app/**/*.{ts,tsx}', { ignore: 'node_modules/**' });
+  
   const nodes: FlowNode[] = [];
-  const edges: FlowEdge[] = [];
+  const flowBlockRegex = /\/\*\*([\s\S]*?)\*\//g;
   
-  // Regex to find flow objects: flow: { ... }
-  // We capture the content inside the braces
-  const flowRegex = /flow:\s*\{([\s\S]*?)\}/g;
-  
-  let match;
-  while ((match = flowRegex.exec(content)) !== null) {
-    const flowBody = match[1];
-    
-    // Simple parser to extract keys and values from the object string
-    // e.g. id: 'app_init', type: 'start'
-    const idMatch = flowBody.match(/id:\s*['"]([^'"]+)['"]/);
-    const parentIdMatch = flowBody.match(/parentId:\s*['"]([^'"]+)['"]/);
-    const typeMatch = flowBody.match(/type:\s*['"]([^'"]+)['"]/);
-    const labelMatch = flowBody.match(/label:\s*['"]([^'"]+)['"]/);
+  for (const file of files) {
+      const absolutePath = path.join(process.cwd(), file);
+      const content = fs.readFileSync(absolutePath, 'utf-8');
+      
+      let match;
+      while ((match = flowBlockRegex.exec(content)) !== null) {
+          const commentBlock = match[1];
+          const flowMatch = commentBlock.match(/@FlowStep\s+([^\n\r]+)/);
+          if (!flowMatch) continue;
+          
+          const flowName = flowMatch[1].trim();
+          const idMatch = commentBlock.match(/@Id\s+([^\n\r]+)/);
+          const titleMatch = commentBlock.match(/@Title\s+([^\n\r]+)/);
+          const subtitleMatch = commentBlock.match(/@Subtitle\s+([^\n\r]+)/);
+          const orderMatch = commentBlock.match(/@Order\s+(\d+)/);
+          const typeMatch = commentBlock.match(/@Type\s+([^\n\r]+)/); 
+          
+          const id = idMatch ? idMatch[1].trim() : `auto_${Math.random()}`;
+          const title = titleMatch ? titleMatch[1].trim() : id;
+          const subtitle = subtitleMatch ? subtitleMatch[1].trim() : undefined;
+          const order = orderMatch ? parseInt(orderMatch[1]) : 999;
+          const type = typeMatch ? typeMatch[1].trim() : 'process';
 
-    if (idMatch) {
-      const id = idMatch[1];
-      const parentId = parentIdMatch ? parentIdMatch[1] : undefined;
-      const type = typeMatch ? typeMatch[1] : 'default';
-      const label = labelMatch ? labelMatch[1] : id;
+          const upToMatch = content.substring(0, match.index);
+          const lineNumber = upToMatch.split('\n').length + 1;
 
-      nodes.push({
-        id,
-        parentId, // Keep for layout calculation
-        type: 'default', // React Flow node type (we'll style them later)
-        label, // Plain text label
-        position: { x: 0, y: 0 }, // Will be calculated by dagre
-        data: { label, type }
-      });
-
-      if (parentId) {
-        edges.push({
-          id: `${parentId}-${id}`,
-          source: parentId,
-          target: id,
-          type: 'smoothstep',
-          animated: true,
-        });
+          nodes.push({
+              id,
+              type: 'default',
+              label: title,
+              subtitle,
+              position: { x: 0, y: 0 },
+              data: {
+                  label: title,
+                  subtitle,
+                  type,
+                  source: 'System',
+                  target: 'System',
+                  fileName: file, // Keep relative for clean UI display
+                  absolutePath: absolutePath, // Pass full path for functionality
+                  lineNumber,
+                  order
+              }
+          });
       }
-    }
   }
 
-  return { nodes, edges };
-}
+  nodes.sort((a, b) => a.data.order - b.data.order);
 
+  return { nodes };
+}

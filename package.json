@@ -37,6 +37,7 @@
     "filepond-plugin-image-preview": "^4.6.12",
     "filepond-plugin-image-resize": "^2.0.10",
     "framer-motion": "^12.23.24",
+    "glob": "^13.0.0",
     "html-react-parser": "^5.2.6",
     "hunspell-asm": "^0.0.8",
     "livekit-client": "^2.16.0",

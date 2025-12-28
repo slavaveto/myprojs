@@ -8,6 +8,13 @@ const logger = createLogger('ProjectService');
 
 export const projectService = {
     // --- Projects ---
+    /**
+     * @FlowStep init-app
+     * @Id fetch_projects_db
+     * @Title Fetch Projects
+     * @Subtitle Query Supabase for all projects sorted by order
+     * @Order 0
+     */
     async getProjects() {
         logger.info('Fetching projects...');
         const { data, error } = await supabase
