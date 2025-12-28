@@ -341,8 +341,8 @@ export const InboxScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
 
     const handleMove = async (taskId: string, projectId: string, folderId: string) => {
         try {
-            // 1. Update task in DB
-            await taskService.updateTask(taskId, { folder_id: folderId });
+            // 1. Update task in DB (move to top of target folder)
+            await taskService.moveTaskToFolder(taskId, folderId);
             
             // 2. Remove from local list (optimistic)
             setTasks(prev => prev.filter(t => t.id !== taskId));

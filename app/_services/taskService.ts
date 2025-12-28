@@ -131,6 +131,28 @@ export const taskService = {
         return data as any[];
     },
 
+    async moveTaskToFolder(taskId: string, folderId: string) {
+        logger.info('Moving task to folder (top)', { taskId, folderId });
+        
+        // Find min sort order
+        const { data: minTask } = await supabase
+            .from('tasks')
+            .select('sort_order')
+            .eq('folder_id', folderId)
+            .order('sort_order', { ascending: true })
+            .limit(1)
+            .maybeSingle();
+            
+        const minOrder = minTask ? minTask.sort_order : 0;
+        const newSortOrder = minOrder - 10000; // Ensure it's well above
+        
+        // Update task
+        await this.updateTask(taskId, { 
+            folder_id: folderId,
+            sort_order: newSortOrder
+        });
+    },
+
     // --- Writes ---
     async createTask(folderId: string | null, content: string, sort_order: number) {
         logger.info('Creating task', { content, folderId });

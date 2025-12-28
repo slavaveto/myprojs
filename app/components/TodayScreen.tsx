@@ -404,8 +404,8 @@ export const TodayScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
 
     const handleMove = async (taskId: string, projectId: string, folderId: string) => {
         try {
-            // 1. Update task in DB
-            await taskService.updateTask(taskId, { folder_id: folderId });
+            // 1. Update task in DB (move to top of target folder)
+            await taskService.moveTaskToFolder(taskId, folderId);
             
             // 2. Remove from local list (optimistic) - or keep it if we want to show it?
             // User said "switch to where we moved". So we are leaving this screen.
