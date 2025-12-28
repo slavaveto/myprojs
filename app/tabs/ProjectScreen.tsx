@@ -15,7 +15,7 @@ import {
    defaultDropAnimationSideEffects,
 } from '@dnd-kit/core';
 
-import { TaskRow } from '@/app/components/TaskRow';
+import { TaskRow } from '@/app/TaskRow';
 import { FolderTabs, FolderTab } from '@/app/components/FolderTabs';
 import { TaskList } from '@/app/components/TaskList';
 import { ActionStatus } from '@/utils/supabase/useAsyncAction';

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Task } from '@/app/types';
-import { TaskRow } from '@/app/components/TaskRow';
+import { TaskRow } from '@/app/TaskRow';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { AnimatePresence } from 'framer-motion';
 

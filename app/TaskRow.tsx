@@ -6,14 +6,14 @@ import { CSS } from '@dnd-kit/utilities';
 import { useDndContext } from '@dnd-kit/core';
 import { Checkbox, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
 import { GripVertical, Trash2, MoreVertical, Check, Pin } from 'lucide-react';
-import { Task } from '../types';
-import { EditableCell } from './EditableCell';
+import { Task } from './types';
+import { EditableCell } from './components/EditableCell';
 import { clsx } from 'clsx';
 import { motion } from 'framer-motion';
-import { TaskContextMenu, TaskMenuItems } from './TaskContextMenu';
-import { TaskStyleControl } from './TaskStyleControl';
-import { TaskPinControl } from './TaskPinControl';
-import { TaskTodayControl } from './TaskTodayControl';
+import { TaskContextMenu, TaskMenuItems } from './components/TaskContextMenu';
+import { TaskStyleControl } from './components/TaskStyleControl';
+import { TaskPinControl } from './components/TaskPinControl';
+import { TaskTodayControl } from './components/TaskTodayControl';
 
 interface TaskRowProps {
    task: Task;
