@@ -48,7 +48,8 @@ const InboxTaskRow = ({
             items={{
                 delete: true,
                 move: true,
-                styles: true
+                styles: true,
+                today: true
             }}
         >
             <motion.div

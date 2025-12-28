@@ -485,7 +485,8 @@ export const TaskRow = React.memo(
                delete: true,
                makeGap: true,
                makeGroup: true,
-               styles: true
+               styles: true,
+               today: true
             }}
          >
             <motion.div

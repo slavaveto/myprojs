@@ -15,7 +15,8 @@ import {
    MoveRight, 
    ArrowRight, 
    Folder as FolderIcon,
-   Check
+   Check,
+   Star
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Task } from '../types';
@@ -31,6 +32,7 @@ interface TaskContextMenuProps {
       makeGap?: boolean;
       makeGroup?: boolean;
       styles?: boolean; // Text styles (Bold, Red)
+      today?: boolean; // Toggle today status
    };
 
    // Callbacks
@@ -131,9 +133,28 @@ export const TaskContextMenu = ({
                         group_color: null as any,
                      });
                      setMenuPos(null);
+                  } else if (key === 'toggle-today') {
+                     onUpdate?.(task.id, { is_today: !task.is_today });
+                     setMenuPos(null);
                   }
                }}
             >
+               {/* --- TODAY --- */}
+               {items.today && !isGroup ? (
+                  <DropdownItem
+                     key="toggle-today"
+                     startContent={
+                        <Star
+                           size={16}
+                           fill={task.is_today ? 'currentColor' : 'none'}
+                           className={task.is_today ? 'text-warning' : 'text-default-500'}
+                        />
+                     }
+                  >
+                     {task.is_today ? 'Remove from Today' : 'Add to Today'}
+                  </DropdownItem>
+               ) : null}
+
                {/* --- TEXT STYLES --- */}
                {items.styles && !isGroup ? (
                    <DropdownItem
