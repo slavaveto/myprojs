@@ -215,7 +215,7 @@ const InboxTaskRow = ({
                                     <ArrowRight size={14} className="text-default-400" />
                                 </div>
 
-                                <div className="absolute left-[100%] top-[-4px] ml-1 w-[200px] hidden group-hover/move:flex flex-col bg-content1 rounded-medium shadow-small border-small border-default-200 p-1 z-50 overflow-y-auto max-h-[300px]">
+                                <div className="absolute right-[100%] top-[-4px] mr-1 w-[200px] hidden group-hover/move:flex flex-col bg-content1 rounded-medium shadow-small border-small border-default-200 p-1 z-50 overflow-visible">
                                     {projectsStructure.map((project) => (
                                         <div key={project.id} className="relative group/project w-full">
                                             <div className="flex items-center justify-between px-2 py-1.5 rounded-small hover:bg-default-100 cursor-default transition-colors w-full">
