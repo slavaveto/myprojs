@@ -7,15 +7,10 @@ import { createLogger } from '@/utils/logger/Logger';
 const logger = createLogger('ProjectService');
 
 export const projectService = {
-    // --- Projects ---
-    /**
-     * @flow_id init-app
-     * @step_id fetch_projects
-     * @role Action
-     * @title Fetch Projects
-     * @description Supabase Query implementation
-     * @step_order 10
-     */
+
+
+    //@ref:8a2b3c
+    // загрузка списка проектов
     async getProjects() {
         logger.info('Fetching projects...');
         const { data, error } = await supabase

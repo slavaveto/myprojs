@@ -64,11 +64,7 @@ export const storage = {
 };
 
 // НОВЫЙ API для глобальных настроек (ВСЕГДА local-Storage)
-/**
- * @ArchComponent LocalStorage
- * @Type Database
- * @Desc Обертка над window.localStorage для персистентности
- */
+
 export const globalStorage = {
   getItem: (key: string): string | null => {
     try {

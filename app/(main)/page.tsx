@@ -193,7 +193,8 @@ function AppContent() {
       })
    );
 
-   // 1. Загрузка списка проектов
+   //@ref:8a2b4c
+   //Загрузка списка проектов - триггер
    useEffect(() => {
       // Test New Logger for Highlight Feature
       const testLogger = createLogger('NewFeatureComponent3');
@@ -370,40 +371,39 @@ function AppContent() {
 
    // --- Global Navigation Handler ---
    const handleNavigate = (target: NavigationTarget) => {
-       logger.info('Navigating to:', target);
-       
-       if (target.type === 'project' && target.projectId) {
-           // Switch to Project
-           setActiveProjectId(target.projectId);
-           setActiveSystemTab(null);
-           globalStorage.setItem('active_project_id', target.projectId);
-           
-           if (target.folderId) {
-               globalStorage.setItem(`active_folder_${target.projectId}`, target.folderId);
-           }
-           
-           if (target.taskId) {
-               globalStorage.setItem(`highlight_task_${target.projectId}`, target.taskId);
-           }
-       } else if (target.type === 'inbox') {
-           setActiveProjectId(null);
-           setActiveSystemTab('inbox');
-           
-           if (target.taskId) {
-               // Store ID for Inbox highlight
-               globalStorage.setItem('highlight_task_inbox', target.taskId);
-           }
-       } else if (target.type === 'today') {
-           setActiveProjectId(null);
-           setActiveSystemTab('today');
-           
-           if (target.taskId) {
-               // Store ID for Today highlight
-               globalStorage.setItem('highlight_task_today', target.taskId);
-           }
-       }
-   };
+      logger.info('Navigating to:', target);
 
+      if (target.type === 'project' && target.projectId) {
+         // Switch to Project
+         setActiveProjectId(target.projectId);
+         setActiveSystemTab(null);
+         globalStorage.setItem('active_project_id', target.projectId);
+
+         if (target.folderId) {
+            globalStorage.setItem(`active_folder_${target.projectId}`, target.folderId);
+         }
+
+         if (target.taskId) {
+            globalStorage.setItem(`highlight_task_${target.projectId}`, target.taskId);
+         }
+      } else if (target.type === 'inbox') {
+         setActiveProjectId(null);
+         setActiveSystemTab('inbox');
+
+         if (target.taskId) {
+            // Store ID for Inbox highlight
+            globalStorage.setItem('highlight_task_inbox', target.taskId);
+         }
+      } else if (target.type === 'today') {
+         setActiveProjectId(null);
+         setActiveSystemTab('today');
+
+         if (target.taskId) {
+            // Store ID for Today highlight
+            globalStorage.setItem('highlight_task_today', target.taskId);
+         }
+      }
+   };
 
    // --- DnD Handlers ---
    const handleDragEnd = async (event: DragEndEvent) => {
