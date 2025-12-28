@@ -217,11 +217,36 @@ export const TodayScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
 
         try {
             // Fetch tasks where is_today = true
-            const data = await taskService.getTodayTasks();
+            let data = await taskService.getTodayTasks();
             
             // Artificial delay for better UX (optional, matching DoneScreen)
             await new Promise(resolve => setTimeout(resolve, 500));
             
+            // Client-side sorting based on Priority (Style) then Alphabetical
+            if (data) {
+                data.sort((a, b) => {
+                    // 1. Priority Weight
+                    const getWeight = (style: string | null) => {
+                        if (style === 'red-bold') return 3;
+                        if (style === 'red') return 2;
+                        if (style === 'bold') return 1;
+                        return 0;
+                    };
+
+                    const weightA = getWeight(a.title_text_style);
+                    const weightB = getWeight(b.title_text_style);
+
+                    if (weightA !== weightB) {
+                        return weightB - weightA; // Higher weight first
+                    }
+
+                    // 2. Alphabetical (content)
+                    const textA = a.content || '';
+                    const textB = b.content || '';
+                    return textA.localeCompare(textB);
+                });
+            }
+
             setTasks(data || []);
             loadingService.logSystemTabFinish('Today', data?.length || 0);
             setIsLoaded(true);
@@ -247,12 +272,37 @@ export const TodayScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
 
     const handleUpdate = async (id: string, updates: any) => {
         // Optimistic update
-        setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+        setTasks(prev => {
+             const newTasks = prev.map(t => t.id === id ? { ...t, ...updates } : t);
+             
+             // If removing from today, filter out
+             if (updates.is_today === false) {
+                 return newTasks.filter(t => t.id !== id);
+             }
 
-        // If removing from today, filter out
-        if (updates.is_today === false) {
-             setTasks(prev => prev.filter(t => t.id !== id));
-        }
+             // Re-sort if style or content changed
+             if ('title_text_style' in updates || 'content' in updates) {
+                 return newTasks.sort((a, b) => {
+                    const getWeight = (style: string | null) => {
+                        if (style === 'red-bold') return 3;
+                        if (style === 'red') return 2;
+                        if (style === 'bold') return 1;
+                        return 0;
+                    };
+
+                    const weightA = getWeight(a.title_text_style);
+                    const weightB = getWeight(b.title_text_style);
+
+                    if (weightA !== weightB) return weightB - weightA;
+                    
+                    const textA = a.content || '';
+                    const textB = b.content || '';
+                    return textA.localeCompare(textB);
+                 });
+             }
+             
+             return newTasks;
+        });
 
         try {
             await taskService.updateTask(id, updates);
