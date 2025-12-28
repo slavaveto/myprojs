@@ -155,15 +155,17 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
    const { pinned, others } = useMemo(() => {
       let result = configs;
 
-      if (!showHidden) {
-         result = result.filter(c => !c.hidden);
-      }
-
       if (search) {
+         // Search active: ignore hidden state (show matches even if hidden)
          const q = search.toLowerCase();
          result = result.filter(
             (c) => c.name.toLowerCase().includes(q) || c.file.toLowerCase().includes(q)
          );
+      } else {
+         // No search: respect showHidden flag
+         if (!showHidden) {
+            result = result.filter(c => !c.hidden);
+         }
       }
 
       // Helper sort function
@@ -266,13 +268,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
          animate={{ opacity: 1, y: 0 }}
          exit={{ opacity: 0, scale: 0.95 }}
          transition={{ duration: 0.2 }}
-         key={item.key}
-         className={`
-             group flex items-center justify-between p-2 py-[2px] bg-content2 border rounded-md border-default-200 hover:bg-default-100 transition-all
-             ${item.enabled ? '!bg-primary-100/50' : ''}
-             ${isNew ? 'ring-1 ring-warning ring-offset-1 ring-offset-content1 z-10' : ''}
-          `}
-      >
+            key={item.key}
+            className={`
+                group flex items-center justify-between p-2 py-[2px] bg-content2 border rounded-md border-default-200 hover:bg-default-100 transition-all
+                ${item.enabled ? '!bg-primary-100/50' : ''}
+                ${item.hidden ? 'opacity-60' : ''}
+                ${isNew ? 'ring-1 ring-warning ring-offset-1 ring-offset-content1 z-10' : ''}
+             `}
+         >
          <div className="flex flex-col overflow-hidden mr-3 flex-1">
             <span
                className={`font-medium text-sm truncate ${item.enabled ? 'text-foreground' : 'text-default-500'}`}
