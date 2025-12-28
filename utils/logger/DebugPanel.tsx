@@ -256,7 +256,7 @@ export function DebugPanel({ isLocal = false }: { isLocal?: boolean }) {
    return (
       <>
          {/* Main Floating Button Group */}
-         <div className="fixed bottom-[60px] left-[5px] z-[9999] flex items-center shadow-lg rounded-full bg-content1 border border-default-200 opacity-50 hover:opacity-100 transition-opacity">
+         <div className="fixed bottom-[60px] left-[20px] z-[9999] flex items-center shadow-lg rounded-full bg-content1 border border-default-200 opacity-50 hover:opacity-100 transition-opacity">
             <Button
                isIconOnly
                className={`bg-transparent min-w-0 w-[32px] h-[32px]`}
