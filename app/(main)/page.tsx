@@ -31,6 +31,7 @@ import { StatusBadge } from '@/utils/supabase/StatusBadge';
 import { EditProjectPopover } from '@/app/components/EditProject';
 import { toast } from 'react-hot-toast';
 import { loadingService } from '@/app/_services/loadingService';
+import { NavigationTarget } from '@/app/components/GlobalSearch';
 
 // DnD Imports
 import {
@@ -359,6 +360,38 @@ function AppContent() {
       globalStorage.setItem('active_project_id', targetProjectId);
    };
 
+   // --- Global Navigation Handler ---
+   const handleNavigate = (target: NavigationTarget) => {
+       logger.info('Navigating to:', target);
+       
+       if (target.type === 'project' && target.projectId) {
+           // Switch to Project
+           setActiveProjectId(target.projectId);
+           setActiveSystemTab(null);
+           globalStorage.setItem('active_project_id', target.projectId);
+           
+           if (target.folderId) {
+               globalStorage.setItem(`active_folder_${target.projectId}`, target.folderId);
+           }
+           
+           if (target.taskId) {
+               globalStorage.setItem(`highlight_task_${target.projectId}`, target.taskId);
+           }
+       } else if (target.type === 'inbox') {
+           setActiveProjectId(null);
+           setActiveSystemTab('inbox');
+           
+           if (target.taskId) {
+               // Optional: Highlight support for Inbox (needs implementation in InboxScreen)
+               // globalStorage.setItem('highlight_task_inbox', target.taskId);
+           }
+       } else if (target.type === 'today') {
+           setActiveProjectId(null);
+           setActiveSystemTab('today');
+       }
+   };
+
+
    // --- DnD Handlers ---
    const handleDragEnd = async (event: DragEndEvent) => {
       const { active, over } = event;
@@ -529,6 +562,7 @@ function AppContent() {
                   canLoad={canLoadBackground || activeSystemTab === 'inbox'}
                   isActive={activeSystemTab === 'inbox'}
                   onMoveTask={handleMoveTask}
+                  onNavigate={handleNavigate}
                />
             </div>
 
@@ -545,6 +579,7 @@ function AppContent() {
                   canLoad={canLoadBackground || activeSystemTab === 'today'}
                   isActive={activeSystemTab === 'today'}
                   onMoveTask={handleMoveTask}
+                  onNavigate={handleNavigate}
                />
             </div>
 
@@ -580,6 +615,7 @@ function AppContent() {
                      canLoad={activeProjectId === project.id || canLoadBackground}
                      onReady={() => handleProjectReady(project.id)}
                      globalStatus={sidebarStatus}
+                     onNavigate={handleNavigate}
                      onUpdateProject={(updates) => {
                         setProjects((prev) =>
                            prev.map((p) => (p.id === project.id ? { ...p, ...updates } : p))

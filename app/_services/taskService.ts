@@ -131,6 +131,38 @@ export const taskService = {
         return data as any[];
     },
 
+    // --- Search Index ---
+    async getAllTasksShort() {
+        logger.info('Fetching all tasks for search index...');
+        const { data, error } = await supabase
+            .from('tasks')
+            .select(`
+                id,
+                content,
+                is_completed,
+                folder_id,
+                is_today,
+                folders (
+                    id,
+                    title,
+                    projects (
+                        id,
+                        title,
+                        color
+                    )
+                )
+            `)
+            .or('is_deleted.eq.false,is_deleted.is.null') // Only active tasks
+            .limit(2000); // Reasonable limit for performance
+
+        if (error) {
+            logger.error('Failed to fetch search index', error);
+            return [];
+        }
+
+        return data || [];
+    },
+
     async moveTaskToFolder(taskId: string, folderId: string) {
         logger.info('Moving task to folder (top)', { taskId, folderId });
         
@@ -361,4 +393,3 @@ export const taskService = {
         logger.info('Tasks reordered', { count: updates.length });
     }
 };
-

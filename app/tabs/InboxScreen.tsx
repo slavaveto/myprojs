@@ -18,6 +18,7 @@ import { TaskStyleControl } from '../components/TaskStyleControl';
 import { TaskTodayControl } from '../components/TaskTodayControl';
 import { useAsyncAction } from '@/utils/supabase/useAsyncAction';
 import { StatusBadge } from '@/utils/supabase/StatusBadge';
+import { GlobalSearch, NavigationTarget } from '@/app/components/GlobalSearch';
 
 const logger = createLogger('InboxScreen');
 
@@ -26,6 +27,7 @@ interface InboxScreenProps {
     canLoad?: boolean;
     isActive?: boolean;
     onMoveTask?: (taskId: string, projectId: string, folderId: string) => void;
+    onNavigate?: (target: NavigationTarget) => void;
 }
 
 // Visual clone of TaskRow for Inbox items
@@ -137,7 +139,7 @@ const InboxTaskRow = ({
     );
 }
 
-export const InboxScreen = ({ globalStatus = 'idle', canLoad = true, isActive = false, onMoveTask }: InboxScreenProps) => {
+export const InboxScreen = ({ globalStatus = 'idle', canLoad = true, isActive = false, onMoveTask, onNavigate }: InboxScreenProps) => {
     const [tasks, setTasks] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -283,6 +285,8 @@ export const InboxScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
                 </h1>
                 
                 <div className="flex items-center gap-4">
+                    {onNavigate && <GlobalSearch onNavigate={onNavigate} />}
+                    
                     <StatusBadge 
                         status={saveStatus}
                         errorMessage={saveError?.message}

@@ -23,6 +23,7 @@ import { StatusBadge } from '@/utils/supabase/StatusBadge';
 import { EditProjectPopover } from '@/app/components/EditProject';
 import { useProjectData } from '@/app/components/hooks/useProjectData';
 import { useProjectDnD } from '@/app/components/hooks/useProjectDnD';
+import { GlobalSearch, NavigationTarget } from '@/app/components/GlobalSearch';
 
 const logger = createLogger('ProjectScreen');
 
@@ -42,10 +43,11 @@ interface ProjectScreenProps {
     canLoad?: boolean;
     onUpdateProject: (updates: { title?: string; color?: string }) => void;
     onDeleteProject: () => void;
+    onNavigate?: (target: NavigationTarget) => void;
 }
 
 export const ProjectScreen = (props: ProjectScreenProps) => {
-   const { project } = props;
+   const { project, onNavigate } = props;
    
    // 1. Data Management Hook
    const {
@@ -158,6 +160,13 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
             </div>
             
             <div className="flex items-center gap-2">
+                {onNavigate && (
+                    <GlobalSearch 
+                        onNavigate={onNavigate} 
+                        currentProjectId={project.id}
+                        currentFolderId={selectedFolderId}
+                    />
+                )}
                 <StatusBadge 
                     status={displayStatus}
                     loadingText="Saving..."

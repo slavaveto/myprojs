@@ -376,6 +376,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
                placeholder="Search..."
                size="sm"
                variant="faded"
+               startContent={<Search className="text-default-400" size={16} />}
+
                value={search}
                onValueChange={setSearch}
                isClearable

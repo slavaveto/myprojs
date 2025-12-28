@@ -17,6 +17,7 @@ import { TaskStyleControl } from '../components/TaskStyleControl';
 import { TaskTodayControl } from '../components/TaskTodayControl';
 import { useAsyncAction } from '@/utils/supabase/useAsyncAction';
 import { StatusBadge } from '@/utils/supabase/StatusBadge';
+import { GlobalSearch, NavigationTarget } from '@/app/components/GlobalSearch';
 
 const logger = createLogger('TodayScreen');
 
@@ -26,6 +27,7 @@ interface TodayScreenProps {
     isActive?: boolean;
     onRestoreTask?: (task: any) => void;
     onMoveTask?: (taskId: string, projectId: string, folderId: string) => void;
+    onNavigate?: (target: NavigationTarget) => void;
 }
 
 // Visual clone of TaskRow for Today items
@@ -154,7 +156,7 @@ const TodayTaskRow = ({
     );
 }
 
-export const TodayScreen = ({ globalStatus = 'idle', canLoad = true, isActive = false, onMoveTask }: TodayScreenProps) => {
+export const TodayScreen = ({ globalStatus = 'idle', canLoad = true, isActive = false, onMoveTask, onNavigate }: TodayScreenProps) => {
     const [tasks, setTasks] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true); // Initial load (full screen)
     const [isRefreshing, setIsRefreshing] = useState(false); // Refresh (button spin)
@@ -345,6 +347,8 @@ export const TodayScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
                 </h1>
 
                 <div className="flex items-center gap-4">
+                    {onNavigate && <GlobalSearch onNavigate={onNavigate} />}
+
                     <StatusBadge 
                         status={saveStatus}
                         errorMessage={saveError?.message}
