@@ -4,7 +4,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { createLogger } from '@/utils/logger/Logger';
 import { taskService } from '@/app/_services/taskService';
 import { clsx } from 'clsx';
-import { CheckCircle2, Trash2, Folder as FolderIcon, RefreshCw, GripVertical, RotateCcw, Calendar, Star, Bold, Type, X } from 'lucide-react';
+import { CheckCircle2, Trash2, Folder as FolderIcon, RefreshCw, GripVertical, RotateCcw, Calendar, Star, Bold, Type, X, MoreVertical } from 'lucide-react';
 import { Spinner, Chip, Button, Switch, Select, SelectItem, Checkbox, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
 import { format, isToday, isYesterday, isThisWeek, isThisMonth } from 'date-fns';
 import { useGlobalPersistentState } from '@/utils/storage';
@@ -181,14 +181,28 @@ const TodayTaskRow = ({ task, onUpdate, onDelete }: { task: any, onUpdate: (id: 
                      <Star size={16} fill="currentColor" />
                  </button>
 
-                <button
-                    onClick={() => onDelete(task.id)}
-                    className="opacity-0 p-[2px] group-hover:opacity-100 text-default-400 cursor-pointer hover:text-danger hover:bg-danger/10 rounded transition-all"
-                    aria-label="Delete task"
-                    title="Delete"
-                >
-                    <Trash2 size={16} />
-                </button>
+                 <Dropdown placement="bottom-end">
+                    <DropdownTrigger>
+                        <button
+                            className="opacity-100 p-[0px] text-default-400 cursor-pointer hover:text-default-600 rounded transition-all outline-none"
+                            aria-label="Task settings"
+                        >
+                            <MoreVertical size={16} />
+                        </button>
+                    </DropdownTrigger>
+                    <DropdownMenu
+                        aria-label="Task Actions"
+                        onAction={(key) => {
+                            if (key === 'delete') {
+                                onDelete(task.id);
+                            }
+                        }}
+                    >
+                        <DropdownItem key="delete" className="text-danger" color="danger">
+                            Delete
+                        </DropdownItem>
+                    </DropdownMenu>
+                </Dropdown>
              </div>
         </motion.div>
     );
