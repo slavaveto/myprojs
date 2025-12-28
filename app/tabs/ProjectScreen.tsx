@@ -47,13 +47,15 @@ interface ProjectScreenProps {
     onUpdateProject: (updates: { title?: string; color?: string }) => void;
     onDeleteProject: () => void;
     onNavigate?: (target: NavigationTarget) => void;
+    viewMode: 'tasks' | 'docs'; // Controlled state
+    onViewModeChange?: (mode: 'tasks' | 'docs') => void;
 }
 
 export const ProjectScreen = (props: ProjectScreenProps) => {
-   const { project, onNavigate } = props;
+   const { project, onNavigate, viewMode } = props;
    
-   // View Mode State: 'tasks' | 'docs'
-   const [viewMode, setViewMode] = React.useState<'tasks' | 'docs'>('tasks');
+   // Removed local viewMode state
+   // const [viewMode, setViewMode] = React.useState<'tasks' | 'docs'>('tasks');
    
    // 1. Data Management Hook
    const {
@@ -183,19 +185,6 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
                     successText="Saved"
                     errorMessage={saveError?.message}
                 />
-
-                {/* View Switcher */}
-                <Button
-                    size="sm"
-                    variant="flat"
-                    color="primary"
-                    startContent={viewMode === 'tasks' ? <Layout size={16} /> : <CheckSquare size={16} />}
-                    onPress={() => setViewMode(prev => prev === 'tasks' ? 'docs' : 'tasks')}
-                >
-                    {viewMode === 'tasks' ? 'Docs' : 'Tasks'}
-                </Button>
-
-                
             </div>
          </div>
 

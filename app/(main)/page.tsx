@@ -61,6 +61,7 @@ interface SortableProjectItemProps {
    project: Project;
    isActive: boolean;
    onClick: () => void;
+   onDocsClick: () => void; // New prop
    children?: React.ReactNode;
 }
 
@@ -68,6 +69,7 @@ const SortableProjectItem = ({
    project,
    isActive,
    onClick,
+   onDocsClick, // Destructure
    children,
 }: SortableProjectItemProps) => {
    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -123,7 +125,7 @@ const SortableProjectItem = ({
                 )}
                 onClick={(e) => {
                     e.stopPropagation();
-                    console.log('Open Docs for', project.title);
+                    onDocsClick();
                 }}
             >
                 {/* <Book size={12} /> */}
@@ -173,6 +175,7 @@ function AppContent() {
    const [projects, setProjects] = useState<Project[]>([]);
    const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
    const [activeSystemTab, setActiveSystemTab] = useState<string | null>(null); // 'inbox' | 'today' | 'done' | null
+   const [projectScreenMode, setProjectScreenMode] = useState<'tasks' | 'docs'>('tasks'); // New mode state
    const { setLoading: setGlobalLoading } = useAppLoader();
 
    // Словарик готовности проектов: { [projectId]: true }
@@ -507,6 +510,13 @@ function AppContent() {
                            onClick={() => {
                               setActiveProjectId(project.id);
                               setActiveSystemTab(null);
+                              setProjectScreenMode('tasks'); // Default to tasks
+                              globalStorage.setItem('active_project_id', project.id);
+                           }}
+                           onDocsClick={() => {
+                              setActiveProjectId(project.id);
+                              setActiveSystemTab(null);
+                              setProjectScreenMode('docs'); // Switch to docs
                               globalStorage.setItem('active_project_id', project.id);
                            }}
                         >
@@ -638,6 +648,8 @@ function AppContent() {
                      onReady={() => handleProjectReady(project.id)}
                      globalStatus={sidebarStatus}
                      onNavigate={handleNavigate}
+                     viewMode={projectScreenMode} // Pass mode
+                     onViewModeChange={setProjectScreenMode} // Pass handler
                      onUpdateProject={(updates) => {
                         setProjects((prev) =>
                            prev.map((p) => (p.id === project.id ? { ...p, ...updates } : p))
