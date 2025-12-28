@@ -137,7 +137,7 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
           )}
           onDoubleClick={handleDoubleClick}
       >
-         <div className="flex-grow w-full max-w-5xl mx-auto flex flex-col px-[50px] py-6">
+         <div className="flex-grow w-full max-w-5xl mx-auto flex flex-col px-[50px] py-6 min-h-0">
              <div className="flex justify-between items-center mb-4 min-h-[40px]">
             <div className="flex items-center gap-1">
                 <h1 className="text-2xl font-bold">{project.title}</h1>
@@ -186,9 +186,9 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
                 hoveredFolderId={hoveredFolderId}
             />
 
-            <div className="mt-6 flex-grow flex flex-col min-h-0">
+            <div className="mt-6 flex-grow flex flex-col min-h-0 overflow-y-auto overflow-x-hidden">
                 {selectedFolderId ? (
-                   <TaskList 
+                   <TaskList  
                         key={selectedFolderId}
                         tasks={filteredTasks}
                         onUpdateTask={handleUpdateTask}

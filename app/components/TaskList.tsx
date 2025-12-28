@@ -39,7 +39,7 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlight
     }, [unpinnedTasks]);
 
     return (
-        <div className="flex-grow overflow-y-auto pr-0 pb-10">
+        <div className="w-full pr-0 pb-10">
              {pinnedTasks.length > 0 && (
                  <div className="flex flex-col gap-[3px] mb-6 pb-2  outline-none">
                      {pinnedTasks.map(task => (
