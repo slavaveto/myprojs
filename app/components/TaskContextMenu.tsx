@@ -108,7 +108,8 @@ export const TaskMenuItems = ({
                             type="button"
                             onClick={(e) => {
                                e.stopPropagation();
-                               onUpdate?.(task.id, { title_text_style: 'bold' });
+                               const newStyle = task.title_text_style === 'bold' ? null : 'bold';
+                               onUpdate?.(task.id, { title_text_style: newStyle });
                                handleClose();
                             }}
                             className={clsx(
@@ -123,7 +124,8 @@ export const TaskMenuItems = ({
                             type="button"
                             onClick={(e) => {
                                e.stopPropagation();
-                               onUpdate?.(task.id, { title_text_style: 'red' });
+                               const newStyle = task.title_text_style === 'red' ? null : 'red';
+                               onUpdate?.(task.id, { title_text_style: newStyle });
                                handleClose();
                             }}
                             className={clsx(
@@ -138,7 +140,8 @@ export const TaskMenuItems = ({
                             type="button"
                             onClick={(e) => {
                                e.stopPropagation();
-                               onUpdate?.(task.id, { title_text_style: 'red-bold' });
+                               const newStyle = task.title_text_style === 'red-bold' ? null : 'red-bold';
+                               onUpdate?.(task.id, { title_text_style: newStyle });
                                handleClose();
                             }}
                             className={clsx(
