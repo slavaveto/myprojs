@@ -4,11 +4,12 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { createLogger } from '@/utils/logger/Logger';
 import { taskService } from '@/app/_services/taskService';
 import { clsx } from 'clsx';
-import { CheckCircle2, Trash2, Folder as FolderIcon, RefreshCw, GripVertical, RotateCcw, Calendar, Inbox, Plus, Bold, Type, Star, X, MoreVertical } from 'lucide-react';
-import { Spinner, Chip, Button, Switch, Select, SelectItem, Checkbox, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
+import { CheckCircle2, Trash2, Folder as FolderIcon, RefreshCw, GripVertical, RotateCcw, Calendar, Inbox, Plus, Bold, Type, Star, X, MoreVertical, MoveRight, ArrowRight } from 'lucide-react';
+import { Spinner, Chip, Button, Switch, Select, SelectItem, Checkbox, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, DropdownSection } from '@heroui/react';
 import { format, isToday, isYesterday, isThisWeek, isThisMonth } from 'date-fns';
 import { useGlobalPersistentState } from '@/utils/storage';
 import { AnimatePresence, motion } from 'framer-motion';
+import { projectService } from '@/app/_services/projectService';
 import { CreateItemPopover } from '@/app/components/CreateItem';
 import { loadingService } from '@/app/_services/loadingService';
 import { EditableCell } from './EditableCell';
@@ -19,10 +20,23 @@ interface InboxScreenProps {
     globalStatus?: string;
     canLoad?: boolean;
     isActive?: boolean;
+    onMoveTask?: (taskId: string, projectId: string, folderId: string) => void;
 }
 
 // Visual clone of TaskRow for Inbox items
-const InboxTaskRow = ({ task, onUpdate, onDelete }: { task: any, onUpdate: (id: string, updates: any) => void, onDelete: (id: string) => void }) => {
+const InboxTaskRow = ({ 
+    task, 
+    onUpdate, 
+    onDelete, 
+    projectsStructure,
+    onMove
+}: { 
+    task: any, 
+    onUpdate: (id: string, updates: any) => void, 
+    onDelete: (id: string) => void,
+    projectsStructure: any[],
+    onMove?: (taskId: string, projectId: string, folderId: string) => void
+}) => {
     return (
         <motion.div
             layout
@@ -185,7 +199,55 @@ const InboxTaskRow = ({ task, onUpdate, onDelete }: { task: any, onUpdate: (id: 
                             }
                         }}
                     >
-                        <DropdownItem key="delete" className="text-danger" color="danger">
+                        <DropdownSection showDivider>
+                            <DropdownItem
+                                key="move-menu"
+                                isReadOnly
+                                className="p-0 opacity-100 data-[hover=true]:bg-transparent cursor-default"
+                                textValue="Move to Project"
+                            >
+                                <Dropdown placement="left-start">
+                                    <DropdownTrigger>
+                                        <div className="flex items-center justify-between w-full px-2 py-1.5 rounded-small hover:bg-default-100 cursor-pointer transition-colors">
+                                            <div className="flex items-center gap-2">
+                                                <MoveRight size={16} className="text-default-500" />
+                                                <span>Move to...</span>
+                                            </div>
+                                            <ArrowRight size={14} className="text-default-400" />
+                                        </div>
+                                    </DropdownTrigger>
+                                    <DropdownMenu 
+                                        aria-label="Select Project Folder"
+                                        className="max-h-[300px] overflow-y-auto"
+                                    >
+                                        {projectsStructure.map((project) => (
+                                            <DropdownSection 
+                                                key={project.id} 
+                                                title={project.title}
+                                                showDivider
+                                            >
+                                                {(project.folders || []).map((folder: any) => (
+                                                    <DropdownItem
+                                                        key={folder.id}
+                                                        startContent={<FolderIcon size={14} className="text-default-400" />}
+                                                        onPress={() => onMove?.(task.id, project.id, folder.id)}
+                                                    >
+                                                        {folder.title}
+                                                    </DropdownItem>
+                                                ))}
+                                                {(!project.folders || project.folders.length === 0) && (
+                                                    <DropdownItem key="no-folders" isReadOnly className="text-default-300 text-xs">
+                                                        No folders
+                                                    </DropdownItem>
+                                                )}
+                                            </DropdownSection>
+                                        ))}
+                                    </DropdownMenu>
+                                </Dropdown>
+                            </DropdownItem>
+                        </DropdownSection>
+
+                        <DropdownItem key="delete" className="text-danger" color="danger" startContent={<Trash2 size={16} />}>
                             Delete
                         </DropdownItem>
                     </DropdownMenu>
@@ -195,11 +257,19 @@ const InboxTaskRow = ({ task, onUpdate, onDelete }: { task: any, onUpdate: (id: 
     );
 }
 
-export const InboxScreen = ({ globalStatus = 'idle', canLoad = true, isActive = false }: InboxScreenProps) => {
+export const InboxScreen = ({ globalStatus = 'idle', canLoad = true, isActive = false, onMoveTask }: InboxScreenProps) => {
     const [tasks, setTasks] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
+    const [projectsStructure, setProjectsStructure] = useState<any[]>([]);
+
+    useEffect(() => {
+        // Load projects structure for Move menu
+        projectService.getProjectsWithFolders()
+            .then(data => setProjectsStructure(data || []))
+            .catch(err => logger.error('Failed to load projects structure', err));
+    }, []);
     
     const fetchTasks = async (showSpinner = true) => {
         if (!canLoad && showSpinner) return;
@@ -260,6 +330,24 @@ export const InboxScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
         } catch (err) {
             logger.error('Failed to delete task', err);
             fetchTasks(false);
+        }
+    };
+
+    const handleMove = async (taskId: string, projectId: string, folderId: string) => {
+        try {
+            // 1. Update task in DB
+            await taskService.updateTask(taskId, { folder_id: folderId });
+            
+            // 2. Remove from local list (optimistic)
+            setTasks(prev => prev.filter(t => t.id !== taskId));
+            
+            // 3. Trigger parent navigation
+            onMoveTask?.(taskId, projectId, folderId);
+            
+            logger.success('Task moved to project');
+        } catch (err) {
+            logger.error('Failed to move task', err);
+            fetchTasks(false); // Revert
         }
     };
 
@@ -333,6 +421,8 @@ export const InboxScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
                                     task={task} 
                                     onUpdate={handleUpdate}
                                     onDelete={handleDelete}
+                                    projectsStructure={projectsStructure}
+                                    onMove={handleMove}
                                 />
                             ))}
                         </AnimatePresence>

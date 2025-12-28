@@ -24,6 +24,29 @@ export const projectService = {
         return data as Project[];
     },
 
+    async getProjectsWithFolders() {
+        const { data, error } = await supabase
+            .from('projects')
+            .select(`
+                *,
+                folders (*)
+            `)
+            .order('sort_order', { ascending: true });
+
+        if (error) throw error;
+
+        // Sort folders in memory
+        if (data) {
+            data.forEach(p => {
+                if (p.folders && Array.isArray(p.folders)) {
+                    p.folders.sort((a: any, b: any) => a.sort_order - b.sort_order);
+                }
+            });
+        }
+
+        return data;
+    },
+
     async createProject(title: string, color: string, sort_order: number) {
         logger.info('Creating project', { title });
         const { data, error } = await supabase

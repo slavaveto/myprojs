@@ -309,6 +309,21 @@ function AppContent() {
        }
    };
 
+   const handleMoveTask = (taskId: string, targetProjectId: string, targetFolderId: string) => {
+       logger.info('Moving task, switching to:', { projectId: targetProjectId, folderId: targetFolderId });
+
+       // Save target folder to storage
+       globalStorage.setItem(`active_folder_${targetProjectId}`, targetFolderId);
+       
+       // Save task ID for highlighting
+       globalStorage.setItem(`highlight_task_${targetProjectId}`, taskId);
+
+       // Switch project
+       setActiveProjectId(targetProjectId);
+       setActiveSystemTab(null);
+       globalStorage.setItem('active_project_id', targetProjectId);
+   };
+
    // --- DnD Handlers ---
    const handleDragEnd = async (event: DragEndEvent) => {
        const { active, over } = event;
@@ -481,6 +496,7 @@ function AppContent() {
                     globalStatus={sidebarStatus} 
                     canLoad={canLoadBackground || activeSystemTab === 'inbox'} 
                     isActive={activeSystemTab === 'inbox'}
+                    onMoveTask={handleMoveTask}
                 />
             </div>
 
@@ -490,7 +506,12 @@ function AppContent() {
                   activeSystemTab === 'today' ? "z-30 opacity-100 pointer-events-auto" : "z-0 opacity-0 pointer-events-none"
                )}
             >
-                <TodayScreen globalStatus={sidebarStatus} canLoad={canLoadBackground || activeSystemTab === 'today'} isActive={activeSystemTab === 'today'} />
+                <TodayScreen 
+                    globalStatus={sidebarStatus} 
+                    canLoad={canLoadBackground || activeSystemTab === 'today'} 
+                    isActive={activeSystemTab === 'today'} 
+                    onMoveTask={handleMoveTask}
+                />
             </div>
 
             <div 
