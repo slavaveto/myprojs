@@ -16,6 +16,7 @@ import {
    FileText,
    EllipsisVertical,
    Star,
+   Book, // Add Book icon
 } from 'lucide-react';
 import { AppLoaderProvider, useAppLoader } from '@/app/AppLoader';
 import { ProjectScreen } from '@/app/tabs/ProjectScreen';
@@ -113,6 +114,21 @@ const SortableProjectItem = ({
                style={{ backgroundColor: project.color || '#3b82f6' }} // Default blue-500
             />
             <span className="truncate flex-grow">{project.title}</span>
+            
+            {/* Docs Chip */}
+            <div 
+                className={clsx(
+                    "flex items-center gap-1 bg-orange-100 hover:bg-orange-200 px-2 py-[6px] rounded-lg text-[10px] font-medium text-default-500 transition-all",
+                    isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                )}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    console.log('Open Docs for', project.title);
+                }}
+            >
+                {/* <Book size={12} /> */}
+                <span>Docs</span>
+            </div>
          </button>
 
          {children && (
