@@ -58,6 +58,7 @@ const DEFAULT_STATE: WindowState = {
 
 export function DebugPanel({ isLocal = false }: { isLocal?: boolean }) {
    const [isMounted, setIsMounted] = useState(false);
+   const [isDragging, setIsDragging] = useState(false);
 
    // Состояние окна (позиция, размер и видимость)
    const [windowState, setWindowState] = useState<WindowState>(DEFAULT_STATE);
@@ -145,6 +146,7 @@ export function DebugPanel({ isLocal = false }: { isLocal?: boolean }) {
       if (e.target instanceof Element && e.target.closest('button')) return;
 
       draggingRef.current = true;
+      setIsDragging(true);
       // Используем ref для актуальных координат, чтобы не зависеть от замыкания,
       // но координаты берем из windowState (который в рендере).
       // Проблема: handleMouseDown мемоизирован? Нет.
@@ -237,6 +239,7 @@ export function DebugPanel({ isLocal = false }: { isLocal?: boolean }) {
 
    const handleMouseUp = useCallback(() => {
       draggingRef.current = false;
+      setIsDragging(false);
       resizingRef.current = false;
       resizeDirectionRef.current = null;
       document.removeEventListener('mousemove', handleMouseMove);
@@ -308,6 +311,7 @@ export function DebugPanel({ isLocal = false }: { isLocal?: boolean }) {
                   onClose={onClose}
                   onToggleSettings={toggleSettings}
                   onHeaderMouseDown={handleMouseDown}
+                  isDragging={isDragging}
                />
 
                {/* Resizers (Position depends on container size) */}
@@ -354,6 +358,7 @@ interface DebugContentProps {
    onClose: () => void;
    onToggleSettings: () => void;
    onHeaderMouseDown: (e: React.MouseEvent) => void;
+   isDragging: boolean;
 }
 
 const DebugContent = React.memo(function DebugContent({
@@ -363,7 +368,8 @@ const DebugContent = React.memo(function DebugContent({
    settingsWidth,
    onClose,
    onToggleSettings,
-   onHeaderMouseDown
+   onHeaderMouseDown,
+   isDragging
 }: DebugContentProps) {
    const [logs, setLogs] = useState<LogItem[]>([]);
    const [showData, setShowData] = useState(false);
@@ -500,7 +506,7 @@ const DebugContent = React.memo(function DebugContent({
          </div>
 
          {/* Settings Panel */}
-         {!isMinimized && showSettings && <SettingsPanel width={settingsWidth} />}
+         {!isMinimized && showSettings && <SettingsPanel width={settingsWidth} isDragging={isDragging} />}
       </div>
    );
 });

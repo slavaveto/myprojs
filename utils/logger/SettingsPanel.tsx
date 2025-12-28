@@ -21,11 +21,12 @@ interface ConfigItem {
 
 interface SettingsPanelProps {
    width: number;
+   isDragging: boolean;
 }
 
 const SORT_MODE_KEY = 'logger-next-sort-mode';
 
-export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width }) => {
+export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging }) => {
    const [configs, setConfigs] = useState<ConfigItem[]>([]);
    const [search, setSearch] = useState('');
    const [sortMode, setSortMode] = useState<'enabled' | 'name'>(() => {
@@ -200,7 +201,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width }) => {
 
    const renderItem = (item: ConfigItem) => (
       <motion.div
-         layout
+         layout={!isDragging}
          initial={{ opacity: 0, y: 10 }}
          animate={{ opacity: 1, y: 0 }}
          exit={{ opacity: 0, scale: 0.95 }}
