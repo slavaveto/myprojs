@@ -19,7 +19,18 @@ export const useTaskData = (
     const loadTasks = async () => {
         try {
             const data = await taskService.getTasks(projectId);
-            setTasks(data);
+            
+            // Merge logic to preserve _tempId from previous state
+            setTasks(prevTasks => {
+                return data.map((newTask: any) => {
+                    const prevTask = prevTasks.find(p => p.id === newTask.id);
+                    if (prevTask && prevTask._tempId) {
+                        return { ...newTask, _tempId: prevTask._tempId };
+                    }
+                    return newTask;
+                });
+            });
+            
             return data;
         } catch (err) {
             logger.error('Failed to load tasks', err);

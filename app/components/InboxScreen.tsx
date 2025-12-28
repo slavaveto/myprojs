@@ -37,6 +37,8 @@ const InboxTaskRow = ({
     projectsStructure: any[],
     onMove?: (taskId: string, projectId: string, folderId: string) => void
 }) => {
+    const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
+
     return (
         <motion.div
             layout
@@ -44,6 +46,10 @@ const InboxTaskRow = ({
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
+            onContextMenu={(e) => {
+               e.preventDefault();
+               setMenuPos({ x: e.clientX, y: e.clientY });
+            }}
             className={clsx(
                 'group px-1 flex justify-between min-h-[30px] items-center rounded-lg border border-default-300 bg-content1 transition-colors outline-none overflow-hidden mb-[0px]',
                 'hover:bg-default-50'
@@ -259,6 +265,47 @@ const InboxTaskRow = ({
                     </DropdownMenu>
                 </Dropdown>
              </div>
+
+             <Dropdown
+                isOpen={!!menuPos}
+                onOpenChange={(open) => {
+                   if (!open) setMenuPos(null);
+                }}
+                placement="bottom-start"
+                triggerScaleOnOpen={false}
+             >
+                <DropdownTrigger>
+                   <div
+                      style={{
+                         position: 'fixed',
+                         left: menuPos?.x ?? 0,
+                         top: menuPos?.y ?? 0,
+                         width: 0,
+                         height: 0,
+                         pointerEvents: 'none',
+                         zIndex: 9999,
+                      }}
+                   />
+                </DropdownTrigger>
+                <DropdownMenu
+                   aria-label="Context Actions"
+                   onAction={(key) => {
+                      if (key === 'delete') {
+                         onDelete(task.id);
+                         setMenuPos(null);
+                      }
+                   }}
+                >
+                   <DropdownItem
+                      key="delete"
+                      className="text-danger"
+                      color="danger"
+                      startContent={<Trash2 size={16} />}
+                   >
+                      Delete
+                   </DropdownItem>
+                </DropdownMenu>
+             </Dropdown>
         </motion.div>
     );
 }
