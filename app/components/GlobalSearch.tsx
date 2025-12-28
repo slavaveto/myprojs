@@ -104,6 +104,7 @@ export const GlobalSearch = ({ onNavigate, className, currentProjectId, currentF
         const handleClickOutside = (event: MouseEvent) => {
             if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
                 setIsSearchOpen(false);
+                setSearchQuery(''); // Auto-clear on blur/click outside
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -183,7 +184,7 @@ export const GlobalSearch = ({ onNavigate, className, currentProjectId, currentF
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -10, scale: 0.98 }}
                         transition={{ duration: 0.15, ease: 'easeOut' }}
-                        className="absolute top-full left-0 right-0 mt-1 bg-content1 rounded-medium shadow-large border border-default-200 z-50 overflow-hidden max-h-[400px] overflow-y-auto w-[400px] -left-[80px]"
+                        className="absolute top-full left-1/2 -translate-x-1/2 mt-3 bg-content1 rounded-medium shadow-large border border-default-200 z-50 overflow-hidden max-h-[400px] overflow-y-auto w-[600px]"
                     >
                         {searchResults.map((item, index) => (
                             <motion.button
