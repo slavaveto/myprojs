@@ -3,7 +3,7 @@
 import React, { useEffect, useCallback, useState } from 'react';
 import { scanFlow, FlowGraph } from '@/app/actions/scanFlow';
 import { Button, Spinner, Card, CardBody } from '@heroui/react';
-import { ArrowDown, Code2, Layout } from 'lucide-react';
+import { ArrowDown, Code2, Layout, Zap, Play } from 'lucide-react';
 
 export default function FlowPage() {
   const [data, setData] = useState<FlowGraph | null>(null);
@@ -26,10 +26,20 @@ export default function FlowPage() {
   }, [loadGraph]);
 
   const openInEditor = (absolutePath: string, line: number) => {
-      // Use the absolute path provided by the server
-      // Format: cursor://file/ABSOLUTE_PATH:LINE
       const url = `cursor://file/${absolutePath}:${line}`;
       window.open(url, '_self');
+  };
+
+  const getRoleIcon = (role: string) => {
+      if (role.toLowerCase() === 'trigger') return <Zap size={14} />;
+      if (role.toLowerCase() === 'action') return <Play size={14} />;
+      return <Code2 size={14} />;
+  };
+
+  const getRoleColor = (role: string) => {
+      if (role.toLowerCase() === 'trigger') return 'warning';
+      if (role.toLowerCase() === 'action') return 'primary';
+      return 'default';
   };
 
   return (
@@ -53,56 +63,59 @@ export default function FlowPage() {
 
          {!loading && data && (
              <div className="flex flex-col relative">
-                 {/* Timeline Line */}
                  <div className="absolute left-6 top-4 bottom-4 w-0.5 bg-gray-200 z-0"></div>
 
                  {data.nodes.length === 0 && (
                      <div className="text-center py-10 text-gray-400">
-                         No @FlowStep markers found in code.
+                         No @flow_id markers found.
                      </div>
                  )}
 
                  {data.nodes.map((step, index) => {
                      const isLast = index === data.nodes.length - 1;
                      
+                     const locations = [...step.data.locations].sort((a, b) => {
+                         const roleA = a.role.toLowerCase();
+                         if (roleA === 'trigger') return -1;
+                         return 1;
+                     });
+
                      return (
                          <div key={step.id} className="relative z-10 mb-6 group">
                              <div className="flex gap-6">
                                  {/* Index Circle */}
                                  <div className="flex-shrink-0 w-12 flex justify-center pt-2">
-                                     <div className="w-8 h-8 rounded-full bg-blue-500 text-white font-bold flex items-center justify-center shadow-md border-4 border-gray-50 z-10">
-                                         {step.data.order < 999 ? step.data.order : index + 1}
+                                     <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center shadow-md border-4 border-gray-50 z-10">
+                                         {step.data.step_order < 999 ? step.data.step_order : index + 1}
                                      </div>
                                  </div>
 
                                  {/* Card */}
                                  <div className="flex-grow">
-                                     <Card shadow="sm" className="w-full hover:shadow-md transition-all border-l-4 border-blue-500">
+                                     <Card shadow="sm" className="w-full hover:shadow-md transition-all border-l-4 border-blue-600">
                                          <CardBody className="p-4">
-                                             <div className="flex justify-between items-start">
-                                                 <div>
-                                                     <h3 className="text-lg font-bold text-gray-900">{step.data.label}</h3>
-                                                     {step.data.subtitle && (
-                                                         <p className="text-gray-500 text-sm mt-1">{step.data.subtitle}</p>
-                                                     )}
-                                                 </div>
-                                                 
-                                                 <Button 
-                                                    isIconOnly 
-                                                    size="sm" 
-                                                    variant="light" 
-                                                    className="opacity-50 hover:opacity-100"
-                                                    onPress={() => openInEditor(step.data.absolutePath, step.data.lineNumber)}
-                                                    title={`Open ${step.data.fileName}:${step.data.lineNumber}`}
-                                                 >
-                                                     <Code2 size={18} />
-                                                 </Button>
+                                             <div className="mb-3">
+                                                 <h3 className="text-lg font-bold text-gray-900">{step.data.label}</h3>
+                                                 {step.data.description && (
+                                                     <p className="text-gray-500 text-sm mt-1">{step.data.description}</p>
+                                                 )}
                                              </div>
 
-                                             <div className="mt-3 pt-2 border-t border-gray-100 flex items-center gap-2 text-[10px] text-gray-400 font-mono">
-                                                 <span className="truncate max-w-[300px]">{step.data.fileName}</span>
-                                                 <span>:</span>
-                                                 <span className="text-blue-500">{step.data.lineNumber}</span>
+                                             <div className="flex flex-wrap gap-2">
+                                                 {locations.map((loc, idx) => (
+                                                     <Button
+                                                        key={idx}
+                                                        size="sm"
+                                                        variant="flat"
+                                                        color={getRoleColor(loc.role) as any}
+                                                        className="h-8 text-xs font-semibold px-3 min-w-0"
+                                                        startContent={getRoleIcon(loc.role)}
+                                                        onPress={() => openInEditor(loc.absolutePath, loc.lineNumber)}
+                                                        title={`${loc.fileName}:${loc.lineNumber}`}
+                                                     >
+                                                         {loc.role}: {loc.fileName.split('/').pop()}
+                                                     </Button>
+                                                 ))}
                                              </div>
                                          </CardBody>
                                      </Card>

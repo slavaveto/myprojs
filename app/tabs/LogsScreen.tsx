@@ -43,6 +43,11 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
     const [actionFilter, setActionFilter] = useGlobalPersistentState<string>('logs_action_filter', 'all');
     const [limitFilter, setLimitFilter] = useGlobalPersistentState<string>('logs_limit_filter', '50');
 
+    /**
+     * @ArchComponent LogsUI
+     * @Type UI
+     * @Desc Real-time logs viewer screen
+     */
     const fetchLogs = async (showSpinner = true) => {
         if (!canLoad && showSpinner) return;
 
@@ -73,6 +78,11 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
 
     useEffect(() => {
         if (canLoad && isActive) {
+            /**
+             * @ArchLink
+             * @From EventBus
+             * @Label Listens for update events
+             */
             logger.info('LogsScreen became active, fetching...');
             fetchLogs(!isLoaded);
         } else if (canLoad && !isLoaded) {

@@ -9,11 +9,12 @@ const logger = createLogger('ProjectService');
 export const projectService = {
     // --- Projects ---
     /**
-     * @FlowStep init-app
-     * @Id fetch_projects_db
-     * @Title Fetch Projects
-     * @Subtitle Query Supabase for all projects sorted by order
-     * @Order 0
+     * @flow_id init-app
+     * @step_id fetch_projects
+     * @role Action
+     * @title Fetch Projects
+     * @description Supabase Query implementation
+     * @step_order 10
      */
     async getProjects() {
         logger.info('Fetching projects...');

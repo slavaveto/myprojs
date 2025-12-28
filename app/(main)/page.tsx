@@ -201,6 +201,14 @@ function AppContent() {
 
       const init = async () => {
          try {
+            /**
+             * @flow_id init-app
+             * @step_id fetch_projects
+             * @role Trigger
+             * @title Init Projects Load
+             * @description useEffect on mount
+             * @step_order 10
+             */
             const projectsData = await projectService.getProjects();
             setProjects(projectsData);
 

@@ -2,6 +2,11 @@
 import { globalStorage } from '@/utils/storage';
 import { useMemo } from 'react';
 
+/**
+ * @ArchComponent LoggerCore
+ * @Type Logic
+ * @Desc Центральное ядро логирования. Управляет уровнями и цветами.
+ */
 // --- Types ---
 
 export type LogLevel = 'info' | 'start' | 'end' | 'success' | 'error' | 'warning';
@@ -52,6 +57,10 @@ class Logger {
 
    private updateConfig() {
       try {
+         /**
+          * @ArchLink To: LocalStorage
+          * @Label Reads Config
+          */
          const configStr = globalStorage.getItem(LOGGER_NEXT_CONFIG_KEY);
          const config = configStr ? JSON.parse(configStr) : {};
          
@@ -98,6 +107,10 @@ class Logger {
       };
 
       if (typeof window !== 'undefined') {
+         /**
+          * @ArchLink To: EventBus
+          * @Label Dispatches Log Event
+          */
          window.dispatchEvent(new CustomEvent(LOGGER_NEXT_EVENT, { detail: logItem }));
       }
    }
