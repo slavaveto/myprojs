@@ -4,35 +4,35 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { createLogger } from '@/utils/logger/Logger';
 import { taskService } from '@/app/_services/taskService';
 import { clsx } from 'clsx';
-import { CheckCircle2, Trash2, Folder as FolderIcon, RefreshCw, GripVertical, RotateCcw, Calendar, Inbox, Plus, MoreVertical, MoveRight, ArrowRight } from 'lucide-react';
+import { CheckCircle2, Trash2, Folder as FolderIcon, RefreshCw, GripVertical, RotateCcw, Calendar, MoreVertical, MoveRight, ArrowRight, Star } from 'lucide-react';
 import { Spinner, Chip, Button, Switch, Select, SelectItem, Checkbox, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, DropdownSection } from '@heroui/react';
 import { format, isToday, isYesterday, isThisWeek, isThisMonth } from 'date-fns';
 import { useGlobalPersistentState } from '@/utils/storage';
 import { AnimatePresence, motion } from 'framer-motion';
 import { projectService } from '@/app/_services/projectService';
-import { CreateItemPopover } from '@/app/components/CreateItem';
 import { loadingService } from '@/app/_services/loadingService';
-import { EditableCell } from './EditableCell';
-import { TaskContextMenu, TaskMenuItems } from './TaskContextMenu';
-import { TaskStyleControl } from './TaskStyleControl';
-import { TaskTodayControl } from './TaskTodayControl';
+import { EditableCell } from '../components/EditableCell';
+import { TaskContextMenu, TaskMenuItems } from '../components/TaskContextMenu';
+import { TaskStyleControl } from '../components/TaskStyleControl';
+import { TaskTodayControl } from '../components/TaskTodayControl';
 import { useAsyncAction } from '@/utils/supabase/useAsyncAction';
 import { StatusBadge } from '@/utils/supabase/StatusBadge';
 
-const logger = createLogger('InboxScreen');
+const logger = createLogger('TodayScreen');
 
-interface InboxScreenProps {
+interface TodayScreenProps {
     globalStatus?: string;
     canLoad?: boolean;
     isActive?: boolean;
+    onRestoreTask?: (task: any) => void;
     onMoveTask?: (taskId: string, projectId: string, folderId: string) => void;
 }
 
-// Visual clone of TaskRow for Inbox items
-const InboxTaskRow = ({ 
+// Visual clone of TaskRow for Today items
+const TodayTaskRow = ({ 
     task, 
     onUpdate, 
-    onDelete, 
+    onDelete,
     projectsStructure,
     onMove
 }: { 
@@ -93,6 +93,24 @@ const InboxTaskRow = ({
                             task.title_text_style === 'red-bold' && 'text-danger font-medium'
                         )}
                     />
+                    
+                    {/* Metadata line (hidden per user request) */}
+                    <div className="hidden flex items-center gap-2 text-xs text-default-400 mt-0.5">
+                        {task.folders?.projects && (
+                            <div className="flex items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
+                                <div 
+                                    className="w-1.5 h-1.5 rounded-full" 
+                                    style={{ backgroundColor: task.folders.projects.color || '#3b82f6' }}
+                                />
+                                <span className="truncate max-w-[100px]">{task.folders.projects.title}</span>
+                            </div>
+                        )}
+                        <span className="opacity-50">/</span>
+                        <div className="flex items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
+                            <FolderIcon size={10} />
+                            <span className="truncate max-w-[100px]">{task.folders?.title || "Unknown Folder"}</span>
+                        </div>
+                    </div>
                 </div>
              </div>
 
@@ -102,14 +120,13 @@ const InboxTaskRow = ({
                  {/* Style Button */}
                  <TaskStyleControl task={task} onUpdate={onUpdate} />
 
-                 {/* Today Button */}
+                 {/* Remove from Today button */}
                  <TaskTodayControl task={task} onUpdate={onUpdate} />
 
-                {/* More Menu */}
-                <Dropdown placement="bottom-end">
+                 <Dropdown placement="bottom-end">
                     <DropdownTrigger>
                         <button
-                            className="opacity-100 p-[0px] text-default-400 cursor-pointer hover:text-default-600 rounded transition-all outline-none"
+                            className="opacity-100 p-[0px] text-default-default-400 cursor-pointer hover:text-default-600 rounded transition-all outline-none"
                             aria-label="Task settings"
                         >
                             <MoreVertical size={16} />
@@ -125,8 +142,8 @@ const InboxTaskRow = ({
                             items: {
                                 delete: true,
                                 move: true,
-                                today: true,
-                                styles: true
+                                styles: true,
+                                today: true
                             }
                         })}
                     </DropdownMenu>
@@ -137,10 +154,10 @@ const InboxTaskRow = ({
     );
 }
 
-export const InboxScreen = ({ globalStatus = 'idle', canLoad = true, isActive = false, onMoveTask }: InboxScreenProps) => {
+export const TodayScreen = ({ globalStatus = 'idle', canLoad = true, isActive = false, onMoveTask }: TodayScreenProps) => {
     const [tasks, setTasks] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [isLoading, setIsLoading] = useState(true); // Initial load (full screen)
+    const [isRefreshing, setIsRefreshing] = useState(false); // Refresh (button spin)
     const [isLoaded, setIsLoaded] = useState(false);
     const [projectsStructure, setProjectsStructure] = useState<any[]>([]);
 
@@ -160,27 +177,58 @@ export const InboxScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
             .catch(err => logger.error('Failed to load projects structure', err));
     }, []);
     
+    // Persistent filters (if needed in future, currently none specific to Today like timeFilter)
+    // const [showCompleted, setShowCompleted] = useGlobalPersistentState<boolean>('today_show_completed', true);
+
     const fetchTasks = async (showSpinner = true) => {
+        // If we shouldn't load, just return. 
         if (!canLoad && showSpinner) return;
 
         if (showSpinner) {
             setIsLoading(true);
-            loadingService.logSystemTabStart('Inbox');
+            loadingService.logSystemTabStart('Today');
         } else {
             setIsRefreshing(true);
-            logger.info('Refreshing inbox tasks...');
+            logger.info('Refreshing today tasks...');
         }
 
         try {
-            const data = await taskService.getInboxTasks();
+            // Fetch tasks where is_today = true
+            let data = await taskService.getTodayTasks();
             
+            // Artificial delay for better UX (optional, matching DoneScreen)
             await new Promise(resolve => setTimeout(resolve, 500));
             
+            // Client-side sorting based on Priority (Style) then Alphabetical
+            if (data) {
+                data.sort((a, b) => {
+                    // 1. Priority Weight
+                    const getWeight = (style: string | null) => {
+                        if (style === 'red-bold') return 3;
+                        if (style === 'red') return 2;
+                        if (style === 'bold') return 1;
+                        return 0;
+                    };
+
+                    const weightA = getWeight(a.title_text_style);
+                    const weightB = getWeight(b.title_text_style);
+
+                    if (weightA !== weightB) {
+                        return weightB - weightA; // Higher weight first
+                    }
+
+                    // 2. Alphabetical (content)
+                    const textA = a.content || '';
+                    const textB = b.content || '';
+                    return textA.localeCompare(textB);
+                });
+            }
+
             setTasks(data || []);
-            loadingService.logSystemTabFinish('Inbox', data?.length || 0);
+            loadingService.logSystemTabFinish('Today', data?.length || 0);
             setIsLoaded(true);
         } catch (err) {
-            logger.error('Failed to load inbox tasks', err);
+            logger.error('Failed to load today tasks', err);
         } finally {
             setIsLoading(false);
             setIsRefreshing(false);
@@ -188,20 +236,50 @@ export const InboxScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
     };
 
     useEffect(() => {
+        // Fetch if allowed to load AND (it's active OR first load)
         if (canLoad && isActive) {
-            logger.info('InboxScreen became active, fetching...');
+            logger.info('TodayScreen became active, fetching...');
+            // Don't show full spinner if already loaded, just refresh icon spin
             fetchTasks(!isLoaded);
         } else if (canLoad && !isLoaded) {
+            // Initial background load
             fetchTasks(true);
         }
     }, [canLoad, isActive]); 
 
     const handleUpdate = async (id: string, updates: any) => {
-        setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+        // Optimistic update
+        setTasks(prev => {
+             const newTasks = prev.map(t => t.id === id ? { ...t, ...updates } : t);
+             
+             // If removing from today, filter out
+             if (updates.is_today === false) {
+                 return newTasks.filter(t => t.id !== id);
+             }
 
-        if (updates.is_completed === true) {
-             setTasks(prev => prev.filter(t => t.id !== id));
-        }
+             // Re-sort if style or content changed
+             if ('title_text_style' in updates || 'content' in updates) {
+                 return newTasks.sort((a, b) => {
+                    const getWeight = (style: string | null) => {
+                        if (style === 'red-bold') return 3;
+                        if (style === 'red') return 2;
+                        if (style === 'bold') return 1;
+                        return 0;
+                    };
+
+                    const weightA = getWeight(a.title_text_style);
+                    const weightB = getWeight(b.title_text_style);
+
+                    if (weightA !== weightB) return weightB - weightA;
+                    
+                    const textA = a.content || '';
+                    const textB = b.content || '';
+                    return textA.localeCompare(textB);
+                 });
+             }
+             
+             return newTasks;
+        });
 
         try {
             await executeSave(async () => {
@@ -209,20 +287,7 @@ export const InboxScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
             });
         } catch (err) {
             logger.error('Failed to update task', err);
-            fetchTasks(false);
-        }
-    };
-
-    const handleDelete = async (id: string) => {
-        setTasks(prev => prev.filter(t => t.id !== id));
-
-        try {
-            await executeSave(async () => {
-                await taskService.deleteTask(id);
-            });
-        } catch (err) {
-            logger.error('Failed to delete task', err);
-            fetchTasks(false);
+            fetchTasks(false); // Revert on error
         }
     };
 
@@ -233,7 +298,9 @@ export const InboxScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
                 await taskService.moveTaskToFolder(taskId, folderId);
             });
             
-            // 2. Remove from local list (optimistic)
+            // 2. Remove from local list (optimistic) - or keep it if we want to show it?
+            // User said "switch to where we moved". So we are leaving this screen.
+            // But let's remove it from local state anyway to be clean.
             setTasks(prev => prev.filter(t => t.id !== taskId));
             
             // 3. Trigger parent navigation
@@ -246,29 +313,24 @@ export const InboxScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
         }
     };
 
-    const handleCreateTask = async (title: string) => {
+    const handleDelete = async (id: string) => {
+        // Optimistic update
+        setTasks(prev => prev.filter(t => t.id !== id));
+
         try {
-             let newTask: any;
-             await executeSave(async () => {
-                 // Create task with no folder (null)
-                 newTask = await taskService.createTask(null, title, 0); // 0 = sort order (top)
-             });
-             
-             if (newTask) {
-                 // Optimistic add to top (or replace temp if we had one, but here we just append)
-                 setTasks(prev => [newTask, ...prev]);
-             }
-             
-             logger.success('Inbox task created');
+            await executeSave(async () => {
+                await taskService.deleteTask(id); // Soft delete
+            });
         } catch (err) {
-             logger.error('Failed to create inbox task', err);
+            logger.error('Failed to delete task', err);
+            fetchTasks(false);
         }
     };
 
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-full">
-                <Spinner label="Loading inbox..." />
+                <Spinner label="Loading today's tasks..." />
             </div>
         );
     }
@@ -276,30 +338,19 @@ export const InboxScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
     return (
         <div className="h-full flex flex-col p-6 max-w-5xl mx-auto w-full">
             <div className="flex justify-between items-center mb-4 min-h-[40px]">
-                
+
                 <h1 className="tab-title">
-                    <Inbox className="text-primary" />
-                    Inbox
+                    <Star className="text-warning" fill="currentColor" />
+                    Today
                 </h1>
-                
+
                 <div className="flex items-center gap-4">
                     <StatusBadge 
                         status={saveStatus}
                         errorMessage={saveError?.message}
                     />
 
-                    <CreateItemPopover 
-                        title="New Inbox Task" 
-                        inputPlaceholder="Task content"
-                        onCreate={handleCreateTask}
-                        placement="bottom"
-                    >
-                        <Button isIconOnly size="sm" variant="flat" color="primary">
-                            <Plus size={20} />
-                        </Button>
-                    </CreateItemPopover>
-
-                    <Button 
+                    <Button
                         isIconOnly
                         size="sm" 
                         variant="flat" 
@@ -315,13 +366,13 @@ export const InboxScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
             <div className="flex-grow overflow-y-auto pr-0 pb-10">
                 {tasks.length === 0 ? (
                     <div className="text-center py-20 text-default-400">
-                        No tasks in Inbox.
+                        No tasks for today.
                     </div>
                 ) : (
                     <div className="flex flex-col gap-[6px]">
                         <AnimatePresence initial={false} mode="popLayout">
                             {tasks.map((task) => (
-                                <InboxTaskRow 
+                                <TodayTaskRow 
                                     key={task.id} 
                                     task={task} 
                                     onUpdate={handleUpdate}

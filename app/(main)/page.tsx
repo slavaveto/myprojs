@@ -10,10 +10,10 @@ import { Plus, LayoutGrid, GripVertical, Inbox, Calendar, CheckCircle2, FileText
 import { AppLoaderProvider, useAppLoader } from '@/app/AppLoader';
 import { ProjectScreen } from '@/app/components/ProjectScreen';
 import { CreateItemPopover } from '@/app/components/CreateItem';
-import { LogsScreen } from '@/app/components/LogsScreen';
+import { LogsScreen } from '@/app/tabs/LogsScreen';
 import { DoneScreen } from '@/app/components/DoneScreen';
-import { TodayScreen } from '@/app/components/TodayScreen';
-import { InboxScreen } from '@/app/components/InboxScreen';
+import { TodayScreen } from '@/app/tabs/TodayScreen';
+import { InboxScreen } from '@/app/tabs/InboxScreen';
 import { SystemScreen } from '@/app/components/SystemScreen';
 import { globalStorage } from '@/utils/storage';
 import { useAsyncAction } from '@/utils/supabase/useAsyncAction';
