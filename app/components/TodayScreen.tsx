@@ -249,8 +249,8 @@ const TodayTaskRow = ({
                                                             key={folder.id}
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
+                                                                document.body.click();
                                                                 onMove?.(task.id, project.id, folder.id);
-                                                                document.body.click(); 
                                                             }}
                                                             className="flex items-center gap-2 px-2 py-1.5 rounded-small hover:bg-default-100 cursor-pointer transition-colors w-full text-left outline-none"
                                                         >
