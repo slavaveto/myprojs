@@ -206,59 +206,65 @@ const TodayTaskRow = ({
                     </DropdownTrigger>
                     <DropdownMenu
                         aria-label="Task Actions"
+                        className="overflow-visible"
                         onAction={(key) => {
                             if (key === 'delete') {
                                 onDelete(task.id);
                             }
                         }}
                     >
-                        <DropdownSection showDivider>
-                            <DropdownItem
-                                key="move-menu"
-                                isReadOnly
-                                className="p-0 opacity-100 data-[hover=true]:bg-transparent cursor-default"
-                                textValue="Move to Project"
-                            >
-                                <Dropdown placement="left-start">
-                                    <DropdownTrigger>
-                                        <div className="flex items-center justify-between w-full px-2 py-1.5 rounded-small hover:bg-default-100 cursor-pointer transition-colors">
-                                            <div className="flex items-center gap-2">
-                                                <MoveRight size={16} className="text-default-500" />
-                                                <span>Move to...</span>
-                                            </div>
-                                            <ArrowRight size={14} className="text-default-400" />
-                                        </div>
-                                    </DropdownTrigger>
-                                    <DropdownMenu 
-                                        aria-label="Select Project Folder"
-                                        className="max-h-[300px] overflow-y-auto"
-                                    >
-                                        {projectsStructure.map((project) => (
-                                            <DropdownSection 
-                                                key={project.id} 
-                                                title={project.title}
-                                                showDivider
-                                            >
-                                                {(project.folders || []).map((folder: any) => (
-                                                    <DropdownItem
-                                                        key={folder.id}
-                                                        startContent={<FolderIcon size={14} className="text-default-400" />}
-                                                        onPress={() => onMove?.(task.id, project.id, folder.id)}
-                                                    >
-                                                        {folder.title}
-                                                    </DropdownItem>
-                                                ))}
-                                                {(!project.folders || project.folders.length === 0) && (
-                                                    <DropdownItem key="no-folders" isReadOnly className="text-default-300 text-xs">
-                                                        No folders
-                                                    </DropdownItem>
+                        <DropdownItem
+                            key="move-custom"
+                            isReadOnly
+                            className="p-0 opacity-100 data-[hover=true]:bg-transparent cursor-default overflow-visible"
+                            textValue="Move to Project"
+                        >
+                            <div className="relative group/move w-full">
+                                <div className="flex items-center justify-between px-2 py-1.5 rounded-small hover:bg-default-100 cursor-default transition-colors w-full">
+                                    <div className="flex items-center gap-2">
+                                        <MoveRight size={16} className="text-default-500" />
+                                        <span>Move to...</span>
+                                    </div>
+                                    <ArrowRight size={14} className="text-default-400" />
+                                </div>
+
+                                <div className="absolute left-[100%] top-[-4px] ml-1 w-[200px] hidden group-hover/move:flex flex-col bg-content1 rounded-medium shadow-small border-small border-default-200 p-1 z-50 overflow-y-auto max-h-[300px]">
+                                    {projectsStructure.map((project) => (
+                                        <div key={project.id} className="relative group/project w-full">
+                                            <div className="flex items-center justify-between px-2 py-1.5 rounded-small hover:bg-default-100 cursor-default transition-colors w-full">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: project.color || '#3b82f6' }} />
+                                                    <span className="text-small truncate max-w-[140px]">{project.title}</span>
+                                                </div>
+                                                {project.folders && project.folders.length > 0 && (
+                                                    <ArrowRight size={12} className="text-default-400" />
                                                 )}
-                                            </DropdownSection>
-                                        ))}
-                                    </DropdownMenu>
-                                </Dropdown>
-                            </DropdownItem>
-                        </DropdownSection>
+                                            </div>
+
+                                            {/* FOLDER LIST (Level 2) */}
+                                            {project.folders && project.folders.length > 0 && (
+                                                <div className="absolute left-[100%] top-[-4px] ml-1 w-[180px] hidden group-hover/project:flex flex-col bg-content1 rounded-medium shadow-small border-small border-default-200 p-1 z-50">
+                                                    {project.folders.map((folder: any) => (
+                                                        <button
+                                                            key={folder.id}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                onMove?.(task.id, project.id, folder.id);
+                                                                document.body.click(); 
+                                                            }}
+                                                            className="flex items-center gap-2 px-2 py-1.5 rounded-small hover:bg-default-100 cursor-pointer transition-colors w-full text-left outline-none"
+                                                        >
+                                                            <FolderIcon size={14} className="text-default-400" />
+                                                            <span className="text-small truncate">{folder.title}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </DropdownItem>
 
                         <DropdownItem key="delete" className="text-danger" color="danger" startContent={<Trash2 size={16} />}>
                             Delete
