@@ -201,7 +201,7 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
 
          {viewMode === 'docs' ? (
              <div className="flex-grow w-full h-full overflow-hidden bg-white rounded-xl border border-default-200 mt-2">
-                 <FlowPage projectLocalPath={project.local_path} />
+                 <FlowPage projectId={project.id} projectLocalPath={project.local_path} />
              </div>
          ) : (
              <DndContext
