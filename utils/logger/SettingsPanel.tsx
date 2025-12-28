@@ -5,7 +5,7 @@ import { globalStorage } from '@/utils/storage';
 import { LOGGER_NEXT_CONFIG_KEY, getAllLoggers } from './Logger';
 // Import updated from LoggerNext
 import { Button, Input, Switch, ScrollShadow, Popover, PopoverTrigger, PopoverContent } from '@heroui/react';
-import { Search, RotateCw, Trash2, SlidersHorizontal, ArrowUpDown, ArrowDownAz, ListChecks, Pin, PinOff } from 'lucide-react';
+import { Search, RotateCw, Trash2, SlidersHorizontal, ArrowUpDown, ArrowDownAz, ListChecks, Pin, PinOff, Eye, EyeOff } from 'lucide-react';
 import { AVAILABLE_COLORS, COLOR_MAP } from '@/utils/logger/loggerColors';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -16,6 +16,7 @@ interface ConfigItem {
    enabled: boolean;
    color: string;
    pinned: boolean; 
+   hidden: boolean; // Added hidden
    createdAt?: number;
    lastActive?: number;
 }
@@ -30,6 +31,7 @@ const SORT_MODE_KEY = 'logger-next-sort-mode';
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging }) => {
    const [configs, setConfigs] = useState<ConfigItem[]>([]);
    const [search, setSearch] = useState('');
+   const [showHidden, setShowHidden] = useState(false);
    const [sortMode, setSortMode] = useState<'enabled' | 'name'>(() => {
       if (typeof window !== 'undefined') {
          const saved = globalStorage.getItem(SORT_MODE_KEY);
@@ -58,6 +60,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
             let enabled = false;
             let color = 'blue';
             let pinned = false;
+            let hidden = false;
             let createdAt: number | undefined;
 
             // Приоритет: конфиг > дефолт
@@ -66,6 +69,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
                   enabled = !!savedVal.enabled;
                   color = savedVal.color || 'blue';
                   pinned = !!savedVal.pinned;
+                  hidden = !!savedVal.hidden;
                   createdAt = savedVal.createdAt;
                } else {
                   enabled = !!savedVal;
@@ -87,6 +91,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
                enabled,
                color,
                pinned,
+               hidden,
                createdAt
             };
          });
@@ -118,46 +123,21 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
       };
    }, []);
 
-   const toggleLogger = (key: string, currentState: boolean, currentColor: string, currentPinned: boolean) => {
+   const updateConfigItem = (key: string, updates: Record<string, any>) => {
       try {
          const str = globalStorage.getItem(LOGGER_NEXT_CONFIG_KEY);
          const raw = str ? JSON.parse(str) : {};
          
-         // Сохраняем как объект, чтобы сохранить цвет и пин
-         // Сбрасываем createdAt при взаимодействии
-         raw[key] = { enabled: !currentState, color: currentColor, pinned: currentPinned, createdAt: undefined };
-         
-         globalStorage.setItem(LOGGER_NEXT_CONFIG_KEY, JSON.stringify(raw));
-         
-         // Уведомляем логгеры и UI
-         window.dispatchEvent(new Event('logger-next-config-change'));
-         loadConfigs();
-      } catch (e) {
-         console.error(e);
-      }
-   };
+         let current = raw[key];
+         // Handle legacy boolean format or missing
+         if (typeof current === 'boolean') {
+             current = { enabled: current, color: 'blue', pinned: false, hidden: false };
+         } else if (!current) {
+             current = { enabled: false, color: 'blue', pinned: false, hidden: false };
+         }
 
-   const changeColor = (key: string, newColor: string, currentEnabled: boolean, currentPinned: boolean) => {
-      try {
-         const str = globalStorage.getItem(LOGGER_NEXT_CONFIG_KEY);
-         const raw = str ? JSON.parse(str) : {};
-         
-         raw[key] = { enabled: currentEnabled, color: newColor, pinned: currentPinned, createdAt: undefined };
-         
-         globalStorage.setItem(LOGGER_NEXT_CONFIG_KEY, JSON.stringify(raw));
-         window.dispatchEvent(new Event('logger-next-config-change'));
-         loadConfigs();
-      } catch (e) {
-         console.error(e);
-      }
-   };
-
-   const togglePin = (key: string, currentPinned: boolean, currentEnabled: boolean, currentColor: string) => {
-      try {
-         const str = globalStorage.getItem(LOGGER_NEXT_CONFIG_KEY);
-         const raw = str ? JSON.parse(str) : {};
-         
-         raw[key] = { enabled: currentEnabled, color: currentColor, pinned: !currentPinned, createdAt: undefined };
+         // Reset createdAt on interaction
+         raw[key] = { ...current, ...updates, createdAt: undefined };
          
          globalStorage.setItem(LOGGER_NEXT_CONFIG_KEY, JSON.stringify(raw));
          window.dispatchEvent(new Event('logger-next-config-change'));
@@ -170,6 +150,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
    // Сортировка и фильтрация
    const { pinned, others } = useMemo(() => {
       let result = configs;
+
+      if (!showHidden) {
+         result = result.filter(c => !c.hidden);
+      }
 
       if (search) {
          const q = search.toLowerCase();
@@ -240,50 +224,61 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
             </span>
          </div>
 
-         <div className="flex items-center gap-2">
-            <Button
-               isIconOnly
-               size="sm"
-               variant="light"
-               className={`min-w-6 w-6 h-6 ${item.pinned ? 'text-warning' : 'text-default-300'}`}
-               onPress={() => togglePin(item.key, item.pinned, item.enabled, item.color)}
-               title={item.pinned ? "Unpin" : "Pin to top"}
-            >
-               {item.pinned ? <Pin size={14} fill="currentColor" /> : <Pin size={14} />}
-            </Button>
+            <div className="flex items-center gap-1">
+               <Button
+                  isIconOnly
+                  size="sm"
+                  variant="light"
+                  className={`min-w-6 w-6 h-6 ${item.hidden ? 'text-default-500' : 'text-default-300 opacity-0 group-hover:opacity-100 transition-opacity'}`}
+                  onPress={() => updateConfigItem(item.key, { hidden: !item.hidden })}
+                  title={item.hidden ? "Unhide" : "Hide"}
+               >
+                  {item.hidden ? <EyeOff size={14} /> : <Eye size={14} />}
+               </Button>
 
-            <Popover placement="left">
-               <PopoverTrigger>
-                  <motion.div
-                     whileHover={{ scale: 1.2 }}
-                     whileTap={{ scale: 0.9 }}
-                     className="w-3 h-3 rounded-full cursor-pointer border border-default-200"
-                     style={{ backgroundColor: item.color === 'black' ? '#52525b' : (COLOR_MAP[item.color] || COLOR_MAP['blue']) }}
-                     title="Change Color"
-                  />
-               </PopoverTrigger>
-               <PopoverContent className="p-2">
-                  <div className="grid grid-cols-5 gap-1 w-[120px]">
-                     {AVAILABLE_COLORS.map((c) => (
-                        <button
-                           key={c.key}
-                           className={`w-5 h-5 rounded-full border border-transparent hover:scale-110 transition-transform ${item.color === c.key ? 'ring-2 ring-offset-1 ring-default-400' : ''}`}
-                           style={{ backgroundColor: c.key === 'black' ? '#52525b' : c.hex }}
-                           onClick={() => changeColor(item.key, c.key, item.enabled, item.pinned)}
-                           title={c.label}
-                        />
-                     ))}
-                  </div>
-               </PopoverContent>
-            </Popover>
+               <Button
+                  isIconOnly
+                  size="sm"
+                  variant="light"
+                  className={`min-w-6 w-6 h-6 ${item.pinned ? 'text-warning' : 'text-default-300'}`}
+                  onPress={() => updateConfigItem(item.key, { pinned: !item.pinned })}
+                  title={item.pinned ? "Unpin" : "Pin to top"}
+               >
+                  {item.pinned ? <Pin size={14} fill="currentColor" /> : <Pin size={14} />}
+               </Button>
 
-            <Switch
-               size="sm"
-               className="scale-75"
-               isSelected={item.enabled}
-               onValueChange={() => toggleLogger(item.key, item.enabled, item.color, item.pinned)}
-            />
-         </div>
+               <Popover placement="left">
+                  <PopoverTrigger>
+                     <motion.div
+                        whileHover={{ scale: 1.2 }}
+                        whileTap={{ scale: 0.9 }}
+                        className="w-3 h-3 rounded-full cursor-pointer border border-default-200 mx-1"
+                        style={{ backgroundColor: item.color === 'black' ? '#52525b' : (COLOR_MAP[item.color] || COLOR_MAP['blue']) }}
+                        title="Change Color"
+                     />
+                  </PopoverTrigger>
+                  <PopoverContent className="p-2">
+                     <div className="grid grid-cols-5 gap-1 w-[120px]">
+                        {AVAILABLE_COLORS.map((c) => (
+                           <button
+                              key={c.key}
+                              className={`w-5 h-5 rounded-full border border-transparent hover:scale-110 transition-transform ${item.color === c.key ? 'ring-2 ring-offset-1 ring-default-400' : ''}`}
+                              style={{ backgroundColor: c.key === 'black' ? '#52525b' : c.hex }}
+                              onClick={() => updateConfigItem(item.key, { color: c.key })}
+                              title={c.label}
+                           />
+                        ))}
+                     </div>
+                  </PopoverContent>
+               </Popover>
+
+               <Switch
+                  size="sm"
+                  className="scale-75"
+                  isSelected={item.enabled}
+                  onValueChange={() => updateConfigItem(item.key, { enabled: !item.enabled })}
+               />
+            </div>
       </motion.div>
       );
    };
@@ -315,6 +310,15 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
             
             {/* Sort Buttons */}
             <div className="flex bg-default-100 rounded-md p-0.5 gap-0.5 shrink-0 border border-default-200/50">
+               <Button 
+                  isIconOnly size="sm" variant={showHidden ? 'solid' : 'light'}
+                  onPress={() => setShowHidden(!showHidden)}
+                  title={showHidden ? "Hide Hidden Items" : "Show Hidden Items"}
+                  className={`w-6 h-6 min-w-6 ${showHidden ? 'bg-background shadow-sm' : 'text-default-400'}`}
+               >
+                  {showHidden ? <Eye size={14} /> : <EyeOff size={14} />}
+               </Button>
+               <div className="w-[1px] bg-default-200 my-0.5 mx-0.5" />
                <Button 
                   isIconOnly size="sm" variant={sortMode === 'name' ? 'solid' : 'light'} 
                   onPress={() => updateSortMode('name')}
