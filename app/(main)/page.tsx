@@ -167,7 +167,7 @@ function AppContent() {
    // 1. Загрузка списка проектов
    useEffect(() => {
       // Test New Logger for Highlight Feature
-      const testLogger = createLogger('NewFeatureComponent2');
+      const testLogger = createLogger('NewFeatureComponent3');
       testLogger.info('This is a new component log!');
 
       const init = async () => {

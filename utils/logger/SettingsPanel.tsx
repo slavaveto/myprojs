@@ -5,7 +5,7 @@ import { globalStorage } from '@/utils/storage';
 import { LOGGER_NEXT_CONFIG_KEY, getAllLoggers } from './Logger';
 // Import updated from LoggerNext
 import { Button, Input, Switch, ScrollShadow, Popover, PopoverTrigger, PopoverContent } from '@heroui/react';
-import { Search, RotateCw, Trash2, SlidersHorizontal, ArrowUpDown, ArrowDownAz, ListChecks, Pin, PinOff, Eye, EyeOff } from 'lucide-react';
+import { Search, RotateCw, Trash2, SlidersHorizontal, ArrowUpDown, ArrowDownAz, ListChecks, Pin, PinOff, Eye, EyeOff, Clock } from 'lucide-react';
 import { AVAILABLE_COLORS, COLOR_MAP } from '@/utils/logger/loggerColors';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -16,8 +16,9 @@ interface ConfigItem {
    enabled: boolean;
    color: string;
    pinned: boolean; 
-   hidden: boolean; // Added hidden
+   hidden: boolean;
    createdAt?: number;
+   seen?: boolean;
    lastActive?: number;
 }
 
@@ -32,15 +33,15 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
    const [configs, setConfigs] = useState<ConfigItem[]>([]);
    const [search, setSearch] = useState('');
    const [showHidden, setShowHidden] = useState(false);
-   const [sortMode, setSortMode] = useState<'enabled' | 'name'>(() => {
+   const [sortMode, setSortMode] = useState<'enabled' | 'name' | 'created'>(() => {
       if (typeof window !== 'undefined') {
          const saved = globalStorage.getItem(SORT_MODE_KEY);
-         return (saved === 'name' || saved === 'enabled') ? saved : 'enabled';
+         return (saved === 'name' || saved === 'enabled' || saved === 'created') ? (saved as any) : 'enabled';
       }
       return 'enabled';
    });
 
-   const updateSortMode = (mode: 'enabled' | 'name') => {
+   const updateSortMode = (mode: 'enabled' | 'name' | 'created') => {
       setSortMode(mode);
       globalStorage.setItem(SORT_MODE_KEY, mode);
    };
@@ -61,6 +62,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
             let color = 'blue';
             let pinned = false;
             let hidden = false;
+            let seen = false;
             let createdAt: number | undefined;
 
             // Приоритет: конфиг > дефолт
@@ -70,6 +72,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
                   color = savedVal.color || 'blue';
                   pinned = !!savedVal.pinned;
                   hidden = !!savedVal.hidden;
+                  seen = !!savedVal.seen;
                   createdAt = savedVal.createdAt;
                } else {
                   enabled = !!savedVal;
@@ -92,6 +95,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
                color,
                pinned,
                hidden,
+               seen,
                createdAt
             };
          });
@@ -136,8 +140,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
              current = { enabled: false, color: 'blue', pinned: false, hidden: false };
          }
 
-         // Reset createdAt on interaction
-         raw[key] = { ...current, ...updates, createdAt: undefined };
+         // Mark as seen on interaction, preserve createdAt
+         raw[key] = { ...current, ...updates, seen: true };
          
          globalStorage.setItem(LOGGER_NEXT_CONFIG_KEY, JSON.stringify(raw));
          window.dispatchEvent(new Event('logger-next-config-change'));
@@ -170,14 +174,21 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
                return a.enabled ? -1 : 1;
             }
          }
+
+         // 2. Sort by created (if active)
+         if (sortMode === 'created') {
+            const tA = a.createdAt || 0;
+            const tB = b.createdAt || 0;
+            if (tA !== tB) return tB - tA; // Newest first
+         }
          
-         // 2. Sort by name
+         // 3. Sort by name
          return a.name.localeCompare(b.name);
       };
 
       // Helper to check if item is new
       const isNew = (item: ConfigItem) => {
-         return item.createdAt && (Date.now() - item.createdAt < 180000);
+         return !item.seen && item.createdAt && (Date.now() - item.createdAt < 180000);
       };
 
       const pinnedItems: ConfigItem[] = [];
@@ -199,7 +210,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
    }, [configs, search, sortMode]);
 
    const renderItem = (item: ConfigItem) => {
-      const isNew = item.createdAt && (Date.now() - item.createdAt < 180000);
+      const isNew = !item.seen && item.createdAt && (Date.now() - item.createdAt < 180000);
 
       return (
       <motion.div
@@ -326,6 +337,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
                   className={`w-6 h-6 min-w-6 ${sortMode === 'name' ? 'bg-background shadow-sm' : 'text-default-400'}`}
                >
                   <ArrowDownAz size={14} />
+               </Button>
+               <Button 
+                  isIconOnly size="sm" variant={sortMode === 'created' ? 'solid' : 'light'}
+                  onPress={() => updateSortMode('created')}
+                  title="Sort by Newest"
+                  className={`w-6 h-6 min-w-6 ${sortMode === 'created' ? 'bg-background shadow-sm' : 'text-default-400'}`}
+               >
+                  <Clock size={14} />
                </Button>
                <Button 
                   isIconOnly size="sm" variant={sortMode === 'enabled' ? 'solid' : 'light'}
