@@ -5,7 +5,7 @@ import { globalStorage } from '@/utils/storage';
 import { LOGGER_NEXT_CONFIG_KEY, getAllLoggers } from './Logger';
 // Import updated from LoggerNext
 import { Button, Input, Switch, ScrollShadow, Popover, PopoverTrigger, PopoverContent } from '@heroui/react';
-import { Search, RotateCw, Trash2, SlidersHorizontal, ArrowUpDown, ArrowDownAz, ListChecks, Pin, PinOff, Eye, EyeOff, Clock } from 'lucide-react';
+import { Search, RotateCw, Trash2, SlidersHorizontal, ArrowUpDown, ArrowDownAz, ListChecks, Pin, PinOff, Eye, EyeOff, Clock, Scan } from 'lucide-react';
 import { AVAILABLE_COLORS, COLOR_MAP } from '@/utils/logger/loggerColors';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -209,6 +209,53 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
       };
    }, [configs, search, sortMode]);
 
+   const handleScan = async () => {
+      try {
+         const res = await fetch('/api/logger/scan');
+         if (!res.ok) throw new Error('Scan failed');
+         
+         const data = await res.json();
+         // data: { validLoggers: string[], duplicates: { name, files }[] }
+
+         let message = '';
+
+         if (data.duplicates.length > 0) {
+            message += `⚠️ DUPLICATES FOUND:\n`;
+            data.duplicates.forEach((d: any) => {
+               message += `- "${d.name}" is used in:\n   ${d.files.join('\n   ')}\n`;
+            });
+            message += '\n';
+         }
+
+         const str = globalStorage.getItem(LOGGER_NEXT_CONFIG_KEY);
+         const config = str ? JSON.parse(str) : {};
+         const configKeys = Object.keys(config);
+         
+         const deadKeys = configKeys.filter(key => !data.validLoggers.includes(key));
+
+         if (deadKeys.length > 0) {
+            message += `🗑️ UNUSED CONFIGS (${deadKeys.length}):\n${deadKeys.join(', ')}\n\nDelete them?`;
+            
+            if (confirm(message || 'Delete unused configs?')) {
+               deadKeys.forEach(key => delete config[key]);
+               globalStorage.setItem(LOGGER_NEXT_CONFIG_KEY, JSON.stringify(config));
+               window.dispatchEvent(new Event('logger-next-config-change'));
+               loadConfigs();
+            }
+         } else {
+            if (message) {
+               alert(message);
+            } else {
+               alert('All clean! No duplicates or unused configs.');
+            }
+         }
+
+      } catch (e) {
+         console.error(e);
+         alert('Scan failed check console');
+      }
+   };
+
    const renderItem = (item: ConfigItem) => {
       const isNew = !item.seen && item.createdAt && (Date.now() - item.createdAt < 180000);
 
@@ -355,6 +402,17 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
                   <ListChecks size={14} />
                </Button>
             </div>
+
+            <Button
+               isIconOnly
+               size="sm"
+               variant="light"
+               className="min-w-6 w-6 h-[28px] text-default-400 hover:text-primary"
+               onPress={handleScan}
+               title="Scan Codebase"
+            >
+               <Scan size={14} />
+            </Button>
 
             <Button
                isIconOnly
