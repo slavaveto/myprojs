@@ -166,7 +166,7 @@ export const TaskMenuItems = ({
                ) : null}
 
                {/* --- MOVE TO PROJECT --- */}
-               {items.move && projectsStructure.length > 0 ? (
+               {items.move && !isGroup && projectsStructure.length > 0 ? (
                   <DropdownItem
                      key="move-menu"
                      isReadOnly
