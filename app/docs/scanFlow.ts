@@ -13,9 +13,29 @@ export interface CodeRef {
   snippet: string; // Next 5 lines of code
 }
 
-export async function scanFlowRefs(): Promise<CodeRef[]> {
-  // Ignore node_modules AND the docs folder itself to prevent self-scanning
-  const files = await glob('app/**/*.{ts,tsx}', { ignore: ['node_modules/**', 'app/docs/**'] });
+export async function scanFlowRefs(projectFolderName?: string): Promise<CodeRef[]> {
+  // Determine root path
+  // If projectFolderName is provided, look in /Users/me/Projs/{folderName}
+  // Otherwise default to process.cwd() (current project)
+  let rootPath = process.cwd();
+  const ignorePatterns = ['**/node_modules/**', '**/dist/**', '**/build/**', '**/.next/**'];
+  
+  if (projectFolderName) {
+      // TODO: Move base path to config/env
+      rootPath = path.join('/Users/me/Projs', projectFolderName);
+  } else {
+      // If scanning CURRENT project, ignore the docs folder to avoid self-scanning
+      ignorePatterns.push('app/docs/**');
+  }
+
+  // console.log('Scanning in:', rootPath);
+
+  // Note: glob patterns are relative to cwd
+  const files = await glob('**/*.{ts,tsx}', { 
+      cwd: rootPath,
+      ignore: ignorePatterns
+  });
+  
   const refs: CodeRef[] = [];
   
   // Regex: // @ref:ID followed optionally by /Description
@@ -24,7 +44,12 @@ export async function scanFlowRefs(): Promise<CodeRef[]> {
   const refRegex = /\/\/\s*@ref:([a-zA-Z0-9_-]+)(?:\/(.*))?/g;
   
   for (const file of files) {
-      const absolutePath = path.join(process.cwd(), file);
+      // HARD STOP: ALWAYS skip docs folder to prevent self-scanning
+      if (file.includes('app/docs/')) {
+          continue;
+      }
+
+      const absolutePath = path.join(rootPath, file);
       const content = fs.readFileSync(absolutePath, 'utf-8');
       const lines = content.split('\n');
       

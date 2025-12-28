@@ -5,6 +5,7 @@ export interface Project {
    sort_order: number;
    created_at: string;
    updated_at: string;
+   local_path?: string; // Name of the folder in ~/Projs/
 }
 
 export interface Folder {
