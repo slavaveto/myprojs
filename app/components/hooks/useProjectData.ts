@@ -3,6 +3,7 @@ import { Task, Project } from '@/app/types';
 import { globalStorage } from '@/utils/storage';
 import { toast } from 'react-hot-toast';
 import { projectService } from '@/app/_services/projectService';
+import { taskService } from '@/app/_services/taskService';
 import { useAsyncAction, ActionStatus } from '@/utils/supabase/useAsyncAction';
 import { createLogger } from '@/utils/logger/Logger';
 import { useFolderData } from './useFolderData';
@@ -25,8 +26,15 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
    const [selectedFolderId, setSelectedFolderId] = useState<string>('');
    const [isDataLoaded, setIsDataLoaded] = useState(false);
    const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null);
+   const [projectsStructure, setProjectsStructure] = useState<any[]>([]);
    
    const loadStartedRef = useRef(false);
+
+   useEffect(() => {
+       projectService.getProjectsWithFolders()
+           .then(data => setProjectsStructure(data || []))
+           .catch(err => logger.error('Failed to load projects structure', err));
+   }, []);
 
    // --- Status Management ---
    const { execute: executeSave, status: saveStatus, error: saveError } = useAsyncAction({
@@ -222,6 +230,27 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
    // (Removed duplicated gap logic)
 
 
+   // --- Move Task ---
+   const handleMoveTask = async (taskId: string, targetProjectId: string, folderId: string) => {
+       try {
+           // Optimistic update
+           setTasks(prev => prev.filter(t => t.id !== taskId));
+           
+           await taskService.moveTaskToFolder(taskId, folderId);
+           logger.success('Task moved to project');
+           
+           // Store highlight info for target project
+           if (targetProjectId !== project.id) {
+                globalStorage.setItem(`highlight_task_${targetProjectId}`, taskId);
+                globalStorage.setItem(`active_folder_${targetProjectId}`, folderId);
+           }
+
+       } catch (err) {
+           logger.error('Failed to move task', err);
+           loadTasks(); // Revert
+       }
+   };
+
    // --- Project Actions ---
    const handleEditProject = async (title: string, color: string) => {
        try {
@@ -272,6 +301,8 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
        handleRemoveProject,
        getFolderTaskCount,
        highlightedTaskId, 
-       handleAddGap
+       handleAddGap,
+       projectsStructure,
+       handleMoveTask
    };
 };

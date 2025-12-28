@@ -71,7 +71,9 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
        getFolderTaskCount,
        highlightedTaskId,
        handleAddGap,
-       quickSaveStatus // Exported from hook
+       quickSaveStatus, // Exported from hook
+       projectsStructure,
+       handleMoveTask
    } = useProjectData(props);
 
    // 2. Drag and Drop Hook
@@ -195,6 +197,8 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
                         highlightedTaskId={highlightedTaskId}
                         onAddGap={handleAddGap} // Pass down
                         projectColor={project.color} // Pass project color
+                        projectsStructure={projectsStructure}
+                        onMoveTask={handleMoveTask}
                    />
                 ) : (
                     <div className="text-center py-20 text-default-400">
