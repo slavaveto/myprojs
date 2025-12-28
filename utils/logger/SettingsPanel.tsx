@@ -364,8 +364,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
                   base: "h-[26px] flex-1",
                   mainWrapper: "h-[26px]",
                   inputWrapper: "h-[26px] min-h-[26px] px-2",
-                  input: "text-[14px]",
+                  input: "text-[14px] ",
                   innerWrapper: "pb-0",
+                  clearButton: "text-default-400 -mr-[15px]"
                }}
             />
             
