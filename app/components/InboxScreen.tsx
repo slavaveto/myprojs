@@ -16,6 +16,8 @@ import { EditableCell } from './EditableCell';
 import { TaskContextMenu, TaskMenuItems } from './TaskContextMenu';
 import { TaskStyleControl } from './TaskStyleControl';
 import { TaskTodayControl } from './TaskTodayControl';
+import { useAsyncAction } from '@/utils/supabase/useAsyncAction';
+import { StatusBadge } from '@/utils/supabase/StatusBadge';
 
 const logger = createLogger('InboxScreen');
 
@@ -142,6 +144,15 @@ export const InboxScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
     const [isLoaded, setIsLoaded] = useState(false);
     const [projectsStructure, setProjectsStructure] = useState<any[]>([]);
 
+    const { execute: executeSave, status: saveStatus, error: saveError } = useAsyncAction({
+        useToast: false,
+        minDuration: 800,
+        successDuration: 2000,
+        loadingMessage: 'Saving...',
+        successMessage: 'Saved',
+        errorMessage: 'Failed to save'
+    });
+
     useEffect(() => {
         // Load projects structure for Move menu
         projectService.getProjectsWithFolders()
@@ -193,7 +204,9 @@ export const InboxScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
         }
 
         try {
-            await taskService.updateTask(id, updates);
+            await executeSave(async () => {
+                await taskService.updateTask(id, updates);
+            });
         } catch (err) {
             logger.error('Failed to update task', err);
             fetchTasks(false);
@@ -204,7 +217,9 @@ export const InboxScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
         setTasks(prev => prev.filter(t => t.id !== id));
 
         try {
-            await taskService.deleteTask(id);
+            await executeSave(async () => {
+                await taskService.deleteTask(id);
+            });
         } catch (err) {
             logger.error('Failed to delete task', err);
             fetchTasks(false);
@@ -213,8 +228,10 @@ export const InboxScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
 
     const handleMove = async (taskId: string, projectId: string, folderId: string) => {
         try {
-            // 1. Update task in DB (move to top of target folder)
-            await taskService.moveTaskToFolder(taskId, folderId);
+            await executeSave(async () => {
+                // 1. Update task in DB (move to top of target folder)
+                await taskService.moveTaskToFolder(taskId, folderId);
+            });
             
             // 2. Remove from local list (optimistic)
             setTasks(prev => prev.filter(t => t.id !== taskId));
@@ -231,11 +248,16 @@ export const InboxScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
 
     const handleCreateTask = async (title: string) => {
         try {
-             // Create task with no folder (null)
-             const newTask = await taskService.createTask(null, title, 0); // 0 = sort order (top)
+             let newTask: any;
+             await executeSave(async () => {
+                 // Create task with no folder (null)
+                 newTask = await taskService.createTask(null, title, 0); // 0 = sort order (top)
+             });
              
-             // Optimistic add to top
-             setTasks(prev => [newTask, ...prev]);
+             if (newTask) {
+                 // Optimistic add to top (or replace temp if we had one, but here we just append)
+                 setTasks(prev => [newTask, ...prev]);
+             }
              
              logger.success('Inbox task created');
         } catch (err) {
@@ -261,6 +283,11 @@ export const InboxScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
                 </h1>
                 
                 <div className="flex items-center gap-4">
+                    <StatusBadge 
+                        status={saveStatus}
+                        errorMessage={saveError?.message}
+                    />
+
                     <CreateItemPopover 
                         title="New Inbox Task" 
                         inputPlaceholder="Task content"

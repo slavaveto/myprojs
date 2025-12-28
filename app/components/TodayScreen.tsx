@@ -15,6 +15,8 @@ import { EditableCell } from './EditableCell';
 import { TaskContextMenu, TaskMenuItems } from './TaskContextMenu';
 import { TaskStyleControl } from './TaskStyleControl';
 import { TaskTodayControl } from './TaskTodayControl';
+import { useAsyncAction } from '@/utils/supabase/useAsyncAction';
+import { StatusBadge } from '@/utils/supabase/StatusBadge';
 
 const logger = createLogger('TodayScreen');
 
@@ -159,6 +161,15 @@ export const TodayScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
     const [isLoaded, setIsLoaded] = useState(false);
     const [projectsStructure, setProjectsStructure] = useState<any[]>([]);
 
+    const { execute: executeSave, status: saveStatus, error: saveError } = useAsyncAction({
+        useToast: false,
+        minDuration: 800,
+        successDuration: 2000,
+        loadingMessage: 'Saving...',
+        successMessage: 'Saved',
+        errorMessage: 'Failed to save'
+    });
+
     useEffect(() => {
         // Load projects structure for Move menu
         projectService.getProjectsWithFolders()
@@ -271,7 +282,9 @@ export const TodayScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
         });
 
         try {
-            await taskService.updateTask(id, updates);
+            await executeSave(async () => {
+                await taskService.updateTask(id, updates);
+            });
         } catch (err) {
             logger.error('Failed to update task', err);
             fetchTasks(false); // Revert on error
@@ -280,8 +293,10 @@ export const TodayScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
 
     const handleMove = async (taskId: string, projectId: string, folderId: string) => {
         try {
-            // 1. Update task in DB (move to top of target folder)
-            await taskService.moveTaskToFolder(taskId, folderId);
+            await executeSave(async () => {
+                // 1. Update task in DB (move to top of target folder)
+                await taskService.moveTaskToFolder(taskId, folderId);
+            });
             
             // 2. Remove from local list (optimistic) - or keep it if we want to show it?
             // User said "switch to where we moved". So we are leaving this screen.
@@ -303,7 +318,9 @@ export const TodayScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
         setTasks(prev => prev.filter(t => t.id !== id));
 
         try {
-            await taskService.deleteTask(id); // Soft delete
+            await executeSave(async () => {
+                await taskService.deleteTask(id); // Soft delete
+            });
         } catch (err) {
             logger.error('Failed to delete task', err);
             fetchTasks(false);
@@ -326,9 +343,14 @@ export const TodayScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
                     <Star className="text-warning" fill="currentColor" />
                     Today
                 </h1>
-                
+
                 <div className="flex items-center gap-4">
-                    <Button 
+                    <StatusBadge 
+                        status={saveStatus}
+                        errorMessage={saveError?.message}
+                    />
+
+                    <Button
                         isIconOnly
                         size="sm" 
                         variant="flat" 
