@@ -9,6 +9,10 @@ export default function FlowPage() {
   const [data, setData] = useState<FlowGraph | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // We should NOT fetch inside the component render if we want to reuse it.
+  // BUT for now, to make it work inside ProjectScreen, we keep it client-side fetching.
+  // In real app, we should pass 'projectId' to filter flows relevant to the project.
+  
   const loadGraph = useCallback(async () => {
     setLoading(true);
     try {
@@ -43,18 +47,18 @@ export default function FlowPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
-      <div className="h-16 bg-white border-b flex items-center justify-between px-6 sticky top-0 z-20 shadow-sm">
+    <div className="h-full flex flex-col font-sans bg-gray-50">
+      <div className="h-14 bg-white border-b flex items-center justify-between px-6 sticky top-0 z-20 shadow-sm flex-shrink-0">
          <div className="flex items-center gap-3">
             <Layout className="text-primary" />
-            <h1 className="font-bold text-xl text-gray-800">System Story Map</h1>
+            <h1 className="font-bold text-lg text-gray-800">System Story Map</h1>
          </div>
          <Button size="sm" color="primary" onPress={loadGraph} isLoading={loading}>
             Refresh
          </Button>
       </div>
 
-      <div className="flex-grow max-w-3xl mx-auto w-full p-8">
+      <div className="flex-grow w-full p-8 overflow-y-auto min-h-0">
          {loading && (
              <div className="flex justify-center py-20">
                  <Spinner label="Scanning Codebase..." />
@@ -62,7 +66,7 @@ export default function FlowPage() {
          )}
 
          {!loading && data && (
-             <div className="flex flex-col relative">
+             <div className="flex flex-col relative max-w-3xl mx-auto">
                  <div className="absolute left-6 top-4 bottom-4 w-0.5 bg-gray-200 z-0"></div>
 
                  {data.nodes.length === 0 && (

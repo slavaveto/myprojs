@@ -288,7 +288,7 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
                             variant="flat" 
                             color="warning"
                             onPress={handleRepair}
-                            className="min-w-0 px-3"
+                            className="min-w-0 px-3 hidden"
                         >
                             Fix Data
                         </Button>

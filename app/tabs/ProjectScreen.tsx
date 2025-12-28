@@ -24,6 +24,9 @@ import { EditProjectPopover } from '@/app/components/EditProject';
 import { useProjectData } from '@/app/components/hooks/useProjectData';
 import { useProjectDnD } from '@/app/components/hooks/useProjectDnD';
 import { GlobalSearch, NavigationTarget } from '@/app/components/GlobalSearch';
+import FlowPage from '@/app/test-flow/page'; // Reuse our existing FlowPage component
+
+import { Layout, CheckSquare } from 'lucide-react'; // Add icons for switch
 
 const logger = createLogger('ProjectScreen');
 
@@ -48,6 +51,9 @@ interface ProjectScreenProps {
 
 export const ProjectScreen = (props: ProjectScreenProps) => {
    const { project, onNavigate } = props;
+   
+   // View Mode State: 'tasks' | 'docs'
+   const [viewMode, setViewMode] = React.useState<'tasks' | 'docs'>('tasks');
    
    // 1. Data Management Hook
    const {
@@ -170,6 +176,17 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
             </div>
 
             <div className="flex items-center gap-2 justify-self-end">
+                {/* View Switcher */}
+                <Button
+                    size="sm"
+                    variant="flat"
+                    color="primary"
+                    startContent={viewMode === 'tasks' ? <Layout size={16} /> : <CheckSquare size={16} />}
+                    onPress={() => setViewMode(prev => prev === 'tasks' ? 'docs' : 'tasks')}
+                >
+                    {viewMode === 'tasks' ? 'Docs' : 'Tasks'}
+                </Button>
+
                 <StatusBadge 
                     status={displayStatus}
                     loadingText="Saving..."
@@ -179,75 +196,79 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
             </div>
          </div>
 
-         <DndContext
-            sensors={sensors}
-            collisionDetection={customCollisionDetection}
-            onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
-            onDragEnd={handleDragEnd}
-         >
-            <FolderTabs 
-                folders={folders}
-                selectedFolderId={selectedFolderId}
-                onSelect={(id) => {
-                    setSelectedFolderId(id);
-                    globalStorage.setItem(`active_folder_${project.id}`, id);
-                }}
-                onAddFolder={handleAddFolder}
-                onUpdateFolder={handleUpdateFolder}
-                onDeleteFolder={handleDeleteFolder}
-                onMoveFolder={handleMoveFolder}
-                getTaskCount={getFolderTaskCount}
-                projectId={project.id}
-                hoveredFolderId={hoveredFolderId}
-            />
+         {viewMode === 'docs' ? (
+             <div className="flex-grow w-full h-full overflow-hidden bg-white rounded-xl border border-default-200 mt-2">
+                 <FlowPage />
+             </div>
+         ) : (
+             <DndContext
+                sensors={sensors}
+                collisionDetection={customCollisionDetection}
+                onDragStart={handleDragStart}
+                onDragOver={handleDragOver}
+                onDragEnd={handleDragEnd}
+             >
+                <FolderTabs 
+                    folders={folders}
+                    selectedFolderId={selectedFolderId}
+                    onSelect={(id) => {
+                        setSelectedFolderId(id);
+                        globalStorage.setItem(`active_folder_${project.id}`, id);
+                    }}
+                    onAddFolder={handleAddFolder}
+                    onUpdateFolder={handleUpdateFolder}
+                    onDeleteFolder={handleDeleteFolder}
+                    onMoveFolder={handleMoveFolder}
+                    getTaskCount={getFolderTaskCount}
+                    projectId={project.id}
+                    hoveredFolderId={hoveredFolderId}
+                />
 
-            <div className="mt-6 flex-grow flex flex-col min-h-0 overflow-y-auto overflow-x-hidden">
-                {selectedFolderId ? (
-                   <TaskList  
-                        key={selectedFolderId}
-                        tasks={filteredTasks}
-                        onUpdateTask={handleUpdateTask}
-                        onDeleteTask={handleDeleteTask}
-                        isEmpty={filteredTasks.length === 0}
-                        highlightedTaskId={highlightedTaskId}
-                        onAddGap={handleAddGap} // Pass down
-                        projectColor={project.color} // Pass project color
-                        projectsStructure={projectsStructure}
-                        onMoveTask={handleMoveTask}
-                        currentProjectId={project.id}
-                   />
-                ) : (
-                    <div className="text-center py-20 text-default-400">
-                        Create a folder to start adding tasks.
-                    </div>
-                )}
-            </div>
-
-            <DragOverlay dropAnimation={dropAnimationConfig}>
-               {activeId ? (
-                   activeId.startsWith('folder-') ? (
-                       // Dragging a folder - Use visual component
-                       <FolderTab 
-                          folder={folders.find(f => `folder-${f.id}` === activeId)!}
-                          count={getFolderTaskCount(activeId.replace('folder-', ''))}
-                          isActive={selectedFolderId === activeId.replace('folder-', '')}
-                          isDragging={true}
-                          layoutIdPrefix="overlay" 
-                          onClick={() => {}}
+                <div className="mt-6 flex-grow flex flex-col min-h-0 overflow-y-auto overflow-x-hidden">
+                    {selectedFolderId ? (
+                       <TaskList  
+                            key={selectedFolderId}
+                            tasks={filteredTasks}
+                            onUpdateTask={handleUpdateTask}
+                            onDeleteTask={handleDeleteTask}
+                            isEmpty={filteredTasks.length === 0}
+                            highlightedTaskId={highlightedTaskId}
+                            onAddGap={handleAddGap} 
+                            projectColor={project.color} 
+                            projectsStructure={projectsStructure}
+                            onMoveTask={handleMoveTask}
+                            currentProjectId={project.id}
                        />
-                   ) : (
-                       // Dragging a task
-                      <TaskRow
-                         task={tasks.find(t => t.id === activeId)!}
-                         onUpdate={() => {}}
-                         onDelete={() => {}}
-                         isOverlay
-                      />
-                   )
-               ) : null}
-            </DragOverlay>
-         </DndContext>
+                    ) : (
+                        <div className="text-center py-20 text-default-400">
+                            Create a folder to start adding tasks.
+                        </div>
+                    )}
+                </div>
+
+                <DragOverlay dropAnimation={dropAnimationConfig}>
+                   {activeId ? (
+                       activeId.startsWith('folder-') ? (
+                           <FolderTab 
+                              folder={folders.find(f => `folder-${f.id}` === activeId)!}
+                              count={getFolderTaskCount(activeId.replace('folder-', ''))}
+                              isActive={selectedFolderId === activeId.replace('folder-', '')}
+                              isDragging={true}
+                              layoutIdPrefix="overlay" 
+                              onClick={() => {}}
+                           />
+                       ) : (
+                          <TaskRow
+                             task={tasks.find(t => t.id === activeId)!}
+                             onUpdate={() => {}}
+                             onDelete={() => {}}
+                             isOverlay
+                          />
+                       )
+                   ) : null}
+                </DragOverlay>
+             </DndContext>
+         )}
          </div>
       </div>
    );

@@ -150,15 +150,15 @@ export const FolderTabs = ({
     selectedFolderId, 
     onSelect, 
     onAddFolder, 
-    onUpdateFolder,
-    onDeleteFolder,
-    onMoveFolder,
+    onUpdateFolder, 
+    onDeleteFolder, 
+    onMoveFolder, 
     getTaskCount,
     projectId,
-    hoveredFolderId
+    hoveredFolderId 
 }: FolderTabsProps) => {
     return (
-        <div className="flex items-end gap-2 w-full ">
+        <div className="flex items-end gap-4 w-full">
            <div className="flex-grow overflow-x-auto scrollbar-hide flex items-center gap-2">
                {folders.map((folder, index) => (
                      <FolderTab 
@@ -177,23 +177,24 @@ export const FolderTabs = ({
                      />
                ))}
            </div>
-           <CreateItemPopover 
-               title="New Folder" 
-               inputPlaceholder="Folder Name"
-               onCreate={onAddFolder}
-               placement="top-end"
-               
-           >
-               <Button 
-                   isIconOnly 
-                   variant="flat" 
-                   size="sm" 
-                   color="success"
-                   className="mb-1"
+           
+           <div className="flex-shrink-0 ml-2">
+               <CreateItemPopover 
+                   title="New Folder" 
+                   inputPlaceholder="Folder Name"
+                   onCreate={onAddFolder}
+                   placement="top-end"
                >
-                   <Plus size={20} />
-               </Button>
-           </CreateItemPopover>
+                   <Button 
+                       isIconOnly 
+                       variant="flat" 
+                       size="sm" 
+                       color="success"
+                   >
+                       <Plus size={20} />
+                   </Button>
+               </CreateItemPopover>
+           </div>
         </div>
     );
 };
