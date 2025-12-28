@@ -11,8 +11,6 @@ interface ThemeToggleProps {
 
 const ThemeToggle: React.FC<ThemeToggleProps> = ({ disableInGridMode = false }) => {
    const { theme, setTheme } = useTheme();
-   
-
 
    return (
       <Tabs
@@ -20,16 +18,14 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ disableInGridMode = false }) 
          color="default"
          size="sm"
          selectedKey={theme}
-      onSelectionChange={(key) => {
-        setTheme(key as 'light' | 'dark' | 'system');
-      }}
+         onSelectionChange={(key) => {
+            setTheme(key as 'light' | 'dark' | 'system');
+         }}
          classNames={{
-        tabList:
-          `gap-[0px] p-[1px] rounded-[10px] !bg-default-200 dark:!bg-default-100 border border-default-300 }`,
+            tabList: `gap-[0px] p-[1px] rounded-[10px] !bg-default-200 dark:!bg-default-100 border border-default-300`,
             tab: 'h-[28px] px-[10px] md:px-[8px] rounded-small',
             tabContent: 'group-data-[selected=true]:text-primary-400',
          }}
-   
       >
          <Tab
             key="light"

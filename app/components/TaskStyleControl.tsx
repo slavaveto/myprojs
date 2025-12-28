@@ -20,7 +20,7 @@ interface TaskStyleControlProps {
    onUpdate: (id: string, updates: any) => void;
 }
 
-export const TaskStyleControl = ({ task, onUpdate }: TaskStyleControlProps) => {
+export const TaskStyleControl = ({ task, onUpdate }: TaskStyleControlProps) => { 
    return (
        <Dropdown placement="bottom-start" className=" min-w-0 w-auto">
           <DropdownTrigger>
