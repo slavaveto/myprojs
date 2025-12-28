@@ -24,9 +24,6 @@ import { EditProjectPopover } from '@/app/components/EditProject';
 import { useProjectData } from '@/app/components/hooks/useProjectData';
 import { useProjectDnD } from '@/app/components/hooks/useProjectDnD';
 import { GlobalSearch, NavigationTarget } from '@/app/components/GlobalSearch';
-import FlowPage from '@/app/docs/page'; // Reuse our existing FlowPage component
-
-import { Layout, CheckSquare } from 'lucide-react'; // Add icons for switch
 
 const logger = createLogger('ProjectScreen');
 
@@ -47,15 +44,10 @@ interface ProjectScreenProps {
     onUpdateProject: (updates: { title?: string; color?: string }) => void;
     onDeleteProject: () => void;
     onNavigate?: (target: NavigationTarget) => void;
-    viewMode: 'tasks' | 'docs'; // Controlled state
-    onViewModeChange?: (mode: 'tasks' | 'docs') => void;
 }
 
 export const ProjectScreen = (props: ProjectScreenProps) => {
-   const { project, onNavigate, viewMode } = props;
-   
-   // Removed local viewMode state
-   // const [viewMode, setViewMode] = React.useState<'tasks' | 'docs'>('tasks');
+   const { project, onNavigate } = props;
    
    // 1. Data Management Hook
    const {
@@ -188,79 +180,73 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
             </div>
          </div>
 
-         {viewMode === 'docs' ? (
-             <div className="flex-grow w-full h-full overflow-hidden bg-white rounded-xl border border-default-200 mt-2">
-                 <FlowPage projectId={project.id} projectLocalPath={project.local_path} />
-             </div>
-         ) : (
-             <DndContext
-                sensors={sensors}
-                collisionDetection={customCollisionDetection}
-                onDragStart={handleDragStart}
-                onDragOver={handleDragOver}
-                onDragEnd={handleDragEnd}
-             >
-                <FolderTabs 
-                    folders={folders}
-                    selectedFolderId={selectedFolderId}
-                    onSelect={(id) => {
-                        setSelectedFolderId(id);
-                        globalStorage.setItem(`active_folder_${project.id}`, id);
-                    }}
-                    onAddFolder={handleAddFolder}
-                    onUpdateFolder={handleUpdateFolder}
-                    onDeleteFolder={handleDeleteFolder}
-                    onMoveFolder={handleMoveFolder}
-                    getTaskCount={getFolderTaskCount}
-                    projectId={project.id}
-                    hoveredFolderId={hoveredFolderId}
-                />
+         <DndContext
+            sensors={sensors}
+            collisionDetection={customCollisionDetection}
+            onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
+            onDragEnd={handleDragEnd}
+         >
+            <FolderTabs 
+                folders={folders}
+                selectedFolderId={selectedFolderId}
+                onSelect={(id) => {
+                    setSelectedFolderId(id);
+                    globalStorage.setItem(`active_folder_${project.id}`, id);
+                }}
+                onAddFolder={handleAddFolder}
+                onUpdateFolder={handleUpdateFolder}
+                onDeleteFolder={handleDeleteFolder}
+                onMoveFolder={handleMoveFolder}
+                getTaskCount={getFolderTaskCount}
+                projectId={project.id}
+                hoveredFolderId={hoveredFolderId}
+            />
 
-                <div className="mt-6 flex-grow flex flex-col min-h-0 overflow-y-auto overflow-x-hidden">
-                    {selectedFolderId ? (
-                       <TaskList  
-                            key={selectedFolderId}
-                            tasks={filteredTasks}
-                            onUpdateTask={handleUpdateTask}
-                            onDeleteTask={handleDeleteTask}
-                            isEmpty={filteredTasks.length === 0}
-                            highlightedTaskId={highlightedTaskId}
-                            onAddGap={handleAddGap} 
-                            projectColor={project.color} 
-                            projectsStructure={projectsStructure}
-                            onMoveTask={handleMoveTask}
-                            currentProjectId={project.id}
+            <div className="mt-6 flex-grow flex flex-col min-h-0 overflow-y-auto overflow-x-hidden">
+                {selectedFolderId ? (
+                   <TaskList  
+                        key={selectedFolderId}
+                        tasks={filteredTasks}
+                        onUpdateTask={handleUpdateTask}
+                        onDeleteTask={handleDeleteTask}
+                        isEmpty={filteredTasks.length === 0}
+                        highlightedTaskId={highlightedTaskId}
+                        onAddGap={handleAddGap} 
+                        projectColor={project.color} 
+                        projectsStructure={projectsStructure}
+                        onMoveTask={handleMoveTask}
+                        currentProjectId={project.id}
+                   />
+                ) : (
+                    <div className="text-center py-20 text-default-400">
+                        Create a folder to start adding tasks.
+                    </div>
+                )}
+            </div>
+
+            <DragOverlay dropAnimation={dropAnimationConfig}>
+               {activeId ? (
+                   activeId.startsWith('folder-') ? (
+                       <FolderTab 
+                          folder={folders.find(f => `folder-${f.id}` === activeId)!}
+                          count={getFolderTaskCount(activeId.replace('folder-', ''))}
+                          isActive={selectedFolderId === activeId.replace('folder-', '')}
+                          isDragging={true}
+                          layoutIdPrefix="overlay" 
+                          onClick={() => {}}
                        />
-                    ) : (
-                        <div className="text-center py-20 text-default-400">
-                            Create a folder to start adding tasks.
-                        </div>
-                    )}
-                </div>
-
-                <DragOverlay dropAnimation={dropAnimationConfig}>
-                   {activeId ? (
-                       activeId.startsWith('folder-') ? (
-                           <FolderTab 
-                              folder={folders.find(f => `folder-${f.id}` === activeId)!}
-                              count={getFolderTaskCount(activeId.replace('folder-', ''))}
-                              isActive={selectedFolderId === activeId.replace('folder-', '')}
-                              isDragging={true}
-                              layoutIdPrefix="overlay" 
-                              onClick={() => {}}
-                           />
-                       ) : (
-                          <TaskRow
-                             task={tasks.find(t => t.id === activeId)!}
-                             onUpdate={() => {}}
-                             onDelete={() => {}}
-                             isOverlay
-                          />
-                       )
-                   ) : null}
-                </DragOverlay>
-             </DndContext>
-         )}
+                   ) : (
+                      <TaskRow
+                         task={tasks.find(t => t.id === activeId)!}
+                         onUpdate={() => {}}
+                         onDelete={() => {}}
+                         isOverlay
+                      />
+                   )
+               ) : null}
+            </DragOverlay>
+         </DndContext>
          </div>
       </div>
    );

@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { AppLoaderProvider, useAppLoader } from '@/app/AppLoader';
 import { ProjectScreen } from '@/app/tabs/ProjectScreen';
+import { DocsScreen } from '@/app/tabs/DocsScreen';
 import { CreateItemPopover } from '@/app/components/CreateItem';
 import { LogsScreen } from '@/app/tabs/LogsScreen';
 import { DoneScreen } from '@/app/tabs/DoneScreen';
@@ -641,46 +642,55 @@ function AppContent() {
                         : 'opacity-0 z-0 pointer-events-none'
                   )}
                >
-                  <ProjectScreen
-                     project={project}
-                     isActive={activeProjectId === project.id}
-                     canLoad={activeProjectId === project.id || canLoadBackground}
-                     onReady={() => handleProjectReady(project.id)}
-                     globalStatus={sidebarStatus}
-                     onNavigate={handleNavigate}
-                     viewMode={projectScreenMode} // Pass mode
-                     onViewModeChange={setProjectScreenMode} // Pass handler
-                     onUpdateProject={(updates) => {
-                        setProjects((prev) =>
-                           prev.map((p) => (p.id === project.id ? { ...p, ...updates } : p))
-                        );
-                     }}
-                     onDeleteProject={() => {
-                        const currentIndex = projects.findIndex((p) => p.id === project.id);
-                        const remainingProjects = projects.filter((p) => p.id !== project.id);
-                        setProjects(remainingProjects);
+                  <div className={clsx("h-full w-full", projectScreenMode === 'tasks' ? 'block' : 'hidden')}>
+                     <ProjectScreen
+                        project={project}
+                        isActive={activeProjectId === project.id && projectScreenMode === 'tasks'}
+                        canLoad={activeProjectId === project.id || canLoadBackground}
+                        onReady={() => handleProjectReady(project.id)}
+                        globalStatus={sidebarStatus}
+                        onNavigate={handleNavigate}
+                        onUpdateProject={(updates) => {
+                           setProjects((prev) =>
+                              prev.map((p) => (p.id === project.id ? { ...p, ...updates } : p))
+                           );
+                        }}
+                        onDeleteProject={() => {
+                           const currentIndex = projects.findIndex((p) => p.id === project.id);
+                           const remainingProjects = projects.filter((p) => p.id !== project.id);
+                           setProjects(remainingProjects);
 
-                        // Switch to nearest project or Inbox
-                        if (remainingProjects.length > 0) {
-                           // Try next project, otherwise previous
-                           const nextProject =
-                              remainingProjects[currentIndex] ||
-                              remainingProjects[currentIndex - 1];
-                           if (nextProject) {
-                              setActiveProjectId(nextProject.id);
-                              globalStorage.setItem('active_project_id', nextProject.id);
+                           // Switch to nearest project or Inbox
+                           if (remainingProjects.length > 0) {
+                              // Try next project, otherwise previous
+                              const nextProject =
+                                 remainingProjects[currentIndex] ||
+                                 remainingProjects[currentIndex - 1];
+                              if (nextProject) {
+                                 setActiveProjectId(nextProject.id);
+                                 globalStorage.setItem('active_project_id', nextProject.id);
+                              } else {
+                                 // Should not happen if length > 0
+                                 setActiveProjectId(remainingProjects[0].id);
+                                 globalStorage.setItem('active_project_id', remainingProjects[0].id);
+                              }
                            } else {
-                              // Should not happen if length > 0
-                              setActiveProjectId(remainingProjects[0].id);
-                              globalStorage.setItem('active_project_id', remainingProjects[0].id);
+                              setActiveProjectId(null);
+                              setActiveSystemTab('inbox'); // Fallback to Inbox
+                              globalStorage.removeItem('active_project_id');
                            }
-                        } else {
-                           setActiveProjectId(null);
-                           setActiveSystemTab('inbox'); // Fallback to Inbox
-                           globalStorage.removeItem('active_project_id');
-                        }
-                     }}
-                  />
+                        }}
+                     />
+                  </div>
+
+                  <div className={clsx("h-full w-full", projectScreenMode === 'docs' ? 'block' : 'hidden')}>
+                     <DocsScreen 
+                        project={project}
+                        isActive={activeProjectId === project.id && projectScreenMode === 'docs'}
+                        canLoad={activeProjectId === project.id || canLoadBackground}
+                        onReady={() => handleProjectReady(project.id)}
+                     />
+                  </div>
                </div>
             ))}
 
