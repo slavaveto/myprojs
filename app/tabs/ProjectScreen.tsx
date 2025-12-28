@@ -24,7 +24,7 @@ import { EditProjectPopover } from '@/app/components/EditProject';
 import { useProjectData } from '@/app/components/hooks/useProjectData';
 import { useProjectDnD } from '@/app/components/hooks/useProjectDnD';
 import { GlobalSearch, NavigationTarget } from '@/app/components/GlobalSearch';
-import FlowPage from '@/app/test-flow/page'; // Reuse our existing FlowPage component
+import FlowPage from '@/app/docs/page'; // Reuse our existing FlowPage component
 
 import { Layout, CheckSquare } from 'lucide-react'; // Add icons for switch
 
@@ -183,7 +183,7 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
                     successText="Saved"
                     errorMessage={saveError?.message}
                 />
-                
+
                 {/* View Switcher */}
                 <Button
                     size="sm"

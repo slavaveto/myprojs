@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useCallback, useState } from 'react';
-import { scanFlow, FlowGraph } from '@/app/actions/scanFlow';
+import { scanFlow, FlowGraph } from '@/app/docs/scanFlow';
 import { Button, Spinner, Card, CardBody } from '@heroui/react';
 import { ArrowDown, Code2, Layout, Zap, Play } from 'lucide-react';
 
