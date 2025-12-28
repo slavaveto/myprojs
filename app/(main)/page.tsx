@@ -382,12 +382,17 @@ function AppContent() {
            setActiveSystemTab('inbox');
            
            if (target.taskId) {
-               // Optional: Highlight support for Inbox (needs implementation in InboxScreen)
-               // globalStorage.setItem('highlight_task_inbox', target.taskId);
+               // Store ID for Inbox highlight
+               globalStorage.setItem('highlight_task_inbox', target.taskId);
            }
        } else if (target.type === 'today') {
            setActiveProjectId(null);
            setActiveSystemTab('today');
+           
+           if (target.taskId) {
+               // Store ID for Today highlight
+               globalStorage.setItem('highlight_task_today', target.taskId);
+           }
        }
    };
 

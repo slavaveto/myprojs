@@ -7,7 +7,7 @@ import { clsx } from 'clsx';
 import { CheckCircle2, Trash2, Folder as FolderIcon, RefreshCw, GripVertical, RotateCcw, Calendar, MoreVertical, MoveRight, ArrowRight, Star } from 'lucide-react';
 import { Spinner, Chip, Button, Switch, Select, SelectItem, Checkbox, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, DropdownSection } from '@heroui/react';
 import { format, isToday, isYesterday, isThisWeek, isThisMonth } from 'date-fns';
-import { useGlobalPersistentState } from '@/utils/storage';
+import { useGlobalPersistentState, globalStorage } from '@/utils/storage';
 import { AnimatePresence, motion } from 'framer-motion';
 import { projectService } from '@/app/_services/projectService';
 import { loadingService } from '@/app/_services/loadingService';
@@ -34,15 +34,17 @@ interface TodayScreenProps {
 const TodayTaskRow = ({ 
     task, 
     onUpdate, 
-    onDelete,
+    onDelete, 
     projectsStructure,
-    onMove
+    onMove,
+    isHighlighted
 }: { 
-    task: any, 
+    task: any,
     onUpdate: (id: string, updates: any) => void, 
     onDelete: (id: string) => void,
     projectsStructure: any[],
-    onMove?: (taskId: string, projectId: string, folderId: string) => void
+    onMove?: (taskId: string, projectId: string, folderId: string) => void,
+    isHighlighted?: boolean
 }) => {
     return (
         <TaskContextMenu
@@ -61,12 +63,17 @@ const TodayTaskRow = ({
             <motion.div
                 layout
                 initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
+                animate={{ 
+                    opacity: 1, 
+                    height: 'auto',
+                    backgroundColor: isHighlighted ? 'var(--highlight-bg, rgba(250, 204, 21, 0.2))' : undefined
+                }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.2 }}
                 className={clsx(
                     'group px-1 flex justify-between min-h-[30px] items-center rounded-lg border border-default-300 bg-content1 transition-colors outline-none overflow-hidden mb-[0px]',
-                    'hover:bg-default-50'
+                    'hover:bg-default-50',
+                    isHighlighted && 'ring-2 ring-primary ring-opacity-50'
                 )}
             >
                  <div className="flex flex-1 gap-2 flex-row items-center pl-2">
@@ -162,6 +169,27 @@ export const TodayScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
     const [isRefreshing, setIsRefreshing] = useState(false); // Refresh (button spin)
     const [isLoaded, setIsLoaded] = useState(false);
     const [projectsStructure, setProjectsStructure] = useState<any[]>([]);
+
+    const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null);
+
+    // --- Check for highlighted task ---
+    useEffect(() => {
+        if (isActive && isLoaded) {
+            const highlightKey = 'highlight_task_today';
+            const taskIdToHighlight = globalStorage.getItem(highlightKey);
+
+            if (taskIdToHighlight) {
+                logger.info('Highlighting restored task', { taskId: taskIdToHighlight });
+                setHighlightedTaskId(taskIdToHighlight);
+                
+                globalStorage.removeItem(highlightKey);
+
+                setTimeout(() => {
+                    setHighlightedTaskId(null);
+                }, 2000);
+            }
+        }
+    }, [isActive, isLoaded]);
 
     const { execute: executeSave, status: saveStatus, error: saveError } = useAsyncAction({
         useToast: false,
@@ -383,6 +411,7 @@ export const TodayScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
                                     onDelete={handleDelete}
                                     projectsStructure={projectsStructure}
                                     onMove={handleMove}
+                                    isHighlighted={highlightedTaskId === task.id}
                                 />
                             ))}
                         </AnimatePresence>
