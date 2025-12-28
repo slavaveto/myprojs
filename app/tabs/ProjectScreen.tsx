@@ -139,9 +139,13 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
       >
          <div className="flex-grow w-full max-w-5xl mx-auto flex flex-col px-[50px] py-6 min-h-0">
              <div className="flex justify-between items-center mb-4 min-h-[40px]">
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-3">
+                <div 
+                    className="w-5 h-5 rounded-full flex-shrink-0 shadow-sm border border-white/10" 
+                    style={{ backgroundColor: project.color || '#3b82f6' }}
+                />
                 <h1 className="text-2xl font-bold">{project.title}</h1>
-                <EditProjectPopover 
+                <EditProjectPopover  
                     initialTitle={project.title}
                     initialColor={project.color}
                     onUpdate={handleEditProject}
