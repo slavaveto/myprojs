@@ -61,7 +61,7 @@ export const LogsScreen = ({ onReady, isActive, canLoad, texts, showToast = true
 
      const fetchLogs = async () => {
          const { data, error } = await supabase
-            .from('logs')
+            .from('_logs')
             .select('*')
             .order('created_at', { ascending: false })
             .limit(100);

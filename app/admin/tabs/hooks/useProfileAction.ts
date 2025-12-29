@@ -5,10 +5,12 @@ import { useAsyncAction } from '@/utils/supabase/useAsyncAction';
 import { createLogger } from '@/utils/logger/Logger';
 
 const logger = createLogger('ProfileActions');
+const TABLE_NAME = '_profiles';
 
 export function useProfileAction() {
   const { supabase } = useSupabase();
   const { log } = useAudit();
+
 
   const { execute: executeUpdate, status: updateStatus } = useAsyncAction({
      useToast: false, 
@@ -20,7 +22,7 @@ export function useProfileAction() {
       if (!username) return true; // Пустой - ок (или не ок? допустим пока валидация на пустоту отдельно)
       
       const { data } = await supabase
-         .from('profiles')
+         .from(TABLE_NAME)
          .select('user_id')
          .eq('username', username)
          .neq('user_id', currentUserId)
@@ -41,7 +43,7 @@ export function useProfileAction() {
 
         // 2. Обновление
         const { error } = await supabase
-           .from('profiles')
+           .from(TABLE_NAME)
            .update({
               ...updates,
               updated_at: new Date().toISOString()

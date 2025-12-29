@@ -4,7 +4,7 @@ import { useAsyncAction } from '@/utils/supabase/useAsyncAction';
 import { createLogger } from '@/utils/logger/Logger';
 
 const logger = createLogger('UserActions');
-const TABLE_NAME = 'users';
+const TABLE_NAME = '_users';
 
 export function useUserActions() {
   const { supabase } = useSupabase();
