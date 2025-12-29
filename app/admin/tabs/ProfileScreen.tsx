@@ -16,6 +16,7 @@ import { AdminUserMenu, triggerProfileUpdate } from '@/app/admin/AdminUserMenu';
 import { motion } from 'framer-motion';
 import { AvatarCropper } from '@/app/admin/tabs/components/AvatarCropper';
 import { AvatarCamera } from '@/app/admin/tabs/components/AvatarCamera';
+import { profileService } from '@/app/admin/_services/profileService';
 
 
 const UPLOAD_CONFIG = {
@@ -59,23 +60,17 @@ export const ProfileScreen = ({ onReady, isActive, canLoad, texts, showToast = t
       if (!user) return;
       try {
          logger.info('Fetching profile for user', { userId: user.id });
-         const { data, error } = await supabase
-            .from('profiles')
-            .select('username, full_name, avatar_url')
-            .eq('user_id', user.id)
-            .single();
+         const data = await profileService.getProfile(supabase, user.id);
 
-         if (error) {
-            logger.error('Error fetching profile', error);
-         } else if (data) {
+         if (data) {
             setUsername(data.username || '');
             setFullName(data.full_name || '');
             setInitialUsername(data.username || '');
             setInitialFullName(data.full_name || '');
-            setInitialUrl(data.avatar_url);
+            setInitialUrl(data.avatar_url || null);
          }
       } catch (err) {
-         logger.error('Unexpected error fetching profile', err);
+         logger.error('Error fetching profile', err);
       }
    };
 

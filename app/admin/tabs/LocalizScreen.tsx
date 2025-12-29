@@ -14,6 +14,7 @@ import { SortableRow } from './components/SortableRow';
 import { useAsyncAction } from '@/utils/supabase/useAsyncAction';
 import { StatusBadge } from '@/utils/supabase/StatusBadge';
 import { useLocalizActions } from '@/app/admin/tabs/hooks/useLocalizActions';
+import { localizationService } from '@/app/admin/_services/localizationService';
 import { AdminUserMenu } from '@/app/admin/AdminUserMenu';
 
 // DnD Imports
@@ -44,7 +45,6 @@ import { PERMISSIONS } from '@/app/admin/_services/acl';
 
 const logger = createLogger('AdminLocalization');
 
-const TABLE_NAME = '_ui';
 
 const TABS = [
    { id: 'entry', label: 'Entry Screen' },
@@ -271,18 +271,9 @@ export const LocalizScreen = ({ onReady, isActive, canLoad, texts, showToast = t
       logger.start('Loading localization data');
 
       const fetchLoc = async () => {
-         const { data, error } = await supabase
-            .from(TABLE_NAME)
-            .select('*')
-            .order('sort_order', { ascending: true, nullsFirst: false })
-            .order('item_id', { ascending: true });
-
-         if (error) throw error;
-
-         if (data) {
-            setItems(data);
-            logger.success('Localization data loaded', { count: data.length });
-         }
+         const data = await localizationService.getAllItems(supabase);
+         setItems(data);
+         logger.success('Localization data loaded', { count: data.length });
       };
 
       if (isManualRefresh) {
@@ -431,12 +422,7 @@ export const LocalizScreen = ({ onReady, isActive, canLoad, texts, showToast = t
             const exists = items.find((i) => i.item_id === newValue && i !== item);
             if (exists) throw new Error(`ID "${newValue}" already exists locally`);
 
-            const { data: dbExists } = await supabase
-               .from(TABLE_NAME)
-               .select('item_id')
-               .eq('item_id', newValue)
-               .maybeSingle();
-
+            const dbExists = await localizationService.checkIdExists(supabase, newValue);
             if (dbExists) throw new Error(`ID "${newValue}" already exists in DB`);
          }
 

@@ -13,21 +13,10 @@ import toast from 'react-hot-toast';
 import { StatusBadge } from '@/utils/supabase/StatusBadge';
 import { useAsyncAction } from '@/utils/supabase/useAsyncAction';
 import { AdminUserMenu, profileUpdateEvent } from '@/app/admin/AdminUserMenu';
+import { userService, UserData } from '@/app/admin/_services/userService';
 
 const logger = createLogger('UsersScreen');
 
-interface UserData {
-  user_id: string;
-  username: string;
-  full_name?: string;
-  avatar_url?: string;
-  is_super_admin: boolean;
-  is_owner?: boolean;
-  email: string;
-  plan: string;
-  subscription_status: string;
-  created_at?: string;
-}
 
 interface UsersScreenProps {
    onReady?: () => void; 
@@ -135,38 +124,8 @@ export const UsersScreen = ({ onReady, isActive, canLoad, texts, showToast = tru
   const loadUsers = useCallback(async (isManualRefresh = false) => {
     setIsLoading(true);
     const fetchUsers = async () => {
-      // 1. Грузим юзеров
-      const { data: usersData, error: usersError } = await supabase.from('_users').select('*');
-      if (usersError) throw usersError;
-
-      if (!usersData || usersData.length === 0) {
-         setUsers([]);
-         return;
-      }
-
-      // 2. Грузим профили для этих юзеров
-      const userIds = usersData.map(u => u.user_id);
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('_profiles')
-        .select('user_id, username, full_name, avatar_url')
-        .in('user_id', userIds);
-        
-      if (profilesError) {
-         logger.error('Error fetching profiles', profilesError);
-      }
-
-      // 3. Склеиваем
-      const mappedData = usersData.map(u => {
-         const profile = profilesData?.find(p => p.user_id === u.user_id);
-         return {
-            ...u,
-            username: profile?.username || u.username || '-', // Приоритет профилю
-            full_name: profile?.full_name || '',
-            avatar_url: profile?.avatar_url
-         };
-      });
-
-      setUsers(mappedData);
+      const data = await userService.getAllUsers(supabase);
+      setUsers(data);
     };
 
     if (isManualRefresh) {
