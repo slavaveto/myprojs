@@ -710,8 +710,10 @@ export const LocalizScreen = ({ onReady, isActive, canLoad, texts, showToast = t
                         isIconOnly
                         variant="flat"
                         onPress={() => loadData(true)}
-                        isLoading={isLoading}
-                        className="shadow-lg bg-background/80 backdrop-blur-md border border-default-200"
+                        size="sm" 
+                  color="success"
+                  isLoading={isLoading} 
+                  className=""
                      >
                         <IconRefresh size={16} />
                      </Button>

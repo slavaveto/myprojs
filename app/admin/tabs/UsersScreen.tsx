@@ -251,7 +251,9 @@ export const UsersScreen = ({ onReady, isActive, canLoad, texts, showToast = tru
                                   variant="flat" 
                                   onPress={handleDryRunSync} 
                                   isLoading={isSyncing}
-                                  className="shadow-lg bg-background/80 backdrop-blur-md border border-default-200"
+                                  size="sm" 
+                  color="success"
+                  className=""
                               >
                                  <IconDownload size={16} />
                               </Button>
@@ -300,9 +302,12 @@ export const UsersScreen = ({ onReady, isActive, canLoad, texts, showToast = tru
                               </Popover>
                           </div>
 
-                   <Button isIconOnly variant="flat" onPress={() => loadUsers(true)} 
-                   isLoading={isLoading}
-                   className="shadow-lg bg-background/80 backdrop-blur-md border border-default-200"
+                   <Button isIconOnly variant="flat" 
+                   onPress={() => loadUsers(true)} 
+                   size="sm" 
+                   color="success"
+                   isLoading={isLoading} 
+                   className=""
                    >
                       <IconRefresh size={16} />
                    </Button>

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Project } from '@/app/types';
-import FlowPage from '@/app/tabs/docs/page';
+import FlowPage from '@/app/tabs/docs/FlowTab';
 import { createLogger } from '@/utils/logger/Logger';
 import { loadingService } from '@/app/_services/loadingLogsService';
 

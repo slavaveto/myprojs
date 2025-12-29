@@ -58,7 +58,7 @@ export const LogsScreen = ({ onReady, isActive, canLoad, texts, showToast = true
   const badgeError = refreshStatus === 'error' ? refreshError?.message : undefined;
   
   const loadLogs = async (isManualRefresh = false) => {
-     if (!isManualRefresh) setIsLoading(true);
+     setIsLoading(true);
 
      const fetchLogs = async () => {
          const data = await logService.getLogs(supabase, 100);
@@ -75,7 +75,7 @@ export const LogsScreen = ({ onReady, isActive, canLoad, texts, showToast = true
         }
      }
      
-     if (!isManualRefresh) setIsLoading(false);
+     setIsLoading(false);
      if (onReady) setTimeout(() => onReady(), 0);
   };
   
@@ -83,7 +83,7 @@ export const LogsScreen = ({ onReady, isActive, canLoad, texts, showToast = true
     if (canLoad) {
         loadLogs();
     }
-  }, [supabase, canLoad]);
+  }, [supabase, canLoad, isActive]);
 
   const filteredLogs = useMemo(() => {
     if (!searchQuery) return logs;
@@ -137,8 +137,10 @@ export const LogsScreen = ({ onReady, isActive, canLoad, texts, showToast = true
                     isIconOnly 
                     variant="flat" 
                     onPress={() => loadLogs(true)} 
-                    isLoading={isLoading}
-                    className="shadow-lg bg-background/80 backdrop-blur-md border border-default-200"
+                    size="sm" 
+                  color="success"
+                  isLoading={isLoading} 
+                  className=""
                  >
                     <IconRefresh size={16} />
                  </Button>

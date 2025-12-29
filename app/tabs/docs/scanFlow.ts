@@ -26,7 +26,7 @@ export async function scanFlowRefs(projectFolderName?: string): Promise<CodeRef[
       rootPath = path.join('/Users/me/Projs', projectFolderName);
   } else {
       // If scanning CURRENT project, ignore the docs folder to avoid self-scanning
-      ignorePatterns.push('app/docs/**');
+      ignorePatterns.push('app/tabs/docs/**');
   }
 
   // console.log('Scanning in:', rootPath);
@@ -46,7 +46,7 @@ export async function scanFlowRefs(projectFolderName?: string): Promise<CodeRef[
   
   for (const file of files) {
       // HARD STOP: ALWAYS skip docs folder to prevent self-scanning
-      if (file.includes('app/docs/')) {
+      if (file.includes('app/tabs/docs/')) {
           continue;
       }
 

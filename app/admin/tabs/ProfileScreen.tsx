@@ -147,12 +147,12 @@ export const ProfileScreen = ({ onReady, isActive, canLoad, texts, showToast = t
 
    const loadData = async (isManualRefresh = false) => {
       if (!isLoaded || !user) return;
-      if (!isManualRefresh) setIsLoading(true);
+      setIsLoading(true);
 
       if (isManualRefresh) await executeRefresh(fetchProfile);
       else await fetchProfile();
 
-      if (!isManualRefresh) setIsLoading(false);
+      setIsLoading(false);
       if (onReady) setTimeout(() => onReady(), 0);
    };
 
@@ -213,8 +213,12 @@ export const ProfileScreen = ({ onReady, isActive, canLoad, texts, showToast = t
                   />
                </div>
                <Button 
-                  isIconOnly variant="flat" onPress={() => loadData(true)} 
-                  isLoading={isLoading} className="shadow-lg bg-background/80 backdrop-blur-md border border-default-200"
+                  isIconOnly variant="flat" 
+                  onPress={() => loadData(true)} 
+                  size="sm" 
+                  color="success"
+                  isLoading={isLoading} 
+                  className=""
                >
                   <IconRefresh size={16} />
                </Button>

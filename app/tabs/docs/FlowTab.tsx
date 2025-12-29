@@ -9,12 +9,12 @@ import { RefreshCw, Code2, FileCode, ChevronRight, ScanSearch, Plus, LayoutList,
 import { clsx } from 'clsx';
 import toast from 'react-hot-toast';
 
-interface FlowPageProps {
+interface FlowTabProps {
     projectId: string;
     projectLocalPath?: string;
 }
 
-export default function FlowPage({ projectId, projectLocalPath }: FlowPageProps) {
+export default function FlowTab({ projectId, projectLocalPath }: FlowTabProps) {
   // --- Scan State ---
   const [scannedRefs, setScannedRefs] = useState<CodeRef[]>([]);
   const [scanLoading, setScanLoading] = useState(false);

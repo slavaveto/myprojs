@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { AppLoaderProvider, useAppLoader } from '@/app/AppLoader';
 import { ProjectScreen } from '@/app/tabs/ProjectScreen';
-import { DocsScreen } from '@/app/tabs/DocsScreen';
+import { DocsScreen } from '@/app/tabs/docs/DocsScreen';
 import { CreateItemPopover } from '@/app/components/CreateItem';
 import { LogsScreen } from '@/app/tabs/LogsScreen';
 import { DoneScreen } from '@/app/tabs/DoneScreen';
