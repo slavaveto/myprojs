@@ -25,7 +25,7 @@ try {
     console.error('Failed to initialize Google Cloud Storage:', error);
 }
 
-const bucketName = process.env.GOOGLE_CLOUD_BUCKET_NAME || 'videorooms_app';
+const bucketName = process.env.GOOGLE_CLOUD_BUCKET_NAME || 'myprojs_app';
 
 export async function POST(req: Request) {
     try {

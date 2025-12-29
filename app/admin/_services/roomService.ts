@@ -2,7 +2,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { createLogger } from '@/utils/logger/Logger';
 
 const logger = createLogger('RoomService');
-const TABLE_NAME = 'rooms'; // Таблицу комнат мы не переименовывали в _rooms?
+const TABLE_NAME = 'rooms'; 
 
 // Если переименовывали, нужно поменять на '_rooms'.
 // Пока оставляю 'rooms', как было в коде, но слежу за твоей реакцией.

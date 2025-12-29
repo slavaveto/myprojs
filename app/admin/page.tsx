@@ -15,7 +15,7 @@ import { useUser, useClerk } from '@clerk/nextjs';
 import clsx from 'clsx';
 import { useAdminLoader } from './AdminLoader';
 import { createLogger } from '@/utils/logger/Logger';
-import { adminLoadingService } from '@/app/admin/_services/adminLoadingService';
+import { adminLoadingService } from '@/app/admin/_services/loadingLogsService';
 import { globalStorage } from '@/utils/storage';
 import { TabId, AdminTabConfig } from './types';
 import { MobileLayout } from './MobileLayout';
