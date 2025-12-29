@@ -204,8 +204,9 @@ export default function FlowTab({ projectId, projectLocalPath, projectTitle, pro
                     <div className="flex flex-col gap-1">
                         <span className="font-semibold text-sm text-gray-900">Code References</span>
                         <div className="flex gap-3 text-[10px] uppercase font-bold tracking-wider">
-                            <span className="text-gray-500">Found: {scannedRefs.length}</span>
+                            <span className="text-gray-500">Total: {scannedRefs.length}</span>
                             <span className="text-green-600">New: {scannedRefs.filter(r => !steps.some(s => s.ref_id === r.id)).length}</span>
+                            <span className="text-blue-600">Added: {scannedRefs.filter(r => steps.some(s => s.ref_id === r.id)).length}</span>
                         </div>
                     </div>
                     <Button size="sm" isIconOnly variant="light" onPress={loadRefs} isLoading={scanLoading} className="text-gray-500 hover:text-gray-900">
