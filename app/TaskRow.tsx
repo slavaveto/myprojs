@@ -163,7 +163,7 @@ export const TaskRow = React.memo(
             // Delay update to allow animation to play
             setTimeout(() => {
                onUpdate(task.id, { is_completed: true });
-            }, 400);
+            }, 600);
          } else {
             // Uncheck immediately
             onUpdate(task.id, { is_completed: false });
