@@ -150,6 +150,25 @@ export const TaskRow = React.memo(
       onOpenMenu
    }: TaskRowProps) => {
       const [isHovered, setIsHovered] = React.useState(false);
+      const [optimisticCompleted, setOptimisticCompleted] = React.useState(task.is_completed);
+
+      React.useEffect(() => {
+         setOptimisticCompleted(task.is_completed);
+      }, [task.is_completed]);
+
+      const handleCheckboxChange = (isSelected: boolean) => {
+         setOptimisticCompleted(isSelected);
+         
+         if (isSelected) {
+            // Delay update to allow animation to play
+            setTimeout(() => {
+               onUpdate(task.id, { is_completed: true });
+            }, 400);
+         } else {
+            // Uncheck immediately
+            onUpdate(task.id, { is_completed: false });
+         }
+      };
 
       const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
          id: task.id,
@@ -232,8 +251,8 @@ export const TaskRow = React.memo(
 
                {!isGroup && !isNote && (
                   <FastCheckbox
-                     isSelected={task.is_completed}
-                     onValueChange={(isSelected) => onUpdate(task.id, { is_completed: isSelected })}
+                     isSelected={optimisticCompleted}
+                     onValueChange={handleCheckboxChange}
                      className={clsx('mr-1 ml-0')}
                      size="sm"
                   />
