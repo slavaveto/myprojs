@@ -2,7 +2,8 @@ import { useState, useCallback } from 'react';
 import { createLogger } from '@/utils/logger/Logger';
 import { triggerAvatarUpdate, triggerProfileUpdate } from '@/app/admin/AdminUserMenu';
 import toast from 'react-hot-toast';
-import { useAudit } from '@/app/admin/_services/useAudit';
+import { logService } from '@/app/admin/_services/logService';
+import { useSupabase } from '@/utils/supabase/useSupabase';
 
 const logger = createLogger('useAvatarUpload');
 
@@ -11,6 +12,7 @@ export function useAvatarUpload(
     onUploadComplete?: () => void,
 
 ) {
+   const { supabase, userId: currentUserId } = useSupabase();
    const [avatarUrl, setAvatarUrl] = useState<string | null>(initialAvatarUrl);
    const [prevAvatarUrl, setPrevAvatarUrl] = useState<string | null>(initialAvatarUrl);
    
@@ -18,8 +20,6 @@ export function useAvatarUpload(
    const [isDeleting, setIsDeleting] = useState(false);
    const [uploadSuccess, setUploadSuccess] = useState(false);
    
-   const { log } = useAudit();
-
    // Crop State
    const [cropModalOpen, setCropModalOpen] = useState(false);
    const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
@@ -60,11 +60,14 @@ export function useAvatarUpload(
           if (onUploadComplete) onUploadComplete();
           triggerAvatarUpdate(); // Обновляем аватарку в хедере
 
-          log({
-             action: 'PROFILE_UPDATE',
-             entity: 'profile',
-             details: { event: 'avatar-upload', success: true }
-          });
+          if (currentUserId) {
+            await logService.logAction(supabase, {
+               action: 'PROFILE_UPDATE',
+               entity: 'profile',
+               details: { event: 'avatar-upload', success: true },
+               userId: currentUserId
+            });
+          }
 
           setTimeout(() => {
              setUploadSuccess(false);
@@ -76,7 +79,7 @@ export function useAvatarUpload(
           setAvatarUrl(prevAvatarUrl);
           setIsUploading(false);
       }
-   }, [avatarUrl, prevAvatarUrl, onUploadComplete, log]);
+   }, [avatarUrl, prevAvatarUrl, onUploadComplete, currentUserId, supabase]);
 
 
    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -162,11 +165,14 @@ export function useAvatarUpload(
           setPrevAvatarUrl(null);
           // Keep isDeleting=true during the small delay to prevent hover flickering
           
-          log({
-             action: 'PROFILE_UPDATE',
-             entity: 'profile',
-             details: { event: 'avatar_delete', success: true }
-          });
+          if (currentUserId) {
+            await logService.logAction(supabase, {
+               action: 'PROFILE_UPDATE',
+               entity: 'profile',
+               details: { event: 'avatar_delete', success: true },
+               userId: currentUserId
+            });
+          }
 
           // Small delay before checkmark
           setTimeout(() => {
@@ -186,7 +192,7 @@ export function useAvatarUpload(
           toast.error('Failed to delete avatar');
           setIsDeleting(false);
       }
-   }, [onUploadComplete, log]);
+   }, [onUploadComplete, currentUserId, supabase]);
 
    const setInitialUrl = useCallback((url: string | null) => {
        if (!isUploading && !isDeleting) {

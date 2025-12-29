@@ -8,7 +8,7 @@ import { ThemeProvider } from '@/utils/providers/ThemeProvider';
 import { MyClerkProvider } from '@/utils/providers/ClerkProvider';
 import { Toaster } from 'react-hot-toast';
 import { headers } from 'next/headers';
-import { supabase } from '@/utils/supabase/supabaseClient'; // Добавлено
+import { supabase } from '@/utils/supabase/supabaseClient';
 import { LocalizationProvider } from '@/utils/providers/localization/LocalizationProvider';
 import GlobalToggles from '@/utils/providers/GlobalToggles';
 import clsx from 'clsx';
