@@ -719,7 +719,7 @@ function LoaderOverlay() {
             isLoading ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
          )}
       >
-         <Spinner size="lg" label="Loading Workspace..." color="primary" />
+         <Spinner size="lg"  color="primary" />
       </div>
    );
 }

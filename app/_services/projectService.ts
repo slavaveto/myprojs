@@ -86,7 +86,7 @@ export const projectService = {
         
         // 1. Get BEFORE
         const { data: beforeState, error: fetchError } = await supabase
-            .from('projects')
+            .from(DB_TABLES.PROJECTS)
             .select('*')
             .eq('id', id)
             .single();
@@ -103,7 +103,7 @@ export const projectService = {
 
         // 3. Update
         const { data: afterState, error } = await supabase
-            .from('projects')
+            .from(DB_TABLES.PROJECTS)
             .update({
                 ...updates,
                 updated_at: new Date().toISOString()
@@ -134,7 +134,7 @@ export const projectService = {
         
         // Get BEFORE
         const { data: beforeState, error: fetchError } = await supabase
-            .from('projects')
+            .from(DB_TABLES.PROJECTS)
             .select('*')
             .eq('id', id)
             .single();
@@ -142,7 +142,7 @@ export const projectService = {
 
         // 1. Get all folders to find tasks
         const { data: folders } = await supabase
-            .from('folders')
+            .from(DB_TABLES.FOLDERS)
             .select('id')
             .eq('project_id', id);
             
@@ -151,7 +151,7 @@ export const projectService = {
             
             // 2. Soft delete tasks
             const { error: taskError } = await supabase
-                .from('tasks')
+                .from(DB_TABLES.TASKS)
                 .update({ 
                     is_deleted: true, 
                     folder_id: null,
@@ -163,7 +163,7 @@ export const projectService = {
             
             // 3. Delete folders
             const { error: foldersError } = await supabase
-                .from('folders')
+                .from(DB_TABLES.FOLDERS)
                 .delete()
                 .in('id', folderIds);
                 
@@ -172,7 +172,7 @@ export const projectService = {
 
         // 4. Delete project
         const { error } = await supabase
-            .from('projects')
+            .from(DB_TABLES.PROJECTS)
             .delete()
             .eq('id', id);
             
@@ -206,7 +206,7 @@ export const projectService = {
         await Promise.all(
             updates.map(u => 
                 supabase
-                    .from('projects')
+                    .from(DB_TABLES.PROJECTS)
                     .update({
                         sort_order: u.sort_order
                         // updated_at: now // REMOVED

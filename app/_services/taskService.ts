@@ -3,6 +3,8 @@ import { Task } from '@/app/types';
 import { logService } from './logService';
 import { BaseActions, EntityTypes, TaskUpdateTypes, BaseActionType } from './actions';
 import { createLogger } from '@/utils/logger/Logger';
+import { DB_TABLES } from '@/utils/supabase/db_tables';
+
 
 const logger = createLogger('TaskService');
 
@@ -11,7 +13,7 @@ export const taskService = {
     async getTasks(projectId: string) {
         logger.info('Fetching tasks...', { projectId });
         const { data, error } = await supabase
-            .from('tasks')
+            .from(DB_TABLES.TASKS)
             .select('*, folders!inner(project_id)')
             .eq('folders.project_id', projectId)
             .or('is_deleted.eq.false,is_deleted.is.null')
@@ -34,7 +36,7 @@ export const taskService = {
         // 1. Fetch Logs first to get accurate completion times
         // We only care about logs for 'task' entity where action is 'complete' or 'delete' (if showDeleted)
         let logQuery = supabase
-            .from('logs')
+            .from(DB_TABLES.LOGS)
             .select('entity_id, created_at, action')
             .eq('entity', 'task')
             .order('created_at', { ascending: false }); // Newest logs first
@@ -68,7 +70,7 @@ export const taskService = {
 
         // 2. Fetch Tasks
         let query = supabase
-            .from('tasks')
+            .from(DB_TABLES.TASKS)
             .select(`
                 *,
                 folders (
@@ -138,7 +140,7 @@ export const taskService = {
     async getTodayTasks() {
         logger.info('Fetching today tasks...');
         const { data, error } = await supabase
-            .from('tasks')
+            .from(DB_TABLES.TASKS)
             .select(`
                 *,
                 folders (
@@ -167,7 +169,7 @@ export const taskService = {
     async getInboxTasks() {
         logger.info('Fetching inbox tasks...');
         const { data, error } = await supabase
-            .from('tasks')
+            .from(DB_TABLES.TASKS)
             .select('*')
             .is('folder_id', null)
             .eq('is_completed', false)
@@ -186,7 +188,7 @@ export const taskService = {
     async getAllTasksShort() {
         logger.info('Fetching all tasks for search index...');
         const { data, error } = await supabase
-            .from('tasks')
+            .from(DB_TABLES.TASKS)
             .select(`
                 id,
                 content,
@@ -219,7 +221,7 @@ export const taskService = {
         
         // Find min sort order
         const { data: minTask } = await supabase
-            .from('tasks')
+            .from(DB_TABLES.TASKS)
             .select('sort_order')
             .eq('folder_id', folderId)
             .order('sort_order', { ascending: true })
@@ -240,7 +242,7 @@ export const taskService = {
     async createTask(folderId: string | null, content: string, sort_order: number) {
         logger.info('Creating task', { content, folderId });
         const { data, error } = await supabase
-            .from('tasks')
+            .from(DB_TABLES.TASKS)
             .insert({
                 folder_id: folderId,
                 content,
@@ -272,7 +274,7 @@ export const taskService = {
         logger.info('Updating task', { id, updates });
         // 1. Get BEFORE state
         const { data: beforeState, error: fetchError } = await supabase
-            .from('tasks')
+            .from(DB_TABLES.TASKS)
             .select('*')
             .eq('id', id)
             .single();
@@ -300,7 +302,7 @@ export const taskService = {
 
         // 3. Perform UPDATE
         const { data: afterState, error } = await supabase
-            .from('tasks')
+            .from(DB_TABLES.TASKS)
             .update({
                 ...updates,
                 updated_at: new Date().toISOString()
@@ -334,7 +336,7 @@ export const taskService = {
         logger.info('Restoring task', { id });
         // Special restore to top
         const { data: task, error: taskError } = await supabase
-            .from('tasks')
+            .from(DB_TABLES.TASKS)
             .select('folder_id, content')
             .eq('id', id)
             .single();
@@ -342,7 +344,7 @@ export const taskService = {
         if (taskError) throw taskError;
         
         const { data: minTask } = await supabase
-            .from('tasks')
+            .from(DB_TABLES.TASKS)
             .select('sort_order')
             .eq('folder_id', task.folder_id)
             .or('is_completed.eq.false,is_completed.is.null')
@@ -353,11 +355,11 @@ export const taskService = {
         const minOrder = minTask ? minTask.sort_order : 0;
         
         // Get BEFORE
-        const { data: beforeState } = await supabase.from('tasks').select('*').eq('id', id).single();
+        const { data: beforeState } = await supabase.from(DB_TABLES.TASKS).select('*').eq('id', id).single();
 
         // Update
         const { data: afterState, error } = await supabase
-            .from('tasks')
+            .from(DB_TABLES.TASKS)
             .update({
                 is_completed: false,
                 is_deleted: false,
@@ -387,7 +389,7 @@ export const taskService = {
         logger.info('Deleting task', { id });
         // Get BEFORE
         const { data: beforeState, error: fetchError } = await supabase
-            .from('tasks')
+            .from(DB_TABLES.TASKS)
             .select('*')
             .eq('id', id)
             .single();
@@ -395,7 +397,7 @@ export const taskService = {
 
         // Soft delete
         const { data: afterState, error } = await supabase
-            .from('tasks')
+            .from(DB_TABLES.TASKS)
             .update({ 
                 is_deleted: true,
                 updated_at: new Date().toISOString()
@@ -433,7 +435,7 @@ export const taskService = {
         await Promise.all(
             updates.map(u => 
                 supabase
-                    .from('tasks')
+                    .from(DB_TABLES.TASKS)
                     .update({
                         sort_order: u.sort_order
                         // updated_at: now // REMOVED to preserve history

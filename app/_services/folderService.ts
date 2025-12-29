@@ -3,6 +3,8 @@ import { Folder } from '@/app/types';
 import { logService } from './logService';
 import { BaseActions, EntityTypes, FolderUpdateTypes } from './actions';
 import { createLogger } from '@/utils/logger/Logger';
+import { DB_TABLES } from '@/utils/supabase/db_tables';
+
 
 const logger = createLogger('FolderService');
 
@@ -10,7 +12,7 @@ export const folderService = {
     async getFolders(projectId: string) {
         logger.info('Fetching folders...', { projectId });
         const { data, error } = await supabase
-            .from('folders')
+            .from(DB_TABLES.FOLDERS)
             .select('*')
             .eq('project_id', projectId)
             .order('sort_order');
@@ -25,7 +27,7 @@ export const folderService = {
     async createFolder(projectId: string, title: string, sort_order: number) {
         logger.info('Creating folder', { title, projectId });
         const { data, error } = await supabase
-            .from('folders')
+            .from(DB_TABLES.FOLDERS)
             .insert({
                 project_id: projectId,
                 title,
@@ -56,7 +58,7 @@ export const folderService = {
         
         // 1. Get state BEFORE update
         const { data: beforeState, error: fetchError } = await supabase
-            .from('folders')
+            .from(DB_TABLES.FOLDERS)
             .select('*')
             .eq('id', id)
             .single();
@@ -68,7 +70,7 @@ export const folderService = {
 
         // 2. Perform UPDATE
         const { data: afterState, error } = await supabase
-            .from('folders')
+            .from(DB_TABLES.FOLDERS)
             .update({
                 ...updates,
                 updated_at: new Date().toISOString()
@@ -105,7 +107,7 @@ export const folderService = {
         
         // 1. Get state BEFORE delete
         const { data: folder, error: fetchError } = await supabase
-            .from('folders')
+            .from(DB_TABLES.FOLDERS)
             .select('*')
             .eq('id', id)
             .single();
@@ -114,7 +116,7 @@ export const folderService = {
 
         // 2. Soft delete tasks
         const { error: taskError } = await supabase
-            .from('tasks')
+            .from(DB_TABLES.TASKS)
             .update({ 
                 is_deleted: true, 
                 folder_id: null,
@@ -129,7 +131,7 @@ export const folderService = {
 
         // 3. Delete folder
         const { error } = await supabase
-            .from('folders')
+            .from(DB_TABLES.FOLDERS)
             .delete()
             .eq('id', id);
             
@@ -163,7 +165,7 @@ export const folderService = {
         await Promise.all(
             updates.map(u => 
                 supabase
-                    .from('folders')
+                    .from(DB_TABLES.FOLDERS)
                     .update({
                         sort_order: u.sort_order
                         // updated_at: now // REMOVED

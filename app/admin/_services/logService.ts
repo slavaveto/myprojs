@@ -57,7 +57,7 @@ export const logService = {
   async getLogs(supabase: SupabaseClient, limit = 100) {
       try {
         const { data, error } = await supabase
-            .from(DB_TABLES.LOGS)
+            .from(DB_TABLES.LOGS_ADMIN)
             .select('*')
             .order('created_at', { ascending: false })
             .limit(limit);

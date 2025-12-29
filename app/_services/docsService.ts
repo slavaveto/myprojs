@@ -1,4 +1,5 @@
 import { supabase } from '@/utils/supabase/supabaseClient';
+import { DB_TABLES } from '@/utils/supabase/db_tables';
 
 export interface DocFlow {
   id: string;
@@ -23,7 +24,7 @@ export interface DocStep {
 export const docsService = {
   async getFlows(projectId: string) {
     const { data, error } = await supabase
-      .from('docs_flows')
+      .from(DB_TABLES.DOCS_FLOWS)
       .select('*')
       .eq('project_id', projectId)
       .order('created_at', { ascending: true });
@@ -38,7 +39,7 @@ export const docsService = {
 
   async createFlow(projectId: string, title: string) {
     const { data, error } = await supabase
-      .from('docs_flows')
+      .from(DB_TABLES.DOCS_FLOWS)
       .insert({ project_id: projectId, title })
       .select()
       .single();
@@ -52,7 +53,7 @@ export const docsService = {
 
   async getSteps(flowId: string) {
     const { data, error } = await supabase
-      .from('docs_steps')
+      .from(DB_TABLES.DOCS_STEPS)
       .select('*')
       .eq('flow_id', flowId)
       .order('step_order', { ascending: true });
@@ -69,7 +70,7 @@ export const docsService = {
     // Fetch all steps for all flows in the project
     // Using inner join to filter by project_id
     const { data, error } = await supabase
-      .from('docs_steps')
+      .from(DB_TABLES.DOCS_STEPS)
       .select('*, docs_flows!inner(project_id)')
       .eq('docs_flows.project_id', projectId)
       .order('step_order', { ascending: true });
@@ -92,7 +93,7 @@ export const docsService = {
     };
 
     const { data, error } = await supabase
-      .from('docs_steps')
+      .from(DB_TABLES.DOCS_STEPS)
       .insert(dbPayload)
       .select()
       .single();
@@ -106,7 +107,7 @@ export const docsService = {
 
   async deleteStep(stepId: string) {
       const { error } = await supabase
-          .from('docs_steps')
+          .from(DB_TABLES.DOCS_STEPS)
           .delete()
           .eq('id', stepId);
       

@@ -1,4 +1,5 @@
 import { supabase } from '@/utils/supabase/supabaseClient';
+import { DB_TABLES } from '@/utils/supabase/db_tables';
 
 export interface LogEntry {
     id: string;
@@ -21,7 +22,7 @@ export const logService = {
         update_type?: string
     ) {
         const { error } = await supabase
-            .from('logs')
+            .from(DB_TABLES.LOGS)
             .insert({
                 action,
                 entity,
@@ -39,7 +40,7 @@ export const logService = {
 
     async getLogs(limit = 100, timeFilter = 'all', actionFilter = 'all') {
         let query = supabase
-            .from('logs')
+            .from(DB_TABLES.LOGS)
             .select('*');
 
         // Filter by Action
@@ -77,7 +78,7 @@ export const logService = {
     async fixMissingLogs(): Promise<{ count: number; error?: any }> {
         // 1. Get all completed or deleted tasks
         const { data: tasks, error } = await supabase
-            .from('tasks')
+            .from(DB_TABLES.TASKS)
             .select('id, content, is_completed, is_deleted, updated_at, folder_id')
             .or('is_completed.eq.true,is_deleted.eq.true');
 
@@ -88,7 +89,7 @@ export const logService = {
 
         // 2. Get existing logs for these tasks
         const { data: existingLogs } = await supabase
-            .from('logs')
+            .from(DB_TABLES.LOGS)
             .select('entity_id, action')
             .eq('entity', 'task')
             .in('entity_id', tasks.map(t => t.id));
@@ -138,7 +139,7 @@ export const logService = {
             // Insert in batches of 100
             for (let i = 0; i < newLogs.length; i += 100) {
                 const batch = newLogs.slice(i, i + 100);
-                await supabase.from('logs').insert(batch);
+                await supabase.from(DB_TABLES.LOGS).insert(batch);
             }
         }
 
