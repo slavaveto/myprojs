@@ -27,6 +27,7 @@ interface TaskRowProps {
    projectsStructure?: any[];
    onMove?: (taskId: string, projectId: string, folderId: string) => void;
    currentProjectId?: string;
+   onOpenMenu?: (taskId: string, e: React.MouseEvent | React.TouchEvent) => void;
 }
 
 // Group Colors Palette (Restored for More menu)
@@ -53,6 +54,7 @@ const GapRow = ({
    attributes,
    listeners,
    onDelete,
+   onOpenMenu, // Receive onOpenMenu
 }: any) => {
    const { active } = useDndContext();
    const isAnyDragging = !!active;
@@ -86,22 +88,24 @@ const GapRow = ({
    }
 
    return (
-      <TaskContextMenu 
-         task={task} 
-         onDelete={onDelete} 
-         items={{ delete: true }}
+      // Context menu handler removed from wrapper. 
+      // We will handle onContextMenu on the row itself if needed, or rely on parent.
+      // Actually, for consistency, we can add onContextMenu to the div.
+      <motion.div
+         ref={setNodeRef}
+         style={style}
+         data-task-row={task.id}
+         className={gapClassName}
+         layout
+         initial={task.isNew ? { opacity: 0, height: 0 } : false}
+         animate={{ opacity: 1, height: 12 }}
+         exit={{ opacity: 0, height: 0 }}
+         transition={{ duration: 0.2 }}
+         onContextMenu={(e) => {
+            e.preventDefault();
+            onOpenMenu?.(task.id, e);
+         }}
       >
-         <motion.div
-            ref={setNodeRef}
-            style={style}
-            data-task-row={task.id}
-            className={gapClassName}
-            layout
-            initial={task.isNew ? { opacity: 0, height: 0 } : false}
-            animate={{ opacity: 1, height: 12 }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
-         >
             {/* Icon visible ONLY on ICON AREA hover, dragging SELF */}
             <div
                className={clsx(
@@ -125,7 +129,7 @@ const GapRow = ({
                onMouseLeave={() => setIsIconHovered(false)}
             />
          </motion.div>
-      </TaskContextMenu>
+      // </TaskContextMenu>
    );
 };
 
@@ -142,7 +146,8 @@ export const TaskRow = React.memo(
       activeGroupColor,
       projectsStructure,
       onMove,
-      currentProjectId
+      currentProjectId,
+      onOpenMenu
    }: TaskRowProps) => {
       const [isHovered, setIsHovered] = React.useState(false);
 
@@ -171,6 +176,7 @@ export const TaskRow = React.memo(
                attributes={attributes}
                listeners={listeners}
                onDelete={onDelete}
+               onOpenMenu={onOpenMenu} // Pass it down
             />
          );
       }
@@ -279,36 +285,17 @@ export const TaskRow = React.memo(
                   </>
                )}
 
-               <Dropdown placement="bottom-end">
-                  <DropdownTrigger>
-                     <button
-                        className="opacity-100 p-[0px] group-hover:opacity-100 text-default-400 cursor-pointer hover:text-default-600 rounded transition-all outline-none"
-                        aria-label="Task settings"
-                     >
-                        <MoreVertical size={16} />
-                     </button>
-                  </DropdownTrigger>
-                  <DropdownMenu aria-label="Task Actions">
-                     {TaskMenuItems({
-                        task,
-                        onUpdate,
-                        onDelete,
-                        onAddGap,
-                        onMove,
-                        projectsStructure,
-                        isInsideGroup: !!activeGroupColor,
-                        currentProjectId,
-                        items: {
-                           delete: true,
-                           makeGap: true,
-                           makeGroup: true,
-                           today: true,
-                           move: true,
-                           styles: true
-                        }
-                     })}
-                  </DropdownMenu>
-               </Dropdown>
+               <button
+                  className="opacity-100 p-[0px] group-hover:opacity-100 text-default-400 cursor-pointer hover:text-default-600 rounded transition-all outline-none"
+                  aria-label="Task settings"
+                  onClick={(e) => {
+                     e.stopPropagation();
+                     // Use specific event type casting if needed or let React handle it
+                     onOpenMenu?.(task.id, e); 
+                  }}
+               >
+                  <MoreVertical size={16} />
+               </button>
             </div>
          </>
       );
@@ -327,45 +314,31 @@ export const TaskRow = React.memo(
       }
 
       return (
-         <TaskContextMenu
-            task={task}
-            onDelete={onDelete}
-            onAddGap={onAddGap}
-            onUpdate={onUpdate}
-            onMove={onMove}
-            projectsStructure={projectsStructure}
-            isInsideGroup={!!activeGroupColor}
-            currentProjectId={currentProjectId}
-            items={{
-               delete: true,
-               makeGap: true,
-               makeGroup: true,
-               styles: true,
-               today: true,
-               move: true
+         // Removed TaskContextMenu wrapper
+         <motion.div
+            ref={setNodeRef}
+            // style={{ ...style, ...borderStyle }}
+            style={{ ...style }}
+            data-task-row={task.id}
+            className={className}
+            layout
+            initial={task.isNew ? { opacity: 0, height: 0 } : false}
+            animate={{
+               opacity: 1,
+               height: 'auto',
+               backgroundColor: isHighlighted ? 'var(--heroui-primary-100)' : groupBackgroundColor,
+            }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            onContextMenu={(e) => {
+               e.preventDefault();
+               onOpenMenu?.(task.id, e);
             }}
          >
-            <motion.div
-               ref={setNodeRef}
-               // style={{ ...style, ...borderStyle }}
-               style={{ ...style }}
-               data-task-row={task.id}
-               className={className}
-               layout
-               initial={task.isNew ? { opacity: 0, height: 0 } : false}
-               animate={{
-                  opacity: 1,
-                  height: 'auto',
-                  backgroundColor: isHighlighted ? 'var(--heroui-primary-100)' : groupBackgroundColor,
-               }}
-               exit={{ opacity: 0, height: 0 }}
-               transition={{ duration: 0.2 }}
-            >
-               {content}
+            {content}
 
-               {/* Dropdown removed, moved to TaskContextMenu */}
-            </motion.div>
-         </TaskContextMenu>
+            {/* Dropdown removed, moved to TaskContextMenu */}
+         </motion.div>
       );
    }
 );
