@@ -5,7 +5,11 @@ import type { UIElement, CachedData, Language } from './types';
 import { createLogger } from '@/utils/logger/Logger';
 import { storage, globalStorage } from '@/utils/storage';
 
-const TABLE_NAME = '_ui';
+import { DB_TABLES } from '@/utils/supabase/db_tables';
+
+const CACHE_KEY = 'ui-elements-cache';
+const CACHE_VERSION_KEY = 'ui-elements-version';
+const CACHE_DURATION = 1000 * 60 * 60 * 24; // 24 hours
 
 // ВРЕМЕННЫЙ ФЛАГ: установи false когда настроишь триггер updated_at в БД
 const FORCE_LOAD_FROM_DB = false;
@@ -22,7 +26,7 @@ export function useUIElements() {
 
    const loadUITable = async () => {
       try {
-         const cacheKey = `ui_${TABLE_NAME}`;
+         const cacheKey = `ui_${DB_TABLES.UI}`;
          const cached = typeof window !== 'undefined' ? globalStorage.getItem(cacheKey) : null;
 
          let shouldLoadFromDB = true;
@@ -39,7 +43,7 @@ export function useUIElements() {
 
             // Проверяем актуальность кэша
             const { data: dbTimestamps } = await supabase
-               .from(TABLE_NAME)
+               .from(DB_TABLES.UI)
                .select('item_id, updated_at');
 
             if (dbTimestamps) {
@@ -65,7 +69,7 @@ export function useUIElements() {
 
                   const itemIds = outdatedItems.map((item) => item.item_id);
                   const { data: freshData } = await supabase
-                     .from(TABLE_NAME)
+                     .from(DB_TABLES.UI)
                      .select('*')
                      .in('item_id', itemIds);
 
@@ -100,7 +104,7 @@ export function useUIElements() {
             // Загружаем все данные
             logger.start('Загрузка UI из БД (кэш отсутствует или устарел)');
 
-            const { data, error } = await supabase.from(TABLE_NAME).select('*');
+            const { data, error } = await supabase.from(DB_TABLES.UI).select('*');
 
             if (data && !error) {
                setUIData(data);

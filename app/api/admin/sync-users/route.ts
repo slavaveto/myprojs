@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     }
     
     const { data: caller } = await supabaseAdmin
-        .from('users')
+        .from(DB_TABLES.USERS)
         .select('is_super_admin')
         .eq('user_id', userId)
         .single();
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
 
             // 2. Проверяем, занят ли такой username
             const { data: collision } = await supabaseAdmin
-                .from('profiles')
+                .from(DB_TABLES.PROFILES)
                 .select('user_id')
                 .eq('username', candidateName)
                 .maybeSingle();
@@ -88,7 +88,7 @@ export async function POST(req: Request) {
 
         // 1. Проверяем существование пользователя в базе
         const { data: existingUser } = await supabaseAdmin
-            .from('users')
+            .from(DB_TABLES.USERS)
             .select('user_id')
             .eq('user_id', user.id)
             .single();
@@ -99,12 +99,12 @@ export async function POST(req: Request) {
                 stats.toCreate.push(`${fullName || finalUsername} (${primaryEmail})`);
             } else {
                 // Реальное создание
-                await supabaseAdmin.from('users').insert({
+                await supabaseAdmin.from(DB_TABLES.USERS).insert({
                     user_id: user.id,
                     email: primaryEmail,
                 });
                 
-                await supabaseAdmin.from('profiles').insert({
+                await supabaseAdmin.from(DB_TABLES.PROFILES).insert({
                     user_id: user.id,
                     username: finalUsername,
                     full_name: fullName,
@@ -117,7 +117,7 @@ export async function POST(req: Request) {
 
         // 2. Пользователь есть -> UPDATE (проверяем профиль)
         const { data: existingProfile } = await supabaseAdmin
-            .from('profiles')
+            .from(DB_TABLES.PROFILES)
             .select('user_id, full_name')
             .eq('user_id', user.id)
             .single();
@@ -141,10 +141,10 @@ export async function POST(req: Request) {
                 stats.toUpdate.push(`${fullName || finalUsername} (${primaryEmail})`);
             } else {
                 if (existingProfile) {
-                    await supabaseAdmin.from('profiles').update(updates).eq('user_id', user.id);
+                    await supabaseAdmin.from(DB_TABLES.PROFILES).update(updates).eq('user_id', user.id);
                 } else {
                     // Если профиля не было совсем, создаем
-                    await supabaseAdmin.from('profiles').insert({
+                    await supabaseAdmin.from(DB_TABLES.PROFILES).insert({
                         user_id: user.id,
                         username: finalUsername,
                         full_name: fullName,
@@ -160,7 +160,7 @@ export async function POST(req: Request) {
     // Находим юзеров в Supabase, которых нет в Clerk
     // Важно: не удаляем текущего админа (себя)
     const { data: allSupabaseUsers } = await supabaseAdmin
-        .from('users')
+        .from(DB_TABLES.USERS)
         .select('user_id, email, is_super_admin');
 
     if (allSupabaseUsers) {
@@ -171,9 +171,9 @@ export async function POST(req: Request) {
                     stats.toDelete.push(`${dbUser.email || dbUser.user_id}`);
                 } else {
                     // Удаляем профиль явно (на случай отсутствия каскада)
-                    await supabaseAdmin.from('profiles').delete().eq('user_id', dbUser.user_id);
+                    await supabaseAdmin.from(DB_TABLES.PROFILES).delete().eq('user_id', dbUser.user_id);
                     // Удаляем юзера
-                    await supabaseAdmin.from('users').delete().eq('user_id', dbUser.user_id);
+                    await supabaseAdmin.from(DB_TABLES.USERS).delete().eq('user_id', dbUser.user_id);
                     stats.deleted++;
                 }
             }

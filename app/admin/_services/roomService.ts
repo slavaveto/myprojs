@@ -1,11 +1,8 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { createLogger } from '@/utils/logger/Logger';
+import { DB_TABLES } from '@/utils/supabase/db_tables';
 
 const logger = createLogger('RoomService');
-const TABLE_NAME = 'rooms'; 
-
-// Если переименовывали, нужно поменять на '_rooms'.
-// Пока оставляю 'rooms', как было в коде, но слежу за твоей реакцией.
 
 export interface Room {
   room_id: string;
@@ -23,7 +20,7 @@ export const roomService = {
   // --- READ ---
   async getRooms(supabase: SupabaseClient, userId: string) {
     const { data, error } = await supabase
-      .from(TABLE_NAME)
+      .from(DB_TABLES.ROOMS)
       .select('room_id, room_title, sort_order, is_section, is_active')
       .eq('user_id', userId)
       .order('sort_order', { ascending: true });
@@ -34,7 +31,7 @@ export const roomService = {
 
   async checkRoomIdExists(supabase: SupabaseClient, roomId: string): Promise<boolean> {
     const { data } = await supabase
-        .from(TABLE_NAME)
+        .from(DB_TABLES.ROOMS)
         .select('room_id')
         .eq('room_id', roomId)
         .maybeSingle();
@@ -43,13 +40,13 @@ export const roomService = {
 
   // --- WRITE ---
   async createRoom(supabase: SupabaseClient, room: Partial<Room>) {
-    const { error } = await supabase.from(TABLE_NAME).insert(room);
+    const { error } = await supabase.from(DB_TABLES.ROOMS).insert(room);
     if (error) throw error;
   },
 
   async updateRoom(supabase: SupabaseClient, roomId: string, updates: Partial<Room>) {
     const { error } = await supabase
-      .from(TABLE_NAME)
+      .from(DB_TABLES.ROOMS)
       .update({
         ...updates,
         // created_at обычно не меняют при апдейте, но если есть updated_at - можно добавить
@@ -61,7 +58,7 @@ export const roomService = {
 
   async deleteRoom(supabase: SupabaseClient, roomId: string) {
     const { error } = await supabase
-      .from(TABLE_NAME)
+      .from(DB_TABLES.ROOMS)
       .delete()
       .eq('room_id', roomId);
     
@@ -72,7 +69,7 @@ export const roomService = {
   async updateSortOrders(supabase: SupabaseClient, updates: { room_id: string; sort_order: number }[]) {
      const promises = updates.map(u => 
         supabase
-           .from(TABLE_NAME)
+           .from(DB_TABLES.ROOMS)
            .update({ sort_order: u.sort_order })
            .eq('room_id', u.room_id)
      );

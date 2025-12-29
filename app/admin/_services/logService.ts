@@ -1,8 +1,8 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { createLogger } from '@/utils/logger/Logger';
+import { DB_TABLES } from '@/utils/supabase/db_tables';
 
 const logger = createLogger('AdminLogService');
-const TABLE_NAME = '_logs';
 
 export type LogAction = 
   | 'ROOM_CREATE' 
@@ -35,7 +35,7 @@ export const logService = {
 
     try {
       // Fire and forget
-      const { error } = await supabase.from(TABLE_NAME).insert({
+      const { error } = await supabase.from(DB_TABLES.LOGS).insert({
         user_id: params.userId,
         action: params.action,
         entity: params.entity,
@@ -57,7 +57,7 @@ export const logService = {
   async getLogs(supabase: SupabaseClient, limit = 100) {
       try {
         const { data, error } = await supabase
-            .from(TABLE_NAME)
+            .from(DB_TABLES.LOGS)
             .select('*')
             .order('created_at', { ascending: false })
             .limit(limit);

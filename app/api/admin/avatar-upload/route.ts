@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { Storage } from '@google-cloud/storage';
 import { auth } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
+import { DB_TABLES } from '@/utils/supabase/db_tables';
 
 // Инициализация GCS
 // GOOGLE_CLOUD_KEY содержит полный JSON сервисного аккаунта
@@ -78,7 +79,7 @@ export async function POST(req: Request) {
         if (supabaseUrl && supabaseKey) {
              const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
              await supabaseAdmin
-                .from('profiles')
+                .from(DB_TABLES.PROFILES)
                 .update({ 
                     avatar_url: publicUrl,
                     updated_at: new Date().toISOString()
@@ -116,7 +117,7 @@ export async function DELETE(req: Request) {
 
         // Получаем текущую аватарку, чтобы узнать имя файла для удаления
         const { data: profile } = await supabaseAdmin
-            .from('profiles')
+            .from(DB_TABLES.PROFILES)
             .select('avatar_url')
             .eq('user_id', userId)
             .single();
@@ -143,7 +144,7 @@ export async function DELETE(req: Request) {
         }
         
         await supabaseAdmin
-            .from('profiles')
+            .from(DB_TABLES.PROFILES)
             .update({ 
                 avatar_url: null,
                 updated_at: new Date().toISOString()

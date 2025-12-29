@@ -1,15 +1,15 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { createLogger } from '@/utils/logger/Logger';
 import { UIElement } from '@/utils/providers/localization/types';
+import { DB_TABLES } from '@/utils/supabase/db_tables';
 
 const logger = createLogger('LocService');
-const TABLE_NAME = '_ui';
 
 export const localizationService = {
   // --- READ ---
   async getAllItems(supabase: SupabaseClient) {
      const { data, error } = await supabase
-        .from(TABLE_NAME)
+        .from(DB_TABLES.UI)
         .select('*')
         .order('sort_order', { ascending: true, nullsFirst: false })
         .order('item_id', { ascending: true });
@@ -20,7 +20,7 @@ export const localizationService = {
 
   async checkIdExists(supabase: SupabaseClient, itemId: string) {
      const { data } = await supabase
-        .from(TABLE_NAME)
+        .from(DB_TABLES.UI)
         .select('item_id')
         .eq('item_id', itemId)
         .maybeSingle();
@@ -40,14 +40,14 @@ export const localizationService = {
           updated_at: new Date().toISOString(),
       };
 
-      const { error } = await supabase.from(TABLE_NAME).insert(payload);
+      const { error } = await supabase.from(DB_TABLES.UI).insert(payload);
       if (error) throw error;
       return payload;
   },
 
   async updateItem(supabase: SupabaseClient, itemId: string, updates: Partial<UIElement>) {
      const { error } = await supabase
-        .from(TABLE_NAME)
+        .from(DB_TABLES.UI)
         .update({ ...updates, updated_at: new Date().toISOString() })
         .eq('item_id', itemId);
 
@@ -55,14 +55,14 @@ export const localizationService = {
   },
 
   async deleteItem(supabase: SupabaseClient, itemId: string) {
-     const { error } = await supabase.from(TABLE_NAME).delete().eq('item_id', itemId);
+     const { error } = await supabase.from(DB_TABLES.UI).delete().eq('item_id', itemId);
      if (error) throw error;
   },
 
   async updateSortOrders(supabase: SupabaseClient, updates: { item_id: string; sort_order: number }[]) {
      const promises = updates.map(u => 
           supabase
-             .from(TABLE_NAME)
+             .from(DB_TABLES.UI)
              .update({ sort_order: u.sort_order, updated_at: new Date().toISOString() })
              .eq('item_id', u.item_id)
       );

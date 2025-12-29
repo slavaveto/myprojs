@@ -2,6 +2,7 @@ import { Webhook } from 'svix';
 import { headers } from 'next/headers';
 import { WebhookEvent } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
+import { DB_TABLES } from '@/utils/supabase/db_tables';
 
 // Создаем админ-клиента Supabase (с обходом RLS)
 const supabaseAdmin = createClient(
@@ -82,7 +83,7 @@ export async function POST(req: Request) {
 
         // 2. Проверяем, занят ли такой username
         const { data: collision } = await supabaseAdmin
-            .from('profiles')
+            .from(DB_TABLES.PROFILES)
             .select('user_id')
             .eq('username', candidateName)
             .maybeSingle();
@@ -100,7 +101,7 @@ export async function POST(req: Request) {
     // 1. Запись в таблицу USERS (системная)
     // Upsert - если нет, создаст, если есть - обновит
     const { error: userError } = await supabaseAdmin
-      .from('users')
+      .from(DB_TABLES.USERS)
       .upsert({
         user_id: id,
         email: primaryEmail,
@@ -115,7 +116,7 @@ export async function POST(req: Request) {
 
     // 2. Запись в таблицу PROFILES (публичная)
     const { error: profileError } = await supabaseAdmin
-      .from('profiles')
+      .from(DB_TABLES.PROFILES)
       .upsert({
         user_id: id,
         username: finalUsername, // Используем вычисленный username
@@ -166,7 +167,7 @@ export async function POST(req: Request) {
 
     // Удаляем из базы (каскадное удаление в базе обычно само чистит профиль, но можно явно)
     const { error } = await supabaseAdmin
-      .from('users')
+      .from(DB_TABLES.USERS)
       .delete()
       .eq('user_id', id);
 

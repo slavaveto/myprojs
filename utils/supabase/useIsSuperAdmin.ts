@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSupabase } from '@/utils/supabase/useSupabase';
 import { useUser } from '@clerk/nextjs';
 import { PlanTier } from '@/app/admin/_services/acl';
+import { DB_TABLES } from '@/utils/supabase/db_tables';
 
 export interface UserRoleData {
   isSuperAdmin: boolean;
@@ -33,7 +34,7 @@ export function useIsSuperAdmin() {
     async function checkStatus() {
       try {
         const { data, error } = await supabase
-          .from('users')
+          .from(DB_TABLES.USERS)
           .select('is_super_admin, is_owner, plan, subscription_status')
           .eq('user_id', user!.id)
           .maybeSingle();

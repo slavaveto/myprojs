@@ -1,8 +1,8 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { createLogger } from '@/utils/logger/Logger';
+import { DB_TABLES } from '@/utils/supabase/db_tables';
 
 const logger = createLogger('ProfileService');
-const TABLE_NAME = '_profiles';
 
 export interface Profile {
   user_id: string;
@@ -16,7 +16,7 @@ export const profileService = {
   // --- READ ---
   async getProfile(supabase: SupabaseClient, userId: string) {
     const { data, error } = await supabase
-      .from(TABLE_NAME)
+      .from(DB_TABLES.PROFILES)
       .select('username, full_name, avatar_url')
       .eq('user_id', userId)
       .single();
@@ -29,7 +29,7 @@ export const profileService = {
       if (!username) return true;
       
       const { data } = await supabase
-         .from(TABLE_NAME)
+         .from(DB_TABLES.PROFILES)
          .select('user_id')
          .eq('username', username)
          .neq('user_id', currentUserId)
@@ -41,7 +41,7 @@ export const profileService = {
   // --- WRITE ---
   async updateProfile(supabase: SupabaseClient, userId: string, updates: { username?: string; full_name?: string; avatar_url?: string }) {
     const { error } = await supabase
-      .from(TABLE_NAME)
+      .from(DB_TABLES.PROFILES)
       .update({
         ...updates,
         updated_at: new Date().toISOString()

@@ -1,9 +1,8 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { createLogger } from '@/utils/logger/Logger';
+import { DB_TABLES } from '@/utils/supabase/db_tables';
 
 const logger = createLogger('UserService');
-const USERS_TABLE = '_users';
-const PROFILES_TABLE = '_profiles';
 
 export interface UserData {
   user_id: string;
@@ -21,7 +20,7 @@ export interface UserData {
 export const userService = {
   async getAllUsers(supabase: SupabaseClient) {
     // 1. Грузим юзеров
-    const { data: usersData, error: usersError } = await supabase.from(USERS_TABLE).select('*');
+    const { data: usersData, error: usersError } = await supabase.from(DB_TABLES.USERS).select('*');
     if (usersError) throw usersError;
 
     if (!usersData || usersData.length === 0) {
@@ -31,7 +30,7 @@ export const userService = {
     // 2. Грузим профили для этих юзеров
     const userIds = usersData.map(u => u.user_id);
     const { data: profilesData, error: profilesError } = await supabase
-      .from(PROFILES_TABLE)
+      .from(DB_TABLES.PROFILES)
       .select('user_id, username, full_name, avatar_url')
       .in('user_id', userIds);
       
@@ -55,7 +54,7 @@ export const userService = {
 
   async updateUser(supabase: SupabaseClient, userId: string, updates: Partial<UserData>) {
      const { error } = await supabase
-        .from(USERS_TABLE)
+        .from(DB_TABLES.USERS)
         .update({
            ...updates,
            updated_at: new Date().toISOString()
@@ -67,7 +66,7 @@ export const userService = {
   
   async getUser(supabase: SupabaseClient, userId: string) {
      const { data, error } = await supabase
-        .from(USERS_TABLE)
+        .from(DB_TABLES.USERS)
         .select('*')
         .eq('user_id', userId)
         .single();
