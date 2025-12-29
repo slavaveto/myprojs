@@ -21,6 +21,7 @@ import {
    EyeOff,
    ChevronsRight,
    ChevronsLeft,
+   Hash,
 } from 'lucide-react';
 import { storage, globalStorage } from '@/utils/storage';
 import { usePermission } from '@/app/admin/_services/usePermission';
@@ -75,6 +76,17 @@ export function DebugPanel({ isLocal = false }: { isLocal?: boolean }) {
 
    // State for Device Toggle Popover
    const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+   const [isRefCopied, setIsRefCopied] = useState(false);
+
+   const handleCopyRef = () => {
+      // Генерируем случайный ID (6 символов hex)
+      const randomId = Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0');
+      const textToCopy = `// @ref:${randomId}\n// `;
+      
+      navigator.clipboard.writeText(textToCopy);
+      setIsRefCopied(true);
+      setTimeout(() => setIsRefCopied(false), 1500);
+   };
 
    useEffect(() => {
       setIsMounted(true);
@@ -264,6 +276,20 @@ export function DebugPanel({ isLocal = false }: { isLocal?: boolean }) {
                size="sm"
             >
                <Bug size={18} className="text-secondary" />
+            </Button>
+            <div className="w-[1px] h-[20px] bg-default-200" />
+            <Button
+               isIconOnly
+               className={`bg-transparent min-w-0 w-[32px] h-[32px]`}
+               onPress={handleCopyRef}
+               size="sm"
+               title="Generate Ref ID"
+            >
+               {isRefCopied ? (
+                  <Check size={18} className="text-success" />
+               ) : (
+                  <Hash size={18} className="text-default-500" />
+               )}
             </Button>
             <div className="w-[1px] h-[20px] bg-default-200" />
             <Popover

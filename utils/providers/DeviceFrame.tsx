@@ -44,8 +44,8 @@ export const DeviceFrame = ({ children, isLocal }: { children: React.ReactNode; 
          widthClass = 'w-[820px]';
          heightClass = 'h-[844px]';
       } else if (forcedMode === 'laptop') {
-         widthClass = 'w-[1512px]';
-         heightClass = 'h-[982px]'; // MacBook Pro 14" (M3)
+         widthClass = 'w-[1440px]';
+         heightClass = 'h-[900px]'; // MacBook Air / Pro 13"
       }
    }
 
