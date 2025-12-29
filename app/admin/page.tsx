@@ -40,6 +40,10 @@ export default function AdminPage() {
 
    useEffect(() => {
        activeTabFinishedRef.current = false;
+       if (timerRef.current) {
+           clearTimeout(timerRef.current);
+           timerRef.current = null;
+       }
        adminLoadingService.logActiveTabStart(activeTab);
    }, [activeTab]);
    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -48,6 +52,7 @@ export default function AdminPage() {
    const [readyTabs, setReadyTabs] = useState<{ [key in TabId]?: boolean }>({});
    const loggedTabsRef = useRef<Set<string>>(new Set());
    const activeTabFinishedRef = useRef(false);
+   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
    const handleSignOut = async () => {
       setGlobalLoading(true);
@@ -131,7 +136,8 @@ export default function AdminPage() {
             adminLoadingService.logActiveTabFinish(activeTab);
             adminLoadingService.logTransitionToBackground(200);
             
-            const spinnerTimer = setTimeout(() => {
+            // Store timer in ref so it survives re-renders
+            timerRef.current = setTimeout(() => {
                setGlobalLoading(false);
                setTimeout(() => {
                   setFadeInContent(true);
@@ -145,14 +151,15 @@ export default function AdminPage() {
                   });
 
                   toast.success('Данные успешно загружены');
+                  timerRef.current = null;
                }, 50);
             }, 200);
-            return () => clearTimeout(spinnerTimer);
-         } else {
-            setGlobalLoading(false);
+         } else if (fadeInContent) {
+             // Ensure spinner is hidden if content is already visible
+             setGlobalLoading(false);
          }
       }
-   }, [readyTabs, activeTab, isAdminLoading, setGlobalLoading, fadeInContent]);
+   }, [readyTabs, activeTab, isAdminLoading, setGlobalLoading, fadeInContent, visibleTabs]);
 
    // Log background readiness (optional, if we track all tabs)
    useEffect(() => {
