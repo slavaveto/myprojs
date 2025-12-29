@@ -124,7 +124,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                                     'fixed inset-0 z-[9999] pointer-events-none',
                                     // 'border-4 border-[rgb(255,224,165)]',
                                     // 'border-4 border-orange-200',
-                                    'border-4 border-red-400',
+                                    'border-0 border-red-400',
                                     // 'dark:border-orange-400/50'
                                  )}
                               />

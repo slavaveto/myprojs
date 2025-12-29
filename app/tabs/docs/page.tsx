@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useCallback, useState } from 'react';
-import { scanFlowRefs, CodeRef } from '@/app/docs/scanFlow';
+import { scanFlowRefs, CodeRef } from '@/app/tabs/docs/scanFlow';
 import { docsService, DocFlow, DocStep } from '@/app/_services/docsService';
 import { globalStorage } from '@/utils/storage';
 import { Button, Spinner, Popover, PopoverTrigger, PopoverContent, Input } from '@heroui/react';
