@@ -54,18 +54,14 @@ export const DocsScreen = (props: DocsScreenProps) => {
 
     return (
         <div className="h-full w-full bg-white flex flex-col overflow-hidden">
-             {/* Header matching ProjectScreen style */}
-             <div className="flex-shrink-0 px-6 py-6 flex items-center gap-3">
-                <div 
-                    className="w-4 h-4 rounded-full flex-shrink-0 shadow-sm border border-white/10" 
-                    style={{ backgroundColor: project.color || '#3b82f6' }}
+             {/* Main Content Area - FlowTab handles the header now to include Scan actions */}
+             <div className="flex-grow min-h-0">
+                <FlowPage 
+                    projectId={project.id} 
+                    projectLocalPath={project.local_path}
+                    projectTitle={project.title}
+                    projectColor={project.color}
                 />
-                <h1 className="text-2xl font-bold text-gray-900">{project.title}</h1>
-             </div>
-
-             {/* Main Content Area */}
-             <div className="flex-grow min-h-0 border-t border-gray-100">
-                <FlowPage projectId={project.id} projectLocalPath={project.local_path} />
              </div>
         </div>
     );
