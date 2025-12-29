@@ -8,8 +8,8 @@ type DeviceType = {
     isTablet: boolean;
     isDesktop: boolean;
     isIOS: boolean;
-    forcedMode?: 'mobile' | 'tablet' | null;              // mobile, tablet или авто (null)
-    setForcedMode?: (mode: 'mobile' | 'tablet' | null) => void;
+    forcedMode?: 'mobile' | 'tablet' | 'laptop' | null;              // mobile, tablet, laptop или авто (null)
+    setForcedMode?: (mode: 'mobile' | 'tablet' | 'laptop' | null) => void;
 };
 
 const defaultValue: DeviceType = {
@@ -34,7 +34,7 @@ export const DeviceProvider = ({children}: { children: ReactNode }) => {
         isIOS: false,
     });
 
-    const [forcedMode, setForcedMode] = useState<'mobile' | 'tablet' | null>(null);
+    const [forcedMode, setForcedMode] = useState<'mobile' | 'tablet' | 'laptop' | null>(null);
 
     useEffect(() => {
         const md = new MobileDetect(window.navigator.userAgent);
@@ -51,14 +51,17 @@ export const DeviceProvider = ({children}: { children: ReactNode }) => {
     // Выбираем итоговый режим: принудительный или авто
     const finalIsMobile = forcedMode === "mobile"
         ? true
-        : (forcedMode === "tablet" ? false : deviceType.isMobile);
+        : (forcedMode === "tablet" || forcedMode === "laptop" ? false : deviceType.isMobile);
 
     const finalIsTablet = forcedMode === "tablet"
         ? true
-        : (forcedMode === "mobile" ? false : deviceType.isTablet);
+        : (forcedMode === "mobile" || forcedMode === "laptop" ? false : deviceType.isTablet);
 
     // Desktop только если не мобилка и не планшет
-    const finalIsDesktop = !finalIsMobile && !finalIsTablet;
+    // Если laptop - это тоже десктоп
+    const finalIsDesktop = forcedMode === "laptop" 
+        ? true
+        : (!finalIsMobile && !finalIsTablet);
 
     return (
         <DeviceContext.Provider value={{

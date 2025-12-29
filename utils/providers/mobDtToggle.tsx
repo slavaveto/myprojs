@@ -2,7 +2,7 @@
 
 import { Tabs, Tab } from '@heroui/react';
 import React from 'react';
-import { Smartphone, Tablet, Monitor } from "lucide-react";
+import { Smartphone, Tablet, Monitor, Laptop } from "lucide-react";
 import { useDevice } from "@/utils/providers/MobileDetect";
 
 const MobDtToggle: React.FC = () => {
@@ -12,7 +12,9 @@ const MobDtToggle: React.FC = () => {
         ? "mobile" 
         : forcedMode === "tablet" 
             ? "tablet" 
-            : "auto";
+            : forcedMode === "laptop"
+                ? "laptop"
+                : "auto";
 
     return (
         <Tabs
@@ -24,6 +26,7 @@ const MobDtToggle: React.FC = () => {
                 if (setForcedMode) {
                     if (key === "mobile") setForcedMode("mobile");
                     else if (key === "tablet") setForcedMode("tablet");
+                    else if (key === "laptop") setForcedMode("laptop");
                     else setForcedMode(null);
                 }
             }}
@@ -42,6 +45,14 @@ const MobDtToggle: React.FC = () => {
                 }
             />
             <Tab
+                key="laptop"
+                title={
+                    <div className="flex items-center">
+                        <Laptop size={18}/>
+                    </div>
+                }
+            />
+            <Tab
                 key="tablet"
                 title={
                     <div className="flex items-center">
@@ -53,7 +64,7 @@ const MobDtToggle: React.FC = () => {
                 key="mobile"
                 title={
                     <div className="flex items-center">
-                        <Smartphone size={16}/>
+                        <Smartphone size={14}/>
                     </div>
                 }
             />

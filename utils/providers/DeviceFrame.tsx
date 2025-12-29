@@ -26,15 +26,37 @@ export const DeviceFrame = ({ children, isLocal }: { children: React.ReactNode; 
    );
 
    // --- ФРЕЙМ ---
+   let widthClass = 'w-full';
+   let heightClass = 'h-full';
+   let roundedClass = 'rounded-none';
+   let borderClass = 'border-0';
+   let shadowClass = 'shadow-none';
+
+   if (!isAuto) {
+      roundedClass = 'rounded-[40px]';
+      borderClass = 'border border-default-200';
+      shadowClass = 'shadow-2xl';
+
+      if (forcedMode === 'mobile') {
+         widthClass = 'w-[390px]';
+         heightClass = 'h-[844px]';
+      } else if (forcedMode === 'tablet') {
+         widthClass = 'w-[820px]';
+         heightClass = 'h-[844px]';
+      } else if (forcedMode === 'laptop') {
+         widthClass = 'w-[1512px]';
+         heightClass = 'h-[982px]'; // MacBook Pro 14" (M3)
+      }
+   }
+
    const frameClasses = clsx(
       "bg-background overflow-hidden relative flex flex-col transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)]", // Плавная кривая Безье
-      isAuto 
-         ? "w-full h-full rounded-none border-0 shadow-none" // Auto: на весь экран
-         : clsx(
-            forcedMode === 'mobile' ? 'w-[390px]' : 'w-[820px]',
-            "h-[844px] max-h-[calc(100vh-40px)]", 
-            "rounded-[40px] border border-default-200 shadow-2xl"
-         )
+      widthClass,
+      heightClass,
+      !isAuto && "max-h-[calc(100vh-40px)]",
+      roundedClass,
+      borderClass,
+      shadowClass
    );
 
    return (
