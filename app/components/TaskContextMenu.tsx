@@ -65,13 +65,14 @@ export const TaskMenuItems = ({
    closeMenu,
 }: TaskMenuItemsProps) => {
    const isGroup = task.task_type === 'group';
+   const isNote = task.task_type === 'note';
    const currentGroupColor = task.group_color || '#3b82f6';
    const handleClose = () => closeMenu?.();
 
    return (
       <>
          {/* --- TODAY --- */}
-         {items.today && !isGroup ? (
+         {items.today && !isGroup && !isNote ? (
             <DropdownItem
                key="toggle-today"
                startContent={
@@ -163,9 +164,9 @@ export const TaskMenuItems = ({
             </DropdownItem>
          ) : null}
 
-         {/* --- GROUP / GAP --- */}
+         {/* --- GROUP / GAP / NOTE --- */}
          {items.makeGroup ? (
-            isGroup ? (
+            isGroup || isNote ? (
                <DropdownItem
                   key="revert-task"
                
@@ -180,19 +181,45 @@ export const TaskMenuItems = ({
                   Revert To Task
                </DropdownItem>
             ) : !isInsideGroup ? (
+               <>
+                  <DropdownItem
+                     key="make-group"
+                     onPress={() => {
+                        onUpdate?.(task.id, {
+                           task_type: 'group',
+                           group_color: '#3b82f6',
+                        });
+                        handleClose();
+                     }}
+                  >
+                     Make As Group
+                  </DropdownItem>
+                  <DropdownItem
+                     key="make-note"
+                     onPress={() => {
+                        onUpdate?.(task.id, {
+                           task_type: 'note',
+                        });
+                        handleClose();
+                     }}
+                  >
+                     Make As Note
+                  </DropdownItem>
+               </>
+            ) : (
+               // Inside a group, can only make note (cannot make group inside group)
                <DropdownItem
-                  key="make-group"
+                  key="make-note"
                   onPress={() => {
                      onUpdate?.(task.id, {
-                        task_type: 'group',
-                        group_color: '#3b82f6',
+                        task_type: 'note',
                      });
                      handleClose();
                   }}
                >
-                  Make As Group
+                  Make As Note
                </DropdownItem>
-            ) : null
+            )
          ) : null}
 
          {items.makeGroup && isGroup ? (

@@ -177,6 +177,7 @@ export const TaskRow = React.memo(
 
       // --- STANDARD TASK RENDER ---
       const isGroup = task.task_type === 'group';
+      const isNote = task.task_type === 'note';
 
       // Group Color Logic
       // Use task.group_color or default project blue (#3b82f6) with 50% opacity (80 hex)
@@ -190,7 +191,8 @@ export const TaskRow = React.memo(
          isDragging && '!opacity-50',
          isOverlay && 'z-50 bg-default-100 border-primary/50 pointer-events-none cursor-grabbing',
          isHighlighted && 'border-orange-500/50',
-         activeGroupColor && 'ml-[20px] -rounded-l-[4px]'
+         activeGroupColor && 'ml-[20px] -rounded-l-[4px]',
+         isNote && 'bg-default-50/50 text-default-600 py-2' // Removed pl-3 to keep drag handle in place
       );
 
       // const borderStyle = activeGroupColor ? { borderLeft: `1px solid ${activeGroupColor}50` } : undefined; // 33 is approx 20% opacity in hex
@@ -222,7 +224,7 @@ export const TaskRow = React.memo(
                   </div>
                )}
 
-               {!isGroup && (
+               {!isGroup && !isNote && (
                   <Checkbox
                      isSelected={task.is_completed}
                      onValueChange={(isSelected) => onUpdate(task.id, { is_completed: isSelected })}
@@ -253,6 +255,7 @@ export const TaskRow = React.memo(
                      'text-[16px] p-0 m-0 pl-0 mr-0',
                      task.is_completed && 'text-default-400 line-through',
                      isGroup && 'font-semibold',
+                     isNote && 'pl-2', // Added padding left specifically for note text
                      task.title_text_style === 'bold' && 'font-medium',
                      task.title_text_style === 'red' && 'text-danger',
                      task.title_text_style === 'red-bold' && 'text-danger font-medium'

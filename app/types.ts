@@ -29,7 +29,7 @@ export interface Task {
    title_text_style?: 'bold' | 'red' | 'red-bold' | null;
    created_at: string;
    updated_at: string;
-   task_type: 'task' | 'gap' | 'group'; // New field
+   task_type: 'task' | 'gap' | 'group' | 'note'; // New field
    group_color?: string;
    isNew?: boolean;
    isDraft?: boolean;
