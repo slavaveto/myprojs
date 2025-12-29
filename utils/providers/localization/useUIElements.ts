@@ -5,7 +5,7 @@ import type { UIElement, CachedData, Language } from './types';
 import { createLogger } from '@/utils/logger/Logger';
 import { storage, globalStorage } from '@/utils/storage';
 
-const TABLE_NAME = 'ui';
+const TABLE_NAME = '_ui';
 
 // ВРЕМЕННЫЙ ФЛАГ: установи false когда настроишь триггер updated_at в БД
 const FORCE_LOAD_FROM_DB = false;

@@ -5,7 +5,7 @@ import { createLogger } from '@/utils/logger/Logger';
 import { UIElement } from '@/utils/providers/localization/types';
 
 const logger = createLogger('LocActions');
-const TABLE_NAME = 'ui';
+const TABLE_NAME = '_ui';
 
 export function useLocalizActions() {
   const { supabase } = useSupabase();

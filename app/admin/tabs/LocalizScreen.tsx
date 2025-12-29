@@ -44,7 +44,7 @@ import { PERMISSIONS } from '@/app/admin/_services/acl';
 
 const logger = createLogger('AdminLocalization');
 
-const TABLE_NAME = 'ui';
+const TABLE_NAME = '_ui';
 
 const TABS = [
    { id: 'entry', label: 'Entry Screen' },

@@ -10,39 +10,49 @@ export function useSupabase() {
   const { getToken, userId } = useAuth();
 
   const supabase = useMemo(() => {
-    return createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        global: {
-          // Переопределяем fetch, чтобы перед каждым запросом подставлять свежий токен
-          fetch: async (url, options = {}) => {
-            try {
-              // Запрашиваем токен
-              const clerkToken = await getToken({ template: 'supabase' });
-              
-              // ЛОГИ ДЛЯ ОТЛАДКИ
-              if (clerkToken) {
-              } else {
-                // Это нормально для анонимных пользователей
-              }
+    // ВРЕМЕННЫЙ ФЛАГ: если true, используем простое подключение без токенов (как в supabaseClient.ts)
+    const USE_SIMPLE_CLIENT = true;
 
-              const headers = new Headers(options?.headers);
-              if (clerkToken) {
-                headers.set('Authorization', `Bearer ${clerkToken}`);
-              }
+    if (USE_SIMPLE_CLIENT) {
+      return createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+    } else {
+      return createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          global: {
+            // Переопределяем fetch, чтобы перед каждым запросом подставлять свежий токен
+            fetch: async (url, options = {}) => {
+              try {
+                // Запрашиваем токен
+                const clerkToken = await getToken({ template: 'supabase' });
+                
+                // ЛОГИ ДЛЯ ОТЛАДКИ
+                if (clerkToken) {
+                } else {
+                  // Это нормально для анонимных пользователей
+                }
 
-              return fetch(url, {
-                ...options,
-                headers,
-              });
-            } catch (err) {
-               throw err;
-            }
+                const headers = new Headers(options?.headers);
+                if (clerkToken) {
+                  headers.set('Authorization', `Bearer ${clerkToken}`);
+                }
+
+                return fetch(url, {
+                  ...options,
+                  headers,
+                });
+              } catch (err) {
+                 throw err;
+              }
+            },
           },
-        },
-      }
-    );
+        }
+      );
+    }
   }, [getToken]);
 
   return { supabase, userId };

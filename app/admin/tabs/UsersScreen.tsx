@@ -136,7 +136,7 @@ export const UsersScreen = ({ onReady, isActive, canLoad, texts, showToast = tru
     setIsLoading(true);
     const fetchUsers = async () => {
       // 1. Грузим юзеров
-      const { data: usersData, error: usersError } = await supabase.from('users').select('*');
+      const { data: usersData, error: usersError } = await supabase.from('_users').select('*');
       if (usersError) throw usersError;
 
       if (!usersData || usersData.length === 0) {
@@ -147,7 +147,7 @@ export const UsersScreen = ({ onReady, isActive, canLoad, texts, showToast = tru
       // 2. Грузим профили для этих юзеров
       const userIds = usersData.map(u => u.user_id);
       const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
+        .from('_profiles')
         .select('user_id, username, full_name, avatar_url')
         .in('user_id', userIds);
         
