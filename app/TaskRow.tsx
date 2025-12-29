@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useDndContext } from '@dnd-kit/core';
-import { Checkbox, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
+import { FastCheckbox } from './components/FastCheckbox';
 import { GripVertical, Trash2, MoreVertical, Check, Pin } from 'lucide-react';
 import { Task } from './types';
 import { EditableCell } from './components/EditableCell';
@@ -231,7 +231,13 @@ export const TaskRow = React.memo(
                )}
 
                {!isGroup && !isNote && (
-                  <Checkbox
+                  <FastCheckbox
+                     isSelected={task.is_completed}
+                     onValueChange={(isSelected) => onUpdate(task.id, { is_completed: isSelected })}
+                     className={clsx('mr-1 ml-0')}
+                     size="sm"
+                  />
+                  /* <Checkbox
                      isSelected={task.is_completed}
                      onValueChange={(isSelected) => onUpdate(task.id, { is_completed: isSelected })}
                      classNames={{
@@ -240,7 +246,7 @@ export const TaskRow = React.memo(
                      className={clsx(' p-0 m-0 text-center  !w-[16px] mx-0')}
                      size="sm"
                      //   className="scale-90"
-                  />
+                  /> */
                )}
 
                <EditableCell
