@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { auth, clerkClient } from '@clerk/nextjs/server';
+import { DB_TABLES } from '@/utils/supabase/db_tables';
+
 
 export async function POST(req: Request) {
   try {
