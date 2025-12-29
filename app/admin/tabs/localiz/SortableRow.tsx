@@ -6,7 +6,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Button, Tooltip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Popover, PopoverTrigger, PopoverContent, Chip } from '@heroui/react';
 import { GripVertical, Trash2 as IconTrash, Edit as IconEdit, FolderInput as IconMoveToTab, Sparkles, Loader2, Heading } from 'lucide-react';
 import { UIElement } from '@/utils/providers/localization/types';
-import { EditableCell } from './EditableCell';
+import { EditableCell } from '@/app/admin/tabs/components/EditableCell';
 import { clsx } from 'clsx';
 import { translateText } from '@/app/admin/tabs/components/actions';
 

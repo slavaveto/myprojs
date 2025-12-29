@@ -8,8 +8,8 @@ import { UIElement } from '@/utils/providers/localization/types';
 import { Input, Button, Tabs, Tab, useDisclosure, Chip, Spinner } from '@heroui/react';
 import { clsx } from 'clsx';
 import { Plus as IconPlus, RefreshCw as IconRefresh, Search as IconSearch } from 'lucide-react';
-import { EditItemModal } from './components/EditItemModal';
-import { SortableRow } from './components/SortableRow';
+import { EditItemModal } from './EditItemModal';
+import { SortableRow } from './SortableRow';
 
 import { useAsyncAction } from '@/utils/supabase/useAsyncAction';
 import { StatusBadge } from '@/utils/supabase/StatusBadge';

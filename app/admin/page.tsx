@@ -5,7 +5,7 @@ import { useDevice } from '@/utils/providers/MobileDetect';
 import { usePermission } from '@/app/admin/_services/usePermission';
 import { PERMISSIONS } from '@/app/admin/_services/acl';
 import { RoomsScreen } from './tabs/RoomsScreen';
-import { LocalizScreen } from './tabs/LocalizScreen';
+import { LocalizScreen } from './tabs/localiz/LocalizScreen';
 import { UsersScreen } from './tabs/UsersScreen';
 import { LogsScreen } from './tabs/LogsScreen';
 import { ProfileScreen } from './tabs/ProfileScreen';
