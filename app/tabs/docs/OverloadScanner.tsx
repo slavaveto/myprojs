@@ -40,6 +40,12 @@ export const OverloadScanner = ({ projectLocalPath }: OverloadScannerProps) => {
         }
     };
 
+    useEffect(() => {
+        if (isOpen) {
+            handleScan();
+        }
+    }, [isOpen]);
+
     const handleScan = async () => {
         setIsLoading(true);
         try {

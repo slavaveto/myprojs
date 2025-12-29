@@ -167,10 +167,10 @@ export default function FlowTab({ projectId, projectLocalPath, projectTitle, pro
   }, [projectLocalPath]);
 
   useEffect(() => {
-      if (isScanOpen && scannedRefs.length === 0) {
+      if (isScanOpen) {
           loadRefs();
       }
-  }, [isScanOpen, scannedRefs.length, loadRefs]);
+  }, [isScanOpen, loadRefs]);
 
   const openInEditor = (absolutePath: string, line: number) => {
       const url = `cursor://file/${absolutePath}:${line}`;
