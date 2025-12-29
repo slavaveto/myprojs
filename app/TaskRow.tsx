@@ -64,9 +64,7 @@ const GapRow = ({
    const gapClassName = clsx(
       'group relative flex items-center justify-center h-[12px] w-full rounded  outline-none transition-colors ',
       // Show background if hovered (icon area), dragging this gap, dragging ANY item
-      isIconHovered || isDragging || isAnyDragging
-         ? 'bg-default-100'
-         : 'bg-transparent',
+      isIconHovered || isDragging || isAnyDragging ? 'bg-default-100' : 'bg-transparent',
       // Cursor logic:
       isDragging ? 'cursor-grabbing' : 'cursor-default'
    );
@@ -89,7 +87,7 @@ const GapRow = ({
    }
 
    return (
-      // Context menu handler removed from wrapper. 
+      // Context menu handler removed from wrapper.
       // We will handle onContextMenu on the row itself if needed, or rely on parent.
       // Actually, for consistency, we can add onContextMenu to the div.
       <motion.div
@@ -107,28 +105,26 @@ const GapRow = ({
             onOpenMenu?.(task.id, e);
          }}
       >
-            {/* Icon visible ONLY on ICON AREA hover, dragging SELF */}
-            <div
-               className={clsx(
-                  'absolute left-[2px] ml-[6px] cursor-grab active:cursor-grabbing hover:bg-default-100 rounded text-center outline-none transition-opacity duration-200 z-20 flex items-center justify-center h-[12px]', // Force 16px height
-                  isIconHovered || isDragging
-                     ? 'opacity-100'
-                     : 'opacity-0 pointer-events-none'
-               )}
-               {...attributes}
-               {...listeners}
-               onMouseEnter={() => setIsIconHovered(true)}
-               onMouseLeave={() => setIsIconHovered(false)}
-            >
-               <GripVertical size={14} className="text-default-400 hover:text-default-600 " />
-            </div>
+         {/* Icon visible ONLY on ICON AREA hover, dragging SELF */}
+         <div
+            className={clsx(
+               'absolute left-[2px] ml-[6px] cursor-grab active:cursor-grabbing hover:bg-default-100 rounded text-center outline-none transition-opacity duration-200 z-20 flex items-center justify-center h-[12px]', // Force 16px height
+               isIconHovered || isDragging ? 'opacity-100' : 'opacity-0 pointer-events-none'
+            )}
+            {...attributes}
+            {...listeners}
+            onMouseEnter={() => setIsIconHovered(true)}
+            onMouseLeave={() => setIsIconHovered(false)}
+         >
+            <GripVertical size={14} className="text-default-400 hover:text-default-600 " />
+         </div>
 
-            {/* Invisible Hit Area for Icon (larger than icon itself) */}
-            <div
-               className="absolute left-0 top-0 bottom-0 w-[30px] z-10" // Sensor zone on the left
-               onMouseEnter={() => setIsIconHovered(true)}
-               onMouseLeave={() => setIsIconHovered(false)}
-            />
+         {/* Invisible Hit Area for Icon (larger than icon itself) */}
+         <div
+            className="absolute left-0 top-0 bottom-0 w-[30px] z-10" // Sensor zone on the left
+            onMouseEnter={() => setIsIconHovered(true)}
+            onMouseLeave={() => setIsIconHovered(false)}
+         />
       </motion.div>
    );
 };
@@ -147,7 +143,7 @@ export const TaskRow = React.memo(
       projectsStructure,
       onMove,
       currentProjectId,
-      onOpenMenu
+      onOpenMenu,
    }: TaskRowProps) => {
       const [isHovered, setIsHovered] = React.useState(false);
       const [optimisticCompleted, setOptimisticCompleted] = React.useState(task.is_completed);
@@ -158,7 +154,7 @@ export const TaskRow = React.memo(
 
       const handleCheckboxChange = (isSelected: boolean) => {
          setOptimisticCompleted(isSelected);
-         
+
          if (isSelected) {
             // Delay update to allow animation to play
             setTimeout(() => {
@@ -271,6 +267,8 @@ export const TaskRow = React.memo(
 
                <EditableCell
                   value={task.content}
+                  // @ref:db02ba
+                  // сохранение задачи 1 завершение редактирования
                   onSave={(val) => onUpdate(task.id, { content: val })}
                   autoFocus={task.isDraft}
                   onCancel={() => {
@@ -317,7 +315,7 @@ export const TaskRow = React.memo(
                   onClick={(e) => {
                      e.stopPropagation();
                      // Use specific event type casting if needed or let React handle it
-                     onOpenMenu?.(task.id, e); 
+                     onOpenMenu?.(task.id, e);
                   }}
                >
                   <MoreVertical size={16} />
@@ -346,7 +344,7 @@ export const TaskRow = React.memo(
             // style={{ ...style, ...borderStyle }}
             style={{ ...style }}
             data-task-row={task.id}
-            className={clsx(className, "overflow-hidden")} // Add overflow-hidden for smooth height animation
+            className={clsx(className, 'overflow-hidden')} // Add overflow-hidden for smooth height animation
             // layout // Removed heavy layout animation
             initial={task.isNew ? { opacity: 0, height: 0, marginTop: 0, marginBottom: 0 } : false}
             animate={{
@@ -356,12 +354,12 @@ export const TaskRow = React.memo(
                marginBottom: 0,
                backgroundColor: isHighlighted ? 'var(--heroui-primary-100)' : groupBackgroundColor,
             }}
-            exit={{ 
-               opacity: 0, 
-               height: 0, 
-               marginTop: 0, 
+            exit={{
+               opacity: 0,
+               height: 0,
+               marginTop: 0,
                marginBottom: 0,
-               transition: { duration: 0.2, ease: "easeInOut" } // Smoother exit
+               transition: { duration: 0.2, ease: 'easeInOut' }, // Smoother exit
             }}
             transition={{ duration: 0.2 }}
             onContextMenu={(e) => {

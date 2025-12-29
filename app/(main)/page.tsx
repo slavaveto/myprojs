@@ -205,7 +205,7 @@ function AppContent() {
    const sensors = useSensors(
       useSensor(PointerSensor, {
          activationConstraint: {
-            delay: 150,
+            delay: 200,
             tolerance: 5,
          },
       }),
@@ -263,6 +263,7 @@ function AppContent() {
                setGlobalLoading(false);
                setCanLoadBackground(true);
                timerRef.current = null;
+               toast.success('Данные успешно загружены');
             }, 200);
          }
       } else {
