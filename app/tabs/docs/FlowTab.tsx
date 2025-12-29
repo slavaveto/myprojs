@@ -10,6 +10,8 @@ import { clsx } from 'clsx';
 import toast from 'react-hot-toast';
 import { createLogger } from '@/utils/logger/Logger';
 
+import { OverloadScanner } from '@/app/tabs/docs/OverloadScanner';
+
 const logger = createLogger('FlowTab');
 
 interface FlowTabProps {
@@ -191,8 +193,11 @@ export default function FlowTab({ projectId, projectLocalPath, projectTitle, pro
             <h1 className="text-2xl font-bold text-gray-900">{projectTitle}</h1>
          </div>
 
-         {/* Scan Popover in Header */}
-         <Popover placement="bottom-end" isOpen={isScanOpen} onOpenChange={setIsScanOpen} shouldFlip>
+         <div className="flex items-center gap-2">
+            <OverloadScanner projectLocalPath={projectLocalPath} />
+
+            {/* Scan Popover in Header */}
+            <Popover placement="bottom-end" isOpen={isScanOpen} onOpenChange={setIsScanOpen} shouldFlip>
             <PopoverTrigger>
                 <Button size="sm" variant="flat" className="h-9 bg-white hover:bg-gray-50 text-gray-700 text-xs font-medium px-4 gap-2 border border-gray-200 shadow-sm">
                     <ScanSearch size={16} className="text-blue-600"/>
@@ -245,6 +250,7 @@ export default function FlowTab({ projectId, projectLocalPath, projectTitle, pro
                 </div>
             </PopoverContent>
          </Popover>
+         </div>
       </div>
 
       <div className="flex-grow flex min-h-0">
