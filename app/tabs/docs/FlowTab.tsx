@@ -289,8 +289,8 @@ export default function FlowTab({ projectId, projectLocalPath, projectTitle, pro
                             "w-1.5 h-1.5 rounded-full flex-shrink-0 transition-colors",
                             selectedFlowId === flow.id ? "bg-blue-500" : "bg-gray-300 group-hover:bg-gray-400"
                         )} />
-                        <span className="truncate flex-grow">{flow.title}</span>
-                        {selectedFlowId === flow.id && <ChevronRight size={14} className="text-gray-400" />}
+                        <span className="truncate flex-grow min-w-0">{flow.title}</span>
+                        {selectedFlowId === flow.id && <ChevronRight size={14} className="text-gray-400 flex-shrink-0" />}
                     </button>
                 ))}
                 
@@ -305,13 +305,12 @@ export default function FlowTab({ projectId, projectLocalPath, projectTitle, pro
           {/* COLUMN 2: Steps List (300px) - Task List Style */}
           <div className="w-[300px] border-r border-gray-200 flex flex-col flex-shrink-0 bg-white">
              <div className="h-14 border-b border-gray-100 flex items-center justify-between px-4 flex-shrink-0 bg-white z-10">
-                 <div className="flex items-center gap-2 min-w-0">
-                    <span className="font-semibold text-gray-800 truncate text-sm">
+                 <div className="flex items-center gap-2 min-w-0 w-full">
+                    <span className="font-semibold text-gray-800 truncate text-sm flex-grow min-w-0">
                         {selectedFlow ? selectedFlow.title : 'Select a Flow'}
                     </span>
-                    {selectedFlow && <span className="text-xs text-gray-400 font-mono">({steps.length})</span>}
+                    {selectedFlow && <span className="text-xs text-gray-400 font-mono flex-shrink-0">({steps.length})</span>}
                  </div>
-                 {/* Empty div to balance if needed, or remove space-between */}
              </div>
 
              <div className="flex-grow overflow-y-auto p-2 bg-gray-50/30">

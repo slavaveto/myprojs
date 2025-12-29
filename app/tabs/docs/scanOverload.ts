@@ -10,7 +10,7 @@ export interface OverloadFile {
   lineCount: number;
 }
 
-export async function scanOverloadedFiles(projectFolderName?: string): Promise<OverloadFile[]> {
+export async function scanOverloadedFiles(projectFolderName?: string, threshold: number = 500): Promise<OverloadFile[]> {
   let rootPath = process.cwd();
   // Standard ignore patterns only, as requested
   const ignorePatterns = ['**/node_modules/**', '**/dist/**', '**/build/**', '**/.next/**'];
@@ -34,7 +34,7 @@ export async function scanOverloadedFiles(projectFolderName?: string): Promise<O
           const content = fs.readFileSync(absolutePath, 'utf-8');
           const lines = content.split('\n');
           
-          if (lines.length > 500) {
+          if (lines.length > threshold) {
               overloadedFiles.push({
                   fileName: file,
                   absolutePath,
