@@ -12,6 +12,7 @@ import {
 import { LogOut, User as IconUser } from 'lucide-react';
 import { useUser, useClerk } from '@clerk/nextjs';
 import { useSupabase } from '@/utils/supabase/useSupabase';
+import { profileService } from '@/app/admin/_services/profileService';
 import { useAdminLoader } from '@/app/admin/AdminLoader';
 import { createLogger } from '@/utils/logger/Logger';
 
@@ -39,13 +40,9 @@ export const AdminUserMenu = ({ showSeparator = true }: { showSeparator?: boolea
    const fetchProfile = React.useCallback(async () => {
       if (!user) return;
       try {
-         const { data, error } = await supabase
-            .from('profiles')
-            .select('avatar_url, full_name')
-            .eq('user_id', user.id)
-            .single();
+         const data = await profileService.getProfile(supabase, user.id);
             
-         // Даже если data.avatar_url null, мы должны обновить стейт, чтобы убрать старую картинку
+         // Даже если data.avatar_url null, мы должны обновить стейт
          setAvatarUrl(data?.avatar_url || null);
          if (data?.full_name) {
             setFullName(data.full_name);
