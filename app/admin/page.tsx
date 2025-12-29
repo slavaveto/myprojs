@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useLayoutEffect, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useLayoutEffect, useCallback, useRef } from 'react';
 import { useDevice } from '@/utils/providers/MobileDetect';
 import { usePermission } from '@/app/admin/_services/usePermission';
 import { PERMISSIONS } from '@/app/admin/_services/acl';
@@ -15,6 +15,7 @@ import { useUser, useClerk } from '@clerk/nextjs';
 import clsx from 'clsx';
 import { useAdminLoader } from './AdminLoader';
 import { createLogger } from '@/utils/logger/Logger';
+import { adminLoadingService } from '@/app/admin/_services/adminLoadingService';
 import { globalStorage } from '@/utils/storage';
 import { TabId, AdminTabConfig } from './types';
 import { MobileLayout } from './MobileLayout';
@@ -32,12 +33,21 @@ export default function AdminPage() {
 
    useLayoutEffect(() => {
       setGlobalLoading(true);
+      adminLoadingService.logInit();
    }, [setGlobalLoading]);
 
    const [activeTab, setActiveTab] = useState<TabId>('rooms');
+
+   useEffect(() => {
+       activeTabFinishedRef.current = false;
+       adminLoadingService.logActiveTabStart(activeTab);
+   }, [activeTab]);
    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
    const [fadeInContent, setFadeInContent] = useState(false);
+   const [canLoadBackground, setCanLoadBackground] = useState(false);
    const [readyTabs, setReadyTabs] = useState<{ [key in TabId]?: boolean }>({});
+   const loggedTabsRef = useRef<Set<string>>(new Set());
+   const activeTabFinishedRef = useRef(false);
 
    const handleSignOut = async () => {
       setGlobalLoading(true);
@@ -116,12 +126,24 @@ export default function AdminPage() {
       const isCurrentTabReady = readyTabs[activeTab];
 
       if (isCurrentTabReady) {
-         if (!fadeInContent) {
-            logger.info(`Tab '${activeTab}' is ready. Hiding spinner in 200ms...`);
+         if (!fadeInContent && !activeTabFinishedRef.current) {
+            activeTabFinishedRef.current = true;
+            adminLoadingService.logActiveTabFinish(activeTab);
+            adminLoadingService.logTransitionToBackground(200);
+            
             const spinnerTimer = setTimeout(() => {
                setGlobalLoading(false);
                setTimeout(() => {
                   setFadeInContent(true);
+                  setCanLoadBackground(true); // Enable background loading
+                  
+                  // Log start of background loading for other tabs
+                  visibleTabs.forEach(tab => {
+                      if (tab.id !== activeTab) {
+                          adminLoadingService.logBackgroundTabStart(tab.id);
+                      }
+                  });
+
                   toast.success('Данные успешно загружены');
                }, 50);
             }, 200);
@@ -131,6 +153,33 @@ export default function AdminPage() {
          }
       }
    }, [readyTabs, activeTab, isAdminLoading, setGlobalLoading, fadeInContent]);
+
+   // Log background readiness (optional, if we track all tabs)
+   useEffect(() => {
+       if (canLoadBackground) {
+           Object.keys(readyTabs).forEach((key) => {
+               const tabId = key as TabId;
+               
+               // If this tab is ready AND wasn't logged yet AND isn't the active one (active is logged separately)
+               if (readyTabs[tabId] && !loggedTabsRef.current.has(tabId) && tabId !== activeTab) {
+                   loggedTabsRef.current.add(tabId);
+                   adminLoadingService.logBackgroundTabFinish(tabId);
+               }
+           });
+
+           // Check if ALL visible tabs are ready
+           const allVisibleTabsReady = visibleTabs.every(tab => readyTabs[tab.id]);
+           if (allVisibleTabsReady && !loggedTabsRef.current.has('ALL_FINISHED')) {
+               loggedTabsRef.current.add('ALL_FINISHED');
+               adminLoadingService.logAllFinished();
+           }
+       } else {
+           // If we are NOT in background mode yet, but active tab is ready, mark it as logged so we don't log it as background later
+           if (readyTabs[activeTab] && !loggedTabsRef.current.has(activeTab)) {
+               loggedTabsRef.current.add(activeTab);
+           }
+       }
+   }, [readyTabs, canLoadBackground, activeTab, visibleTabs]);
 
    const content = visibleTabs.map((tab) => (
       <div
@@ -145,6 +194,7 @@ export default function AdminPage() {
          <tab.component
             onReady={() => handleTabReady(tab.id)}
             isActive={activeTab === tab.id}
+            canLoad={activeTab === tab.id || canLoadBackground}
          />
       </div>
    ));

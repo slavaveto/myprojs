@@ -32,6 +32,7 @@ interface UserData {
 interface UsersScreenProps {
    onReady?: () => void; 
    isActive: boolean;
+   canLoad?: boolean;
    texts: {
       saveLoading: string;
       saveSuccess: string;
@@ -41,7 +42,7 @@ interface UsersScreenProps {
    showToast?: boolean;
 }
 
-export const UsersScreen = ({ onReady, isActive, texts, showToast = true }: UsersScreenProps) => {
+export const UsersScreen = ({ onReady, isActive, canLoad, texts, showToast = true }: UsersScreenProps) => {
   const { supabase } = useSupabase();
   const { can, isLoading: isPermissionLoading } = usePermission();
   const { updateUserRole, isUpdating } = useUserActions();
@@ -183,17 +184,19 @@ export const UsersScreen = ({ onReady, isActive, texts, showToast = true }: User
   }, [supabase, executeRefresh, onReady]);
 
   useEffect(() => {
-    loadUsers();
+    if (canLoad) {
+        loadUsers();
+    }
 
     const handleUpdate = () => {
-        loadUsers();
+        if (canLoad) loadUsers();
     };
 
     profileUpdateEvent.addEventListener('profileUpdated', handleUpdate);
     return () => {
         profileUpdateEvent.removeEventListener('profileUpdated', handleUpdate);
     };
-  }, [loadUsers]);
+  }, [loadUsers, canLoad]);
 
   const filteredUsers = useMemo(() => {
     let result = users;

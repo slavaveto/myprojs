@@ -54,6 +54,7 @@ const dropAnimation = {
 interface RoomsScreenProps {
    onReady?: () => void;
    isActive: boolean;
+   canLoad?: boolean;
    texts: {
       saveLoading: string;
       saveSuccess: string;
@@ -63,7 +64,7 @@ interface RoomsScreenProps {
    showToast?: boolean;
 }
 
-export const RoomsScreen = ({ onReady, isActive, texts, showToast = true }: RoomsScreenProps) => {
+export const RoomsScreen = ({ onReady, isActive, canLoad, texts, showToast = true }: RoomsScreenProps) => {
    const logger = createLogger('RoomsScreen');
    const { user, isLoaded } = useUser();
    const { supabase } = useSupabase();
@@ -169,10 +170,10 @@ export const RoomsScreen = ({ onReady, isActive, texts, showToast = true }: Room
    };
 
    useEffect(() => {
-      if (isLoaded && user) {
+      if (isLoaded && user && canLoad) {
          loadData(false);
       }
-   }, [isLoaded, user]);
+   }, [isLoaded, user, canLoad]);
 
    // Filtered Rooms
    const filteredRooms = useMemo(() => {

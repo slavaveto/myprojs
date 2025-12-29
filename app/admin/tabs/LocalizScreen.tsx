@@ -86,6 +86,7 @@ const dropAnimationConfig: DropAnimation = {
 interface LocalizScreenProps {
    onReady?: () => void;
    isActive: boolean;
+   canLoad?: boolean;
    texts: {
       saveLoading: string;
       saveSuccess: string;
@@ -95,7 +96,7 @@ interface LocalizScreenProps {
    showToast?: boolean;
 }
 
-export const LocalizScreen = ({ onReady, isActive, texts, showToast = true }: LocalizScreenProps) => {
+export const LocalizScreen = ({ onReady, isActive, canLoad, texts, showToast = true }: LocalizScreenProps) => {
    const { supabase } = useSupabase();
    const { user, isLoaded } = useUser();
    const { can, isLoading: isPermissionLoading } = usePermission();
@@ -304,8 +305,10 @@ export const LocalizScreen = ({ onReady, isActive, texts, showToast = true }: Lo
    };
 
    useEffect(() => {
-      loadData(false);
-   }, [user]);
+      if (canLoad) {
+          loadData(false);
+      }
+   }, [user, canLoad]);
 
    const filteredItems = useMemo(() => {
       let currentTabItems: UIElement[] = [];

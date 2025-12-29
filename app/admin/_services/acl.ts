@@ -56,7 +56,9 @@ export function checkPermission(permission: Permission, user: UserAccessContext)
       case PERMISSIONS.MANAGE_USERS:
       case PERMISSIONS.MANAGE_ALL_ROOMS:
       case PERMISSIONS.VIEW_AUDIT_LOGS:
-         return user.isSuperAdmin; // Только Супер-Админ (везде)
+         // return user.isSuperAdmin; // Только Супер-Админ (везде)
+         return user.isLocal;
+
 
       case PERMISSIONS.SHOW_DEBUG_PANEL:
          return user.isLocal; // Показывать дебаг-консоль локально всегда (даже без логина)

@@ -26,6 +26,7 @@ const UPLOAD_CONFIG = {
 interface ProfileScreenProps {
    onReady?: () => void;
    isActive: boolean;
+   canLoad?: boolean;
    texts: {
       saveLoading: string;
       saveSuccess: string;
@@ -35,7 +36,7 @@ interface ProfileScreenProps {
    showToast?: boolean;
 }
 
-export const ProfileScreen = ({ onReady, isActive, texts, showToast = true }: ProfileScreenProps) => {
+export const ProfileScreen = ({ onReady, isActive, canLoad, texts, showToast = true }: ProfileScreenProps) => {
    const logger = createLogger('ProfileScreen');
    const { user, isLoaded } = useUser();
    const { supabase } = useSupabase();
@@ -160,7 +161,9 @@ export const ProfileScreen = ({ onReady, isActive, texts, showToast = true }: Pr
       if (onReady) setTimeout(() => onReady(), 0);
    };
 
-   useEffect(() => { loadData(); }, [isLoaded, user, supabase]);
+   useEffect(() => { 
+       if (canLoad) loadData(); 
+   }, [isLoaded, user, supabase, canLoad]);
 
    const handleSave = async () => {
       if (!user) return;

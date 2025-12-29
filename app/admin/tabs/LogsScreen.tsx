@@ -26,6 +26,7 @@ interface LogEntry {
 interface LogsScreenProps {
    onReady?: () => void;
    isActive: boolean;
+   canLoad?: boolean;
    texts: {
       saveLoading: string;
       saveSuccess: string;
@@ -35,7 +36,7 @@ interface LogsScreenProps {
    showToast?: boolean;
 }
 
-export const LogsScreen = ({ onReady, isActive, texts, showToast = true }: LogsScreenProps) => {
+export const LogsScreen = ({ onReady, isActive, canLoad, texts, showToast = true }: LogsScreenProps) => {
   const { supabase } = useSupabase();
   const { can, isLoading: isPermissionLoading } = usePermission();
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -84,8 +85,10 @@ export const LogsScreen = ({ onReady, isActive, texts, showToast = true }: LogsS
   };
   
   useEffect(() => {
-    loadLogs();
-  }, [supabase]);
+    if (canLoad) {
+        loadLogs();
+    }
+  }, [supabase, canLoad]);
 
   const filteredLogs = useMemo(() => {
     if (!searchQuery) return logs;

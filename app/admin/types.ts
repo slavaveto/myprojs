@@ -19,6 +19,6 @@ export interface AdminTabConfig {
    id: TabId;
    label: string;
    icon: React.ElementType;
-   component: React.ComponentType<{ onReady?: () => void; isActive: boolean }>;
+   component: React.ComponentType<{ onReady?: () => void; isActive: boolean; canLoad?: boolean }>;
    isVisible: (can: (permission: Permission) => boolean) => boolean;
 }
