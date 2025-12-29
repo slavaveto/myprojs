@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { createLogger } from '@/utils/logger/Logger';
 import { projectService } from '@/app/_services/projectService';
 import { Project } from '@/app/types';
@@ -188,6 +188,7 @@ function AppContent() {
 
    // Флаг, разрешающий фоновую загрузку (когда активный проект готов)
    const [canLoadBackground, setCanLoadBackground] = useState(false);
+   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
    // Status for sidebar actions (reordering)
    const {
@@ -255,15 +256,20 @@ function AppContent() {
       const isActiveReady = readyProjects[activeProjectId];
 
       if (isActiveReady) {
-         if (!canLoadBackground) {
+         if (!canLoadBackground && !timerRef.current) {
             loadingService.logTransitionToBackground(200);
             // Small delay to visually separate active load finish from background start
-            setTimeout(() => {
+            timerRef.current = setTimeout(() => {
                setGlobalLoading(false);
                setCanLoadBackground(true);
+               timerRef.current = null;
             }, 200);
          }
       } else {
+         if (timerRef.current) {
+             clearTimeout(timerRef.current);
+             timerRef.current = null;
+         }
          setGlobalLoading(true);
          setCanLoadBackground(false);
       }
