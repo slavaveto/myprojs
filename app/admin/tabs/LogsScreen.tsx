@@ -166,8 +166,8 @@ export const LogsScreen = ({ onReady, isActive, canLoad, texts, showToast = true
                    <TableColumn>Details</TableColumn>
                 </TableHeader>
                 <TableBody emptyContent="No logs found">
-                   {filteredLogs.map((log) => (
-                      <TableRow key={log.id}>
+                   {filteredLogs.map((log, idx) => (
+                      <TableRow key={log.id || `log-idx-${idx}`}>
                          <TableCell className="whitespace-nowrap text text-default-500">
                             {new Date(log.created_at).toLocaleString('ru-RU')}
                          </TableCell>

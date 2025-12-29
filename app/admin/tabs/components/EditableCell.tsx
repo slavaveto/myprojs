@@ -21,13 +21,13 @@ export const EditableCell = ({
    onValidate,
    autoFocus
 }: EditableCellProps) => {
-   const [localValue, setLocalValue] = useState(value);
+   const [localValue, setLocalValue] = useState(value ?? '');
    const [error, setError] = useState<string | null>(null);
    const textareaRef = useRef<HTMLTextAreaElement>(null);
    const isCanceling = useRef(false);
 
    useEffect(() => {
-      setLocalValue(value);
+      setLocalValue(value ?? '');
       setError(null);
    }, [value]);
 
@@ -101,7 +101,7 @@ export const EditableCell = ({
          <textarea
             ref={textareaRef}
             autoFocus={autoFocus}
-            value={localValue}
+            value={localValue ?? ''}
             onChange={handleChange}
             onBlur={handleBlur}
             onKeyDownCapture={handleKeyDown}

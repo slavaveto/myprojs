@@ -142,7 +142,7 @@ export const SortableRoomRow = ({
          {!item.is_section && (
             <div className="flex items-center justify-center border-l border-default-300 h-full">
                <Checkbox 
-                  isSelected={item.is_active ?? true} 
+                  isSelected={item.is_active !== false && item.is_active !== 'false'} 
                   onValueChange={() => onToggleActive(item)} 
                   size="sm" 
                   aria-label="Active"
