@@ -216,7 +216,7 @@ export function DebugPanel({ isLocal = false }: { isLocal?: boolean }) {
                   resizeDirectionRef.current === 'right' ||
                   resizeDirectionRef.current === 'bottom-right'
                ) {
-                  newWidth = Math.min(300, Math.max(150, startResizeRef.current.w + deltaX));
+                  newWidth = Math.min(600, Math.max(200, startResizeRef.current.w + deltaX));
                }
             }
 
