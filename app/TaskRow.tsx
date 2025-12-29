@@ -9,7 +9,7 @@ import { GripVertical, Trash2, MoreVertical, Check, Pin } from 'lucide-react';
 import { Task } from './types';
 import { EditableCell } from './components/EditableCell';
 import { clsx } from 'clsx';
-import { motion } from 'framer-motion';
+// import { motion } from 'framer-motion'; // Removed framer motion
 import { TaskContextMenu, TaskMenuItems } from './components/TaskContextMenu';
 import { TaskStyleControl } from './components/TaskStyleControl';
 import { TaskPinControl } from './components/TaskPinControl';
@@ -91,16 +91,16 @@ const GapRow = ({
       // Context menu handler removed from wrapper. 
       // We will handle onContextMenu on the row itself if needed, or rely on parent.
       // Actually, for consistency, we can add onContextMenu to the div.
-      <motion.div
+      <div
          ref={setNodeRef}
          style={style}
          data-task-row={task.id}
          className={gapClassName}
-         layout
-         initial={task.isNew ? { opacity: 0, height: 0 } : false}
-         animate={{ opacity: 1, height: 12 }}
-         exit={{ opacity: 0, height: 0 }}
-         transition={{ duration: 0.2 }}
+         // layout // Removed framer motion layout
+         // initial={task.isNew ? { opacity: 0, height: 0 } : false}
+         // animate={{ opacity: 1, height: 12 }}
+         // exit={{ opacity: 0, height: 0 }}
+         // transition={{ duration: 0.2 }}
          onContextMenu={(e) => {
             e.preventDefault();
             onOpenMenu?.(task.id, e);
@@ -128,8 +128,7 @@ const GapRow = ({
                onMouseEnter={() => setIsIconHovered(true)}
                onMouseLeave={() => setIsIconHovered(false)}
             />
-         </motion.div>
-      // </TaskContextMenu>
+      </div>
    );
 };
 
@@ -340,21 +339,21 @@ export const TaskRow = React.memo(
 
       return (
          // Removed TaskContextMenu wrapper
-         <motion.div
+         <div
             ref={setNodeRef}
             // style={{ ...style, ...borderStyle }}
             style={{ ...style }}
             data-task-row={task.id}
             className={className}
-            layout
-            initial={task.isNew ? { opacity: 0, height: 0 } : false}
-            animate={{
-               opacity: 1,
-               height: 'auto',
-               backgroundColor: isHighlighted ? 'var(--heroui-primary-100)' : groupBackgroundColor,
-            }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
+            // layout // Removed framer motion layout
+            // initial={task.isNew ? { opacity: 0, height: 0 } : false}
+            // animate={{
+            //    opacity: 1,
+            //    height: 'auto',
+            //    backgroundColor: isHighlighted ? 'var(--heroui-primary-100)' : groupBackgroundColor,
+            // }}
+            // exit={{ opacity: 0, height: 0 }}
+            // transition={{ duration: 0.2 }}
             onContextMenu={(e) => {
                e.preventDefault();
                onOpenMenu?.(task.id, e);
@@ -363,7 +362,7 @@ export const TaskRow = React.memo(
             {content}
 
             {/* Dropdown removed, moved to TaskContextMenu */}
-         </motion.div>
+         </div>
       );
    }
 );
