@@ -3,6 +3,7 @@
 import React, { useEffect, useCallback, useState } from 'react';
 import { scanFlowRefs, CodeRef } from '@/app/docs/scanFlow';
 import { docsService, DocFlow, DocStep } from '@/app/_services/docsService';
+import { globalStorage } from '@/utils/storage';
 import { Button, Spinner, Popover, PopoverTrigger, PopoverContent, Input } from '@heroui/react';
 import { RefreshCw, Code2, FileCode, ChevronRight, ScanSearch, Plus, LayoutList, Share2, FileText, Trash2, CheckSquare } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -21,32 +22,63 @@ export default function FlowPage({ projectId, projectLocalPath }: FlowPageProps)
 
   // --- DB State ---
   const [flows, setFlows] = useState<DocFlow[]>([]);
-  const [selectedFlowId, setSelectedFlowId] = useState<string | null>(null);
+  const [selectedFlowId, setSelectedFlowIdState] = useState<string | null>(null);
   
-  const [steps, setSteps] = useState<DocStep[]>([]);
-  const [selectedStepId, setSelectedStepId] = useState<string | null>(null); // New state for 3rd column
+  const [allSteps, setAllSteps] = useState<DocStep[]>([]); // Store all steps for the project
+  const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
 
   const [dbLoading, setDbLoading] = useState(false);
-  const [stepsLoading, setStepsLoading] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
+
+  // Wrapper for setSelectedFlowId to persist to storage
+  const setSelectedFlowId = (id: string | null) => {
+      setSelectedFlowIdState(id);
+      if (id) {
+          globalStorage.setItem(`active_flow_${projectId}`, id);
+      } else {
+          globalStorage.removeItem(`active_flow_${projectId}`);
+      }
+      setSelectedStepId(null); // Reset step selection when flow changes
+  };
 
   // --- Initial Load ---
   useEffect(() => {
-    loadFlows();
+    loadData();
   }, [projectId]);
 
-  // --- Load Flows ---
-  const loadFlows = async () => {
+  // --- Load Data (Flows & All Steps) ---
+  const loadData = async () => {
       setDbLoading(true);
       try {
-          const data = await docsService.getFlows(projectId);
-          setFlows(data);
+          // Load flows and all steps in parallel
+          const [flowsData, stepsData] = await Promise.all([
+              docsService.getFlows(projectId),
+              (docsService as any).getAllProjectSteps(projectId)
+          ]);
+          
+          setFlows(flowsData);
+          setAllSteps(stepsData);
+
+          // Restore active flow selection
+          const storedFlowId = globalStorage.getItem(`active_flow_${projectId}`);
+          if (storedFlowId && flowsData.some((f: DocFlow) => f.id === storedFlowId)) {
+              setSelectedFlowIdState(storedFlowId);
+          } else {
+              // Optional: Select first flow if nothing stored? Or stay empty?
+              // User said "запоминание активного flow". If none, maybe empty is fine.
+              setSelectedFlowIdState(null);
+          }
       } catch (e) {
           console.error(e);
+          toast.error('Failed to load docs data');
       } finally {
           setDbLoading(false);
       }
   };
+
+  // --- Derived State: Current Flow Steps ---
+  const steps = allSteps.filter(s => s.flow_id === selectedFlowId).sort((a, b) => a.step_order - b.step_order);
+  const stepsLoading = false; // No longer separate loading state
 
   // --- Create Flow ---
   const handleCreateFlow = async () => {
@@ -62,35 +94,6 @@ export default function FlowPage({ projectId, projectLocalPath }: FlowPageProps)
           setCreateLoading(false);
       }
   };
-
-  // --- Load Steps when Flow Selected ---
-  useEffect(() => {
-      if (!selectedFlowId) {
-          setSteps([]);
-          setSelectedStepId(null);
-          return;
-      }
-      
-      const loadSteps = async () => {
-          setStepsLoading(true);
-          try {
-              const data = await docsService.getSteps(selectedFlowId);
-              setSteps(data);
-              // Auto-select first step if available
-              if (data.length > 0) {
-                  setSelectedStepId(data[0].id);
-              } else {
-                  setSelectedStepId(null);
-              }
-          } catch (e) {
-              console.error(e);
-          } finally {
-              setStepsLoading(false);
-          }
-      };
-      
-      loadSteps();
-  }, [selectedFlowId]);
 
   // --- Add Step from Scan ---
   const handleAddRefToFlow = async (ref: CodeRef) => {
@@ -119,8 +122,8 @@ export default function FlowPage({ projectId, projectLocalPath }: FlowPageProps)
               snippet: ref.snippet
           });
 
-          setSteps(prev => [...prev, newStep]);
-          setSelectedStepId(newStep.id); // Auto select new step
+          setAllSteps(prev => [...prev, newStep]); // Add to global list
+          setSelectedStepId(newStep.id); 
           toast.success('Step added');
       } catch (e) {
           console.error(e);
@@ -133,7 +136,7 @@ export default function FlowPage({ projectId, projectLocalPath }: FlowPageProps)
         if (!confirm('Delete step?')) return;
         try {
             await docsService.deleteStep(stepId);
-            setSteps(prev => prev.filter(s => s.id !== stepId));
+            setAllSteps(prev => prev.filter(s => s.id !== stepId)); // Remove from global list
             if (selectedStepId === stepId) {
                 setSelectedStepId(null);
             }

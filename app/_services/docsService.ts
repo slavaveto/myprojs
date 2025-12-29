@@ -65,6 +65,23 @@ export const docsService = {
     return data as DocStep[];
   },
 
+  async getAllProjectSteps(projectId: string) {
+    // Fetch all steps for all flows in the project
+    // Using inner join to filter by project_id
+    const { data, error } = await supabase
+      .from('docs_steps')
+      .select('*, docs_flows!inner(project_id)')
+      .eq('docs_flows.project_id', projectId)
+      .order('step_order', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching all project steps:', error);
+      throw error;
+    }
+
+    return data as DocStep[];
+  },
+
   async addStep(step: Omit<DocStep, 'id'>) {
     const { snippet, ...rest } = step;
     

@@ -28,7 +28,7 @@ export const loadingService = {
     },
 
     logBackgroundProjectFinish(title: string) {
-        logger.info(`Background project loaded: ${title}`);
+        logger.success(`Background project loaded: ${title}`);
     },
 
     logDocsScreenStart(title: string) {

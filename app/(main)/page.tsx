@@ -687,8 +687,7 @@ function AppContent() {
                      <DocsScreen 
                         project={project}
                         isActive={activeProjectId === project.id && projectScreenMode === 'docs'}
-                        canLoad={activeProjectId === project.id || canLoadBackground}
-                        onReady={() => handleProjectReady(project.id)}
+                        canLoad={canLoadBackground && !!readyProjects[project.id]} 
                      />
                   </div>
                </div>
