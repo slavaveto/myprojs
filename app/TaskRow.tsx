@@ -5,6 +5,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useDndContext } from '@dnd-kit/core';
 import { FastCheckbox } from './components/FastCheckbox';
+import { Checkbox } from '@heroui/react'; // Restore Checkbox import
 import { GripVertical, Trash2, MoreVertical, Check, Pin } from 'lucide-react';
 import { Task } from './types';
 import { EditableCell } from './components/EditableCell';
@@ -249,22 +250,23 @@ export const TaskRow = React.memo(
                )}
 
                {!isGroup && !isNote && (
-                  <FastCheckbox
+                  /* <FastCheckbox
                      isSelected={optimisticCompleted}
                      onValueChange={handleCheckboxChange}
                      className={clsx('mr-1 ml-0')}
                      size="sm"
-                  />
-                  /* <Checkbox
-                     isSelected={task.is_completed}
-                     onValueChange={(isSelected) => onUpdate(task.id, { is_completed: isSelected })}
+                  /> */
+                  <Checkbox
+                     isSelected={optimisticCompleted}
+                     // isSelected={task.is_completed} // Using optimistic state for standard checkbox too? Yes, for consistency.
+                     onValueChange={handleCheckboxChange}
                      classNames={{
                         wrapper: 'after:bg-primary',
                      }}
                      className={clsx(' p-0 m-0 text-center  !w-[16px] mx-0')}
                      size="sm"
                      //   className="scale-90"
-                  /> */
+                  />
                )}
 
                <EditableCell
