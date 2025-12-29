@@ -10,6 +10,7 @@ import { RefreshCw as IconRefresh, Search as IconSearch } from 'lucide-react';
 import { StatusBadge } from '@/utils/supabase/StatusBadge';
 import { useAsyncAction } from '@/utils/supabase/useAsyncAction';
 import { AdminUserMenu } from '@/app/admin/AdminUserMenu';
+import { logService } from '@/app/admin/_services/logService';
 
 const logger = createLogger('AdminLogsScreen');
 
@@ -60,14 +61,8 @@ export const LogsScreen = ({ onReady, isActive, canLoad, texts, showToast = true
      if (!isManualRefresh) setIsLoading(true);
 
      const fetchLogs = async () => {
-         const { data, error } = await supabase
-            .from('_logs')
-            .select('*')
-            .order('created_at', { ascending: false })
-            .limit(100);
-
-         if (error) throw error;
-         setLogs(data || []);
+         const data = await logService.getLogs(supabase, 100);
+         setLogs(data as any);
      };
 
      if (isManualRefresh) {

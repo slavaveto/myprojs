@@ -1,13 +1,13 @@
 import { useSupabase } from '@/utils/supabase/useSupabase';
-import { useAudit } from '@/app/admin/_services/useAudit';
+import { logService } from '@/app/admin/_services/logService';
+import { roomService } from '@/app/admin/_services/roomService';
 import { useAsyncAction } from '@/utils/supabase/useAsyncAction';
 import { createLogger } from '@/utils/logger/Logger';
 
 const logger = createLogger('RoomActions');
 
 export function useRoomActions() {
-  const { supabase } = useSupabase();
-  const { log } = useAudit();
+  const { supabase, userId: currentUserId } = useSupabase();
 
   // 1. Создание
   const { execute: executeCreate, status: createStatus } = useAsyncAction({
@@ -19,26 +19,29 @@ export function useRoomActions() {
 
   const createRoom = async (payload: { title: string; userId: string; roomId?: string; sortOrder?: number; isSection?: boolean; isActive?: boolean }) => {
     return executeCreate(async () => {
-       const { data, error } = await supabase.from('rooms').insert({
+       const roomData = {
           room_id: payload.roomId, // Supabase сам сгенерит если нет, но мы можем передать
           room_title: payload.title,
           user_id: payload.userId,
           sort_order: payload.sortOrder ?? 0,
           is_section: payload.isSection ?? false,
           is_active: payload.isActive ?? true,
-       }).select().single();
+       };
 
-       if (error) throw error;
+       await roomService.createRoom(supabase, roomData);
 
        // Логируем
-       log({ 
-          action: 'ROOM_CREATE', 
-          entity: 'rooms', 
-          entityId: data.room_id, 
-          details: { title: payload.title } 
-       });
+       if (currentUserId) {
+         await logService.logAction(supabase, {
+            action: 'ROOM_CREATE',
+            entity: 'rooms',
+            entityId: payload.roomId, // Внимание: если ID генерит база, тут может быть undefined, но в createRoom мы передавали его
+            details: { title: payload.title },
+            userId: currentUserId
+         });
+       }
 
-       return data;
+       return roomData; // Раньше возвращали data из базы, сейчас просто payload, т.к. service void
     });
   };
 
@@ -52,14 +55,16 @@ export function useRoomActions() {
 
   const deleteRoom = async (roomId: string) => {
     return executeDelete(async () => {
-       const { error } = await supabase.from('rooms').delete().eq('room_id', roomId);
-       if (error) throw error;
+       await roomService.deleteRoom(supabase, roomId);
 
-       log({ 
-          action: 'ROOM_DELETE', 
-          entity: 'rooms', 
-          entityId: roomId 
-       });
+       if (currentUserId) {
+         await logService.logAction(supabase, {
+            action: 'ROOM_DELETE',
+            entity: 'rooms',
+            entityId: roomId,
+            userId: currentUserId
+         });
+       }
     });
   };
 
@@ -73,33 +78,30 @@ export function useRoomActions() {
   const updateRoom = async (roomId: string, updates: Record<string, any>) => {
      // Для обновлений часто не нужен лоадер на весь экран, но нужен тост
      return executeUpdate(async () => {
-        const { data, error } = await supabase
-           .from('rooms')
-           .update({
-             ...updates,
-             updated_at: new Date().toISOString()
-           })
-           .eq('room_id', roomId)
-           .select()
-           .single();
+        await roomService.updateRoom(supabase, roomId, updates);
 
-        if (error) throw error;
-
-        log({ 
-           action: 'ROOM_UPDATE', 
-           entity: 'rooms', 
-           entityId: roomId, 
-           details: updates 
-        });
-
-        return data;
+        if (currentUserId) {
+          await logService.logAction(supabase, {
+             action: 'ROOM_UPDATE',
+             entity: 'rooms',
+             entityId: roomId,
+             details: updates,
+             userId: currentUserId
+          });
+        }
      });
+  };
+
+  // 4. Массовая сортировка (добавили)
+  const updateSortOrders = async (updates: { room_id: string; sort_order: number }[]) => {
+      await roomService.updateSortOrders(supabase, updates);
   };
 
   return {
     createRoom,
     deleteRoom,
     updateRoom,
+    updateSortOrders, // Экспортируем новый метод
     isCreating: createStatus === 'loading',
     isDeleting: deleteStatus === 'loading',
     isUpdating: updateStatus === 'loading'

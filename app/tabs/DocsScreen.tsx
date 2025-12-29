@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Project } from '@/app/types';
 import FlowPage from '@/app/tabs/docs/page';
 import { createLogger } from '@/utils/logger/Logger';
-import { loadingService } from '@/app/_services/loadingService';
+import { loadingService } from '@/app/_services/loadingLogsService';
 
 const logger = createLogger('DocsScreen');
 

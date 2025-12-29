@@ -15,6 +15,7 @@ import { StatusBadge } from '@/utils/supabase/StatusBadge';
 import { useAsyncAction } from '@/utils/supabase/useAsyncAction';
 import { SortableRoomRow, Room } from './components/SortableRoomRow';
 import { useUser } from '@clerk/nextjs';
+import { roomService } from '@/app/admin/_services/roomService';
 import { useRoomActions } from '@/app/admin/tabs/hooks/useRoomActions';
 import { AdminUserMenu } from '@/app/admin/AdminUserMenu';
 
@@ -139,17 +140,8 @@ export const RoomsScreen = ({ onReady, isActive, canLoad, texts, showToast = tru
       setIsLoading(true);
 
       const fetchRooms = async () => {
-         const { data, error } = await supabase
-            .from('rooms')
-            .select('room_id, room_title, sort_order, is_section, is_active')
-            .eq('user_id', targetUserId)
-            .order('sort_order', { ascending: true });
-
-         if (error) throw error;
-
-         if (data) {
-            setRooms(data);
-         }
+         const data = await roomService.getRooms(supabase, targetUserId);
+         setRooms(data);
       };
 
       if (isManualRefresh) {

@@ -11,7 +11,7 @@ import { ActionStatus } from '@/utils/supabase/useAsyncAction';
 import { useGlobalPersistentState } from '@/utils/storage';
 import { BaseActions } from '@/app/_services/actions';
 import { isToday, isYesterday, isThisWeek, isThisMonth } from 'date-fns';
-import { loadingService } from '@/app/_services/loadingService';
+import { loadingService } from '@/app/_services/loadingLogsService';
 
 const logger = createLogger('LogsScreen');
 

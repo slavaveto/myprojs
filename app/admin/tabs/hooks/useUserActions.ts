@@ -1,5 +1,5 @@
 import { useSupabase } from '@/utils/supabase/useSupabase';
-import { useAudit } from '@/app/admin/_services/useAudit';
+import { logService } from '@/app/admin/_services/logService';
 import { useAsyncAction } from '@/utils/supabase/useAsyncAction';
 import { createLogger } from '@/utils/logger/Logger';
 
@@ -7,8 +7,7 @@ const logger = createLogger('UserActions');
 const TABLE_NAME = '_users';
 
 export function useUserActions() {
-  const { supabase } = useSupabase();
-  const { log } = useAudit();
+  const { supabase, userId: currentUserId } = useSupabase();
 
   const { execute: executeUpdate, status: updateStatus } = useAsyncAction({
     useToast: false, // Отключаем, так как тосты управляются из UI
@@ -44,12 +43,15 @@ export function useUserActions() {
        if (error) throw error;
 
        // 3. Лог
-       log({ 
-          action: 'USER_ROLE_UPDATE', 
-          entity: 'users', 
-          entityId: targetUserId, 
-          details: updates 
-       });
+       if (currentUserId) {
+         await logService.logAction(supabase, {
+            action: 'USER_ROLE_UPDATE',
+            entity: 'users',
+            entityId: targetUserId,
+            details: updates,
+            userId: currentUserId
+         });
+       }
     });
   };
 

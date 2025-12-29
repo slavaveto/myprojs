@@ -32,7 +32,7 @@ import { useAsyncAction } from '@/utils/supabase/useAsyncAction';
 import { StatusBadge } from '@/utils/supabase/StatusBadge';
 import { EditProjectPopover } from '@/app/components/EditProject';
 import { toast } from 'react-hot-toast';
-import { loadingService } from '@/app/_services/loadingService';
+import { loadingService } from '@/app/_services/loadingLogsService';
 import { NavigationTarget } from '@/app/components/GlobalSearch';
 
 // DnD Imports

@@ -8,7 +8,7 @@ import { CheckCircle2, Trash2, Folder as FolderIcon, RefreshCw, GripVertical, Ro
 import { Spinner, Chip, Button, Switch, Select, SelectItem, Checkbox } from '@heroui/react';
 import { format, isToday, isYesterday, isThisWeek, isThisMonth } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { loadingService } from '@/app/_services/loadingService';
+import { loadingService } from '@/app/_services/loadingLogsService';
 import { useGlobalPersistentState } from '@/utils/storage';
 import { AnimatePresence, motion } from 'framer-motion';
 

@@ -8,7 +8,7 @@ import { useAsyncAction, ActionStatus } from '@/utils/supabase/useAsyncAction';
 import { createLogger } from '@/utils/logger/Logger';
 import { useFolderData } from './useFolderData';
 import { useTaskData } from './useTaskData';
-import { loadingService } from '@/app/_services/loadingService';
+import { loadingService } from '@/app/_services/loadingLogsService';
 
 const logger = createLogger('ProjectScreenHook');
 

@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useSupabase } from '@/utils/supabase/useSupabase';
-import { useAudit } from '../../_services/useAudit';
+import { logService } from '@/app/admin/_services/logService';
 import { useAsyncAction } from '@/utils/supabase/useAsyncAction';
 import { createLogger } from '@/utils/logger/Logger';
 
@@ -8,9 +8,7 @@ const logger = createLogger('ProfileActions');
 const TABLE_NAME = '_profiles';
 
 export function useProfileAction() {
-  const { supabase } = useSupabase();
-  const { log } = useAudit();
-
+  const { supabase, userId: currentUserId } = useSupabase();
 
   const { execute: executeUpdate, status: updateStatus } = useAsyncAction({
      useToast: false, 
@@ -53,14 +51,17 @@ export function useProfileAction() {
         if (error) throw error;
 
         // 3. Лог
-        log({ 
-           action: 'PROFILE_UPDATE', 
-           entity: 'profile', 
-           entityId: userId, 
-           details: updates 
-        });
+        if (currentUserId) {
+          await logService.logAction(supabase, {
+             action: 'PROFILE_UPDATE',
+             entity: 'profile',
+             entityId: userId,
+             details: updates,
+             userId: currentUserId
+          });
+        }
      });
-  }, [executeUpdate, supabase, log, checkUsernameAvailability]);
+  }, [executeUpdate, supabase, checkUsernameAvailability, currentUserId]);
 
   return {
     updateProfile,

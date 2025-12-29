@@ -1,5 +1,5 @@
 import { useSupabase } from '@/utils/supabase/useSupabase';
-import { useAudit } from '@/app/admin/_services/useAudit';
+import { logService } from '@/app/admin/_services/logService';
 import { useAsyncAction } from '@/utils/supabase/useAsyncAction';
 import { createLogger } from '@/utils/logger/Logger';
 import { UIElement } from '@/utils/providers/localization/types';
@@ -8,8 +8,7 @@ const logger = createLogger('LocActions');
 const TABLE_NAME = '_ui';
 
 export function useLocalizActions() {
-  const { supabase } = useSupabase();
-  const { log } = useAudit();
+  const { supabase, userId: currentUserId } = useSupabase();
 
   // 1. Создание
   const { execute: executeCreate, status: createStatus } = useAsyncAction({
@@ -45,12 +44,15 @@ export function useLocalizActions() {
        const { error } = await supabase.from(TABLE_NAME).insert(payload);
        if (error) throw error;
 
-       log({ 
-          action: 'LOCALIZATION_CREATE', 
-          entity: 'ui', 
-          entityId: item.item_id,
-          details: payload
-       });
+       if (currentUserId) {
+         await logService.logAction(supabase, {
+            action: 'LOCALIZATION_CREATE',
+            entity: 'ui',
+            entityId: item.item_id,
+            details: payload,
+            userId: currentUserId
+         });
+       }
     });
   };
 
@@ -67,11 +69,14 @@ export function useLocalizActions() {
        const { error } = await supabase.from(TABLE_NAME).delete().eq('item_id', itemId);
        if (error) throw error;
 
-       log({ 
-          action: 'LOCALIZATION_CREATE', 
-          entity: 'ui', 
-          entityId: itemId 
-       });
+       if (currentUserId) {
+         await logService.logAction(supabase, {
+            action: 'LOCALIZATION_DELETE',
+            entity: 'ui',
+            entityId: itemId,
+            userId: currentUserId
+         });
+       }
     });
   };
 
@@ -91,12 +96,15 @@ export function useLocalizActions() {
 
         if (error) throw error;
 
-        log({ 
-           action: 'LOCALIZATION_CREATE', 
-           entity: 'ui', 
-           entityId: itemId, 
-           details: updates 
-        });
+        if (currentUserId) {
+          await logService.logAction(supabase, {
+             action: 'LOCALIZATION_UPDATE',
+             entity: 'ui',
+             entityId: itemId,
+             details: updates,
+             userId: currentUserId
+          });
+        }
      });
   };
 

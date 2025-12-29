@@ -11,7 +11,7 @@ import { useGlobalPersistentState, globalStorage } from '@/utils/storage';
 import { AnimatePresence, motion } from 'framer-motion';
 import { projectService } from '@/app/_services/projectService';
 import { CreateItemPopover } from '@/app/components/CreateItem';
-import { loadingService } from '@/app/_services/loadingService';
+import { loadingService } from '@/app/_services/loadingLogsService';
 import { EditableCell } from '../components/EditableCell';
 import { TaskContextMenu, TaskMenuItems } from '../components/TaskContextMenu';
 import { TaskStyleControl } from '../components/TaskStyleControl';
