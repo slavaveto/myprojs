@@ -14,6 +14,7 @@ import GlobalToggles from '@/utils/providers/GlobalToggles';
 import clsx from 'clsx';
 import { DebugPanel } from '@/utils/logger/DebugPanel';
 import { DeviceFrame } from '@/utils/providers/DeviceFrame';
+import { DB_TABLES } from '@/utils/supabase/db_tables';
 
 const montserrat = Montserrat({
    display: 'swap',
@@ -35,7 +36,7 @@ export async function generateMetadata(): Promise<Metadata> {
    let roomTitle = null;
    if (roomId) {
       const { data } = await supabase
-         .from('rooms')
+         .from(DB_TABLES.ROOMS)
          .select('room_title')
          .eq('room_id', roomId)
          .maybeSingle();

@@ -3,6 +3,8 @@ import { Project } from '@/app/types';
 import { logService } from './logService';
 import { BaseActions, EntityTypes, ProjectUpdateTypes } from './actions';
 import { createLogger } from '@/utils/logger/Logger';
+import { DB_TABLES } from '@/utils/supabase/db_tables';
+
 
 const logger = createLogger('ProjectService');
 
@@ -14,7 +16,7 @@ export const projectService = {
     async getProjects() {
         logger.info('Fetching projects...');
         const { data, error } = await supabase
-            .from('projects')
+            .from(DB_TABLES.PROJECTS)
             .select('*')
             .order('sort_order', { ascending: true });
             
@@ -29,7 +31,7 @@ export const projectService = {
 
     async getProjectsWithFolders() {
         const { data, error } = await supabase
-            .from('projects')
+            .from(DB_TABLES.PROJECTS)
             .select(`
                 *,
                 folders (*)
@@ -53,7 +55,7 @@ export const projectService = {
     async createProject(title: string, color: string, sort_order: number) {
         logger.info('Creating project', { title });
         const { data, error } = await supabase
-            .from('projects')
+            .from(DB_TABLES.PROJECTS)
             .insert({
                 title,
                 color,
