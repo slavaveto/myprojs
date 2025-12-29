@@ -10,7 +10,7 @@ import { GripVertical, Trash2, MoreVertical, Check, Pin } from 'lucide-react';
 import { Task } from './types';
 import { EditableCell } from './components/EditableCell';
 import { clsx } from 'clsx';
-// import { motion } from 'framer-motion'; // Removed framer motion
+import { motion } from 'framer-motion';
 import { TaskContextMenu, TaskMenuItems } from './components/TaskContextMenu';
 import { TaskStyleControl } from './components/TaskStyleControl';
 import { TaskPinControl } from './components/TaskPinControl';
@@ -92,16 +92,16 @@ const GapRow = ({
       // Context menu handler removed from wrapper. 
       // We will handle onContextMenu on the row itself if needed, or rely on parent.
       // Actually, for consistency, we can add onContextMenu to the div.
-      <div
+      <motion.div
          ref={setNodeRef}
          style={style}
          data-task-row={task.id}
          className={gapClassName}
-         // layout // Removed framer motion layout
-         // initial={task.isNew ? { opacity: 0, height: 0 } : false}
-         // animate={{ opacity: 1, height: 12 }}
-         // exit={{ opacity: 0, height: 0 }}
-         // transition={{ duration: 0.2 }}
+         // layout // Removed heavy layout animation
+         initial={task.isNew ? { opacity: 0, height: 0 } : false}
+         animate={{ opacity: 1, height: 12 }}
+         exit={{ opacity: 0, height: 0 }}
+         transition={{ duration: 0.2 }}
          onContextMenu={(e) => {
             e.preventDefault();
             onOpenMenu?.(task.id, e);
@@ -129,7 +129,7 @@ const GapRow = ({
                onMouseEnter={() => setIsIconHovered(true)}
                onMouseLeave={() => setIsIconHovered(false)}
             />
-      </div>
+      </motion.div>
    );
 };
 
@@ -341,21 +341,29 @@ export const TaskRow = React.memo(
 
       return (
          // Removed TaskContextMenu wrapper
-         <div
+         <motion.div
             ref={setNodeRef}
             // style={{ ...style, ...borderStyle }}
             style={{ ...style }}
             data-task-row={task.id}
-            className={className}
-            // layout // Removed framer motion layout
-            // initial={task.isNew ? { opacity: 0, height: 0 } : false}
-            // animate={{
-            //    opacity: 1,
-            //    height: 'auto',
-            //    backgroundColor: isHighlighted ? 'var(--heroui-primary-100)' : groupBackgroundColor,
-            // }}
-            // exit={{ opacity: 0, height: 0 }}
-            // transition={{ duration: 0.2 }}
+            className={clsx(className, "overflow-hidden")} // Add overflow-hidden for smooth height animation
+            // layout // Removed heavy layout animation
+            initial={task.isNew ? { opacity: 0, height: 0, marginTop: 0, marginBottom: 0 } : false}
+            animate={{
+               opacity: 1,
+               height: 'auto',
+               marginTop: 0, // Ensure margins are controlled if needed, or rely on gaps
+               marginBottom: 0,
+               backgroundColor: isHighlighted ? 'var(--heroui-primary-100)' : groupBackgroundColor,
+            }}
+            exit={{ 
+               opacity: 0, 
+               height: 0, 
+               marginTop: 0, 
+               marginBottom: 0,
+               transition: { duration: 0.2, ease: "easeInOut" } // Smoother exit
+            }}
+            transition={{ duration: 0.2 }}
             onContextMenu={(e) => {
                e.preventDefault();
                onOpenMenu?.(task.id, e);
@@ -364,7 +372,7 @@ export const TaskRow = React.memo(
             {content}
 
             {/* Dropdown removed, moved to TaskContextMenu */}
-         </div>
+         </motion.div>
       );
    }
 );

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Task } from '@/app/types';
 import { TaskRow } from '@/app/TaskRow';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-// import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { Dropdown, DropdownTrigger, DropdownMenu } from '@heroui/react';
 import { TaskMenuItems } from '@/app/components/TaskContextMenu';
 
@@ -117,7 +117,7 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlight
                 strategy={verticalListSortingStrategy}
              >
                <div className="flex flex-col gap-[3px] min-h-[50px] outline-none">
-                  {/* <AnimatePresence initial={false} mode="popLayout"> */}
+                  <AnimatePresence initial={false}>
                       {tasksWithGroupInfo.map(({ task, activeGroupColor }, index) => (
                          <TaskRow
                             key={task._tempId || task.id}
@@ -134,7 +134,7 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlight
                             onOpenMenu={handleOpenMenu}
                          />
                       ))}
-                  {/* </AnimatePresence> */}
+                  </AnimatePresence>
                   {isEmpty && (
                        <div className="text-center py-10 text-default-400">
                            No tasks in this folder.
