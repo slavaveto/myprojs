@@ -23,7 +23,7 @@
 - If a response requires >50 lines of code, STOP and ask if I want full implementation.
 
 # 4. USER RULES & TECH STACK (ПРАВИЛА ПОЛЬЗОВАТЕЛЯ И СТЕК)
-
+# Используй logger вместо console.log.
 # API: const logger = createLogger('ComponentName');
 # Methods: logger.info(), .error(), .success(), .warning(), .start(), .end().
 - Use `logger` instead of `console.log` (import { createLogger } from '@/utils/logger/Logger').
@@ -49,3 +49,10 @@
 - IF a request has multiple valid interpretations: STOP AND ASK.
 - DO NOT assume the "most likely" path. Present options.
 - Explicitly ask: "Did you mean X or Y?" before proceeding.
+
+# 7. SPECIAL MARKERS PROTECTION (ЗАЩИТА СПЕЦ-МЕТОК)
+# Метки вида `// @ref:...` и следующая за ними строка комментариев — НЕПРИКОСНОВЕННЫ.
+# Никогда не удаляй, не меняй и не перемещай их при рефакторинге.
+# Если меняешь код вокруг — копируй эти метки 1-в-1.
+- CRITICAL: PRESERVE `// @ref:...` lines and the comment line immediately following them.
+- Treat these pairs as IMMUTABLE ANCHORS. Never delete them.
