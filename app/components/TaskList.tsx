@@ -85,6 +85,8 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlight
                    )}
                 </div>
              </SortableContext>
+             {/* Invisible spacer to prevent selecting last task text on double click below list */}
+             <div className="h-px w-full" />
         </div>
     );
 };
