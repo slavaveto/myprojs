@@ -18,7 +18,7 @@ interface EditorCallbacks {
 
 interface RichTextContextType {
     activeId: string | null;
-    activate: (id: string, initialContent: string, callbacks: EditorCallbacks) => void;
+    activate: (id: string, initialContent: string, callbacks: EditorCallbacks, event?: React.MouseEvent) => void;
     deactivate: () => void;
     editor: Editor | null;
 }
@@ -226,27 +226,31 @@ export const RichTextProvider = ({ children }: { children: React.ReactNode }) =>
         };
     }, [editor, handleSave]);
 
-    const activate = useCallback((id: string, initialContent: string, callbacks: EditorCallbacks) => {
+    const activate = useCallback((id: string, initialContent: string, callbacks: EditorCallbacks, event?: React.MouseEvent) => {
         if (!editor) return;
 
         // If we are already active on this ID, do nothing
         if (activeId === id) return;
 
-        // If we were active elsewhere, save previous (handled by blur usually, but let's be safe?)
-        // Blur event fires when focus moves.
-        
+        // Capture coords immediately
+        const coords = event ? { left: event.clientX, top: event.clientY } : null;
+
         callbacksRef.current = callbacks;
         initialContentRef.current = initialContent;
-        
-        // Update placeholder if needed (not easy with extension config, but we can rely on CSS attr if we passed it down?)
-        // Placeholder extension uses extension config. 
-        // We can ignore placeholder dynamic update for now or try to reconfigure.
         
         editor.commands.setContent(initialContent);
         setActiveId(id);
         
         // Focus
         requestAnimationFrame(() => {
+            if (coords) {
+                const pos = editor.view.posAtCoords(coords);
+                if (pos) {
+                    editor.commands.setTextSelection(pos.pos);
+                    editor.commands.focus();
+                    return;
+                }
+            }
             editor.commands.focus('end');
         });
 

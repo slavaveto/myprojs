@@ -264,7 +264,7 @@ export const RichEditableCell = ({
                     onClick={(e) => {
                         e.stopPropagation(); 
                         e.preventDefault();
-                        activate(finalId, value || '', { onSave, onBlur, onCancel });
+                        activate(finalId, value || '', { onSave, onBlur, onCancel }, e);
                     }}
                     className={clsx(
                         "outline-none min-h-[24px] break-words whitespace-pre-wrap leading-normal flex items-center rounded px-1 py-[1px] transition-colors cursor-text",
