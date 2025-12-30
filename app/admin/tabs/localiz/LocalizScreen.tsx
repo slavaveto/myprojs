@@ -18,7 +18,6 @@ import { DndContext, pointerWithin, DragOverlay } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 
 // Refactored Imports
-import { TABS } from './constants';
 import { DroppableTabTitle } from './components/DroppableTabTitle';
 import { useLocalizCrud } from './hooks/useLocalizCrud';
 import { useLocalizDnD } from './hooks/useLocalizDnD';
@@ -46,6 +45,7 @@ export const LocalizScreen = ({ onReady, isActive, canLoad, texts, showToast = t
    // -- 1. CRUD Logic Hook --
    const {
       items,
+      tabs, // <-- Получаем динамические табы
       isLoading,
       loadData,
       handleAddNew,
@@ -78,6 +78,7 @@ export const LocalizScreen = ({ onReady, isActive, canLoad, texts, showToast = t
       handleDragEnd
    } = useLocalizDnD({
       items,
+      tabs, // <-- Прокидываем табы
       selectedTab,
       onUpdateItems: updateLocalItems,
       onSaveSortOrders: saveSortOrders,
@@ -88,10 +89,14 @@ export const LocalizScreen = ({ onReady, isActive, canLoad, texts, showToast = t
    // -- 4. Tabs Logic --
    useEffect(() => {
       const savedTab = globalStorage.getItem('admin_loc_tab');
-      if (savedTab && TABS.find((t) => t.id === savedTab)) {
+      // Проверяем, существует ли сохраненный таб в загруженных табах
+      if (savedTab && tabs.find((t) => t.id === savedTab)) {
          setSelectedTab(savedTab);
+      } else if (tabs.length > 0 && (!savedTab || !tabs.find((t) => t.id === savedTab))) {
+          // Если сохраненного нет или он невалиден, ставим первый
+          setSelectedTab(tabs[0].id);
       }
-   }, []);
+   }, [tabs]); // Зависимость от tabs
 
    const handleTabChange = (key: string) => {
       setSelectedTab(key);
@@ -100,7 +105,7 @@ export const LocalizScreen = ({ onReady, isActive, canLoad, texts, showToast = t
 
    const handleSearchResultClick = (item: UIElement) => {
       const targetTab = item.tab_id || 'misc';
-      const isMisc = !item.tab_id || item.tab_id === 'misc' || !TABS.find((t) => t.id === item.tab_id);
+      const isMisc = !item.tab_id || item.tab_id === 'misc' || !tabs.find((t) => t.id === item.tab_id);
       const newTab = isMisc ? 'misc' : targetTab;
 
       if (selectedTab !== newTab) {
@@ -118,7 +123,7 @@ export const LocalizScreen = ({ onReady, isActive, canLoad, texts, showToast = t
       if (selectedTab === 'misc') {
          currentTabItems = items.filter(
             (item) =>
-               !item.tab_id || item.tab_id === 'misc' || !TABS.find((t) => t.id === item.tab_id)
+               !item.tab_id || item.tab_id === 'misc' || !tabs.find((t) => t.id === item.tab_id)
          );
       } else {
          currentTabItems = items.filter((item) => item.tab_id === selectedTab);
@@ -131,13 +136,13 @@ export const LocalizScreen = ({ onReady, isActive, canLoad, texts, showToast = t
       });
 
       return currentTabItems;
-   }, [items, selectedTab]);
+   }, [items, selectedTab, tabs]);
 
    const getTabCount = (tabId: string) => {
       if (tabId === 'misc') {
          return items.filter(
             (item) =>
-               !item.tab_id || item.tab_id === 'misc' || !TABS.find((t) => t.id === item.tab_id)
+               !item.tab_id || item.tab_id === 'misc' || !tabs.find((t) => t.id === item.tab_id)
          ).length;
       }
       return items.filter((item) => item.tab_id === tabId).length;
@@ -165,30 +170,6 @@ export const LocalizScreen = ({ onReady, isActive, canLoad, texts, showToast = t
          en: formData.en || '',
       };
 
-      // Reuse handleUpdateField logic? Or call updateItem directly?
-      // handleUpdateField is optimized for single field.
-      // Let's manually call update via CRUD hook or modify handleUpdateField to accept object.
-      // For simplicity in this refactor, I'll iterate or use a direct update method if I exposed it.
-      // But handleUpdateField only takes one field.
-      // Let's add a `updateItemFull` to CRUD hook or just use updateItem logic here?
-      // No, better to keep logic in hook. 
-      // I will assume handleUpdateField can be called multiple times or I should expose `updateItem` from hook.
-      // Wait, `handleUpdateField` in hook does optimistic update for single field.
-      // Let's modify handleSaveModal to use `handleUpdateField` for each field or add a method to hook.
-      // Adding `handleUpdateItem` to hook is cleaner.
-      // But for now, I will just call `handleUpdateField` 3 times or better yet -
-      // I'll update the hook to expose a generic update method.
-      
-      // FIX: Calling handleUpdateField 3 times is bad for performance/renders.
-      // I will cheat slightly and rely on the fact that I can't easily change the hook interface without another file edit.
-      // Actually I am allowed to edit multiple files.
-      // I'll stick to what I have: `updateItem` was internal in hook.
-      // Let's look at `useLocalizCrud.ts`. It exposes `handleUpdateField`.
-      // I should have exposed `handleUpdateItem`.
-      
-      // Let's restart the hook edit? No, user is impatient.
-      // I'll execute single updates for now. It's not critical.
-      // Actually, I can use `handleUpdateField` for each.
       await handleUpdateField(formData.item_id, 'ru', payload.ru);
       await handleUpdateField(formData.item_id, 'uk', payload.uk);
       await handleUpdateField(formData.item_id, 'en', payload.en);
@@ -277,7 +258,7 @@ export const LocalizScreen = ({ onReady, isActive, canLoad, texts, showToast = t
                variant="underlined"
                aria-label="Localization Tabs"
             >
-               {TABS.map((tab) => (
+               {tabs.map((tab) => (
                   <Tab
                      key={tab.id}
                      title={
@@ -328,7 +309,7 @@ export const LocalizScreen = ({ onReady, isActive, canLoad, texts, showToast = t
                            onMove={handleMoveWrapper}
                            onEdit={handleEdit}
                            onDelete={handleDelete}
-                           tabs={TABS}
+                           tabs={tabs}
                            onRowBlur={handleRowBlur}
                            onCancel={item.isNew ? () => handleCancelNewItem(item._tempId!) : undefined}
                            onToggleSection={handleToggleSection}
@@ -360,7 +341,7 @@ export const LocalizScreen = ({ onReady, isActive, canLoad, texts, showToast = t
                               onMove={() => {}}
                               onEdit={() => {}}
                               onDelete={() => {}}
-                              tabs={TABS}
+                              tabs={tabs}
                               isOverlay
                               onToggleSection={handleToggleSection}
                            />
@@ -376,7 +357,7 @@ export const LocalizScreen = ({ onReady, isActive, canLoad, texts, showToast = t
             onClose={onClose}
             onSave={handleSaveModal}
             item={editingItem}
-            tabs={TABS}
+            tabs={tabs}
             defaultTab={selectedTab}
          />
       </div>

@@ -11,14 +11,14 @@ import {
    SelectItem,
    Textarea,
 } from '@heroui/react';
-import { UIElement } from '@/utils/providers/localization/types';
+import { UIElement, LocalizTab } from '@/utils/providers/localization/types';
 
 interface EditItemModalProps {
    isOpen: boolean;
    onClose: () => void;
    onSave: (data: Partial<UIElement>) => Promise<void>;
    item: UIElement | null; // null if creating new
-   tabs: { id: string; label: string }[];
+   tabs: LocalizTab[];
    defaultTab: string;
 }
 
@@ -157,4 +157,3 @@ export const EditItemModal = ({
       </Modal>
    );
 };
-

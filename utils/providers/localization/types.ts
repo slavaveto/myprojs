@@ -1,5 +1,11 @@
 export type Language = 'ru' | 'uk' | 'en';
 
+export interface LocalizTab {
+    id: string;
+    label: string;
+    order: number;
+}
+
 export interface UIElement {
     item_id: string;
     ru: string;
@@ -9,6 +15,7 @@ export interface UIElement {
     tab_id?: string | null;
     sort_order?: number;
     is_section?: boolean;
+    config?: LocalizTab[]; // Поле для спец. строки (_FOLDERS_CONFIG)
     // Client-side only
     isNew?: boolean;
     _tempId?: string;

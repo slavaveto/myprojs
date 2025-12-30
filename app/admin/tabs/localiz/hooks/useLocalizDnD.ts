@@ -7,19 +7,31 @@ import {
    KeyboardSensor,
    useSensor,
    useSensors,
+   defaultDropAnimationSideEffects,
 } from '@dnd-kit/core';
 import {
    arrayMove,
    sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable';
-import { UIElement } from '@/utils/providers/localization/types';
+import { UIElement, LocalizTab } from '@/utils/providers/localization/types';
 import { createLogger } from '@/utils/logger/Logger';
-import { TABS, dropAnimationConfig } from '../constants';
 
 const logger = createLogger('UseLocalizDnD');
 
+// Moved from constants.ts
+const dropAnimationConfig: DropAnimation = {
+    sideEffects: defaultDropAnimationSideEffects({
+       styles: {
+          active: {
+             opacity: '0.4',
+          },
+       },
+    }),
+ };
+
 interface UseLocalizDnDProps {
     items: UIElement[];
+    tabs: LocalizTab[];
     selectedTab: string;
     onUpdateItems: (items: UIElement[]) => void;
     onSaveSortOrders: (updates: { item_id: string; sort_order: number }[]) => Promise<void>;
@@ -29,6 +41,7 @@ interface UseLocalizDnDProps {
 
 export const useLocalizDnD = ({ 
     items, 
+    tabs,
     selectedTab, 
     onUpdateItems, 
     onSaveSortOrders, 
@@ -82,7 +95,7 @@ export const useLocalizDnD = ({
                     return (
                        !item.tab_id ||
                        item.tab_id === 'misc' ||
-                       !TABS.find((t) => t.id === item.tab_id)
+                       !tabs.find((t) => t.id === item.tab_id)
                     );
                  }
                  return item.tab_id === selectedTab;
@@ -142,4 +155,3 @@ export const useLocalizDnD = ({
         handleDragEnd
     };
 };
-

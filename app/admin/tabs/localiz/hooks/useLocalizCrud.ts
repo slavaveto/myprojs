@@ -1,12 +1,11 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { useSupabase } from '@/utils/supabase/useSupabase';
-import { UIElement } from '@/utils/providers/localization/types';
+import { UIElement, LocalizTab } from '@/utils/providers/localization/types';
 import { createLogger } from '@/utils/logger/Logger';
 import { localizationService } from '@/app/admin/_services/localizationService';
 import { useLocalizActions } from '@/app/admin/tabs/hooks/useLocalizActions';
 import { useAsyncAction } from '@/utils/supabase/useAsyncAction';
-import { TABS } from '../constants';
 
 const logger = createLogger('UseLocalizCrud');
 
@@ -25,7 +24,10 @@ interface UseLocalizCrudProps {
 export const useLocalizCrud = ({ canLoad, onReady, showToast = true, texts }: UseLocalizCrudProps) => {
     const { supabase } = useSupabase();
     const { user } = useUser();
+    
+    // State
     const [items, setItems] = useState<UIElement[]>([]);
+    const [tabs, setTabs] = useState<LocalizTab[]>([]); // Новое состояние для табов
     const [isLoading, setIsLoading] = useState(false);
 
     const {
@@ -34,9 +36,6 @@ export const useLocalizCrud = ({ canLoad, onReady, showToast = true, texts }: Us
         updateItem,
         moveItem: apiMoveItem,
         updateSortOrders: apiUpdateSortOrders,
-        isCreating,
-        isDeleting,
-        isUpdating,
     } = useLocalizActions();
 
     // -- Загрузка данных --
@@ -59,9 +58,16 @@ export const useLocalizCrud = ({ canLoad, onReady, showToast = true, texts }: Us
         logger.start('Loading localization data');
 
         const fetchLoc = async () => {
-            const data = await localizationService.getAllItems(supabase);
-            setItems(data);
-            logger.success('Localization data loaded', { count: data.length });
+            // Теперь сервис возвращает { items, tabs }
+            const { items: loadedItems, tabs: loadedTabs } = await localizationService.getAllItems(supabase);
+            
+            setItems(loadedItems);
+            setTabs(loadedTabs);
+            
+            logger.success('Localization data loaded', { 
+                itemsCount: loadedItems.length, 
+                tabsCount: loadedTabs.length 
+            });
         };
 
         if (isManualRefresh) {
@@ -264,6 +270,7 @@ export const useLocalizCrud = ({ canLoad, onReady, showToast = true, texts }: Us
 
     return {
         items,
+        tabs, // Экспортируем табы!
         isLoading,
         loadData,
         handleAddNew,
@@ -286,4 +293,3 @@ export const useLocalizCrud = ({ canLoad, onReady, showToast = true, texts }: Us
         }
     };
 };
-
