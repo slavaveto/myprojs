@@ -29,8 +29,8 @@ export const taskService = {
       });
    },
 
-   async getDoneTasks(showDeleted = false, timeFilter = 'all') {
-      logger.info('Fetching done tasks...', { showDeleted, timeFilter });
+   async getDoneTasks(showDeleted = false, timeFilter = 'all', limit = 200) {
+      logger.info('Fetching done tasks...', { showDeleted, timeFilter, limit });
 
       // 1. Fetch Logs first to get accurate completion times
       // We only care about logs for 'task' entity where action is 'complete' or 'delete' (if showDeleted)
@@ -47,20 +47,17 @@ export const taskService = {
       }
 
       // Limit logs to reasonable amount to map back to tasks.
-      // Note: This approach implies we rely on logs for "recent" items.
-      // If we have thousands of logs, we might miss some if we limit too early,
-      // but for "Done" screen usually we care about recent history or finite set.
-      const { data: logs, error: logError } = await logQuery.limit(500);
+      // Use slightly higher limit for logs to cover potential gaps
+      const logLimit = limit > 500 ? limit * 2 : 500;
+      const { data: logs, error: logError } = await logQuery.limit(logLimit);
 
       if (logError) {
          logger.error('Failed to fetch task logs', logError);
-         // Fallback to old method if logs fail
       }
 
       const logMap = new Map<string, string>(); // taskId -> finishedAt (ISO string)
       if (logs) {
          logs.forEach((log) => {
-            // If multiple logs exist (e.g. completed multiple times), latest one wins because of sort order
             if (!logMap.has(log.entity_id)) {
                logMap.set(log.entity_id, log.created_at);
             }
@@ -91,7 +88,7 @@ export const taskService = {
       // We can't easily filter by time using logs + tasks in one SQL query without join.
       // So we'll fetch tasks and filter in JS using the log timestamps if available, or updated_at as fallback.
 
-      const { data, error } = await query.limit(200); // Fetch enough tasks
+      const { data, error } = await query.limit(limit); // Fetch enough tasks
 
       if (error) {
          logger.error('Failed to fetch done tasks', error);

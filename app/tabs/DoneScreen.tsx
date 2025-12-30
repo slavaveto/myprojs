@@ -27,6 +27,13 @@ const TIME_RANGES = [
     { key: 'hour', label: 'Last Hour' },
 ];
 
+const LIMIT_OPTIONS = [
+    { key: '50', label: '50 items' },
+    { key: '100', label: '100 items' },
+    { key: '200', label: '200 items' },
+    { key: '500', label: '500 items' },
+];
+
 // Visual clone of TaskRow for Done items
 const DoneTaskRow = ({ task, onRestore, onDelete }: { task: any, onRestore: (t: any) => void, onDelete: (id: string) => void }) => {
     return (
@@ -140,6 +147,7 @@ export const DoneScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
     // Persistent filters
     const [showDeleted, setShowDeleted] = useGlobalPersistentState<boolean>('done_show_deleted', false);
     const [timeFilter, setTimeFilter] = useGlobalPersistentState<string>('done_time_filter', 'all');
+    const [limitFilter, setLimitFilter] = useGlobalPersistentState<string>('done_limit_filter', '200');
 
     const fetchTasks = async (showSpinner = true) => {
         // If we shouldn't load, just return. 
@@ -154,8 +162,9 @@ export const DoneScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
         }
 
         try {
+            const limit = parseInt(limitFilter) || 200;
             const [data] = await Promise.all([
-                taskService.getDoneTasks(showDeleted, timeFilter),
+                taskService.getDoneTasks(showDeleted, timeFilter, limit),
                 new Promise(resolve => setTimeout(resolve, 1000)) // Min wait time for better UX
             ]);
             setTasks(data || []);
@@ -179,7 +188,7 @@ export const DoneScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
             // Initial background load
             fetchTasks(true);
         }
-    }, [canLoad, isActive, showDeleted, timeFilter]); // Re-fetch on filter change or tab activation
+    }, [canLoad, isActive, showDeleted, timeFilter, limitFilter]); // Re-fetch on filter change or tab activation
 
     const handleRestore = async (task: any) => {
         // Optimistic remove
@@ -305,13 +314,28 @@ export const DoneScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
                         size="sm"
                         selectedKeys={[timeFilter]}
                         onChange={(e) => setTimeFilter(e.target.value)}
-                        className="w-[200px]"
+                        className="w-[150px]"
                         aria-label="Time Range"
                         disallowEmptySelection
                     >
                         {TIME_RANGES.map((range) => (
                             <SelectItem key={range.key}>
                                 {range.label}
+                            </SelectItem>
+                        ))}
+                    </Select>
+
+                    <Select 
+                        size="sm"
+                        selectedKeys={[limitFilter]}
+                        onChange={(e) => setLimitFilter(e.target.value)}
+                        className="w-[150px]"
+                        aria-label="Limit"
+                        disallowEmptySelection
+                    >
+                        {LIMIT_OPTIONS.map((opt) => (
+                            <SelectItem key={opt.key}>
+                                {opt.label}
                             </SelectItem>
                         ))}
                     </Select>
