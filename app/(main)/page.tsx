@@ -70,15 +70,13 @@ const SortableProjectItem = ({
 
    return (
       <div ref={setNodeRef} style={style} className="w-full mb-1 group relative">
-         <button
-            {...attributes}
-            {...listeners}
+         <div
             onClick={onClick}
             className={clsx(
                'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors w-full text-left select-none pr-3',
 
                // Dragging state (cursor, z-index, ring)
-               isDragging && 'cursor-grabbing z-20 ring-1 ring-primary/30',
+               isDragging && 'z-20 ring-1 ring-primary/30',
 
                // Hover state (handled via group-hover on parent to keep highlight when hovering actions)
                !isDragging && !isActive && 'cursor-pointer group-hover:bg-default-100',
@@ -95,10 +93,19 @@ const SortableProjectItem = ({
                     : 'text-foreground'
             )}
          >
+            {/* Drag Handle (Circle) */}
             <div
-               className="w-3 h-3 rounded-full flex-shrink-0"
-               style={{ backgroundColor: project.color || '#3b82f6' }} // Default blue-500
-            />
+               {...attributes}
+               {...listeners}
+               className="p-1 -m-1 flex items-center justify-center cursor-grab active:cursor-grabbing outline-none"
+               onClick={(e) => e.stopPropagation()}
+            >
+               <div
+                  className="w-3 h-3 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: project.color || '#3b82f6' }}
+               />
+            </div>
+
             <span className="truncate flex-grow">{project.title}</span>
             
             {/* Docs Chip */}
@@ -115,7 +122,7 @@ const SortableProjectItem = ({
                 {/* <Book size={12} /> */}
                 <span>Docs</span>
             </div>
-         </button>
+         </div>
 
          {/* {children && (
             <div
@@ -383,8 +390,8 @@ function AppContent() {
                   className={clsx(
                      'absolute inset-0 w-full h-full bg-background transition-opacity duration-300',
                      activeProjectId === project.id
-                        ? 'opacity-100 z-10 pointer-events-auto'
-                        : 'opacity-0 z-0 pointer-events-none'
+                        ? 'z-10 block'
+                        : 'z-0 hidden'
                   )}
                >
                   <div className={clsx("h-full w-full", projectScreenMode === 'tasks' ? 'block' : 'hidden')}>

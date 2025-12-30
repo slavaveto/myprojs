@@ -51,7 +51,7 @@ export function usePageLogic() {
    const sensors = useSensors(
       useSensor(PointerSensor, {
          activationConstraint: {
-            delay: 200,
+            delay: 0,
             tolerance: 5,
          },
       }),
