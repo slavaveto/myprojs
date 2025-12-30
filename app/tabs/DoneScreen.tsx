@@ -75,7 +75,8 @@ const DoneTaskRow = ({ task, onRestore, onDelete }: { task: any, onRestore: (t: 
                         className={clsx(
                             "rich-editor-cell !bg-transparent !p-0 select-text cursor-text",
                             !task.is_deleted && "text-default-400 ",
-                            task.is_deleted && "text-danger"
+                            // Removed task.is_deleted && "text-danger" to keep text color normal for deleted items
+                             task.is_deleted && "text-default-400" 
                         )}
                         dangerouslySetInnerHTML={{ __html: task.content || "Empty task" }}
                     />
