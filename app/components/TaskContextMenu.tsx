@@ -103,6 +103,7 @@ export const TaskMenuItems = ({
       // TODO: Config for Note
       if (isNote) return [
          'revertToTask', 
+         'styles',
          'separator', 
          'insertNoteAbove',
           'insertNoteBelow',
