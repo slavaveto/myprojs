@@ -18,6 +18,7 @@ export const projectService = {
         const { data, error } = await supabase
             .from(DB_TABLES.PROJECTS)
             .select('*')
+            .or('is_deleted.eq.false,is_deleted.is.null') // Soft Delete Filter
             .order('sort_order', { ascending: true });
             
         if (error) {
@@ -30,20 +31,27 @@ export const projectService = {
     },
 
     async getProjectsWithFolders() {
+        // We need to filter both projects AND folders.
+        // Supabase join filtering works on the join relation.
         const { data, error } = await supabase
             .from(DB_TABLES.PROJECTS)
             .select(`
                 *,
                 folders (*)
             `)
+            .or('is_deleted.eq.false,is_deleted.is.null') // Filter projects
             .order('sort_order', { ascending: true });
 
         if (error) throw error;
 
-        // Sort folders in memory
+        // Filter folders manually or via complex query. 
+        // Simple way: filter in memory after fetch, since we need to sort them anyway.
         if (data) {
             data.forEach(p => {
                 if (p.folders && Array.isArray(p.folders)) {
+                    // Filter deleted folders
+                    p.folders = p.folders.filter((f: any) => !f.is_deleted);
+                    // Sort
                     p.folders.sort((a: any, b: any) => a.sort_order - b.sort_order);
                 }
             });
@@ -60,6 +68,7 @@ export const projectService = {
                 title,
                 color,
                 sort_order,
+                is_deleted: false,
                 updated_at: new Date().toISOString(),
                 created_at: new Date().toISOString()
             })
@@ -130,7 +139,7 @@ export const projectService = {
     },
 
     async deleteProject(id: string) {
-        logger.info('Deleting project', { id });
+        logger.info('Deleting project (soft)', { id });
         
         // Get BEFORE
         const { data: beforeState, error: fetchError } = await supabase
@@ -149,31 +158,37 @@ export const projectService = {
         if (folders && folders.length > 0) {
             const folderIds = folders.map(f => f.id);
             
-            // 2. Soft delete tasks
+            // 2. Soft delete tasks (KEEP FOLDER_ID!)
             const { error: taskError } = await supabase
                 .from(DB_TABLES.TASKS)
                 .update({ 
                     is_deleted: true, 
-                    folder_id: null,
+                    // folder_id: null, <--- REMOVED! Keep relation for RLS
                     updated_at: new Date().toISOString()
                 })
                 .in('folder_id', folderIds);
                 
             if (taskError) throw taskError;
             
-            // 3. Delete folders
+            // 3. Soft delete folders
             const { error: foldersError } = await supabase
                 .from(DB_TABLES.FOLDERS)
-                .delete()
+                .update({
+                    is_deleted: true,
+                    updated_at: new Date().toISOString()
+                })
                 .in('id', folderIds);
                 
             if (foldersError) throw foldersError;
         }
 
-        // 4. Delete project
+        // 4. Soft delete project
         const { error } = await supabase
             .from(DB_TABLES.PROJECTS)
-            .delete()
+            .update({
+                is_deleted: true,
+                updated_at: new Date().toISOString()
+            })
             .eq('id', id);
             
         if (error) {

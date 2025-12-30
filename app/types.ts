@@ -6,6 +6,7 @@ export interface Project {
    created_at: string;
    updated_at: string;
    local_path?: string; // Name of the folder in ~/Projs/
+   is_deleted?: boolean; // Added for Soft Delete
 }
 
 export interface Folder {
@@ -15,6 +16,7 @@ export interface Folder {
    sort_order: number;
    created_at: string;
    updated_at: string;
+   is_deleted?: boolean; // Added for Soft Delete
 }
 
 export interface Task {

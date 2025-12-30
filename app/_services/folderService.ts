@@ -15,6 +15,7 @@ export const folderService = {
             .from(DB_TABLES.FOLDERS)
             .select('*')
             .eq('project_id', projectId)
+            .or('is_deleted.eq.false,is_deleted.is.null') // Soft Delete Filter
             .order('sort_order');
         if (error) {
             logger.error('Failed to fetch folders', error);
@@ -32,6 +33,7 @@ export const folderService = {
                 project_id: projectId,
                 title,
                 sort_order,
+                is_deleted: false,
                 updated_at: new Date().toISOString(),
                 created_at: new Date().toISOString()
             })
@@ -103,7 +105,7 @@ export const folderService = {
     },
 
     async deleteFolder(id: string) {
-        logger.info('Deleting folder', { id });
+        logger.info('Deleting folder (soft)', { id });
         
         // 1. Get state BEFORE delete
         const { data: folder, error: fetchError } = await supabase
@@ -114,12 +116,12 @@ export const folderService = {
             
         if (fetchError) throw fetchError;
 
-        // 2. Soft delete tasks
+        // 2. Soft delete tasks (KEEP FOLDER ID!)
         const { error: taskError } = await supabase
             .from(DB_TABLES.TASKS)
             .update({ 
                 is_deleted: true, 
-                folder_id: null,
+                // folder_id: null, <--- REMOVED
                 updated_at: new Date().toISOString()
             })
             .eq('folder_id', id);
@@ -129,10 +131,13 @@ export const folderService = {
              throw taskError;
         }
 
-        // 3. Delete folder
+        // 3. Soft Delete folder
         const { error } = await supabase
             .from(DB_TABLES.FOLDERS)
-            .delete()
+            .update({
+                is_deleted: true,
+                updated_at: new Date().toISOString()
+            })
             .eq('id', id);
             
         if (error) {
@@ -176,4 +181,3 @@ export const folderService = {
         logger.info('Folders reordered', { count: updates.length });
     },
 };
-
