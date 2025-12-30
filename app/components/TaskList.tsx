@@ -202,6 +202,7 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlight
                             delete: true,
                             makeGap: true,
                             makeGroup: true,
+                            makeNote: true,
                             today: true,
                             move: true,
                             styles: true
