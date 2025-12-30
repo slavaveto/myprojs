@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useDisclosure, Button } from '@heroui/react';
 import { Plus as IconPlus, RefreshCw as IconRefresh } from 'lucide-react';
 import { createLogger } from '@/utils/logger/Logger';
@@ -51,6 +51,7 @@ export const LocalizScreen = ({ onReady, isActive, canLoad, texts, showToast = t
       isLoading,
       loadData,
       handleAddNew,
+      handleInsert, 
       handleUpdateField,
       saveNewItem,
       handleCancelNewItem,
@@ -69,6 +70,12 @@ export const LocalizScreen = ({ onReady, isActive, canLoad, texts, showToast = t
       executeSave,
       status
    } = useLocalizCrud({ canLoad: !!canLoad, onReady, showToast, texts });
+
+   // Keep items in ref to avoid stale closures in event handlers
+   const itemsRef = useRef(items);
+   useEffect(() => {
+       itemsRef.current = items;
+   }, [items]);
 
    // -- 2. UI State --
    const [selectedTab, setSelectedTab] = useState<string>('entry');
@@ -136,9 +143,8 @@ export const LocalizScreen = ({ onReady, isActive, canLoad, texts, showToast = t
          currentTabItems = items.filter((item) => item.tab_id === selectedTab);
       }
 
+      // Исправленная сортировка: только по sort_order (новые встают куда надо)
       currentTabItems.sort((a, b) => {
-         if (a.isNew && !b.isNew) return -1;
-         if (!a.isNew && b.isNew) return 1;
          return (a.sort_order || 0) - (b.sort_order || 0);
       });
 
@@ -183,13 +189,27 @@ export const LocalizScreen = ({ onReady, isActive, canLoad, texts, showToast = t
    };
 
    const handleRowBlur = async (item: UIElement) => {
-      if (item.isNew) {
-         if (item.item_id.trim() && item._tempId) {
-            await saveNewItem(item, item._tempId);
-         } else if (item._tempId) {
-            handleCancelNewItem(item._tempId);
-         }
-      }
+      // Use setTimeout to allow state updates from child components (EditableCell) to propagate to itemsRef
+      setTimeout(async () => {
+        const freshItem = itemsRef.current.find(i => 
+            (i._tempId && i._tempId === item._tempId) || (i.item_id === item.item_id)
+        );
+
+        if (!freshItem) return;
+
+        if (freshItem.isNew) {
+            // Safety Check: If item was just created (< 500ms), ignore blur to allow focus to settle
+            const timestamp = parseInt(freshItem._tempId?.split('_')[1] || '0');
+            if (Date.now() - timestamp < 500) return;
+
+            if (freshItem.item_id && freshItem.item_id.trim() && freshItem._tempId) {
+                await saveNewItem(freshItem, freshItem._tempId);
+            } else if (freshItem._tempId) {
+               // Only cancel if it's truly empty after the delay
+               handleCancelNewItem(freshItem._tempId);
+            }
+        }
+      }, 100);
    };
    
    const handleMoveWrapper = async (item: UIElement, newTabId: string) => {
@@ -259,7 +279,7 @@ export const LocalizScreen = ({ onReady, isActive, canLoad, texts, showToast = t
             onDragEnd={handleDragEnd}
          >
              <LayoutGroup id="admin-tabs">
-                <div className="flex items-end gap-2 mb-2 w-full"> {/* УБРАЛ БОРДЕР */}
+                <div className="flex items-end gap-2 mb-2 w-full">
                     <div className="flex-grow overflow-x-auto scrollbar-hide flex items-center gap-2 pb-1">
                         {tabs.map((tab, index) => (
                             <AdminTabTitle
@@ -336,6 +356,7 @@ export const LocalizScreen = ({ onReady, isActive, canLoad, texts, showToast = t
                            onMove={handleMoveWrapper}
                            onEdit={handleEdit}
                            onDelete={handleDelete}
+                           onInsert={handleInsert} // <-- NEW
                            tabs={tabs}
                            onRowBlur={handleRowBlur}
                            onCancel={item.isNew ? () => handleCancelNewItem(item._tempId!) : undefined}

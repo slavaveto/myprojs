@@ -31,6 +31,20 @@ export const EditableCell = ({
       setError(null);
    }, [value]);
 
+   // Focus handling
+   useEffect(() => {
+      if (autoFocus && textareaRef.current) {
+         // Small delay to ensure element is mounted and ready, especially after DnD or virtual list updates
+         setTimeout(() => {
+            if (textareaRef.current) {
+               textareaRef.current.focus();
+               // Optional: select all text if needed, or place cursor at end
+               // textareaRef.current.select(); 
+            }
+         }, 200);
+      }
+   }, [autoFocus]);
+
    // Auto-resize
    useEffect(() => {
       if (textareaRef.current) {

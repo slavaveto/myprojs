@@ -9,11 +9,13 @@ import { UIElement, LocalizTab } from '@/utils/providers/localization/types';
 import { EditableCell } from '@/app/admin/tabs/components/EditableCell';
 import { clsx } from 'clsx';
 import { translateText } from '@/app/admin/tabs/components/actions';
+import { LocalizContextMenu } from './LocalizContextMenu';
 
 interface SortableRowProps {
    item: UIElement;
    onEdit: (item: UIElement) => void;
    onDelete: (id: string) => void;
+   onInsert?: (id: string, position: 'above' | 'below') => void;
    onUpdateField: (id: string, field: keyof UIElement, value: string) => void;
    highlightedItemId: string | null;
    tabs: LocalizTab[];
@@ -30,6 +32,7 @@ export const SortableRow = ({
    item,
    onEdit,
    onDelete,
+   onInsert,
    onUpdateField,
    highlightedItemId,
    tabs,
@@ -131,7 +134,7 @@ export const SortableRow = ({
       setNodeRef(element);
    };
 
-   return (
+   const Content = (
       <div
          ref={setRefs}
          id={item.item_id} // Add ID for easier finding if needed
@@ -350,5 +353,20 @@ export const SortableRow = ({
             )}
          </div>
       </div>
+   );
+
+   if (isOverlay) {
+       return Content;
+   }
+
+   return (
+       <LocalizContextMenu
+           item={item}
+           onInsertAbove={() => onInsert?.(sortableId, 'above')}
+           onInsertBelow={() => onInsert?.(sortableId, 'below')}
+           onDelete={() => onDelete(item.item_id)}
+       >
+           {Content}
+       </LocalizContextMenu>
    );
 };

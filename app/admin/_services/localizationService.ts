@@ -62,11 +62,25 @@ export const localizationService = {
           tab_id: item.tab_id || 'misc',
           sort_order: item.sort_order || 0,
           updated_at: new Date().toISOString(),
-          config: item.config || null, // Добавили поддержку конфига
+          config: item.config || null,
       };
 
-      const { error } = await supabase.from(DB_TABLES.UI).insert(payload);
-      if (error) throw error;
+      const { data, error } = await supabase
+        .from(DB_TABLES.UI)
+        .insert(payload)
+        .select();
+        
+      if (error) {
+        console.error('[LocService] Create Error:', error);
+        throw error;
+      }
+      
+      if (!data || data.length === 0) {
+        console.warn('[LocService] Insert successful but no data returned. Check RLS policies?');
+      } else {
+        console.log('[LocService] Created:', data[0]);
+      }
+      
       return payload;
   },
 

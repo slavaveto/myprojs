@@ -134,6 +134,59 @@ export const useLocalizCrud = ({ canLoad, onReady, showToast = true, texts }: Us
         setItems((prev) => [newItem, ...prev]);
     };
 
+    const handleInsert = (targetItemId: string, position: 'above' | 'below') => {
+        const targetIndex = items.findIndex(i => (i._tempId || i.item_id) === targetItemId);
+        if (targetIndex === -1) return;
+
+        const targetItem = items[targetIndex];
+        const tabId = targetItem.tab_id || 'misc';
+        
+        // Фильтруем элементы только текущего таба для правильного расчета порядка
+        const currentTabItems = items.filter((i) =>
+             tabId === 'misc' ? !i.tab_id || i.tab_id === 'misc' : i.tab_id === tabId
+        ).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+
+        const targetInTabIdx = currentTabItems.findIndex(i => (i._tempId || i.item_id) === targetItemId);
+        
+        let newSortOrder = 0;
+        const targetOrder = targetItem.sort_order || 0;
+
+        // Расчет позиции
+        if (position === 'above') {
+            const prevItem = currentTabItems[targetInTabIdx - 1];
+            if (prevItem) {
+                newSortOrder = (targetOrder + (prevItem.sort_order || 0)) / 2;
+            } else {
+                newSortOrder = targetOrder - 100; // Если первый
+            }
+        } else { // below
+            const nextItem = currentTabItems[targetInTabIdx + 1];
+            if (nextItem) {
+                newSortOrder = (targetOrder + (nextItem.sort_order || 0)) / 2;
+            } else {
+                newSortOrder = targetOrder + 100; // Если последний
+            }
+        }
+
+        const tempId = `new_${Date.now()}`;
+        const newItem: UIElement = {
+            item_id: '',
+            ru: '',
+            uk: '',
+            en: '',
+            tab_id: tabId,
+            sort_order: newSortOrder,
+            updated_at: new Date().toISOString(),
+            isNew: true,
+            _tempId: tempId,
+        };
+
+        const newItems = [...items];
+        newItems.splice(position === 'above' ? targetIndex : targetIndex + 1, 0, newItem);
+        
+        setItems(newItems);
+    };
+
     const handleUpdateField = async (itemIdOrTempId: string, field: string, newValue: string, highlightCallback?: (newId: string) => void) => {
         const itemIndex = items.findIndex((i) => (i._tempId || i.item_id) === itemIdOrTempId);
         if (itemIndex === -1) return;
@@ -175,6 +228,7 @@ export const useLocalizCrud = ({ canLoad, onReady, showToast = true, texts }: Us
 
     const saveNewItem = async (item: UIElement, tempId: string) => {
         try {
+            logger.info('Saving new item', item);
             await executeSave(async () => {
                 await createItem({
                     item_id: item.item_id,
@@ -186,11 +240,13 @@ export const useLocalizCrud = ({ canLoad, onReady, showToast = true, texts }: Us
                 });
             });
 
-            setItems((prev) =>
-                prev.map((i) => (i._tempId === tempId ? { ...i, isNew: false, _tempId: undefined } : i))
-            );
+            // Reload data to ensure sync with DB (especially for sort_order types and generated fields)
+            await loadData();
+
         } catch (err: any) {
-            alert(err.message);
+            logger.error('Failed to save item', err);
+            console.error('Save Item Error:', err);
+            alert(`Error saving: ${err.message}`);
         }
     };
 
@@ -317,16 +373,6 @@ export const useLocalizCrud = ({ canLoad, onReady, showToast = true, texts }: Us
             await executeSave(async () => {
                 // Сначала сохраняем конфиг табов
                 await localizationService.saveTabsConfig(supabase, newTabs);
-                
-                // Потом обновляем элементы в базе (это может быть долго, если их много)
-                // Оптимизация: одним запросом обновить все items где tab_id = X
-                // Но у нас нет такого метода в сервисе пока. Будем перебирать или добавим batch update.
-                // Для простоты пока оставим как есть: элементы станут "визуально" в misc, 
-                // но в базе у них останется старый tab_id. 
-                // А, стоп! Если tab_id нет в списке tabs, они АВТОМАТИЧЕСКИ попадают в misc!
-                // Так что обновлять элементы в базе НЕ ОБЯЗАТЕЛЬНО!
-                // Logic: items.filter(i => ... !tabs.find(t => t.id === item.tab_id))
-                // Значит, достаточно просто удалить таб из конфига!
             });
         } catch (err) {
             setTabs(oldTabs);
@@ -364,6 +410,7 @@ export const useLocalizCrud = ({ canLoad, onReady, showToast = true, texts }: Us
         isLoading,
         loadData,
         handleAddNew,
+        handleInsert, // NEW
         handleUpdateField,
         saveNewItem,
         handleCancelNewItem,
