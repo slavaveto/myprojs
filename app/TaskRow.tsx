@@ -9,6 +9,7 @@ import { Checkbox } from '@heroui/react'; // Restore Checkbox import
 import { GripVertical, Trash2, MoreVertical, Check, Pin } from 'lucide-react';
 import { Task } from './types';
 import { EditableCell } from './components/EditableCell';
+import { RichEditableCell } from './components/RichEditableCell';
 import { clsx } from 'clsx';
 import { motion } from 'framer-motion';
 import { TaskContextMenu, TaskMenuItems } from './components/TaskContextMenu';
@@ -278,7 +279,8 @@ export const TaskRow = React.memo(
                   />
                )}
 
-               <EditableCell
+               {/* Replaced EditableCell with RichEditableCell for standard tasks */}
+               <RichEditableCell
                   value={task.content}
                   // @ref:db02ba
                   // сохранение задачи 1 завершение редактирования
@@ -288,8 +290,11 @@ export const TaskRow = React.memo(
                      if (task.isDraft) onDelete(task.id);
                   }}
                   onBlur={(val) => {
+                     // Check if empty (strip HTML tags first for fair check)
+                     const stripped = val.replace(/<[^>]*>/g, '').trim();
                      const timeSinceCreation = Date.now() - creationTimeRef.current;
-                     if (task.isDraft && !val.trim()) {
+                     
+                     if (task.isDraft && !stripped) {
                         // Protect against immediate blur from menu closing (focus restoration)
                         if (task.isNew && timeSinceCreation < 500) {
                            return;
@@ -297,13 +302,13 @@ export const TaskRow = React.memo(
                         onDelete(task.id);
                      }
                   }}
-                  isMultiline
-                  autoWidth={isGroup}
+                  // isMultiline - Tiptap is multiline by default
+                  // autoWidth - Tiptap handles width, but for group title we might need specific styling
                   className={clsx(
-                     'text-[16px] p-0 m-0 pl-0 mr-0',
-                     task.is_completed && 'text-default-400 line-through',
+                     'p-0 m-0 pl-0 mr-0',
+                     task.is_completed && 'text-default-400 line-through opacity-70', // Opacity helper for completed
                      isGroup && 'font-semibold',
-                     isNote && 'pl-2', // Added padding left specifically for note text
+                     isNote && 'pl-2', 
                      task.title_text_style === 'bold' && 'font-medium',
                      task.title_text_style === 'red' && 'text-danger',
                      task.title_text_style === 'red-bold' && 'text-danger font-medium'

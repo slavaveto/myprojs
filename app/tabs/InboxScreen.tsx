@@ -13,6 +13,7 @@ import { projectService } from '@/app/_services/projectService';
 import { CreateItemPopover } from '@/app/components/CreateItem';
 import { loadingService } from '@/app/_services/loadingLogsService';
 import { EditableCell } from '../components/EditableCell';
+import { RichEditableCell } from '../components/RichEditableCell';
 import { TaskContextMenu, TaskMenuItems } from '../components/TaskContextMenu';
 import { TaskStyleControl } from '../components/TaskStyleControl';
 import { TaskTodayControl } from '../components/TaskTodayControl';
@@ -91,12 +92,11 @@ const InboxTaskRow = ({
                 />
 
                 <div className="flex-grow min-w-0 pl-1 mr-2 flex flex-col justify-center py-1">
-                    <EditableCell
+                    <RichEditableCell
                         value={task.content}
                         onSave={(val) => onUpdate(task.id, { content: val })}
-                        isMultiline
                         className={clsx(
-                            "text-[16px] leading-normal break-words whitespace-pre-wrap",
+                            "leading-normal break-words whitespace-pre-wrap",
                             task.is_completed && "text-default-400 line-through",
                             task.title_text_style === 'bold' && 'font-medium',
                             task.title_text_style === 'red' && 'text-danger',

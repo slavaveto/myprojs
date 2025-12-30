@@ -23,8 +23,32 @@
 
 
 
-.tab-title {
-    @apply pl-1 text-2xl font-bold flex items-center gap-2
+/* Reset ProseMirror Paragraph margins to ensure vertical alignment matches View Mode */
+.ProseMirror p {
+  margin: 0;
+  /* line-height inherited from container (leading-normal) */
+}
+
+.ProseMirror {
+  outline: none;
+  min-height: 24px;
+  display: flex;
+  align-items: center; /* Center content vertically */
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  color: #adb5bd;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Tiptap Highlight Styles */
+mark {
+    background-color: transparent; /* Reset default mark bg */
+    border-radius: 2px;
+    padding: 0 2px;
 }
 
 
