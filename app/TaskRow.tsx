@@ -222,7 +222,7 @@ export const TaskRow = React.memo(
          isDragging && '!opacity-50',
          isOverlay && 'z-50 bg-default-100 border-primary/50 pointer-events-none cursor-grabbing',
          isHighlighted && 'border-orange-500/50',
-         activeGroupColor && 'ml-[20px] -rounded-l-[4px]',
+         activeGroupColor && 'ml-[15px] -rounded-l-[4px]',
          
          // Border Logic (Task & Note & Group)
          'border-l-[3px]', // Always apply border for non-gap items (as Gap is handled above)
