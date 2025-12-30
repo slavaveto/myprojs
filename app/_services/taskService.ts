@@ -79,7 +79,8 @@ export const taskService = {
                         color
                     )
                 )
-            `);
+            `)
+            .order('updated_at', { ascending: false }); // Add sort to ensure we get recent items with limit
 
       if (showDeleted) {
          query = query.or('is_completed.eq.true,is_deleted.eq.true');
