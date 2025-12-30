@@ -211,6 +211,11 @@ export const TaskRow = React.memo(
       const currentGroupColor = task.group_color || '#3b82f6';
       const groupBackgroundColor = isGroup ? `${currentGroupColor}20` : '';
 
+      // Dynamic border style for groups
+      const borderStyle: React.CSSProperties | undefined = isGroup 
+          ? { borderLeft: `3px solid ${currentGroupColor}` } 
+          : undefined;
+
       const className = clsx(
          'group px-1 flex justify-between min-h-[30px] items-center rounded border border-default-300 bg-content1 transition-colors outline-none ',
          !isDragging && !isOverlay && 'hover:bg-default-50',
@@ -218,11 +223,13 @@ export const TaskRow = React.memo(
          isOverlay && 'z-50 bg-default-100 border-primary/50 pointer-events-none cursor-grabbing',
          isHighlighted && 'border-orange-500/50',
          activeGroupColor && 'ml-[20px] -rounded-l-[4px]',
-         isNote && 'bg-default-50/50 text-default-600 py-2 border-l-[3px] border-l-default-400' // Removed pl-3 to keep drag handle in place
+         
+         // Border Logic (Task & Note & Group)
+         'border-l-[3px]', // Always apply border for non-gap items (as Gap is handled above)
+         (!isGroup && !isNote) && 'border-l-default-300', // Regular Task border color
+         
+         isNote && 'bg-default-50/50 text-default-600 py-2 border-l-default-400' // Note specific
       );
-
-      // const borderStyle = activeGroupColor ? { borderLeft: `1px solid ${activeGroupColor}50` } : undefined; // 33 is approx 20% opacity in hex
-      const borderStyle: React.CSSProperties | undefined = undefined;
 
       const content = (
          <>
@@ -338,8 +345,7 @@ export const TaskRow = React.memo(
          return (
             <div
                ref={setNodeRef}
-               // style={{ ...style, opacity: 1, ...borderStyle }}
-               style={{ ...style, opacity: 1 }}
+               style={{ ...style, opacity: 1, ...borderStyle }}
                className={className}
             >
                {content}
@@ -352,7 +358,7 @@ export const TaskRow = React.memo(
          <motion.div
             ref={setNodeRef}
             // style={{ ...style, ...borderStyle }}
-            style={{ ...style }}
+            style={{ ...style, ...borderStyle }}
             data-task-row={task.id}
             className={clsx(className, 'overflow-hidden')} // Add overflow-hidden for smooth height animation
             // layout // Removed heavy layout animation
