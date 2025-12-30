@@ -218,7 +218,7 @@ export const TaskRow = React.memo(
          isOverlay && 'z-50 bg-default-100 border-primary/50 pointer-events-none cursor-grabbing',
          isHighlighted && 'border-orange-500/50',
          activeGroupColor && 'ml-[20px] -rounded-l-[4px]',
-         isNote && 'bg-default-50/50 text-default-600 py-2' // Removed pl-3 to keep drag handle in place
+         isNote && 'bg-default-50/50 text-default-600 py-2 border-l-[3px] border-l-default-400' // Removed pl-3 to keep drag handle in place
       );
 
       // const borderStyle = activeGroupColor ? { borderLeft: `1px solid ${activeGroupColor}50` } : undefined; // 33 is approx 20% opacity in hex
