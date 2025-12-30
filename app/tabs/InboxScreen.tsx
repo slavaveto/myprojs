@@ -67,18 +67,20 @@ const InboxTaskRow = ({
                 animate={{ 
                     opacity: 1, 
                     height: 'auto',
-                    backgroundColor: isHighlighted ? 'rgba(250, 204, 21, 0.2)' : undefined
+                    // backgroundColor: isHighlighted ? 'rgba(250, 204, 21, 0.2)' : undefined
+                    backgroundColor: isHighlighted ? undefined : undefined,
+
                 }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.2 }}
                 className={clsx(
-                    'group px-1 flex justify-between min-h-[30px] items-center rounded-lg border border-default-300 bg-content1 transition-colors outline-none overflow-hidden mb-[0px]',
+                    'group px-1 flex justify-between min-h-[30px] items-center rounded border border-default-300 bg-content1 transition-colors outline-none overflow-hidden ',
                     'hover:bg-default-50',
                     'border-l-[3px]',
-                    isHighlighted ? '!border-orange-500 !border-l-orange-500' : 'border-l-default-300'
+                    isHighlighted ? '!border-orange-300 !border-l-orange-300' : 'border-l-default-300'
                 )}
             >
-                 <div className="flex flex-1 gap-2 flex-row items-center pl-2">
+                 <div className="flex flex-1 gap-1 flex-row items-center pl-1">
                     <Checkbox
                     isSelected={task.is_completed} 
                     onValueChange={(isSelected) => {
@@ -91,7 +93,7 @@ const InboxTaskRow = ({
                     size="sm"
                 />
 
-                <div className="flex-grow min-w-0 pl-1 mr-2 flex flex-col justify-center py-1">
+                <div className="flex-grow min-w-0 mr-2 rounded flex flex-col justify-center py-0">
                     <RichEditableCell
                         value={task.content}
                         onSave={(val) => onUpdate(task.id, { content: val })}
