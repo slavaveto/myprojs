@@ -48,20 +48,20 @@ export const AdminTabTitle = ({
          ref={setNodeRef}
          onClick={onClick}
          className={clsx(
-            "group/tab relative flex items-center gap-2 px-3 h-[40px] select-none transition-colors min-w-fit outline-none rounded-t-lg cursor-pointer",
+            "group/tab relative flex items-center gap-1 px-2 h-[40px] select-none transition-colors min-w-fit outline-none rounded-lg border-2 border-transparent",
             // Drag over state
-            isOver && "bg-primary/10 text-primary border-dashed border-primary",
+            isOver && "bg-primary/10 text-primary border-dashed border-primary cursor-pointer",
             
             // Active state
-            !isOver && isActive && "text-primary font-medium",
+            !isOver && isActive && "text-primary font-medium cursor-pointer",
             
             // Default state
-            !isOver && !isActive && "text-default-500 hover:text-default-700 hover:bg-default-100"
+            !isOver && !isActive && "text-default-500 hover:text-default-700 cursor-pointer"
          )}
       >
          <span className="relative z-10">{label}</span>
          
-         <div className="relative flex items-center justify-center min-w-[20px] h-5">
+         <div className="relative flex items-center justify-center min-w-[20px] -mt-[1px] h-5">
             {/* Chip */}
             <div 
                className={clsx(
@@ -74,7 +74,7 @@ export const AdminTabTitle = ({
                    variant="flat" 
                    className={clsx(
                        "h-5 min-w-5 px-1 text-[10px] relative z-10",
-                       isActive ? "bg-primary/20 text-primary" : "bg-default-200 text-default-500"
+                       isActive ? "bg-primary/20 text-primary" : "bg-default-100 text-default-500"
                    )}
                >
                   {count}

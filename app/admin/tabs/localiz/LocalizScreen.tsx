@@ -12,7 +12,7 @@ import { StatusBadge } from '@/utils/supabase/StatusBadge';
 import { AdminUserMenu } from '@/app/admin/AdminUserMenu';
 import { usePermission } from '@/app/admin/_services/usePermission';
 import { PERMISSIONS } from '@/app/admin/_services/acl';
-import { LayoutGroup } from 'framer-motion'; // Добавил
+import { LayoutGroup } from 'framer-motion';
 
 // DnD Imports
 import { DndContext, pointerWithin, DragOverlay } from '@dnd-kit/core';
@@ -259,7 +259,7 @@ export const LocalizScreen = ({ onReady, isActive, canLoad, texts, showToast = t
             onDragEnd={handleDragEnd}
          >
              <LayoutGroup id="admin-tabs">
-                <div className="flex items-end gap-2 mb-2 w-full border-b border-default-200">
+                <div className="flex items-end gap-2 mb-2 w-full"> {/* УБРАЛ БОРДЕР */}
                     <div className="flex-grow overflow-x-auto scrollbar-hide flex items-center gap-2 pb-1">
                         {tabs.map((tab, index) => (
                             <AdminTabTitle
@@ -287,8 +287,9 @@ export const LocalizScreen = ({ onReady, isActive, canLoad, texts, showToast = t
                             <Button 
                                 isIconOnly
                                 size="sm"
-                                variant="light" 
-                                className="text-default-400 hover:text-primary"
+                                color="success"
+                                variant="flat" 
+                                className=""
                                 title="Add Tab"
                             >
                                 <IconPlus size={20} />
