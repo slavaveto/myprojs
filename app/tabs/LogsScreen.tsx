@@ -137,7 +137,7 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
     const renderGroup = (title: string, groupLogs: LogEntry[]) => {
         if (groupLogs.length === 0) return null;
         return (
-            <div key={title} className="mb-0">
+            <div key={title} className="mb-6">
                 <div className="text font-semibold text-default-400 uppercase tracking-wider mb-2 px-1">
                     {title}
                 </div>
@@ -221,6 +221,9 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
                         className="w-[150px]"
                         aria-label="Action Filter"
                         disallowEmptySelection
+                        classNames={{
+                            trigger: "cursor-pointer"
+                          }}
                     >
                         {ACTION_FILTERS.map((filter) => (
                             <SelectItem key={filter.key}>
@@ -236,6 +239,9 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
                         className="w-[150px]"
                         aria-label="Time Range"
                         disallowEmptySelection
+                        classNames={{
+                            trigger: "cursor-pointer"
+                          }}
                     >
                         {TIME_RANGES.map((range) => (
                             <SelectItem key={range.key}>
@@ -251,6 +257,9 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
                         className="w-[150px]"
                         aria-label="Limit"
                         disallowEmptySelection
+                        classNames={{
+                            trigger: "cursor-pointer"
+                          }}
                     >
                         {LIMIT_OPTIONS.map((opt) => (
                             <SelectItem key={opt.key}>

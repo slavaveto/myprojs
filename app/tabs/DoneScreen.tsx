@@ -317,6 +317,9 @@ export const DoneScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
                         className="w-[150px]"
                         aria-label="Time Range"
                         disallowEmptySelection
+                        classNames={{
+                            trigger: "cursor-pointer"
+                          }}
                     >
                         {TIME_RANGES.map((range) => (
                             <SelectItem key={range.key}>
@@ -332,6 +335,9 @@ export const DoneScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
                         className="w-[150px]"
                         aria-label="Limit"
                         disallowEmptySelection
+                        classNames={{
+                            trigger: "cursor-pointer"
+                          }}
                     >
                         {LIMIT_OPTIONS.map((opt) => (
                             <SelectItem key={opt.key}>
