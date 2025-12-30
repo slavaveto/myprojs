@@ -44,6 +44,7 @@ import { Project } from '@/app/types';
 interface SortableProjectItemProps {
    project: Project;
    isActive: boolean;
+   isFirst: boolean; // Add prop
    onClick: () => void;
    onDocsClick: () => void;
    children?: React.ReactNode;
@@ -52,6 +53,7 @@ interface SortableProjectItemProps {
 const SortableProjectItem = ({
    project,
    isActive,
+   isFirst,
    onClick,
    onDocsClick,
    children,
@@ -69,7 +71,7 @@ const SortableProjectItem = ({
    };
 
    return (
-      <div ref={setNodeRef} style={style} className="w-full mb-1 group relative">
+      <div ref={setNodeRef} style={style} className={clsx("w-full mb-1 group relative", isFirst && "mb-0 border border-default-200 rounded-lg")}>
             <div
                onClick={onClick}
                className={clsx(
@@ -257,11 +259,12 @@ function AppContent() {
                      items={projects.map((p: Project) => p.id)}
                      strategy={verticalListSortingStrategy}
                   >
-                     {projects.map((project) => (
+                     {projects.map((project, index) => (
                         <SortableProjectItem
                            key={project.id}
                            project={project}
                            isActive={activeProjectId === project.id}
+                           isFirst={index === 0} // Pass true for first item
                            onClick={() => {
                               setActiveProjectId(project.id);
                               setActiveSystemTab(null);
