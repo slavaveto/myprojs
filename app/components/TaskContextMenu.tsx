@@ -11,7 +11,7 @@ import {
    ArrowRight,
    Folder as FolderIcon,
    Check,
-   Star,
+   Star, ArrowDown, ArrowUp
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Task } from '../types';
@@ -118,6 +118,7 @@ export const TaskMenuItems = ({
             'separator', 
             'insertAbove', 
             'insertBelow', 
+            'separator', 
             'insertGap', 
             'separator', 
             'delete'
@@ -133,6 +134,7 @@ export const TaskMenuItems = ({
             'separator', 
             'insertAbove', 
             'insertBelow', 
+            'separator', 
             'insertGap', 
             'separator', 
             'move', 
@@ -260,7 +262,7 @@ export const TaskMenuItems = ({
          case 'insertAbove':
             if (!onInsertTask) return null;
             return (
-               <DropdownItem key="insert-above" onPress={() => { onInsertTask('above'); handleClose(); }}>
+               <DropdownItem key="insert-above" onPress={() => { onInsertTask('above'); handleClose(); }} endContent={<ArrowUp size={14} className="text-default-400" />}>
                   Insert Task Above
                </DropdownItem>
             );
@@ -268,7 +270,7 @@ export const TaskMenuItems = ({
          case 'insertBelow':
             if (!onInsertTask) return null;
             return (
-               <DropdownItem key="insert-below" onPress={() => { onInsertTask('below'); handleClose(); }}>
+               <DropdownItem key="insert-below" onPress={() => { onInsertTask('below'); handleClose(); }} endContent={<ArrowDown size={14} className="text-default-400" />}>
                   Insert Task Below
                </DropdownItem>
             );
@@ -276,7 +278,7 @@ export const TaskMenuItems = ({
          case 'insertNoteAbove':
             if (!onInsertNote) return null;
             return (
-               <DropdownItem key="insert-note-above" onPress={() => { onInsertNote('above'); handleClose(); }}>
+               <DropdownItem key="insert-note-above" onPress={() => { onInsertNote('above'); handleClose(); }} endContent={<ArrowUp size={14} className="text-default-400" />}>
                   Insert Note Above
                </DropdownItem>
             );
@@ -284,7 +286,7 @@ export const TaskMenuItems = ({
          case 'insertNoteBelow':
             if (!onInsertNote) return null;
             return (
-               <DropdownItem key="insert-note-below" onPress={() => { onInsertNote('below'); handleClose(); }}>
+               <DropdownItem key="insert-note-below" onPress={() => { onInsertNote('below'); handleClose(); }} endContent={<ArrowDown size={14} className="text-default-400" />}>
                   Insert Note Below
                </DropdownItem>
             );
@@ -292,7 +294,7 @@ export const TaskMenuItems = ({
          case 'insertGap':
             if (!items.makeGap || !onAddGap) return null;
             return (
-               <DropdownItem key="make-gap" onPress={() => { onAddGap(); handleClose(); }}>
+               <DropdownItem key="make-gap" onPress={() => { onAddGap(); handleClose(); }} endContent={<ArrowDown size={14} className="text-default-400" />}>
                   Insert Gap Below
                </DropdownItem>
             );
