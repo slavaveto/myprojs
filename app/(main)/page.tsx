@@ -70,13 +70,13 @@ const SortableProjectItem = ({
 
    return (
       <div ref={setNodeRef} style={style} className="w-full mb-1 group relative">
-         <div
-            onClick={onClick}
-            className={clsx(
-               'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors w-full text-left select-none pr-3',
+            <div
+               onClick={onClick}
+               className={clsx(
+                  'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors w-full text-left select-none pr-3 min-h-[40px]', // Added min-h-[40px]
 
-               // Dragging state (cursor, z-index, ring)
-               isDragging && 'z-20 ring-1 ring-primary/30',
+                  // Dragging state (cursor, z-index, ring)
+                  isDragging && 'z-20 ring-1 ring-primary/30',
 
                // Hover state (handled via group-hover on parent to keep highlight when hovering actions)
                !isDragging && !isActive && 'cursor-pointer group-hover:bg-default-100',
