@@ -20,7 +20,11 @@
     --breakpoint-xs500: 500px;
 }
 
-
+@layer components {
+    .tab-title {
+      @apply text-2xl font-bold flex items-center gap-2;
+    }
+}
 
 
 /* Reset ProseMirror Paragraph margins to ensure vertical alignment matches View Mode */

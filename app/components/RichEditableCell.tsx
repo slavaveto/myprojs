@@ -209,7 +209,7 @@ const TiptapEditor = ({
         editorProps: {
             attributes: {
                 class: clsx(
-                    'outline-none min-h-[24px] break-words whitespace-pre-wrap leading-normal flex items-center focus:bg-primary-50/50 dark:focus:bg-primary-900/20 rounded px-1 -ml-1 py-[1px] transition-colors', // Added py-[1px] padding
+                    'outline-none min-h-[24px] break-words whitespace-pre-wrap leading-normal flex items-center focus:bg-primary-50/50 dark:focus:bg-primary-900/20 rounded pl-0 pr-1 -ml-1 py-[1px] transition-colors', // Changed px-1 to pl-1 pr-1 for clarity and ensure padding
                     className
                 ),
             },
