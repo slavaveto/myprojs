@@ -9,6 +9,7 @@ import { createLogger } from '@/utils/logger/Logger';
 import { useFolderData } from './useFolderData';
 import { useTaskData } from './useTaskData';
 import { loadingService } from '@/app/_services/loadingLogsService';
+import { NavigationTarget } from '@/app/components/GlobalSearch';
 
 const logger = createLogger('ProjectScreenHook');
 
@@ -20,10 +21,11 @@ interface UseProjectDataProps {
     onUpdateProject: (updates: { title?: string; color?: string }) => void;
     onDeleteProject: () => void;
     globalStatus?: ActionStatus;
+    onNavigate?: (target: NavigationTarget) => void;
 }
 
 // Export updated types
-export const useProjectData = ({ project, isActive, onReady, canLoad = true, onUpdateProject, onDeleteProject, globalStatus = 'idle' }: UseProjectDataProps) => {
+export const useProjectData = ({ project, isActive, onReady, canLoad = true, onUpdateProject, onDeleteProject, globalStatus = 'idle', onNavigate }: UseProjectDataProps) => {
    const [selectedFolderId, setSelectedFolderId] = useState<string>('');
    const [isDataLoaded, setIsDataLoaded] = useState(false);
    const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null);
@@ -240,10 +242,18 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
            await taskService.moveTaskToFolder(taskId, folderId);
            logger.success('Task moved to project');
            
-           // Store highlight info for target project
-           if (targetProjectId !== project.id) {
-                globalStorage.setItem(`highlight_task_${targetProjectId}`, taskId);
-                globalStorage.setItem(`active_folder_${targetProjectId}`, folderId);
+           // Switch to target project if different
+           if (targetProjectId !== project.id && onNavigate) {
+                onNavigate({
+                    type: 'project',
+                    projectId: targetProjectId,
+                    folderId: folderId,
+                    taskId: taskId
+                });
+           } else if (targetProjectId !== project.id) {
+               // Fallback if no navigation handler
+               globalStorage.setItem(`highlight_task_${targetProjectId}`, taskId);
+               globalStorage.setItem(`active_folder_${targetProjectId}`, folderId);
            }
 
        } catch (err) {
