@@ -17,6 +17,7 @@ export const EntityTypes = {
 export const ProjectUpdateTypes = {
     RENAME: 'rename',
     RECOLOR: 'recolor',
+    UPDATE_SETTINGS: 'update_settings',
 } as const;
 
 export const FolderUpdateTypes = {

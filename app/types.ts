@@ -7,6 +7,7 @@ export interface Project {
    updated_at: string;
    local_path?: string; // Name of the folder in ~/Projs/
    is_deleted?: boolean; // Added for Soft Delete
+   show_docs_btn?: boolean; // Toggle for Docs button visibility
 }
 
 export interface Folder {

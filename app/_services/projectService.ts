@@ -90,7 +90,7 @@ export const projectService = {
         return data as Project;
     },
 
-    async updateProject(id: string, updates: { title?: string; color?: string }) {
+    async updateProject(id: string, updates: Partial<Project>) {
         logger.info('Updating project', { id, updates });
         
         // 1. Get BEFORE
@@ -109,6 +109,7 @@ export const projectService = {
         let updateType = undefined;
         if (updates.title) updateType = ProjectUpdateTypes.RENAME;
         else if (updates.color) updateType = ProjectUpdateTypes.RECOLOR;
+        else if ('show_docs_btn' in updates) updateType = ProjectUpdateTypes.UPDATE_SETTINGS; // Assuming generic update type or reusing existing
 
         // 3. Update
         const { data: afterState, error } = await supabase

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Popover, PopoverTrigger, PopoverContent, Button, Input, PopoverProps } from '@heroui/react';
+import { Popover, PopoverTrigger, PopoverContent, Button, Input, PopoverProps, Checkbox } from '@heroui/react';
 import { clsx } from 'clsx';
 import { Check, Trash2 } from 'lucide-react';
 import { DeleteConfirmationModal } from '@/app/components/DeleteModal';
@@ -21,7 +21,8 @@ interface EditProjectPopoverProps {
     children: React.ReactNode;
     initialTitle: string;
     initialColor: string;
-    onUpdate: (title: string, color: string) => Promise<void> | void;
+    initialShowDocs?: boolean;
+    onUpdate: (title: string, color: string, showDocs: boolean) => Promise<void> | void;
     onDelete: () => Promise<void> | void;
     placement?: PopoverProps['placement'];
 }
@@ -30,6 +31,7 @@ export const EditProjectPopover = ({
     children, 
     initialTitle,
     initialColor,
+    initialShowDocs = false,
     onUpdate,
     onDelete,
     placement = "bottom-end"
@@ -37,6 +39,7 @@ export const EditProjectPopover = ({
     const [isOpen, setIsOpen] = useState(false);
     const [title, setTitle] = useState(initialTitle);
     const [selectedColor, setSelectedColor] = useState(initialColor);
+    const [showDocs, setShowDocs] = useState(initialShowDocs);
     const [isLoading, setIsLoading] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -45,13 +48,15 @@ export const EditProjectPopover = ({
     useEffect(() => {
         setTitle(initialTitle);
         setSelectedColor(initialColor || COLORS[0].value);
-    }, [initialTitle, initialColor]);
+        setShowDocs(initialShowDocs);
+    }, [initialTitle, initialColor, initialShowDocs]);
 
     const handleOpenChange = (open: boolean) => {
         setIsOpen(open);
         if (open) {
             setTitle(initialTitle);
             setSelectedColor(initialColor || COLORS[0].value);
+            setShowDocs(initialShowDocs);
             setIsDeleting(false);
         }
     };
@@ -62,7 +67,7 @@ export const EditProjectPopover = ({
 
         setIsLoading(true);
         try {
-            await onUpdate(title, selectedColor);
+            await onUpdate(title, selectedColor, showDocs);
             setIsOpen(false);
         } catch (err) {
             console.error(err);
@@ -145,6 +150,16 @@ export const EditProjectPopover = ({
                                         </button>
                                     ))}
                                 </div>
+                            </div>
+                            
+                            <div className="px-1">
+                                <Checkbox 
+                                    isSelected={showDocs} 
+                                    onValueChange={setShowDocs}
+                                    size="sm"
+                                >
+                                    Show Docs Button
+                                </Checkbox>
                             </div>
 
                             <div className="flex gap-2 justify-between pt-2 border-t border-divider mt-1">
