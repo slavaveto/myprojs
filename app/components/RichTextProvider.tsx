@@ -189,19 +189,7 @@ export const RichTextProvider = ({ children }: { children: React.ReactNode }) =>
             handleKeyDown: (view, event) => {
                 if (event.key === 'Enter' && !event.shiftKey) {
                     event.preventDefault();
-                    // Manually trigger save logic
-                    handleSave(); 
-                    // We don't deactivate here? Or should we? Usually Enter in table -> save and stay or next?
-                    // Original behavior: save on Enter.
-                    // But if we press Enter, we probably want to keep focus? 
-                    // Actually original behavior was: handleKeyDown returns true -> preventDefault.
-                    // And useEffect listener called onSave.
-                    // Let's call deactivate() to act like "submit"?
-                    // User said: "Enter to save".
-                    // If we deactivate, the editor disappears and view mode appears.
-                    // Let's keep it consistent: Enter -> Save -> Deactivate (Blur)
-                    
-                    // Actually, let's just blur the editor, which triggers onBlur -> save
+                    // Just blur to trigger save via onBlur handler
                     (event.target as HTMLElement).blur();
                     return true; 
                 }
