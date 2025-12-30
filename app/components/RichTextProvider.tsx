@@ -180,7 +180,7 @@ export const RichTextProvider = ({ children }: { children: React.ReactNode }) =>
         editorProps: {
             attributes: {
                 class: clsx(
-                    'rich-editor-cell focus:bg-primary-50/50 dark:focus:bg-primary-900/20',
+                    'rich-editor-cell focus:bg-blue-100 dark:focus:bg-black',
                 ),
             },
             handleKeyDown: (view, event) => {

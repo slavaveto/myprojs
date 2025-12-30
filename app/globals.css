@@ -26,7 +26,7 @@
     }
 
     .rich-editor-cell {
-        @apply min-h-[24px] w-full break-words whitespace-pre-wrap leading-normal flex items-center rounded px-1 py-[0px] transition-colors outline-none;
+        @apply min-h-[28px] w-full break-words whitespace-pre-wrap leading-normal flex items-center rounded px-1 py-[0px] transition-colors outline-none;
     }
 }
 
