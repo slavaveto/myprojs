@@ -306,7 +306,7 @@ export const TaskRow = React.memo(
                   // isMultiline - Tiptap is multiline by default
                   // autoWidth - Tiptap handles width, but for group title we might need specific styling
                   className={clsx(
-                     'p-0 m-0 ml-1 mr-0 flex-1', // Restored ml-1 and added flex-1
+                     'm-0 ml-0 mr-0 flex-1', // Removed p-0 to avoid overriding rich-editor-cell padding
                      task.is_completed && 'text-default-400 line-through opacity-70', // Opacity helper for completed
                      isGroup && 'font-semibold',
                      isNote && 'pl-2', 
