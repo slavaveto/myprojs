@@ -30,6 +30,7 @@ export interface TaskContextMenuProps {
    onDelete?: (id: string) => void;
    onUpdate?: (id: string, updates: any) => void;
    onAddGap?: () => void;
+   onInsertTask?: (position: 'above' | 'below') => void; // New prop
    onMove?: (taskId: string, projectId: string, folderId: string) => void;
    projectsStructure?: any[];
    isInsideGroup?: boolean;
@@ -58,6 +59,7 @@ export const TaskMenuItems = ({
    onDelete,
    onUpdate,
    onAddGap,
+   onInsertTask,
    onMove,
    projectsStructure = [],
    isInsideGroup = false,
@@ -72,6 +74,30 @@ export const TaskMenuItems = ({
 
    return (
       <>
+         {/* --- INSERT TASKS --- */}
+         {!isGroup && !isNote && !isGap && onInsertTask ? (
+            <>
+               <DropdownItem
+                  key="insert-above"
+                  onPress={() => {
+                     onInsertTask('above');
+                     handleClose();
+                  }}
+               >
+                  Insert Task Above
+               </DropdownItem>
+               <DropdownItem
+                  key="insert-below"
+                  onPress={() => {
+                     onInsertTask('below');
+                     handleClose();
+                  }}
+               >
+                  Insert Task Below
+               </DropdownItem>
+            </>
+         ) : null}
+
          {/* --- TODAY --- */}
          {items.today && !isGroup && !isNote && !isGap ? (
             <DropdownItem

@@ -276,16 +276,15 @@ export const InboxScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
         }
     };
 
-    const handleCreateTask = async (title: string) => {
+    const handleCreateTask = async (title: string, _color?: string) => {
         try {
              let newTask: any;
+             // Inbox tasks are always created at top (0)
              await executeSave(async () => {
-                 // Create task with no folder (null)
-                 newTask = await taskService.createTask(null, title, 0); // 0 = sort order (top)
+                 newTask = await taskService.createTask(null, title, 0); 
              });
              
              if (newTask) {
-                 // Optimistic add to top (or replace temp if we had one, but here we just append)
                  setTasks(prev => [newTask, ...prev]);
              }
              
@@ -293,6 +292,25 @@ export const InboxScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
         } catch (err) {
              logger.error('Failed to create inbox task', err);
         }
+    };
+
+    const handleInsertTask = (taskId: string, position: 'above' | 'below') => {
+        // Since Inbox is sorted by time, we can't easily insert "between" two tasks without faking time.
+        // Or we switch Inbox to sort_order?
+        // Let's just create a new task for now and warn user or just let it float to top.
+        // Actually, for Inbox, maybe better to just open CreateItemPopover?
+        // But context menu usually implies immediate action.
+        // Let's create an empty task at the top for now, or ask user?
+        // "Insert Task" usually implies inline creation.
+        
+        // Given limitations, maybe skip Inbox for this feature or switch Inbox to sort_order?
+        // Let's skip updating InboxScreen for now to avoid breaking its chronological logic, 
+        // unless you want me to switch Inbox to manual sort?
+        
+        // User asked "add for task". Probably meant inside ProjectScreen mainly.
+        // But if I add it to InboxTaskRow interface, I must handle it.
+        
+        // Let's pass undefined for now to hide the menu item in Inbox if it's not supported.
     };
 
     if (isLoading) {

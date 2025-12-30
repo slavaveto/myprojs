@@ -41,6 +41,19 @@ export const EditableCell = ({
       }
    }, [localValue, autoWidth]);
 
+   // Force focus logic
+   useEffect(() => {
+      if (autoFocus) {
+          // Delay to ensure we steal focus back from any closing menus
+          setTimeout(() => {
+              if (textareaRef.current) {
+                  textareaRef.current.focus();
+              }
+              // Also support input ref if we add it later
+          }, 300);
+      }
+   }, [autoFocus]);
+
    const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement> | React.ChangeEvent<HTMLInputElement>) => {
       const val = e.target.value;
       setLocalValue(val);

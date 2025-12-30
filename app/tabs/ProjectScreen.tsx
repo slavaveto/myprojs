@@ -213,6 +213,7 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
                         isEmpty={filteredTasks.length === 0}
                         highlightedTaskId={highlightedTaskId}
                         onAddGap={handleAddGap} 
+                        onInsertTask={handleAddTask} // Pass handler for context menu
                         projectColor={project.color} 
                         projectsStructure={projectsStructure}
                         onMoveTask={handleMoveTask}

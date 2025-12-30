@@ -147,6 +147,7 @@ export const TaskRow = React.memo(
    }: TaskRowProps) => {
       const [isHovered, setIsHovered] = React.useState(false);
       const [optimisticCompleted, setOptimisticCompleted] = React.useState(task.is_completed);
+      const creationTimeRef = React.useRef(Date.now()); // Track mount time
 
       React.useEffect(() => {
          setOptimisticCompleted(task.is_completed);
@@ -275,7 +276,12 @@ export const TaskRow = React.memo(
                      if (task.isDraft) onDelete(task.id);
                   }}
                   onBlur={(val) => {
+                     const timeSinceCreation = Date.now() - creationTimeRef.current;
                      if (task.isDraft && !val.trim()) {
+                        // Protect against immediate blur from menu closing (focus restoration)
+                        if (task.isNew && timeSinceCreation < 500) {
+                           return;
+                        }
                         onDelete(task.id);
                      }
                   }}

@@ -15,13 +15,14 @@ interface TaskListProps {
     isEmpty: boolean;
     highlightedTaskId?: string | null;
     onAddGap?: (index: number) => void;
+    onInsertTask?: (index: number) => void; // New prop
     projectColor?: string;
     projectsStructure?: any[];
     onMoveTask?: (taskId: string, projectId: string, folderId: string) => void;
     currentProjectId?: string;
 }
 
-export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlightedTaskId, onAddGap, projectColor, projectsStructure, onMoveTask, currentProjectId }: TaskListProps) => {
+export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlightedTaskId, onAddGap, onInsertTask, projectColor, projectsStructure, onMoveTask, currentProjectId }: TaskListProps) => {
     // Global Menu State
     const [menuState, setMenuState] = useState<{
        taskId: string | null;
@@ -174,16 +175,16 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlight
                          onUpdate: onUpdateTask,
                          onDelete: onDeleteTask,
                          onAddGap: () => {
-                             // Find index of active task to add gap after it
-                             const index = unpinnedTasks.findIndex(t => t.id === activeTask.id);
-                             if (index !== -1 && onAddGap) onAddGap(index + 1); // +1? TaskRow usually calls onAddGap() which adds at specific place
-                             // Actually, TaskRow passed `onAddGap={() => onAddGap?.(index)}`
-                             // But here we need to know the index.
-                             // Wait, `onAddGap` prop in TaskList takes an index. 
-                             // Let's use the same logic.
-                             // NOTE: `onAddGap` in TaskRow logic might be slightly different.
-                             // Let's assume onAddGap(index) adds AFTER index.
+                             // Find index in the FULL list of tasks (filtered by folder), not just unpinned
+                             const index = tasks.findIndex(t => t.id === activeTask.id);
                              if (index !== -1 && onAddGap) onAddGap(index); 
+                         },
+                         onInsertTask: (position) => {
+                             // Find index in the FULL list of tasks
+                             const index = tasks.findIndex(t => t.id === activeTask.id);
+                             if (index !== -1 && onInsertTask) {
+                                 onInsertTask(position === 'above' ? index : index + 1);
+                             }
                          },
                          onMove: onMoveTask,
                          projectsStructure: projectsStructure,
