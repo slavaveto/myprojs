@@ -262,10 +262,10 @@ export const RichEditableCell = ({
         // AutoFocus Effect for new tasks
         useEffect(() => {
             if (autoFocus && !isActive) {
-                 // Slight delay to ensure render is complete
+                 // Slight delay to ensure render is complete and menu focus return is handled
                  const timer = setTimeout(() => {
                      activate(finalId, value || '', { onSave, onBlur, onCancel });
-                 }, 10);
+                 }, 200);
                  return () => clearTimeout(timer);
             }
         }, []); // Run once on mount
