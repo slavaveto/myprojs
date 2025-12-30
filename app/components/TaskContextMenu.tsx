@@ -24,6 +24,7 @@ export interface TaskContextMenuProps {
       move?: boolean;
       makeGap?: boolean;
       makeGroup?: boolean;
+      makeNote?: boolean;
       styles?: boolean;
       today?: boolean;
    };
@@ -83,69 +84,105 @@ export const TaskMenuItems = ({
 
    // --- CONFIGURATION ---
    const getMenuLayout = (): MenuItemType[] => {
-      // 1. Gaps, Groups, Notes (Custom configs later)
       if (isGap) return [
          'insertAbove', 
-            'insertBelow', 
-            'separator', 
-            'delete'];
+         'insertBelow', 
+         'separator', 
+         'delete'
+      ];
 
-      // TODO: Config for Group Header
       if (isGroup) return [
          'revertToTask', 
+         'styles', 
          'separator', 
          'groupColor', 
          'separator', 
          'insertBelow', 
          'separator', 
-         'delete']; 
+         'delete'
+      ]; 
 
-      // TODO: Config for Note
       if (isNote) return [
          'revertToTask', 
          'styles',
          'separator', 
          'insertNoteAbove',
-          'insertNoteBelow',
+         'insertNoteBelow',
          'separator', 
-         'delete'];
+         'move', 
+         'separator', 
+         'delete'
+      ];
 
-      // 2. Regular Tasks (isGroup=false, isNote=false, isGap=false)
-      if (isInsideGroup) {
-         // Task Inside Group
-         return [
-            'today', 
-            'styles', 
-            'separator', 
-            'insertAbove', 
-            'insertBelow', 
-            'separator', 
-            'insertGap', 
-            'separator', 
-            'delete'
-         ];
-      } else {
-         // Root Task
-         return [
-            'today', 
-            'styles', 
-            'separator', 
-            'makeGroup', 
-            'makeNote', 
-            'separator', 
-            'insertAbove', 
-            'insertBelow', 
-            'separator', 
-            'insertGap', 
-            'separator', 
-            'move', 
-            'separator', 
-            'delete'
-         ];
-      }
+      if (isInsideGroup) return [
+         'today', 
+         'styles', 
+         'separator', 
+         'insertAbove', 
+         'insertBelow', 
+         'insertGap', 
+         'separator', 
+         'delete'
+      ];
+
+      // Root Task
+      return [
+         'today', 
+         'styles', 
+         'separator', 
+         'makeGroup', 
+         'makeNote', 
+         'separator', 
+         'insertAbove', 
+         'insertBelow', 
+         'insertGap', 
+         'separator', 
+         'move', 
+         'separator', 
+         'delete'
+      ];
    };
 
-   const menuLayout = getMenuLayout();
+   // --- FILTER & CLEANUP ---
+   const cleanLayout = (layout: MenuItemType[]): MenuItemType[] => {
+       const filtered = layout.filter(type => {
+           switch (type) {
+               case 'today': return items.today;
+               case 'styles': return items.styles;
+               case 'makeGroup': return items.makeGroup;
+               case 'makeNote': return items.makeNote; 
+               case 'revertToTask': return items.makeGroup; // Assuming re-use of makeGroup permission
+               case 'groupColor': return items.makeGroup;
+               case 'insertAbove': return !!onInsertTask;
+               case 'insertBelow': return !!onInsertTask;
+               case 'insertGap': return items.makeGap && !!onAddGap;
+               case 'insertNoteAbove': return !!onInsertNote;
+               case 'insertNoteBelow': return !!onInsertNote;
+               case 'move': return items.move && projectsStructure.length > 0;
+               case 'delete': return items.delete;
+               case 'separator': return true;
+               default: return true;
+           }
+       });
+
+       const result: MenuItemType[] = [];
+       filtered.forEach((item) => {
+           if (item === 'separator') {
+               if (result.length > 0 && result[result.length - 1] !== 'separator') {
+                   result.push(item);
+               }
+           } else {
+               result.push(item);
+           }
+       });
+       
+       if (result.length > 0 && result[result.length - 1] === 'separator') {
+           result.pop();
+       }
+       return result;
+   };
+
+   const menuLayout = cleanLayout(getMenuLayout());
 
    // --- RENDERERS ---
    const renderItem = (type: MenuItemType, index: number) => {
