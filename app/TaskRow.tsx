@@ -280,8 +280,9 @@ export const TaskRow = React.memo(
                )}
 
                {/* Replaced EditableCell with RichEditableCell for standard tasks */}
-               <RichEditableCell
-                  value={task.content}
+         <RichEditableCell
+            id={`task-${task.id}`}
+            value={task.content}
                   // @ref:db02ba
                   // сохранение задачи 1 завершение редактирования
                   onSave={(val) => onUpdate(task.id, { content: val })}

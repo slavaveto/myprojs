@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useContext } from 'react';
-import { useEditor, EditorContent } from '@tiptap/react';
+import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
+import { useEditor, EditorContent, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import Highlight from '@tiptap/extension-highlight';
@@ -9,21 +9,31 @@ import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
 import { clsx } from 'clsx';
 import { Bold, Italic, Trash2 } from 'lucide-react';
-import { RichTextContext } from './RichTextProvider';
 
-interface RichEditableCellProps {
-    value: string;
+interface EditorCallbacks {
     onSave: (val: string) => void;
-    placeholder?: string;
-    className?: string;
-    autoFocus?: boolean;
-    onBlur?: (val: string) => void;
     onCancel?: () => void;
-    id?: string;
+    onBlur?: (val: string) => void;
 }
 
-// --- Local Components for Standalone Mode ---
+interface RichTextContextType {
+    activeId: string | null;
+    activate: (id: string, initialContent: string, callbacks: EditorCallbacks) => void;
+    deactivate: () => void;
+    editor: Editor | null;
+}
 
+export const RichTextContext = createContext<RichTextContextType | null>(null);
+
+export const useRichText = () => {
+    const context = useContext(RichTextContext);
+    if (!context) {
+        throw new Error('useRichText must be used within a RichTextProvider');
+    }
+    return context;
+};
+
+// --- Custom Floating Menu Component (Moved here) ---
 const CustomBubbleMenu = ({ editor }: { editor: any }) => {
     const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
 
@@ -36,12 +46,14 @@ const CustomBubbleMenu = ({ editor }: { editor: any }) => {
                 return;
             }
 
+            // Get coordinates
             const { view } = editor;
             const start = view.coordsAtPos(from);
             const end = view.coordsAtPos(to);
             
+            // Calculate center
             const left = (start.left + end.right) / 2;
-            const top = start.top - 40; 
+            const top = start.top - 40; // 40px above
 
             setPosition({ top, left });
         };
@@ -65,7 +77,7 @@ const CustomBubbleMenu = ({ editor }: { editor: any }) => {
                 left: position.left, 
                 transform: 'translateX(-50%)' 
             }}
-            onMouseDown={(e) => e.preventDefault()} 
+            onMouseDown={(e) => e.preventDefault()} // Prevent focus loss
         >
              <button
                 onClick={() => editor.chain().focus().toggleBold().run()}
@@ -122,14 +134,27 @@ const CustomBubbleMenu = ({ editor }: { editor: any }) => {
     );
 };
 
-const StandaloneTiptapEditor = ({ 
-    initialContent, 
-    onSave, 
-    onCancel, 
-    onBlurProp, 
-    placeholder,
-    className 
-}: any) => {
+export const RichTextProvider = ({ children }: { children: React.ReactNode }) => {
+    const [activeId, setActiveId] = useState<string | null>(null);
+    const callbacksRef = useRef<EditorCallbacks | null>(null);
+    const initialContentRef = useRef<string>("");
+
+    const handleSave = useCallback(() => {
+        if (!activeId || !callbacksRef.current || !editor) return;
+
+        const html = editor.getHTML();
+        const isEmpty = editor.isEmpty;
+        const finalVal = isEmpty ? '' : html;
+        
+        // Check if changed
+        if (finalVal !== initialContentRef.current) {
+             callbacksRef.current.onSave(finalVal);
+             if (callbacksRef.current.onBlur) {
+                 callbacksRef.current.onBlur(finalVal);
+             }
+        }
+    }, [activeId]);
+
     const editor = useEditor({
         immediatelyRender: false,
         extensions: [
@@ -140,7 +165,7 @@ const StandaloneTiptapEditor = ({
                 orderedList: false,
             }),
             Placeholder.configure({
-                placeholder: placeholder,
+                placeholder: "Empty", // Will be overridden dynamically if needed? No, usually placeholder is per cell. But we can update options.
                 emptyEditorClass: 'is-editor-empty before:content-[attr(data-placeholder)] before:text-default-300 before:float-left before:h-0 before:pointer-events-none',
             }),
             TextStyle,
@@ -149,23 +174,36 @@ const StandaloneTiptapEditor = ({
                 multicolor: true,
             }),
         ],
-        content: initialContent,
-        autofocus: 'end',
+        content: '',
         editorProps: {
             attributes: {
                 class: clsx(
                     'outline-none min-h-[24px] break-words whitespace-pre-wrap leading-normal flex items-center focus:bg-primary-50/50 dark:focus:bg-primary-900/20 rounded pl-0 pr-1 -ml-1 py-[1px] transition-colors',
-                    className
                 ),
             },
             handleKeyDown: (view, event) => {
                 if (event.key === 'Enter' && !event.shiftKey) {
                     event.preventDefault();
+                    // Manually trigger save logic
+                    handleSave(); 
+                    // We don't deactivate here? Or should we? Usually Enter in table -> save and stay or next?
+                    // Original behavior: save on Enter.
+                    // But if we press Enter, we probably want to keep focus? 
+                    // Actually original behavior was: handleKeyDown returns true -> preventDefault.
+                    // And useEffect listener called onSave.
+                    // Let's call deactivate() to act like "submit"?
+                    // User said: "Enter to save".
+                    // If we deactivate, the editor disappears and view mode appears.
+                    // Let's keep it consistent: Enter -> Save -> Deactivate (Blur)
+                    
+                    // Actually, let's just blur the editor, which triggers onBlur -> save
+                    (event.target as HTMLElement).blur();
                     return true; 
                 }
                 if (event.key === 'Escape') {
                     event.preventDefault();
-                    onCancel();
+                    if (callbacksRef.current?.onCancel) callbacksRef.current.onCancel();
+                    setActiveId(null);
                     return true;
                 }
                 return false;
@@ -173,135 +211,57 @@ const StandaloneTiptapEditor = ({
         },
     });
 
+    // Handle blur
     useEffect(() => {
         if (!editor) return;
-        const handleKeyDown = (view: any, event: KeyboardEvent) => {
-            if (event.key === 'Enter' && !event.shiftKey) {
-                const html = editor.getHTML();
-                const isEmpty = editor.isEmpty;
-                onSave(isEmpty ? '' : html);
-                return true; 
-            }
-            return false;
+        
+        const onBlur = () => {
+            handleSave();
+            setActiveId(null);
         };
-    }, [editor, onSave]);
+        
+        editor.on('blur', onBlur);
+        return () => {
+            editor.off('blur', onBlur);
+        };
+    }, [editor, handleSave]);
 
-    useEffect(() => {
-        if (editor && onSave && onCancel) {
-            editor.setOptions({
-                editorProps: {
-                    handleKeyDown: (view, event) => {
-                        if (event.key === 'Enter' && !event.shiftKey) {
-                            event.preventDefault();
-                            const html = editor.getHTML();
-                            const isEmpty = editor.isEmpty;
-                            onSave(isEmpty ? '' : html);
-                            return true;
-                        }
-                        if (event.key === 'Escape') {
-                            event.preventDefault();
-                            onCancel();
-                            return true;
-                        }
-                        return false;
-                    }
-                }
-            })
-        }
-    }, [editor, onSave, onCancel]);
+    const activate = useCallback((id: string, initialContent: string, callbacks: EditorCallbacks) => {
+        if (!editor) return;
 
-    const handleBlur = useCallback(() => {
-        if (editor) {
-            const html = editor.getHTML();
-            const isEmpty = editor.isEmpty;
-            const finalVal = isEmpty ? '' : html;
-            
-            if (finalVal !== initialContent) {
-                if (onBlurProp) onBlurProp(finalVal);
-                onSave(finalVal);
-            }
-        }
-    }, [editor, onSave, onBlurProp, initialContent]);
+        // If we are already active on this ID, do nothing
+        if (activeId === id) return;
 
-    if (!editor) return null;
+        // If we were active elsewhere, save previous (handled by blur usually, but let's be safe?)
+        // Blur event fires when focus moves.
+        
+        callbacksRef.current = callbacks;
+        initialContentRef.current = initialContent;
+        
+        // Update placeholder if needed (not easy with extension config, but we can rely on CSS attr if we passed it down?)
+        // Placeholder extension uses extension config. 
+        // We can ignore placeholder dynamic update for now or try to reconfigure.
+        
+        editor.commands.setContent(initialContent);
+        setActiveId(id);
+        
+        // Focus
+        requestAnimationFrame(() => {
+            editor.commands.focus('end');
+        });
+
+    }, [editor, activeId]);
+
+    const deactivate = useCallback(() => {
+        setActiveId(null);
+        editor?.commands.blur();
+    }, [editor]);
 
     return (
-        <>
-            <CustomBubbleMenu editor={editor} />
-            <EditorContent 
-                editor={editor} 
-                onBlur={handleBlur}
-            />
-        </>
-    )
-}
-
-// --- Main Component ---
-
-export const RichEditableCell = ({
-    value,
-    onSave,
-    placeholder = "Empty",
-    className,
-    onBlur,
-    onCancel,
-    id
-}: RichEditableCellProps) => {
-    const context = useContext(RichTextContext);
-
-    // --- SHARED MODE (if Provider exists) ---
-    if (context) {
-        const { activeId, activate, editor } = context;
-        // Generate fallback ID only if context exists (to avoid overhead in standalone?)
-        // Actually hooks must be unconditional.
-        const fallbackId = React.useId();
-        const finalId = id || fallbackId;
-        const isActive = activeId === finalId;
-
-        if (!isActive) {
-            return (
-                <div 
-                    onClick={(e) => {
-                        e.stopPropagation(); 
-                        e.preventDefault();
-                        activate(finalId, value || '', { onSave, onBlur, onCancel });
-                    }}
-                    className={clsx(
-                        "outline-none min-h-[24px] break-words whitespace-pre-wrap leading-normal flex items-center rounded pl-0 pr-1 -ml-1 py-[1px] transition-colors cursor-text",
-                        !value && "text-default-300",
-                        className
-                    )}
-                    dangerouslySetInnerHTML={{ __html: value || placeholder }}
-                />
-            );
-        }
-
-        return (
-            <EditorContent 
-                editor={editor} 
-                className={className} 
-            />
-        );
-    }
-
-    // --- STANDALONE MODE (Fallback for Inbox/Logs etc) ---
-    // Note: We always render StandaloneTiptapEditor immediately for now, as View Mode removal was requested.
-    // If we want View Mode here too, we can implement it locally. 
-    // But since user complained about alignment, let's keep it simple: Just render Editor.
-    // Wait, user said "сука с rich драг рабттат пизед лагает" - this applies to Project.
-    // Inbox doesn't have drag-and-drop reordering (only move to project).
-    // So Standalone Editor in Inbox is acceptable performance-wise.
-    
-    // We use a simplified version without View/Edit switching to avoid alignment issues.
-    
-    return (
-        <StandaloneTiptapEditor 
-            initialContent={value}
-            onSave={onSave}
-            onCancel={() => { if (onCancel) onCancel(); }}
-            onBlurProp={onBlur}
-            placeholder={placeholder}
-            className={className}
-        />
+        <RichTextContext.Provider value={{ activeId, activate, deactivate, editor }}>
+            {children}
+            {editor && activeId && <CustomBubbleMenu editor={editor} />}
+        </RichTextContext.Provider>
     );
 };
+

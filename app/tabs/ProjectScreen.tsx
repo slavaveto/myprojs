@@ -24,6 +24,8 @@ import { useProjectData } from '@/app/components/hooks/useProjectData';
 import { useProjectDnD } from '@/app/components/hooks/useProjectDnD';
 import { GlobalSearch, NavigationTarget } from '@/app/components/GlobalSearch';
 
+import { RichTextProvider } from '@/app/components/RichTextProvider';
+
 const logger = createLogger('ProjectScreen');
 
 const dropAnimationConfig: DropAnimation = {
@@ -151,6 +153,7 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
    // Removing the redeclaration:
    
    return (
+    <RichTextProvider>
       <div 
           className={clsx(
             "h-full w-full overflow-hidden flex flex-col",
@@ -293,5 +296,6 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
          </DndContext>
          </div>
       </div>
+    </RichTextProvider>
    );
 };
