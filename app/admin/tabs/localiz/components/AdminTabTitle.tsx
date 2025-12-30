@@ -5,13 +5,16 @@ import { useDroppable } from '@dnd-kit/core';
 import { Chip } from '@heroui/react';
 import { EllipsisVertical } from 'lucide-react';
 import { clsx } from 'clsx';
+import { motion } from 'framer-motion';
 import { EditTabPopover } from './EditTabPopover';
 
 interface AdminTabTitleProps {
    id: string;
    label: string;
    count: number;
-   isActive?: boolean;
+   isActive: boolean;
+   onClick: () => void;
+   layoutIdPrefix?: string; // Для анимации подчеркивания
    onUpdate?: (title: string) => Promise<void> | void;
    onDelete?: () => Promise<void> | void;
    onMove?: (direction: 'left' | 'right') => void;
@@ -24,35 +27,42 @@ export const AdminTabTitle = ({
     label, 
     count, 
     isActive,
+    onClick,
+    layoutIdPrefix = 'admin-tabs',
     onUpdate,
     onDelete,
     onMove,
     canMoveLeft,
     canMoveRight
 }: AdminTabTitleProps) => {
+   // Пока оставляем Droppable, чтобы можно было кидать файлы на таб (если понадобится)
    const { isOver, setNodeRef } = useDroppable({
       id: `tab-${id}`,
       data: { type: 'tab', tabId: id }
    });
 
-   // Special styling for Misc/Entry/Room (system tabs might not be editable? 
-   // Or we allow editing everything? Let's allow everything for now, 
-   // or maybe restrict deleting 'misc'?)
    const isSystemTab = id === 'misc'; 
 
    return (
       <div 
          ref={setNodeRef}
+         onClick={onClick}
          className={clsx(
-            "group/tab relative flex items-center gap-2 px-2 py-1 rounded-lg transition-colors min-h-[32px]",
-            isOver ? "bg-primary/20 ring-2 ring-primary border-transparent" : "hover:bg-default-100",
-            isActive && !isOver ? "text-primary font-medium" : "text-default-500"
+            "group/tab relative flex items-center gap-2 px-3 h-[40px] select-none transition-colors min-w-fit outline-none rounded-t-lg cursor-pointer",
+            // Drag over state
+            isOver && "bg-primary/10 text-primary border-dashed border-primary",
+            
+            // Active state
+            !isOver && isActive && "text-primary font-medium",
+            
+            // Default state
+            !isOver && !isActive && "text-default-500 hover:text-default-700 hover:bg-default-100"
          )}
       >
-         <span className="relative z-10 select-none">{label}</span>
+         <span className="relative z-10">{label}</span>
          
          <div className="relative flex items-center justify-center min-w-[20px] h-5">
-            {/* Chip - visible by default */}
+            {/* Chip */}
             <div 
                className={clsx(
                    "transition-opacity duration-200",
@@ -71,7 +81,7 @@ export const AdminTabTitle = ({
                </Chip>
             </div>
 
-            {/* Action Button - hidden by default, visible on hover */}
+            {/* Menu Button */}
             {!isSystemTab && onUpdate && onDelete && (
                <div 
                    className={clsx(
@@ -79,7 +89,7 @@ export const AdminTabTitle = ({
                        "opacity-0 group-hover/tab:opacity-100 transition-opacity duration-200 z-20"
                    )}
                    onPointerDown={(e) => e.stopPropagation()}
-                   onClick={(e) => e.stopPropagation()} // Prevent tab switching when clicking menu
+                   onClick={(e) => e.stopPropagation()} 
                >
                    <EditTabPopover
                        initialTitle={label}
@@ -97,9 +107,6 @@ export const AdminTabTitle = ({
                                if (e.key === 'Enter' || e.key === ' ') {
                                    e.preventDefault();
                                    e.stopPropagation();
-                                   // Popover trigger handles click, so we simulate it if needed, 
-                                   // but Trigger usually wraps children. 
-                                   // Let's hope HeroUI Trigger works with div.
                                }
                            }}
                        >
@@ -109,6 +116,16 @@ export const AdminTabTitle = ({
                </div>
             )}
          </div>
+
+         {/* Active Indicator (Underline) */}
+         {isActive && !isOver && (
+              <motion.div 
+                  layoutId={`${layoutIdPrefix}-underline`}
+                  className="absolute bottom-0 left-0 w-full h-[2px] bg-primary z-0"
+                  initial={false}
+                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
+              />
+         )}
       </div>
    );
 };

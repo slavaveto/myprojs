@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { useDisclosure, Tabs, Tab, Button } from '@heroui/react';
+import { useDisclosure, Button } from '@heroui/react';
 import { Plus as IconPlus, RefreshCw as IconRefresh } from 'lucide-react';
 import { createLogger } from '@/utils/logger/Logger';
 import { globalStorage } from '@/utils/storage';
@@ -12,6 +12,7 @@ import { StatusBadge } from '@/utils/supabase/StatusBadge';
 import { AdminUserMenu } from '@/app/admin/AdminUserMenu';
 import { usePermission } from '@/app/admin/_services/usePermission';
 import { PERMISSIONS } from '@/app/admin/_services/acl';
+import { LayoutGroup } from 'framer-motion'; // Добавил
 
 // DnD Imports
 import { DndContext, pointerWithin, DragOverlay } from '@dnd-kit/core';
@@ -257,56 +258,45 @@ export const LocalizScreen = ({ onReady, isActive, canLoad, texts, showToast = t
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
          >
-            <div className="flex items-center gap-2 mb-2 overflow-x-auto pb-2">
-                 <Tabs
-                    selectedKey={selectedTab}
-                    onSelectionChange={(key) => handleTabChange(key as string)}
-                    color="primary"
-                    variant="underlined"
-                    aria-label="Localization Tabs"
-                    classNames={{
-                        tabList: "gap-4 relative rounded-none p-0 border-b border-divider",
-                        cursor: "w-full bg-primary",
-                        tab: "max-w-fit px-0 h-12",
-                        tabContent: "group-data-[selected=true]:text-primary"
-                    }}
-                 >
-                    {tabs.map((tab, index) => (
-                       <Tab
-                          key={tab.id}
-                          title={
-                             <AdminTabTitle
+             <LayoutGroup id="admin-tabs">
+                <div className="flex items-end gap-2 mb-2 w-full border-b border-default-200">
+                    <div className="flex-grow overflow-x-auto scrollbar-hide flex items-center gap-2 pb-1">
+                        {tabs.map((tab, index) => (
+                            <AdminTabTitle
+                                key={tab.id}
                                 id={tab.id}
                                 label={tab.label}
                                 count={getTabCount(tab.id)}
                                 isActive={selectedTab === tab.id}
+                                onClick={() => handleTabChange(tab.id)}
                                 onUpdate={handleUpdateTab ? (title) => handleUpdateTab(tab.id, title) : undefined}
                                 onDelete={handleDeleteTab ? () => handleDeleteTab(tab.id) : undefined}
                                 onMove={handleMoveTab ? (direction) => handleMoveTab(tab.id, direction) : undefined}
                                 canMoveLeft={index > 0}
                                 canMoveRight={index < tabs.length - 1}
-                             />
-                          }
-                       />
-                    ))}
-                 </Tabs>
-                 
-                 <AdminCreatePopover 
-                     title="New Tab"
-                     inputPlaceholder="Tab Name"
-                     onCreate={handleAddTab}
-                 >
-                     <Button 
-                         isIconOnly
-                         size="sm"
-                         variant="light" 
-                         className="text-default-400 hover:text-primary mb-1"
-                         title="Add Tab"
-                     >
-                         <IconPlus size={20} />
-                     </Button>
-                 </AdminCreatePopover>
-            </div>
+                            />
+                        ))}
+                    </div>
+                    
+                    <div className="pb-1 pl-2">
+                        <AdminCreatePopover 
+                            title="New Tab"
+                            inputPlaceholder="Tab Name"
+                            onCreate={handleAddTab}
+                        >
+                            <Button 
+                                isIconOnly
+                                size="sm"
+                                variant="light" 
+                                className="text-default-400 hover:text-primary"
+                                title="Add Tab"
+                            >
+                                <IconPlus size={20} />
+                            </Button>
+                        </AdminCreatePopover>
+                    </div>
+                </div>
+            </LayoutGroup>
 
             <div className="flex-grow overflow-auto mt-2 ">
                <div className="grid grid-cols-[200px_1fr_1fr_1fr_120px] gap-1 py-2 bg-default-100 border border-default-300 rounded-lg font-bold text-small text-default-600 items-center mb-2">
