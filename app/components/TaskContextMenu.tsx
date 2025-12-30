@@ -75,7 +75,7 @@ export const TaskMenuItems = ({
    return (
       <>
          {/* --- INSERT TASKS --- */}
-         {!isGroup && !isNote && !isGap && onInsertTask ? (
+         {!isGroup && !isNote && onInsertTask ? (
             <>
                <DropdownItem
                   key="insert-above"
