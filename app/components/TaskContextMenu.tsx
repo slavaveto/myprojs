@@ -75,7 +75,7 @@ export const TaskMenuItems = ({
    return (
       <>
          {/* --- INSERT TASKS --- */}
-         {onInsertTask ? (
+         {!isGroup && onInsertTask ? (
             <>
                <DropdownItem
                   key="insert-above"
@@ -99,7 +99,7 @@ export const TaskMenuItems = ({
          ) : null}
 
          {/* --- TODAY --- */}
-         {items.today && !isGroup && !isNote && !isGap ? (
+         {items.today && !isGroup && !isGap ? (
             <DropdownItem
                key="toggle-today"
                startContent={
@@ -193,7 +193,7 @@ export const TaskMenuItems = ({
 
          {/* --- GROUP / GAP / NOTE --- */}
          {items.makeGroup && !isGap ? (
-            isGroup || isNote ? (
+            (isGroup || isNote) && !isInsideGroup ? (
                <DropdownItem
                   key="revert-task"
                
