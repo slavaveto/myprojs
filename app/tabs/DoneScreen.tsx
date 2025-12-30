@@ -79,31 +79,29 @@ const DoneTaskRow = ({ task, onRestore, onDelete }: { task: any, onRestore: (t: 
                         {task.content || "Empty task"}
                     </div>
                     
-                    {/* Metadata line (hidden per user request) */}
-                    <div className="hidden flex items-center gap-2 text-xs text-default-400 mt-0.5">
-                        {task.folders?.projects && (
-                            <div className="flex items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
-                                <div 
-                                    className="w-1.5 h-1.5 rounded-full" 
-                                    style={{ backgroundColor: task.folders.projects.color || '#3b82f6' }}
-                                />
-                                <span className="truncate max-w-[100px]">{task.folders.projects.title}</span>
-                            </div>
-                        )}
-                        <span className="opacity-50">/</span>
-                        <div className="flex items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
-                            <FolderIcon size={10} />
-                            <span className="truncate max-w-[100px]">{task.folders?.title || "Unknown Folder"}</span>
+                    {/* Metadata line */}
+                    {(task.folders?.projects || task.folders) && (
+                        <div className="flex items-center gap-2 text-xs text-default-400 mt-0.5 opacity-70">
+                            {task.folders?.projects && (
+                                <div className="flex items-center gap-1">
+                                    <div 
+                                        className="w-1.5 h-1.5 rounded-full flex-shrink-0" 
+                                        style={{ backgroundColor: task.folders.projects.color || '#3b82f6' }}
+                                    />
+                                    <span className="truncate max-w-[120px]">{task.folders.projects.title}</span>
+                                </div>
+                            )}
+                            {task.folders?.projects && task.folders?.title && (
+                                <span className="opacity-50">/</span>
+                            )}
+                            {task.folders?.title && (
+                                <div className="flex items-center gap-1">
+                                    <FolderIcon size={10} className="flex-shrink-0" />
+                                    <span className="truncate max-w-[120px]">{task.folders.title}</span>
+                                </div>
+                            )}
                         </div>
-                        <span className="ml-auto opacity-50">
-                            {format(new Date(task.updated_at), 'MMM d, HH:mm')}
-                        </span>
-                         {task.is_deleted && (
-                            <Chip size="sm" variant="flat" color="danger" className="h-4 text-[10px] px-1 ml-2">
-                                Deleted
-                            </Chip>
-                        )}
-                    </div>
+                    )}
                 </div>
              </div>
 
