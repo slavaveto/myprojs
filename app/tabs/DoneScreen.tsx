@@ -71,13 +71,14 @@ const DoneTaskRow = ({ task, onRestore, onDelete }: { task: any, onRestore: (t: 
                 )}
 
                 <div className="flex-grow min-w-0 pl-1 mr-2 flex flex-col justify-center py-1">
-                    <div className={clsx(
-                        "text-[16px] leading-normal break-words whitespace-pre-wrap",
-                        !task.is_deleted && "text-default-400 ",
-                        task.is_deleted && "text-danger"
-                    )}>
-                        {task.content || "Empty task"}
-                    </div>
+                    <div 
+                        className={clsx(
+                            "rich-editor-cell !bg-transparent !p-0 select-text cursor-text",
+                            !task.is_deleted && "text-default-400 ",
+                            task.is_deleted && "text-danger"
+                        )}
+                        dangerouslySetInnerHTML={{ __html: task.content || "Empty task" }}
+                    />
                     
                     {/* Metadata line */}
                     {(task.folders?.projects || task.folders) && (

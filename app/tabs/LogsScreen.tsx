@@ -171,7 +171,11 @@ export const LogsScreen = ({ globalStatus = 'idle', canLoad = true, isActive = f
                                         </span>
 
                                         <span className="text-xs font-medium truncate text-default-500" title={log.entity_title || log.entity_id}>
-                                            {log.entity_title || <span className="text-default-300">{log.entity_id.slice(0, 8)}</span>}
+                                            {log.entity_title ? (
+                                                <span dangerouslySetInnerHTML={{ __html: log.entity_title.replace(/<[^>]*>/g, '') }} />
+                                            ) : (
+                                                <span className="text-default-300">{log.entity_id.slice(0, 8)}</span>
+                                            )}
                                         </span>
                                     </div>
 
