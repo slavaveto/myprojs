@@ -214,6 +214,7 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
                         highlightedTaskId={highlightedTaskId}
                         onAddGap={handleAddGap} 
                         onInsertTask={handleAddTask} // Pass handler for context menu
+                        onInsertNote={(index: number) => handleAddTask(index, 'note')}
                         projectColor={project.color} 
                         projectsStructure={projectsStructure}
                         onMoveTask={handleMoveTask}

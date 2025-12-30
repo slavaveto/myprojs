@@ -15,14 +15,15 @@ interface TaskListProps {
     isEmpty: boolean;
     highlightedTaskId?: string | null;
     onAddGap?: (index: number) => void;
-    onInsertTask?: (index: number) => void; // New prop
+    onInsertTask?: (index: number) => void; 
+    onInsertNote?: (index: number) => void; // New prop for notes
     projectColor?: string;
     projectsStructure?: any[];
     onMoveTask?: (taskId: string, projectId: string, folderId: string) => void;
     currentProjectId?: string;
 }
 
-export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlightedTaskId, onAddGap, onInsertTask, projectColor, projectsStructure, onMoveTask, currentProjectId }: TaskListProps) => {
+export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlightedTaskId, onAddGap, onInsertTask, onInsertNote, projectColor, projectsStructure, onMoveTask, currentProjectId }: TaskListProps) => {
     // Global Menu State
     const [menuState, setMenuState] = useState<{
        taskId: string | null;
@@ -185,6 +186,12 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlight
                              const index = tasks.findIndex(t => t.id === activeTask.id);
                              if (index !== -1 && onInsertTask) {
                                  onInsertTask(position === 'above' ? index : index + 1);
+                             }
+                         },
+                         onInsertNote: (position) => {
+                             const index = tasks.findIndex(t => t.id === activeTask.id);
+                             if (index !== -1 && onInsertNote) {
+                                 onInsertNote(position === 'above' ? index : index + 1);
                              }
                          },
                          onMove: onMoveTask,

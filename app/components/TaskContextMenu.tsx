@@ -31,6 +31,7 @@ export interface TaskContextMenuProps {
    onUpdate?: (id: string, updates: any) => void;
    onAddGap?: () => void;
    onInsertTask?: (position: 'above' | 'below') => void;
+   onInsertNote?: (position: 'above' | 'below') => void;
    onMove?: (taskId: string, projectId: string, folderId: string) => void;
    projectsStructure?: any[];
    isInsideGroup?: boolean;
@@ -53,6 +54,7 @@ type MenuItemType =
    | 'today' | 'styles' | 'separator' 
    | 'makeGroup' | 'makeNote' | 'revertToTask' | 'groupColor'
    | 'insertAbove' | 'insertBelow' | 'insertGap'
+   | 'insertNoteAbove' | 'insertNoteBelow'
    | 'move' | 'delete';
 
 interface TaskMenuItemsProps extends Omit<TaskContextMenuProps, 'children'> {
@@ -66,6 +68,7 @@ export const TaskMenuItems = ({
    onUpdate,
    onAddGap,
    onInsertTask,
+   onInsertNote,
    onMove,
    projectsStructure = [],
    isInsideGroup = false,
@@ -100,6 +103,9 @@ export const TaskMenuItems = ({
       // TODO: Config for Note
       if (isNote) return [
          'revertToTask', 
+         'separator', 
+         'insertNoteAbove',
+          'insertNoteBelow',
          'separator', 
          'delete'];
 
@@ -264,6 +270,22 @@ export const TaskMenuItems = ({
             return (
                <DropdownItem key="insert-below" onPress={() => { onInsertTask('below'); handleClose(); }}>
                   Insert Task Below
+               </DropdownItem>
+            );
+
+         case 'insertNoteAbove':
+            if (!onInsertNote) return null;
+            return (
+               <DropdownItem key="insert-note-above" onPress={() => { onInsertNote('above'); handleClose(); }}>
+                  Insert Note Above
+               </DropdownItem>
+            );
+
+         case 'insertNoteBelow':
+            if (!onInsertNote) return null;
+            return (
+               <DropdownItem key="insert-note-below" onPress={() => { onInsertNote('below'); handleClose(); }}>
+                  Insert Note Below
                </DropdownItem>
             );
 

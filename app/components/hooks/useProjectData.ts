@@ -22,6 +22,7 @@ interface UseProjectDataProps {
     globalStatus?: ActionStatus;
 }
 
+// Export updated types
 export const useProjectData = ({ project, isActive, onReady, canLoad = true, onUpdateProject, onDeleteProject, globalStatus = 'idle' }: UseProjectDataProps) => {
    const [selectedFolderId, setSelectedFolderId] = useState<string>('');
    const [isDataLoaded, setIsDataLoaded] = useState(false);

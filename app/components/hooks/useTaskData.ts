@@ -38,7 +38,7 @@ export const useTaskData = (
         }
     };
 
-    const handleAddTask = async (targetIndex?: number) => {
+    const handleAddTask = async (targetIndex?: number, type: 'task' | 'note' | 'gap' = 'task') => {
        if (!selectedFolderId) return;
 
        // Filter only active tasks because targetIndex comes from the UI which shows only active tasks
@@ -58,7 +58,7 @@ export const useTaskData = (
           content: '',
           sort_order: insertIndex,
           is_completed: false,
-          task_type: 'task', // Default type
+          task_type: type, // Use passed type
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           isNew: true,
@@ -108,9 +108,9 @@ export const useTaskData = (
                       // Create in DB
                       const data = await taskService.createTask(snapshotBeforeSave.folder_id, content, snapshotBeforeSave.sort_order);
                       
-                      // If created as gap (via draft logic? unlikely here, but if so update type)
-                      if (snapshotBeforeSave.task_type === 'gap') {
-                          await taskService.updateTask(data.id, { task_type: 'gap' });
+                      // If created as gap OR NOTE (via draft logic)
+                      if (snapshotBeforeSave.task_type !== 'task') {
+                          await taskService.updateTask(data.id, { task_type: snapshotBeforeSave.task_type });
                       }
 
                       // Persist Order
