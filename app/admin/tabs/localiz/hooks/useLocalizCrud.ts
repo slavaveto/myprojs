@@ -134,39 +134,20 @@ export const useLocalizCrud = ({ canLoad, onReady, showToast = true, texts }: Us
         setItems((prev) => [newItem, ...prev]);
     };
 
-    const handleInsert = (targetItemId: string, position: 'above' | 'below') => {
+    const handleInsert = async (targetItemId: string, position: 'above' | 'below') => {
         const targetIndex = items.findIndex(i => (i._tempId || i.item_id) === targetItemId);
         if (targetIndex === -1) return;
 
         const targetItem = items[targetIndex];
         const tabId = targetItem.tab_id || 'misc';
         
-        // Фильтруем элементы только текущего таба для правильного расчета порядка
+        // 1. Get current items in tab, sorted by order
         const currentTabItems = items.filter((i) =>
              tabId === 'misc' ? !i.tab_id || i.tab_id === 'misc' : i.tab_id === tabId
         ).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
 
         const targetInTabIdx = currentTabItems.findIndex(i => (i._tempId || i.item_id) === targetItemId);
-        
-        let newSortOrder = 0;
-        const targetOrder = targetItem.sort_order || 0;
-
-        // Расчет позиции
-        if (position === 'above') {
-            const prevItem = currentTabItems[targetInTabIdx - 1];
-            if (prevItem) {
-                newSortOrder = (targetOrder + (prevItem.sort_order || 0)) / 2;
-            } else {
-                newSortOrder = targetOrder - 100; // Если первый
-            }
-        } else { // below
-            const nextItem = currentTabItems[targetInTabIdx + 1];
-            if (nextItem) {
-                newSortOrder = (targetOrder + (nextItem.sort_order || 0)) / 2;
-            } else {
-                newSortOrder = targetOrder + 100; // Если последний
-            }
-        }
+        const insertIndex = position === 'above' ? targetInTabIdx : targetInTabIdx + 1;
 
         const tempId = `new_${Date.now()}`;
         const newItem: UIElement = {
@@ -175,16 +156,44 @@ export const useLocalizCrud = ({ canLoad, onReady, showToast = true, texts }: Us
             uk: '',
             en: '',
             tab_id: tabId,
-            sort_order: newSortOrder,
+            sort_order: 0, // Will be set by reindex
             updated_at: new Date().toISOString(),
             isNew: true,
             _tempId: tempId,
         };
 
-        const newItems = [...items];
-        newItems.splice(position === 'above' ? targetIndex : targetIndex + 1, 0, newItem);
+        // 2. Insert and Reindex
+        const newTabItems = [...currentTabItems];
+        newTabItems.splice(insertIndex, 0, newItem);
         
-        setItems(newItems);
+        // Reindex all items in this tab
+        const reindexedTabItems = newTabItems.map((item, index) => ({
+            ...item,
+            sort_order: index
+        }));
+
+        // 3. Merge back into global items list
+        const otherItems = items.filter(i => 
+            tabId === 'misc' ? (i.tab_id && i.tab_id !== 'misc') : i.tab_id !== tabId
+        );
+        
+        setItems([...otherItems, ...reindexedTabItems]);
+
+        // 4. Save order for EXISTING items immediately (background)
+        // We filter out the new item (it will be saved later via saveNewItem)
+        const updates = reindexedTabItems
+            .filter(i => !i.isNew)
+            .map(i => ({ item_id: i.item_id, sort_order: i.sort_order }));
+            
+        if (updates.length > 0) {
+            try {
+                 await executeSave(async () => {
+                     await apiUpdateSortOrders(updates);
+                 });
+            } catch (err) {
+                logger.error('Failed to reorder items', err);
+            }
+        }
     };
 
     const handleUpdateField = async (itemIdOrTempId: string, field: string, newValue: string, highlightCallback?: (newId: string) => void) => {
