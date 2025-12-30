@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { useDisclosure, Tabs, Tab, Button, Input, Chip } from '@heroui/react';
-import { Plus as IconPlus, RefreshCw as IconRefresh, Search as IconSearch } from 'lucide-react';
+import { useDisclosure, Tabs, Tab, Button } from '@heroui/react';
+import { Plus as IconPlus, RefreshCw as IconRefresh } from 'lucide-react';
 import { createLogger } from '@/utils/logger/Logger';
 import { globalStorage } from '@/utils/storage';
 import { UIElement } from '@/utils/providers/localization/types';
@@ -18,7 +18,8 @@ import { DndContext, pointerWithin, DragOverlay } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 
 // Refactored Imports
-import { DroppableTabTitle } from './components/DroppableTabTitle';
+import { AdminTabTitle } from './components/AdminTabTitle';
+import { AdminCreatePopover } from './components/AdminCreatePopover';
 import { useLocalizCrud } from './hooks/useLocalizCrud';
 import { useLocalizDnD } from './hooks/useLocalizDnD';
 
@@ -45,7 +46,7 @@ export const LocalizScreen = ({ onReady, isActive, canLoad, texts, showToast = t
    // -- 1. CRUD Logic Hook --
    const {
       items,
-      tabs, // <-- Получаем динамические табы
+      tabs,
       isLoading,
       loadData,
       handleAddNew,
@@ -57,6 +58,13 @@ export const LocalizScreen = ({ onReady, isActive, canLoad, texts, showToast = t
       updateLocalItems,
       moveItemToTab,
       saveSortOrders,
+      
+      // Tab Actions
+      handleAddTab,
+      handleUpdateTab,
+      handleDeleteTab,
+      handleMoveTab,
+      
       executeSave,
       status
    } = useLocalizCrud({ canLoad: !!canLoad, onReady, showToast, texts });
@@ -78,7 +86,7 @@ export const LocalizScreen = ({ onReady, isActive, canLoad, texts, showToast = t
       handleDragEnd
    } = useLocalizDnD({
       items,
-      tabs, // <-- Прокидываем табы
+      tabs, 
       selectedTab,
       onUpdateItems: updateLocalItems,
       onSaveSortOrders: saveSortOrders,
@@ -89,14 +97,12 @@ export const LocalizScreen = ({ onReady, isActive, canLoad, texts, showToast = t
    // -- 4. Tabs Logic --
    useEffect(() => {
       const savedTab = globalStorage.getItem('admin_loc_tab');
-      // Проверяем, существует ли сохраненный таб в загруженных табах
       if (savedTab && tabs.find((t) => t.id === savedTab)) {
          setSelectedTab(savedTab);
       } else if (tabs.length > 0 && (!savedTab || !tabs.find((t) => t.id === savedTab))) {
-          // Если сохраненного нет или он невалиден, ставим первый
           setSelectedTab(tabs[0].id);
       }
-   }, [tabs]); // Зависимость от tabs
+   }, [tabs]); 
 
    const handleTabChange = (key: string) => {
       setSelectedTab(key);
@@ -251,28 +257,58 @@ export const LocalizScreen = ({ onReady, isActive, canLoad, texts, showToast = t
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
          >
-            <Tabs
-               selectedKey={selectedTab}
-               onSelectionChange={(key) => handleTabChange(key as string)}
-               color="primary"
-               variant="underlined"
-               aria-label="Localization Tabs"
-            >
-               {tabs.map((tab) => (
-                  <Tab
-                     key={tab.id}
-                     title={
-                        <DroppableTabTitle
-                           id={tab.id}
-                           label={tab.label}
-                           count={getTabCount(tab.id)}
-                        />
-                     }
-                  />
-               ))}
-            </Tabs>
+            <div className="flex items-center gap-2 mb-2 overflow-x-auto pb-2">
+                 <Tabs
+                    selectedKey={selectedTab}
+                    onSelectionChange={(key) => handleTabChange(key as string)}
+                    color="primary"
+                    variant="underlined"
+                    aria-label="Localization Tabs"
+                    classNames={{
+                        tabList: "gap-4 relative rounded-none p-0 border-b border-divider",
+                        cursor: "w-full bg-primary",
+                        tab: "max-w-fit px-0 h-12",
+                        tabContent: "group-data-[selected=true]:text-primary"
+                    }}
+                 >
+                    {tabs.map((tab, index) => (
+                       <Tab
+                          key={tab.id}
+                          title={
+                             <AdminTabTitle
+                                id={tab.id}
+                                label={tab.label}
+                                count={getTabCount(tab.id)}
+                                isActive={selectedTab === tab.id}
+                                onUpdate={handleUpdateTab ? (title) => handleUpdateTab(tab.id, title) : undefined}
+                                onDelete={handleDeleteTab ? () => handleDeleteTab(tab.id) : undefined}
+                                onMove={handleMoveTab ? (direction) => handleMoveTab(tab.id, direction) : undefined}
+                                canMoveLeft={index > 0}
+                                canMoveRight={index < tabs.length - 1}
+                             />
+                          }
+                       />
+                    ))}
+                 </Tabs>
+                 
+                 <AdminCreatePopover 
+                     title="New Tab"
+                     inputPlaceholder="Tab Name"
+                     onCreate={handleAddTab}
+                 >
+                     <Button 
+                         isIconOnly
+                         size="sm"
+                         variant="light" 
+                         className="text-default-400 hover:text-primary mb-1"
+                         title="Add Tab"
+                     >
+                         <IconPlus size={20} />
+                     </Button>
+                 </AdminCreatePopover>
+            </div>
 
-            <div className="flex-grow overflow-auto mt-4 ">
+            <div className="flex-grow overflow-auto mt-2 ">
                <div className="grid grid-cols-[200px_1fr_1fr_1fr_120px] gap-1 py-2 bg-default-100 border border-default-300 rounded-lg font-bold text-small text-default-600 items-center mb-2">
                   <div className="flex items-center justify-between pl-2 pr-2">
                      Item ID
