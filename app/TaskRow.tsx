@@ -221,12 +221,13 @@ export const TaskRow = React.memo(
          !isDragging && !isOverlay && 'hover:bg-default-50',
          isDragging && '!opacity-50',
          isOverlay && 'z-50 bg-default-100 border-primary/50 pointer-events-none cursor-grabbing',
-         isHighlighted && 'border-orange-500/50',
+         isHighlighted && '!border-orange-500',
          activeGroupColor && 'ml-[15px] -rounded-l-[4px]',
          
          // Border Logic (Task & Note & Group)
          'border-l-[3px]', // Always apply border for non-gap items (as Gap is handled above)
-         (!isGroup && !isNote) && 'border-l-default-300', // Regular Task border color
+         (!isGroup && !isNote && !isHighlighted) && 'border-l-default-300', // Regular Task border color (gray if not highlighted)
+         isHighlighted && '!border-l-orange-500', // Highlighted task border color
          
          isNote && 'bg-default-50/50 text-default-600 py-2 border-l-default-400' // Note specific
       );
@@ -368,7 +369,7 @@ export const TaskRow = React.memo(
                height: 'auto',
                marginTop: 0, // Ensure margins are controlled if needed, or rely on gaps
                marginBottom: 0,
-               backgroundColor: isHighlighted ? 'var(--heroui-primary-100)' : groupBackgroundColor,
+               backgroundColor: isHighlighted ? 'rgba(250, 204, 21, 0.2)' : groupBackgroundColor,
             }}
             exit={{
                opacity: 0,

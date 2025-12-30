@@ -75,7 +75,7 @@ const SortableProjectItem = ({
             {...listeners}
             onClick={onClick}
             className={clsx(
-               'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors w-full text-left select-none pr-9',
+               'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors w-full text-left select-none pr-3',
 
                // Dragging state (cursor, z-index, ring)
                isDragging && 'cursor-grabbing z-20 ring-1 ring-primary/30',
@@ -117,15 +117,15 @@ const SortableProjectItem = ({
             </div>
          </button>
 
-         {children && (
+         {/* {children && (
             <div
-               className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity z-20"
+               className=" absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity z-20"
                onPointerDown={(e) => e.stopPropagation()}
                onClick={(e) => e.stopPropagation()}
             >
                {children}
             </div>
-         )}
+         )} */}
       </div>
    );
 };
@@ -274,7 +274,7 @@ function AppContent() {
                            >
                               <button
                                  type="button"
-                                 className="w-8 h-8 flex items-center justify-center text-default-400 hover:text-primary transition-colors outline-none cursor-pointer"
+                                 className=" w-8 h-8 flex items-center justify-center text-default-400 hover:text-primary transition-colors outline-none cursor-pointer"
                               >
                                  <EllipsisVertical size={18} />
                               </button>

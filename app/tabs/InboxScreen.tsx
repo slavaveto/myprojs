@@ -66,14 +66,15 @@ const InboxTaskRow = ({
                 animate={{ 
                     opacity: 1, 
                     height: 'auto',
-                    backgroundColor: isHighlighted ? 'var(--highlight-bg, rgba(250, 204, 21, 0.2))' : undefined
+                    backgroundColor: isHighlighted ? 'rgba(250, 204, 21, 0.2)' : undefined
                 }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.2 }}
                 className={clsx(
                     'group px-1 flex justify-between min-h-[30px] items-center rounded-lg border border-default-300 bg-content1 transition-colors outline-none overflow-hidden mb-[0px]',
                     'hover:bg-default-50',
-                    isHighlighted && 'ring-2 ring-primary ring-opacity-50'
+                    'border-l-[3px]',
+                    isHighlighted ? '!border-orange-500 !border-l-orange-500' : 'border-l-default-300'
                 )}
             >
                  <div className="flex flex-1 gap-2 flex-row items-center pl-2">
