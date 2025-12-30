@@ -221,7 +221,7 @@ export const TaskRow = React.memo(
          'group px-1 flex justify-between min-h-[30px] items-center rounded border border-default-300 bg-content1 transition-colors outline-none ',
          !isDragging && !isOverlay && 'hover:bg-default-50',
          isDragging && '!opacity-50',
-         isOverlay && 'z-50 bg-default-100 border-primary/50 pointer-events-none cursor-grabbing',
+         isOverlay && 'z-50 bg-default-100 !border-primary/50 !border-l-[3px] pointer-events-none cursor-grabbing',
          isHighlighted && '!border-orange-500',
          activeGroupColor && 'ml-[15px] -rounded-l-[4px]',
          
