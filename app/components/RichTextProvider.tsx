@@ -151,9 +151,12 @@ export const RichTextProvider = ({ children }: { children: React.ReactNode }) =>
         // Check if changed
         if (finalVal !== initialContentRef.current) {
              callbacksRef.current.onSave(finalVal);
-             if (callbacksRef.current.onBlur) {
-                 callbacksRef.current.onBlur(finalVal);
-             }
+        }
+        
+        // Always call onBlur if provided, regardless of changes
+        // This is crucial for deleting empty new tasks
+        if (callbacksRef.current.onBlur) {
+            callbacksRef.current.onBlur(finalVal);
         }
     }, [activeId]);
 

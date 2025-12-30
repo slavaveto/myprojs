@@ -245,6 +245,7 @@ export const RichEditableCell = ({
     className,
     onBlur,
     onCancel,
+    autoFocus,
     id
 }: RichEditableCellProps) => {
     const context = useContext(RichTextContext);
@@ -257,6 +258,17 @@ export const RichEditableCell = ({
         const fallbackId = React.useId();
         const finalId = id || fallbackId;
         const isActive = activeId === finalId;
+
+        // AutoFocus Effect for new tasks
+        useEffect(() => {
+            if (autoFocus && !isActive) {
+                 // Slight delay to ensure render is complete
+                 const timer = setTimeout(() => {
+                     activate(finalId, value || '', { onSave, onBlur, onCancel });
+                 }, 10);
+                 return () => clearTimeout(timer);
+            }
+        }, []); // Run once on mount
 
         if (!isActive) {
             return (
