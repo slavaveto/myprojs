@@ -24,6 +24,10 @@
     .tab-title {
       @apply text-2xl font-bold flex items-center gap-2;
     }
+
+    .rich-editor-cell {
+        @apply min-h-[24px] w-full break-words whitespace-pre-wrap leading-normal flex items-center rounded px-1 py-[0px] transition-colors outline-none;
+    }
 }
 
 

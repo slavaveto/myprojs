@@ -154,7 +154,7 @@ const StandaloneTiptapEditor = ({
         editorProps: {
             attributes: {
                 class: clsx(
-                    'outline-none min-h-[24px] w-full break-words whitespace-pre-wrap leading-normal flex items-center focus:bg-primary-50/50 dark:focus:bg-primary-900/20 rounded px-1 py-[0px] transition-colors',
+                    'rich-editor-cell focus:bg-primary-50/50 dark:focus:bg-primary-900/20',
                     className
                 ),
             },
@@ -268,7 +268,7 @@ export const RichEditableCell = ({
                         activate(finalId, value || '', { onSave, onBlur, onCancel }, e);
                     }}
                     className={clsx(
-                        "outline-none min-h-[24px] break-words whitespace-pre-wrap leading-normal flex items-center rounded px-1 py-[1px] transition-colors cursor-text",
+                        "rich-editor-cell cursor-text",
                         !value && "text-default-300",
                         className
                     )}
