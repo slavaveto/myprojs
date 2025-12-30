@@ -309,7 +309,7 @@ export const TaskRow = React.memo(
                      'm-0 ml-0 mr-0 flex-1', // Removed p-0 to avoid overriding rich-editor-cell padding
                      task.is_completed && 'text-default-400 line-through opacity-70', // Opacity helper for completed
                      isGroup && 'font-semibold',
-                     isNote && 'pl-2', 
+                     // isNote && 'pl-2', 
                      task.title_text_style === 'bold' && 'font-medium',
                      task.title_text_style === 'red' && 'text-danger',
                      task.title_text_style === 'red-bold' && 'text-danger font-medium'
