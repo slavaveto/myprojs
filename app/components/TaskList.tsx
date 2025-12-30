@@ -133,6 +133,7 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlight
                             onMove={onMoveTask}
                             currentProjectId={currentProjectId}
                             onOpenMenu={handleOpenMenu}
+                            isMenuOpen={menuState.isOpen && menuState.taskId === task.id}
                          />
                       ))}
                   </AnimatePresence>
