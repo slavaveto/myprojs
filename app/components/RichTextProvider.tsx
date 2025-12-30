@@ -139,6 +139,8 @@ export const RichTextProvider = ({ children }: { children: React.ReactNode }) =>
     const callbacksRef = useRef<EditorCallbacks | null>(null);
     const initialContentRef = useRef<string>("");
 
+    const isSwitchingRef = useRef(false);
+
     const handleSave = useCallback(() => {
         if (!activeId || !callbacksRef.current || !editor) return;
 
@@ -216,6 +218,7 @@ export const RichTextProvider = ({ children }: { children: React.ReactNode }) =>
         if (!editor) return;
         
         const onBlur = () => {
+            if (isSwitchingRef.current) return; // Ignore blur during switch
             handleSave();
             setActiveId(null);
         };
@@ -232,6 +235,12 @@ export const RichTextProvider = ({ children }: { children: React.ReactNode }) =>
         // If we are already active on this ID, do nothing
         if (activeId === id) return;
 
+        // Force save previous editor state before switching
+        if (activeId) {
+            handleSave();
+            isSwitchingRef.current = true;
+        }
+
         // Capture coords immediately
         const coords = event ? { left: event.clientX, top: event.clientY } : null;
 
@@ -243,6 +252,7 @@ export const RichTextProvider = ({ children }: { children: React.ReactNode }) =>
         
         // Focus
         requestAnimationFrame(() => {
+            isSwitchingRef.current = false;
             if (coords) {
                 const pos = editor.view.posAtCoords(coords);
                 if (pos) {

@@ -154,7 +154,7 @@ const StandaloneTiptapEditor = ({
         editorProps: {
             attributes: {
                 class: clsx(
-                    'outline-none min-h-[24px] w-full break-words whitespace-pre-wrap leading-normal flex items-center focus:bg-primary-50/50 dark:focus:bg-primary-900/20 rounded px-1 py-[1px] transition-colors',
+                    'outline-none min-h-[24px] w-full break-words whitespace-pre-wrap leading-normal flex items-center focus:bg-primary-50/50 dark:focus:bg-primary-900/20 rounded px-1 py-[0px] transition-colors',
                     className
                 ),
             },
@@ -261,7 +261,8 @@ export const RichEditableCell = ({
         if (!isActive) {
             return (
                 <div 
-                    onClick={(e) => {
+                    onMouseDown={(e) => {
+                        if (e.button !== 0) return; // Only left click
                         e.stopPropagation(); 
                         e.preventDefault();
                         activate(finalId, value || '', { onSave, onBlur, onCancel }, e);
