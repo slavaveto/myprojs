@@ -66,13 +66,14 @@ export const TaskMenuItems = ({
 }: TaskMenuItemsProps) => {
    const isGroup = task.task_type === 'group';
    const isNote = task.task_type === 'note';
+   const isGap = task.task_type === 'gap';
    const currentGroupColor = task.group_color || '#3b82f6';
    const handleClose = () => closeMenu?.();
 
    return (
       <>
          {/* --- TODAY --- */}
-         {items.today && !isGroup && !isNote ? (
+         {items.today && !isGroup && !isNote && !isGap ? (
             <DropdownItem
                key="toggle-today"
                startContent={
@@ -92,7 +93,7 @@ export const TaskMenuItems = ({
          ) : null}
 
          {/* --- TEXT STYLES --- */}
-         {items.styles && !isGroup ? (
+         {items.styles && !isGroup && !isGap ? (
             <DropdownItem
                key="styles"
                isReadOnly
@@ -165,7 +166,7 @@ export const TaskMenuItems = ({
          ) : null}
 
          {/* --- GROUP / GAP / NOTE --- */}
-         {items.makeGroup ? (
+         {items.makeGroup && !isGap ? (
             isGroup || isNote ? (
                <DropdownItem
                   key="revert-task"
@@ -259,7 +260,7 @@ export const TaskMenuItems = ({
             </DropdownItem>
          ) : null}
 
-         {items.makeGap ? (
+         {items.makeGap && !isGap ? (
             <DropdownItem
                key="make-gap"
                onPress={() => {
@@ -272,7 +273,7 @@ export const TaskMenuItems = ({
          ) : null}
 
          {/* --- MOVE TO PROJECT --- */}
-         {items.move && !isGroup && projectsStructure.length > 0 ? (
+         {items.move && !isGroup && !isGap && projectsStructure.length > 0 ? (
             <DropdownItem
                key="move-menu"
                isReadOnly
