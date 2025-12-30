@@ -21,8 +21,9 @@ interface EditProjectPopoverProps {
     children: React.ReactNode;
     initialTitle: string;
     initialColor: string;
-    initialShowDocs?: boolean;
-    onUpdate: (title: string, color: string, showDocs: boolean) => Promise<void> | void;
+    initialShowDocs: boolean;
+    initialIsHighlighted: boolean;
+    onUpdate: (title: string, color: string, showDocs: boolean, isHighlighted: boolean) => Promise<void> | void;
     onDelete: () => Promise<void> | void;
     placement?: PopoverProps['placement'];
 }
@@ -32,6 +33,7 @@ export const EditProjectPopover = ({
     initialTitle,
     initialColor,
     initialShowDocs = false,
+    initialIsHighlighted = false,
     onUpdate,
     onDelete,
     placement = "bottom-end"
@@ -40,6 +42,7 @@ export const EditProjectPopover = ({
     const [title, setTitle] = useState(initialTitle);
     const [selectedColor, setSelectedColor] = useState(initialColor);
     const [showDocs, setShowDocs] = useState(initialShowDocs);
+    const [isHighlighted, setIsHighlighted] = useState(initialIsHighlighted);
     const [isLoading, setIsLoading] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -49,7 +52,8 @@ export const EditProjectPopover = ({
         setTitle(initialTitle);
         setSelectedColor(initialColor || COLORS[0].value);
         setShowDocs(initialShowDocs);
-    }, [initialTitle, initialColor, initialShowDocs]);
+        setIsHighlighted(initialIsHighlighted);
+    }, [initialTitle, initialColor, initialShowDocs, initialIsHighlighted]);
 
     const handleOpenChange = (open: boolean) => {
         setIsOpen(open);
@@ -57,6 +61,7 @@ export const EditProjectPopover = ({
             setTitle(initialTitle);
             setSelectedColor(initialColor || COLORS[0].value);
             setShowDocs(initialShowDocs);
+            setIsHighlighted(initialIsHighlighted);
             setIsDeleting(false);
         }
     };
@@ -67,7 +72,7 @@ export const EditProjectPopover = ({
 
         setIsLoading(true);
         try {
-            await onUpdate(title, selectedColor, showDocs);
+            await onUpdate(title, selectedColor, showDocs, isHighlighted);
             setIsOpen(false);
         } catch (err) {
             console.error(err);
@@ -152,13 +157,22 @@ export const EditProjectPopover = ({
                                 </div>
                             </div>
                             
-                            <div className="px-1">
+                            <div className="px-1 flex flex-col gap-2">
                                 <Checkbox 
                                     isSelected={showDocs} 
                                     onValueChange={setShowDocs}
                                     size="sm"
                                 >
                                     Show Docs Button
+                                </Checkbox>
+
+                                <Checkbox 
+                                    isSelected={isHighlighted} 
+                                    onValueChange={setIsHighlighted}
+                                    size="sm"
+                                    color="secondary"
+                                >
+                                    Highlight Project
                                 </Checkbox>
                             </div>
 

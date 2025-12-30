@@ -109,7 +109,7 @@ export const projectService = {
         let updateType = undefined;
         if (updates.title) updateType = ProjectUpdateTypes.RENAME;
         else if (updates.color) updateType = ProjectUpdateTypes.RECOLOR;
-        else if ('show_docs_btn' in updates) updateType = ProjectUpdateTypes.UPDATE_SETTINGS; // Assuming generic update type or reusing existing
+        else if ('show_docs_btn' in updates || 'is_highlighted' in updates) updateType = ProjectUpdateTypes.UPDATE_SETTINGS; 
 
         // 3. Update
         const { data: afterState, error } = await supabase
