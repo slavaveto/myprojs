@@ -6,8 +6,7 @@ import { Project } from '@/app/types';
 import { globalStorage } from '@/utils/storage';
 import { clsx } from 'clsx';
 import { EllipsisVertical } from 'lucide-react';
-import { Button } from '@heroui/react';
-
+import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
 import {
    DndContext,
    DragOverlay,
@@ -97,6 +96,26 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
        setSelectedFolderId,
        executeSave: executeQuickSave // Use quick save for DnD
    });
+
+   const [bgMenuPos, setBgMenuPos] = React.useState<{ x: number; y: number } | null>(null);
+
+   const handleBackgroundContextMenu = (e: React.MouseEvent) => {
+       e.preventDefault();
+       if ((e.target as HTMLElement).closest('[data-task-row], button, input, a, [role="button"]')) {
+           return;
+       }
+       
+       // Force close other menus (like task menu)
+       document.body.click();
+       
+       const x = e.clientX;
+       const y = e.clientY;
+
+       // Delay opening to allow other menus (and this one) to close properly first
+       setTimeout(() => {
+           setBgMenuPos({ x, y });
+       }, 10);
+   };
 
    const handleDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
        // Ignore if clicked on interactive elements (buttons, inputs)
@@ -203,7 +222,10 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
                 hoveredFolderId={hoveredFolderId}
             />
 
-            <div className="mt-6 flex-grow flex flex-col min-h-0 overflow-y-auto overflow-x-hidden">
+            <div 
+                className="mt-6 flex-grow flex flex-col min-h-0 overflow-y-auto overflow-x-hidden"
+                onContextMenu={handleBackgroundContextMenu}
+            >
                 {selectedFolderId ? (
                    <TaskList  
                         key={selectedFolderId}
@@ -226,6 +248,26 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
                     </div>
                 )}
             </div>
+
+            {/* Background Context Menu */}
+            <Dropdown 
+                isOpen={!!bgMenuPos} 
+                onOpenChange={(open) => { if (!open) setBgMenuPos(null); }}
+                placement="bottom-start"
+                triggerScaleOnOpen={false}
+            >
+                <DropdownTrigger>
+                    <div style={{ position: 'fixed', left: bgMenuPos?.x ?? 0, top: bgMenuPos?.y ?? 0, width: 0, height: 0, pointerEvents: 'none' }} />
+                </DropdownTrigger>
+                <DropdownMenu aria-label="Background Actions">
+                    <DropdownItem key="create-task" onPress={() => handleAddTask()}>
+                        Create Task
+                    </DropdownItem>
+                    <DropdownItem key="create-note" onPress={() => handleAddTask(undefined, 'note')}>
+                        Create Note
+                    </DropdownItem>
+                </DropdownMenu>
+            </Dropdown>
 
             <DragOverlay dropAnimation={dropAnimationConfig}>
                {activeId ? (
