@@ -319,13 +319,16 @@ export const TaskRow = React.memo(
                   )}
                />
                
-               {isGroup && (groupCount !== undefined) && (
+               {isGroup && (groupCount !== undefined) && groupCount > 0 && (
                   <div className="flex-1 flex items-center">
                      <Chip 
                          size="sm" 
                          variant="bordered" 
                         //  color="primary"
-                         className="ml-2 h-5 min-w-5 px-1 text-[10px] font-bold bg-default-100 text-default-500"
+                         classNames={{
+                           content: "font-medium"
+                         }}
+                         className="ml-2 h-5 min-w-5 px-1 text-[10px] bg-default-100 text-default-500"
                      >
                         {groupCount}
                      </Chip>
