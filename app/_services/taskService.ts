@@ -401,8 +401,13 @@ export const taskService = {
          .from(DB_TABLES.TASKS)
          .select('*')
          .eq('id', id)
-         .single();
+         .maybeSingle(); // Use maybeSingle to avoid crash if already gone
+      
       if (fetchError) throw fetchError;
+      if (!beforeState) {
+          logger.warning('Task not found for deletion', { id });
+          return;
+      }
 
       // Soft delete
       const { data: afterState, error } = await supabase
@@ -413,20 +418,22 @@ export const taskService = {
          })
          .eq('id', id)
          .select()
-         .single();
+         .maybeSingle();
 
       if (error) {
          logger.error('Failed to delete task', error);
          throw error;
       }
 
-      await logService.logAction(
-         BaseActions.DELETE,
-         EntityTypes.TASK,
-         id,
-         { before: beforeState, after: afterState },
-         beforeState.content
-      );
+      if (afterState) {
+          await logService.logAction(
+             BaseActions.DELETE,
+             EntityTypes.TASK,
+             id,
+             { before: beforeState, after: afterState },
+             beforeState.content
+          );
+      }
       logger.success('Task deleted', { id });
    },
 

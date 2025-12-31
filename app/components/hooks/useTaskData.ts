@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Task } from '@/app/types';
+import { calculateGroupUpdates } from './groupLogic';
 import { taskService } from '@/app/_services/taskService'; // New Service
 import { createLogger } from '@/utils/logger/Logger';
 
@@ -191,29 +192,17 @@ export const useTaskData = (
        if (isStructureChange) {
            const currentFolderTasks = optimisticTasks.filter(t => t.folder_id === task.folder_id).sort((a, b) => a.sort_order - b.sort_order);
            
-           let currentGroupId: string | null = null;
+           // Use unified helper
+           const calculatedUpdates = calculateGroupUpdates(currentFolderTasks);
 
-           currentFolderTasks.forEach(t => {
-               const effectiveType = t.task_type; // Already updated in optimisticTasks
-               
-               let myNewGroupId = null;
-               if (effectiveType === 'task' || effectiveType === 'note') {
-                   myNewGroupId = currentGroupId;
-               } else {
-                   myNewGroupId = null;
-               }
-
-               if (effectiveType === 'group') {
-                   currentGroupId = t.id;
-               } else if (effectiveType === 'gap') {
-                   currentGroupId = null;
-               }
-
-               if (t.group_id !== myNewGroupId) {
+           calculatedUpdates.forEach(u => {
+               // Find original sort order to keep object shape compatible if needed
+               const t = currentFolderTasks.find(ct => ct.id === u.id);
+               if (t) {
                    updatesForGroup.push({
-                       id: t.id,
+                       id: u.id,
                        sort_order: t.sort_order,
-                       group_id: myNewGroupId
+                       group_id: u.group_id
                    });
                    needsGroupUpdate = true;
                }
@@ -250,8 +239,8 @@ export const useTaskData = (
     };
 
     const handleDeleteTask = async (id: string) => {
-       const task = tasks.find(t => t.id === id);
-       const isDraft = task?.isDraft;
+       const taskToDelete = tasks.find(t => t.id === id);
+       const isDraft = taskToDelete?.isDraft;
 
        const oldTasks = [...tasks];
        setTasks(prev => prev.filter(t => t.id !== id));
@@ -261,6 +250,36 @@ export const useTaskData = (
        try {
           await executeSave(async () => {
               await taskService.deleteTask(id);
+
+              // --- RECALCULATE GROUPS if structure changed ---
+              if (taskToDelete && (taskToDelete.task_type === 'group' || taskToDelete.task_type === 'gap')) {
+                  const currentFolderTasks = oldTasks
+                      .filter(t => t.folder_id === taskToDelete.folder_id && t.id !== id) // Exclude deleted
+                      .sort((a, b) => a.sort_order - b.sort_order);
+                  
+                  const updatesForGroupRaw = calculateGroupUpdates(currentFolderTasks);
+                  const updatesForGroup: { id: string; sort_order: number; group_id: string | null }[] = [];
+                  
+                  updatesForGroupRaw.forEach(u => {
+                      const t = currentFolderTasks.find(ct => ct.id === u.id);
+                      if (t) {
+                           updatesForGroup.push({
+                               id: u.id,
+                               sort_order: t.sort_order,
+                               group_id: u.group_id
+                           });
+                      }
+                  });
+
+                  if (updatesForGroup.length > 0) {
+                      await taskService.updateTaskOrder(updatesForGroup);
+                      // Update local state for all affected
+                      setTasks(prev => prev.map(t => {
+                          const update = updatesForGroup.find(u => u.id === t.id);
+                          return update ? { ...t, group_id: update.group_id } : t;
+                      }));
+                  }
+              }
           });
        } catch (err) {
           logger.error('Failed to delete task', err);
@@ -306,12 +325,53 @@ export const useTaskData = (
                 const data = await taskService.createTask(selectedFolderId, '', insertIndex);
                 await taskService.updateTask(data.id, { task_type: 'gap' });
                 
+                // --- RECALCULATE GROUPS for inserted GAP ---
+                // Inserting a GAP might break an existing group into two (or terminate one).
+                // We need to re-scan.
+                
                 const currentFolderTasks = [...activeTasks];
-                currentFolderTasks.splice(insertIndex, 0, { ...newGap, id: data.id });
+                const realNewGap = { ...newGap, id: data.id };
+                currentFolderTasks.splice(insertIndex, 0, realNewGap);
+                
+                // First update Sort Order
                 const orderUpdates = currentFolderTasks.map((t, idx) => ({ id: t.id === tempId ? data.id : t.id, sort_order: idx }));
-                await taskService.updateTaskOrder(orderUpdates);
+                
+                // Then Calculate Group IDs
+                // Use helper
+                const sortedForScan = currentFolderTasks.map((t, idx) => ({...t, sort_order: idx}));
+                const updatesRaw = calculateGroupUpdates(sortedForScan);
+                
+                const updatesForGroup: { id: string; sort_order: number; group_id: string | null }[] = [];
+                
+                // Merge sort_order updates with group_id updates
+                sortedForScan.forEach(t => {
+                    const groupUpdate = updatesRaw.find(u => u.id === t.id);
+                    // Use calculated group_id if available (meaning it changed or was set), 
+                    // otherwise use existing. Actually calculateGroupUpdates returns diffs?
+                    // No, my implementation above returned diffs.
+                    // But for safety here we want explicit values for everyone we touched.
+                    // Or we can just iterate updatesRaw.
+                    
+                    // Actually we need to update Sort Order for everyone anyway.
+                    // So let's build the full payload.
+                    
+                    updatesForGroup.push({
+                        id: t.id,
+                        sort_order: t.sort_order,
+                        group_id: groupUpdate ? groupUpdate.group_id : (t.group_id || null)
+                    });
+                });
 
-                 setTasks(prev => prev.map(t => t.id === tempId ? { ...t, id: data.id, _tempId: tempId, isNew: false } : t));
+                await taskService.updateTaskOrder(updatesForGroup);
+
+                 setTasks(prev => prev.map(t => {
+                     if (t.id === tempId) {
+                         const update = updatesForGroup.find(u => u.id === data.id);
+                         return { ...t, id: data.id, _tempId: tempId, isNew: false, group_id: update ? update.group_id : null };
+                     }
+                     const update = updatesForGroup.find(u => u.id === t.id);
+                     return update ? { ...t, sort_order: update.sort_order, group_id: update.group_id } : t;
+                 }));
             });
         } catch (err) {
             logger.error('Failed to create gap', err);

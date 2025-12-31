@@ -15,6 +15,7 @@ import {
     arrayMove, 
     sortableKeyboardCoordinates 
 } from '@dnd-kit/sortable';
+import { calculateGroupUpdates } from './groupLogic';
 import { Project, Task, Folder } from '@/app/types';
 import { createLogger } from '@/utils/logger/Logger';
 import { globalStorage } from '@/utils/storage';
@@ -423,40 +424,34 @@ export const useProjectDnD = ({
         // Step 4: Recalculate Group IDs and Sort Orders for everyone
         const sortedTasks = finalFlatList; // Use this reconstructed list
         
-        let currentGroupId: string | null = null;
-
+        // Use unified helper for group calculations
+        const groupUpdates = calculateGroupUpdates(sortedTasks);
+        
         const tasksToUpdate = sortedTasks.map((t, index) => {
-             // 1. Determine the group ID for THIS task
-             let myNewGroupId: string | null = null;
-
-             if (t.task_type === 'task' || t.task_type === 'note') {
-                 // Optimization: If t is hidden (part of closed group), it MUST belong to that group.
-                 // We shouldn't accidentally reassign it if logic fails.
-                 const parent = t.group_id ? groupMap.get(t.group_id) : null;
-                 if (parent && parent.is_closed) {
-                     myNewGroupId = t.group_id || null; // Keep existing
-                 } else {
-                     myNewGroupId = currentGroupId;
-                 }
-             } else {
-                 myNewGroupId = null;
-             }
-
-             // 2. Update context for the NEXT tasks
-             if (t.task_type === 'group') {
-                 currentGroupId = t.id; 
-             } else if (t.task_type === 'gap') {
-                 currentGroupId = null;
-             }
+             // Find if group ID needs update
+             const groupUpdate = groupUpdates.find(u => u.id === t.id);
+             // Default to keeping old if no update, but helper returns full diffs? No, helper returns calculated.
+             // Wait, helper logic might override "hidden" logic optimization?
+             // "Optimization: If t is hidden (part of closed group), it MUST belong to that group."
+             // My helper logic doesn't know about hidden status, it just calculates based on linear order.
+             // BUT since we rehydrated the list correctly (Group -> Children -> Gap/Task), 
+             // the helper will correctly assign children to the group above them.
+             // So the optimization is actually redundant if the order is correct!
+             // And we ensured order is correct in Step 3.
+             
+             const newGroupId = groupUpdate ? groupUpdate.group_id : (t.task_type === 'task' || t.task_type === 'note' ? t.group_id : null); 
+             // If calculateGroupUpdates didn't return an update, it means no change? 
+             // No, my implementation of calculateGroupUpdates ONLY returns items that CHANGED.
+             // So if it's not in array, newGroupId = t.group_id.
              
              // Check if changed
-             const isGroupIdChanged = t.group_id !== myNewGroupId;
+             const isGroupIdChanged = t.group_id !== newGroupId;
              const isSortOrderChanged = t.sort_order !== index;
              
              return {
                  id: t.id,
                  sort_order: index,
-                 group_id: myNewGroupId,
+                 group_id: newGroupId,
                  shouldUpdate: isGroupIdChanged || isSortOrderChanged
              };
         });

@@ -110,8 +110,11 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlight
             }
 
             if (isParentClosed) {
-                // Skip rendering this task
-                return acc;
+                // If it's a GAP, allow it to be shown
+                if (task.task_type !== 'gap') {
+                    // Skip rendering this task
+                    return acc;
+                }
             }
 
             if (task.task_type === 'group') {
@@ -125,7 +128,18 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlight
                 currentGroupColor = null;
                 acc.push({ task, activeGroupColor: null, isLastStandingGap: allAreGaps });
             } else {
-                acc.push({ task, activeGroupColor: currentGroupColor });
+                // Use explicit group_id for styling if available
+                let effectiveGroupColor = null;
+                
+                if (task.group_id) {
+                    // If task has explicit parent, use its color
+                    const parent = unpinnedTasks.find(t => t.id === task.group_id);
+                    if (parent) {
+                        effectiveGroupColor = parent.group_color || '#3b82f6';
+                    }
+                } 
+                
+                acc.push({ task, activeGroupColor: effectiveGroupColor });
             }
             
             return acc;
