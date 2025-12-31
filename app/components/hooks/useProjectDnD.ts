@@ -323,9 +323,49 @@ export const useProjectDnD = ({
             .sort((a, b) => a.sort_order - b.sort_order);
 
         // Prepare updates for DB
-        const updates = currentFolderTasks.map((t, index) => ({ 
-            id: t.id, 
-            sort_order: index 
+        // Recalculate Group IDs based on new order
+        const tasksToUpdate = currentFolderTasks.map((t, index) => {
+             let newGroupId: string | null = null;
+             // Look at task above
+             if (index > 0) {
+                 const taskAbove = currentFolderTasks[index - 1];
+                 if (taskAbove.task_type === 'group') {
+                     newGroupId = taskAbove.id;
+                 } else if (taskAbove.task_type === 'gap') {
+                     newGroupId = null;
+                 } else {
+                     newGroupId = taskAbove.group_id || null;
+                 }
+             }
+             
+             // Check if group_id changed or sort_order changed
+             const isGroupIdChanged = t.group_id !== newGroupId;
+             const isSortOrderChanged = t.sort_order !== index;
+             
+             return {
+                 id: t.id,
+                 sort_order: index,
+                 group_id: newGroupId,
+                 shouldUpdate: isGroupIdChanged || isSortOrderChanged
+             };
+        });
+
+        const updatesForOrder = tasksToUpdate.map(t => ({ id: t.id, sort_order: t.sort_order }));
+        // Identify tasks that need group_id update
+        const groupUpdates = tasksToUpdate.filter(t => t.shouldUpdate && t.id === activeIdString).map(t => ({ id: t.id, group_id: t.group_id }));
+        
+        // Also update local state with new group IDs (for ALL tasks, not just active, to be consistent)
+        // Although drag only moves ONE task, its move might technically affect others if we had auto-grouping logic.
+        // But here we only update the moved task's group ID based on its new position.
+        // Wait, if I drag a group header, its children are not moved here. That logic is separate.
+        // Here we handle dragging a standard task.
+        
+        setTasks(prev => prev.map(t => {
+            const update = tasksToUpdate.find(u => u.id === t.id);
+            if (update) {
+                return { ...t, sort_order: update.sort_order, group_id: update.group_id };
+            }
+            return t;
         }));
 
         try {
@@ -335,9 +375,11 @@ export const useProjectDnD = ({
                     // 1. If folder changed, update the task specifically
                     taskService.updateTask(activeIdString, { 
                         folder_id: selectedFolderId,
+                        // We also need to update group_id in DB for the active task
+                        group_id: tasksToUpdate.find(u => u.id === activeIdString)?.group_id
                     }),
                     // 2. Update order for ALL tasks in the folder
-                    taskService.updateTaskOrder(updates)
+                    taskService.updateTaskOrder(updatesForOrder)
                 ]);
             });
         } catch (err) {

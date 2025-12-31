@@ -35,6 +35,8 @@ export interface Task {
    updated_at: string;
    task_type: 'task' | 'gap' | 'group' | 'note'; // New field
    group_color?: string;
+   group_id?: string | null; // Parent group ID
+   is_closed?: boolean; // Collapsed state for groups
    isNew?: boolean;
    isDraft?: boolean;
    _tempId?: string;

@@ -96,22 +96,40 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlight
             }
         });
 
-        // Second pass: Map tasks with colors and counts
-        return unpinnedTasks.map(task => {
+        // Second pass: Map tasks with colors and counts AND FILTER CLOSED GROUPS
+        return unpinnedTasks.reduce((acc: any[], task) => {
+            // Determine parent group status
+            let isParentClosed = false;
+            if (task.group_id) {
+                // Find parent group in the FULL unpinned list (or use cache/lookup if optimization needed)
+                // Since tasks are flat list, parent is likely 'above' or just search by ID.
+                const parentGroup = unpinnedTasks.find(t => t.id === task.group_id);
+                if (parentGroup && parentGroup.is_closed) {
+                    isParentClosed = true;
+                }
+            }
+
+            if (isParentClosed) {
+                // Skip rendering this task
+                return acc;
+            }
+
             if (task.task_type === 'group') {
                 currentGroupColor = task.group_color || '#3b82f6';
-                return { 
+                acc.push({ 
                    task, 
                    activeGroupColor: null,
                    groupCount: groupCounts[task.id] || 0
-                };
-            }
-            if (task.task_type === 'gap') {
+                });
+            } else if (task.task_type === 'gap') {
                 currentGroupColor = null;
-                return { task, activeGroupColor: null, isLastStandingGap: allAreGaps };
+                acc.push({ task, activeGroupColor: null, isLastStandingGap: allAreGaps });
+            } else {
+                acc.push({ task, activeGroupColor: currentGroupColor });
             }
-            return { task, activeGroupColor: currentGroupColor };
-        });
+            
+            return acc;
+        }, []);
     }, [unpinnedTasks, allAreGaps]);
 
     // Find group color for active task

@@ -323,6 +323,13 @@ export const TaskRow = React.memo(
                   )}
                />
                
+               {/* DEBUG: Show group ID suffix for tasks inside a group */}
+               {!isGroup && task.group_id && (
+                  <span className="text-[10px] text-default-300 ml-2 font-mono">
+                     {task.group_id.substring(0, 3)}
+                  </span>
+               )}
+
                {isGroup && (groupCount !== undefined) && groupCount > 0 && (
                   <div className="flex-1 flex items-center">
                      <Chip 
@@ -412,6 +419,12 @@ export const TaskRow = React.memo(
             onContextMenu={(e) => {
                e.preventDefault();
                onOpenMenu?.(task.id, e);
+            }}
+            onDoubleClick={(e) => {
+               if (isGroup) {
+                  e.stopPropagation(); // Stop global create task
+                  onUpdate(task.id, { is_closed: !task.is_closed });
+               }
             }}
          >
             {content}

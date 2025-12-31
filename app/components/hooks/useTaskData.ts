@@ -41,7 +41,7 @@ export const useTaskData = (
     const handleAddTask = async (targetIndex?: number, type: 'task' | 'note' | 'gap' = 'task') => {
        if (!selectedFolderId) return;
 
-       // Filter only active tasks because targetIndex comes from the UI which shows only active tasks
+       // Filter only active tasks
        const activeTasks = tasks
            .filter(t => t.folder_id === selectedFolderId && !t.is_completed)
            .sort((a, b) => a.sort_order - b.sort_order);
@@ -49,6 +49,29 @@ export const useTaskData = (
        let insertIndex = targetIndex !== undefined ? targetIndex : activeTasks.length;
        if (insertIndex < 0) insertIndex = 0;
        if (insertIndex > activeTasks.length) insertIndex = activeTasks.length;
+
+       // --- Determine Group ID based on insertion point ---
+       // We look at the task immediately ABOVE the insertion point.
+       // If it's a group header, we join that group.
+       // If it's a task inside a group, we join that group.
+       // If it's a gap, we are orphaned (group_id = null).
+       
+       let targetGroupId: string | null = null;
+       
+       if (insertIndex > 0) {
+           const taskAbove = activeTasks[insertIndex - 1];
+           if (taskAbove.task_type === 'group') {
+               // Directly under a group header -> belong to it
+               targetGroupId = taskAbove.id;
+           } else if (taskAbove.task_type === 'gap') {
+               // Under a gap -> orphan
+               targetGroupId = null;
+           } else {
+               // Under a regular task -> inherit its group
+               targetGroupId = taskAbove.group_id || null;
+           }
+       }
+       // Note: If inserting at 0, targetGroupId remains null (correct)
 
        const tempId = crypto.randomUUID();
        const newTask: Task = {
@@ -62,7 +85,8 @@ export const useTaskData = (
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           isNew: true,
-          isDraft: true // Create as draft
+          isDraft: true, // Create as draft
+          group_id: targetGroupId // Assign calculated group ID
        };
 
        // Optimistic update
@@ -98,7 +122,8 @@ export const useTaskData = (
                    folder_id: realTask.folder_id,
                    sort_order: realTask.sort_order,
                    is_completed: realTask.is_completed,
-                   task_type: realTask.task_type || 'task'
+                   task_type: realTask.task_type || 'task',
+                   group_id: realTask.group_id
                };
                
                setTasks(prev => prev.map(t => t.id === id ? realTask : t));
@@ -108,9 +133,17 @@ export const useTaskData = (
                       // Create in DB
                       const data = await taskService.createTask(snapshotBeforeSave.folder_id, content, snapshotBeforeSave.sort_order);
                       
-                      // If created as gap OR NOTE (via draft logic)
+                      // If created as gap OR NOTE (via draft logic) OR if it has group_id
+                      const updatesToApply: any = {};
                       if (snapshotBeforeSave.task_type !== 'task') {
-                          await taskService.updateTask(data.id, { task_type: snapshotBeforeSave.task_type });
+                          updatesToApply.task_type = snapshotBeforeSave.task_type;
+                      }
+                      if (snapshotBeforeSave.group_id) {
+                          updatesToApply.group_id = snapshotBeforeSave.group_id;
+                      }
+                      
+                      if (Object.keys(updatesToApply).length > 0) {
+                          await taskService.updateTask(data.id, updatesToApply);
                       }
 
                       // Persist Order
