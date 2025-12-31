@@ -175,17 +175,73 @@ export const useTaskData = (
        // Optimistic
        const updatesWithTimestamp = { ...updates, updated_at: new Date().toISOString() };
        
-       // Don't update time if it's just a local UI state or if we want to preserve server time?
-       // Actually for UI responsiveness we show new time.
-       setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updatesWithTimestamp } : t));
+       // --- OPTIMISTIC RECALCULATE GROUPS ---
+       let optimisticTasks = tasks.map(t => t.id === id ? { ...t, ...updatesWithTimestamp } : t);
+       let updatesForGroup: { id: string; sort_order: number; group_id: string | null }[] = [];
+       let needsGroupUpdate = false;
+
+       // Trigger recalculation if type changed
+       const newType = updates.task_type;
+       const oldType = task.task_type;
+       const isStructureChange = newType && (
+           newType === 'group' || newType === 'gap' || 
+           oldType === 'group' || oldType === 'gap'
+       );
+
+       if (isStructureChange) {
+           const currentFolderTasks = optimisticTasks.filter(t => t.folder_id === task.folder_id).sort((a, b) => a.sort_order - b.sort_order);
+           
+           let currentGroupId: string | null = null;
+
+           currentFolderTasks.forEach(t => {
+               const effectiveType = t.task_type; // Already updated in optimisticTasks
+               
+               let myNewGroupId = null;
+               if (effectiveType === 'task' || effectiveType === 'note') {
+                   myNewGroupId = currentGroupId;
+               } else {
+                   myNewGroupId = null;
+               }
+
+               if (effectiveType === 'group') {
+                   currentGroupId = t.id;
+               } else if (effectiveType === 'gap') {
+                   currentGroupId = null;
+               }
+
+               if (t.group_id !== myNewGroupId) {
+                   updatesForGroup.push({
+                       id: t.id,
+                       sort_order: t.sort_order,
+                       group_id: myNewGroupId
+                   });
+                   needsGroupUpdate = true;
+               }
+           });
+
+           if (needsGroupUpdate) {
+               // Apply group updates to optimistic state
+               optimisticTasks = optimisticTasks.map(t => {
+                   const update = updatesForGroup.find(u => u.id === t.id);
+                   return update ? { ...t, group_id: update.group_id } : t;
+               });
+           }
+       }
+
+       // Single SetState for instant UI update
+       setTasks(optimisticTasks);
        
        if (task?.isNew) return; 
 
        try {
-        // @ref:735735
-// сохранени задачи 2 - отправляем в useAsyncAction
           await executeSave(async () => {
+              // 1. Update the target task
               await taskService.updateTask(id, updates);
+
+              // 2. Update affected neighbors if needed
+              if (needsGroupUpdate) {
+                  await taskService.updateTaskOrder(updatesForGroup);
+              }
           });
        } catch (err) {
           logger.error('Failed to update task', err);

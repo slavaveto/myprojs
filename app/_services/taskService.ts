@@ -430,7 +430,7 @@ export const taskService = {
       logger.success('Task deleted', { id });
    },
 
-   async updateTaskOrder(updates: { id: string; sort_order: number }[]) {
+   async updateTaskOrder(updates: { id: string; sort_order: number; group_id?: string | null }[]) {
       if (updates.length === 0) return;
 
       const batchId = crypto.randomUUID();
@@ -439,15 +439,18 @@ export const taskService = {
       });
 
       await Promise.all(
-         updates.map((u) =>
-            supabase
+         updates.map((u) => {
+            const payload: any = {
+                sort_order: u.sort_order,
+            };
+            if (u.group_id !== undefined) {
+                payload.group_id = u.group_id;
+            }
+            return supabase
                .from(DB_TABLES.TASKS)
-               .update({
-                  sort_order: u.sort_order,
-                  // updated_at: now // REMOVED to preserve history
-               })
+               .update(payload)
                .eq('id', u.id)
-         )
+         })
       );
       logger.info('Tasks reordered', { count: updates.length });
    },

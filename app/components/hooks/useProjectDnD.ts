@@ -324,42 +324,47 @@ export const useProjectDnD = ({
 
         // Prepare updates for DB
         // Recalculate Group IDs based on new order
-        const tasksToUpdate = currentFolderTasks.map((t, index) => {
-             let newGroupId: string | null = null;
-             // Look at task above
-             if (index > 0) {
-                 const taskAbove = currentFolderTasks[index - 1];
-                 if (taskAbove.task_type === 'group') {
-                     newGroupId = taskAbove.id;
-                 } else if (taskAbove.task_type === 'gap') {
-                     newGroupId = null;
-                 } else {
-                     newGroupId = taskAbove.group_id || null;
-                 }
+        // Sort first to ensure we process in visual order
+        const sortedTasks = [...currentFolderTasks].sort((a, b) => a.sort_order - b.sort_order);
+        
+        let currentGroupId: string | null = null;
+
+        const tasksToUpdate = sortedTasks.map((t, index) => {
+             // 1. Determine the group ID for THIS task based on current context
+             let myNewGroupId: string | null = null;
+
+             if (t.task_type === 'task' || t.task_type === 'note') {
+                 myNewGroupId = currentGroupId;
+             } else {
+                 // Groups and Gaps don't have parents
+                 myNewGroupId = null;
+             }
+
+             // 2. Update context for the NEXT tasks
+             if (t.task_type === 'group') {
+                 currentGroupId = t.id; // Start of a new group
+             } else if (t.task_type === 'gap') {
+                 currentGroupId = null; // Break the group
              }
              
              // Check if group_id changed or sort_order changed
-             const isGroupIdChanged = t.group_id !== newGroupId;
+             const isGroupIdChanged = t.group_id !== myNewGroupId;
              const isSortOrderChanged = t.sort_order !== index;
              
              return {
                  id: t.id,
                  sort_order: index,
-                 group_id: newGroupId,
+                 group_id: myNewGroupId,
                  shouldUpdate: isGroupIdChanged || isSortOrderChanged
              };
         });
 
-        const updatesForOrder = tasksToUpdate.map(t => ({ id: t.id, sort_order: t.sort_order }));
-        // Identify tasks that need group_id update
-        const groupUpdates = tasksToUpdate.filter(t => t.shouldUpdate && t.id === activeIdString).map(t => ({ id: t.id, group_id: t.group_id }));
+        const updatesForOrder = tasksToUpdate.map(t => ({ id: t.id, sort_order: t.sort_order, group_id: t.group_id }));
         
-        // Also update local state with new group IDs (for ALL tasks, not just active, to be consistent)
-        // Although drag only moves ONE task, its move might technically affect others if we had auto-grouping logic.
-        // But here we only update the moved task's group ID based on its new position.
-        // Wait, if I drag a group header, its children are not moved here. That logic is separate.
-        // Here we handle dragging a standard task.
+        // Find update for active task to send specific DB update (though updateTaskOrder handles all, updateTask is specific)
+        const activeTaskUpdate = tasksToUpdate.find(u => u.id === activeIdString);
         
+        // Update local state FULLY to match calculations
         setTasks(prev => prev.map(t => {
             const update = tasksToUpdate.find(u => u.id === t.id);
             if (update) {
@@ -371,16 +376,20 @@ export const useProjectDnD = ({
         try {
             await executeSave(async () => {
                 // Execute updates in parallel
-                await Promise.all([
-                    // 1. If folder changed, update the task specifically
-                    taskService.updateTask(activeIdString, { 
-                        folder_id: selectedFolderId,
-                        // We also need to update group_id in DB for the active task
-                        group_id: tasksToUpdate.find(u => u.id === activeIdString)?.group_id
-                    }),
-                    // 2. Update order for ALL tasks in the folder
+                const promises: Promise<any>[] = [
+                    // 1. Update order for ALL tasks in the folder AND their group_id
                     taskService.updateTaskOrder(updatesForOrder)
-                ]);
+                ];
+
+                // 2. If active task changed folder, we still need updateTask for folder_id
+                if (activeTaskUpdate && activeTask.folder_id !== selectedFolderId) {
+                     promises.push(taskService.updateTask(activeIdString, { 
+                        folder_id: selectedFolderId,
+                        // group_id is handled by updateTaskOrder now
+                    }));
+                }
+                
+                await Promise.all(promises);
             });
         } catch (err) {
             logger.error('Failed to save drag changes', err);
