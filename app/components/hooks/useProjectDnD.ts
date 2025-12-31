@@ -295,8 +295,33 @@ export const useProjectDnD = ({
                 const orderMap = new Map<string, number>();
                 newOrdered.forEach((t, idx) => orderMap.set(t.id, idx));
 
+                // @ref:visual-group-update - Calculate group_id on the fly for better UX
+                let tempGroupId: string | null | undefined = undefined;
+                const activeItem = currentTasks[oldIndex];
+                
+                // Only apply visual group update for TASKS and NOTES (not groups)
+                if (activeItem.task_type === 'task' || activeItem.task_type === 'note') {
+                    const neighborAbove = newIndex > 0 ? newOrdered[newIndex - 1] : null;
+                    
+                    if (!neighborAbove) {
+                        tempGroupId = null; // Top of list
+                    } else if (neighborAbove.task_type === 'group') {
+                        tempGroupId = neighborAbove.id; // Directly under a group header
+                    } else if (neighborAbove.task_type === 'gap') {
+                        tempGroupId = null; // Under a gap -> no group
+                    } else {
+                        // Inherit from the task above
+                        tempGroupId = neighborAbove.group_id;
+                    }
+                }
+
                 setTasks((prev) => {
                     return prev.map(t => {
+                        // Update active task specifically with new group visualization
+                        if (t.id === activeIdString && tempGroupId !== undefined) {
+                             return { ...t, sort_order: orderMap.get(t.id)!, group_id: tempGroupId };
+                        }
+
                         if (orderMap.has(t.id)) {
                             return { ...t, sort_order: orderMap.get(t.id)! };
                         }
