@@ -85,24 +85,7 @@ export const LocalizScreen = ({ onReady, isActive, canLoad, texts, showToast = t
    const { isOpen, onOpen, onClose } = useDisclosure();
    const [editingItem, setEditingItem] = useState<UIElement | null>(null);
 
-   // -- 3. DnD Logic Hook --
-   const {
-      sensors,
-      activeId,
-      dropAnimation,
-      handleDragStart,
-      handleDragEnd
-   } = useLocalizDnD({
-      items,
-      tabs, 
-      selectedTab,
-      onUpdateItems: updateLocalItems,
-      onSaveSortOrders: saveSortOrders,
-      onMoveToTab: moveItemToTab,
-      executeSave
-   });
-
-   // -- 4. Tabs Logic --
+   // -- 3. Tabs Logic --
    useEffect(() => {
       const savedTab = globalStorage.getItem('admin_loc_tab');
       if (savedTab && tabs.find((t) => t.id === savedTab)) {
@@ -116,6 +99,25 @@ export const LocalizScreen = ({ onReady, isActive, canLoad, texts, showToast = t
       setSelectedTab(key);
       globalStorage.setItem('admin_loc_tab', key);
    };
+
+   // -- 4. DnD Logic Hook --
+   const {
+      sensors,
+      activeId,
+      dropAnimation,
+      handleDragStart,
+      handleDragEnd,
+      customCollisionDetection
+   } = useLocalizDnD({
+      items,
+      tabs, 
+      selectedTab,
+      setSelectedTab: handleTabChange,
+      onUpdateItems: updateLocalItems,
+      onSaveSortOrders: saveSortOrders,
+      onMoveToTab: moveItemToTab,
+      executeSave
+   });
 
    const handleSearchResultClick = (item: UIElement) => {
       const targetTab = item.tab_id || 'misc';
@@ -274,7 +276,7 @@ export const LocalizScreen = ({ onReady, isActive, canLoad, texts, showToast = t
 
          <DndContext
             sensors={sensors}
-            collisionDetection={pointerWithin}
+            collisionDetection={customCollisionDetection}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
          >
