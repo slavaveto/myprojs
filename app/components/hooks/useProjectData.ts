@@ -285,7 +285,12 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
    };
 
    const getFolderTaskCount = (folderId: string) => {
-       return tasks.filter(t => t.folder_id === folderId && !t.is_completed).length;
+       return tasks.filter(t => 
+           t.folder_id === folderId && 
+           !t.is_completed && 
+           t.task_type !== 'gap' && 
+           t.task_type !== 'group'
+       ).length;
    };
 
    return {

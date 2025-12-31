@@ -315,7 +315,7 @@ export const TaskRow = React.memo(
                      task.title_text_style === 'red-bold' && 'text-danger font-medium'
                   )}
                />
-               {isGroup && <div className="flex-1" />}
+               {/* {isGroup && <div className="flex-1" />} */}
             </div>
 
             {/* Actions */}
