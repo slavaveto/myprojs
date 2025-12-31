@@ -77,10 +77,30 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlight
 
     const tasksWithGroupInfo = React.useMemo(() => {
         let currentGroupColor: string | null = null;
+        // First pass: Calculate group counts
+        const groupCounts: Record<string, number> = {};
+        let currentGroupId: string | null = null;
+
+        unpinnedTasks.forEach(task => {
+            if (task.task_type === 'group') {
+                currentGroupId = task.id;
+                groupCounts[currentGroupId] = 0;
+            } else if (task.task_type === 'gap') {
+                currentGroupId = null;
+            } else if (currentGroupId) {
+                groupCounts[currentGroupId]++;
+            }
+        });
+
+        // Second pass: Map tasks with colors and counts
         return unpinnedTasks.map(task => {
             if (task.task_type === 'group') {
                 currentGroupColor = task.group_color || '#3b82f6';
-                return { task, activeGroupColor: null }; // Group itself doesn't get the border
+                return { 
+                   task, 
+                   activeGroupColor: null,
+                   groupCount: groupCounts[task.id] || 0
+                };
             }
             if (task.task_type === 'gap') {
                 currentGroupColor = null;
@@ -120,7 +140,7 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlight
              >
                <div className="flex flex-col gap-[3px] min-h-[50px] outline-none">
                   <AnimatePresence initial={false}>
-                      {tasksWithGroupInfo.map(({ task, activeGroupColor }, index) => (
+                      {tasksWithGroupInfo.map(({ task, activeGroupColor, groupCount }, index) => (
                          <TaskRow
                             key={task._tempId || task.id}
                             task={task}
@@ -135,6 +155,7 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlight
                             currentProjectId={currentProjectId}
                             onOpenMenu={handleOpenMenu}
                             isMenuOpen={menuState.isOpen && menuState.taskId === task.id}
+                            groupCount={groupCount}
                          />
                       ))}
                   </AnimatePresence>

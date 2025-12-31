@@ -5,7 +5,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useDndContext } from '@dnd-kit/core';
 import { FastCheckbox } from './components/FastCheckbox';
-import { Checkbox } from '@heroui/react'; // Restore Checkbox import
+import { Checkbox, Chip } from '@heroui/react'; // Restore Checkbox import
 import { GripVertical, Trash2, MoreVertical, Check, Pin } from 'lucide-react';
 import { Task } from './types';
 import { EditableCell } from './components/EditableCell';
@@ -31,6 +31,7 @@ interface TaskRowProps {
    currentProjectId?: string;
    onOpenMenu?: (taskId: string, e: React.MouseEvent | React.TouchEvent) => void;
    isMenuOpen?: boolean; // New prop
+   groupCount?: number;
 }
 
 // Group Colors Palette (Restored for More menu)
@@ -148,6 +149,7 @@ export const TaskRow = React.memo(
       currentProjectId,
       onOpenMenu,
       isMenuOpen,
+      groupCount,
    }: TaskRowProps) => {
       const [isHovered, setIsHovered] = React.useState(false);
       const [optimisticCompleted, setOptimisticCompleted] = React.useState(task.is_completed);
@@ -306,7 +308,8 @@ export const TaskRow = React.memo(
                   // isMultiline - Tiptap is multiline by default
                   // autoWidth - Tiptap handles width, but for group title we might need specific styling
                   className={clsx(
-                     'm-0 ml-0 mr-0 flex-1', // Removed p-0 to avoid overriding rich-editor-cell padding
+                     'm-0 ml-0 mr-0', // Removed p-0 to avoid overriding rich-editor-cell padding
+                     isGroup ? 'w-fit' : 'flex-1',
                      task.is_completed && 'text-default-400 line-through opacity-70', // Opacity helper for completed
                      isGroup && 'font-semibold',
                      // isNote && 'pl-2', 
@@ -315,7 +318,19 @@ export const TaskRow = React.memo(
                      task.title_text_style === 'red-bold' && 'text-danger font-medium'
                   )}
                />
-               {/* {isGroup && <div className="flex-1" />} */}
+               
+               {isGroup && (groupCount !== undefined) && (
+                  <div className="flex-1 flex items-center">
+                     <Chip 
+                         size="sm" 
+                         variant="bordered" 
+                        //  color="primary"
+                         className="ml-2 h-5 min-w-5 px-1 text-[10px] font-bold bg-default-100 text-default-500"
+                     >
+                        {groupCount}
+                     </Chip>
+                  </div>
+               )}
             </div>
 
             {/* Actions */}
