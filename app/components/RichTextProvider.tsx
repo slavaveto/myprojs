@@ -8,7 +8,7 @@ import Highlight from '@tiptap/extension-highlight';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
 import { clsx } from 'clsx';
-import { Bold, Italic, Trash2 } from 'lucide-react';
+import { Bold, Italic, Trash2, Highlighter, Baseline } from 'lucide-react';
 
 interface EditorCallbacks {
     onSave: (val: string) => void;
@@ -53,7 +53,7 @@ const CustomBubbleMenu = ({ editor }: { editor: any }) => {
             
             // Calculate center
             const left = (start.left + end.right) / 2;
-            const top = start.top - 40; // 40px above
+            const top = start.top - 50; // Чуть выше из-за размера меню
 
             setPosition({ top, left });
         };
@@ -71,7 +71,7 @@ const CustomBubbleMenu = ({ editor }: { editor: any }) => {
 
     return (
         <div 
-            className="fixed z-50 flex items-center gap-1 p-1 rounded-lg bg-content1 shadow-medium border border-default-200 animate-in fade-in zoom-in-95 duration-100"
+            className="fixed z-50 flex items-center gap-0.5 p-1 rounded-lg bg-content1 shadow-medium border border-default-200 animate-in fade-in zoom-in-95 duration-100"
             style={{ 
                 top: position.top, 
                 left: position.left, 
@@ -82,53 +82,111 @@ const CustomBubbleMenu = ({ editor }: { editor: any }) => {
              <button
                 onClick={() => editor.chain().focus().toggleBold().run()}
                 className={clsx(
-                    "p-1 rounded hover:bg-default-100 transition-colors",
-                    editor.isActive('bold') ? 'text-primary bg-primary/10' : 'text-default-500'
+                    "p-1.5 rounded-md hover:bg-default-100 transition-colors text-default-500",
+                    editor.isActive('bold') && 'text-primary bg-primary/10 font-bold'
                 )}
                 type="button"
+                title="Bold"
             >
-                <Bold size={14} />
+                <Bold size={16} />
             </button>
             <button
                 onClick={() => editor.chain().focus().toggleItalic().run()}
                 className={clsx(
-                    "p-1 rounded hover:bg-default-100 transition-colors",
-                    editor.isActive('italic') ? 'text-primary bg-primary/10' : 'text-default-500'
+                    "p-1.5 rounded-md hover:bg-default-100 transition-colors text-default-500",
+                    editor.isActive('italic') && 'text-primary bg-primary/10 italic'
                 )}
                 type="button"
+                title="Italic"
             >
-                <Italic size={14} />
+                <Italic size={16} />
             </button>
             
             <div className="w-px h-4 bg-default-200 mx-1" />
             
+            {/* Highlights */}
             <button
                 onClick={() => editor.chain().focus().toggleHighlight({ color: '#facc15' }).run()}
                 className={clsx(
-                    "w-5 h-5 rounded-full border border-default-200 hover:scale-110 transition-transform",
-                    editor.isActive('highlight', { color: '#facc15' }) && 'ring-2 ring-offset-1 ring-primary'
+                    "p-1.5 rounded-md transition-colors",
+                    editor.isActive('highlight', { color: '#facc15' }) 
+                        ? 'bg-[#facc15]/20 text-[#facc15]' 
+                        : 'text-[#facc15] hover:bg-default-100'
                 )}
-                style={{ backgroundColor: '#facc15' }}
+                style={{ backgroundColor: '' }}
+                title="Yellow Highlight"
                 type="button"
-            />
+            >
+                <Highlighter size={16} />
+            </button>
             
-             <button
+            <button
                 onClick={() => editor.chain().focus().toggleHighlight({ color: '#f87171' }).run()}
                 className={clsx(
-                    "w-5 h-5 rounded-full border border-default-200 hover:scale-110 transition-transform",
-                    editor.isActive('highlight', { color: '#f87171' }) && 'ring-2 ring-offset-1 ring-primary'
+                    "p-1.5 rounded-md transition-colors",
+                    editor.isActive('highlight', { color: '#f87171' }) 
+                        ? 'bg-[#f87171]/20 text-[#f87171]' 
+                        : 'text-[#f87171] hover:bg-default-100'
                 )}
-                style={{ backgroundColor: '#f87171' }}
+                style={{ backgroundColor: '' }}
+                title="Red Highlight"
                 type="button"
-            />
+            >
+                <Highlighter size={16} />
+            </button>
+
+            <div className="w-px h-4 bg-default-200 mx-1" />
+
+            {/* Text Colors */}
+            <button
+                onClick={() => {
+                    if (editor.isActive('textStyle', { color: '#3b82f6' })) {
+                        editor.chain().focus().unsetColor().run();
+                    } else {
+                        editor.chain().focus().setColor('#3b82f6').run();
+                    }
+                }}
+                className={clsx(
+                    "p-1.5 rounded-md transition-colors",
+                    editor.isActive('textStyle', { color: '#3b82f6' }) 
+                        ? 'bg-primary/10 text-[#3b82f6]' 
+                        : 'text-[#3b82f6] hover:bg-default-100'
+                )}
+                title="Blue Text"
+                type="button"
+            >
+                <Baseline size={16} />
+            </button>
+
+            <button
+                onClick={() => {
+                    if (editor.isActive('textStyle', { color: '#ef4444' })) {
+                        editor.chain().focus().unsetColor().run();
+                    } else {
+                        editor.chain().focus().setColor('#ef4444').run();
+                    }
+                }}
+                className={clsx(
+                    "p-1.5 rounded-md transition-colors",
+                    editor.isActive('textStyle', { color: '#ef4444' }) 
+                        ? 'bg-danger/10 text-[#ef4444]' 
+                        : 'text-[#ef4444] hover:bg-default-100'
+                )}
+                title="Red Text"
+                type="button"
+            >
+                <Baseline size={16} />
+            </button>
+
+            <div className="w-px h-4 bg-default-200 mx-1" />
 
              <button
                 onClick={() => editor.chain().focus().unsetAllMarks().run()}
-                className="p-1 rounded hover:bg-default-100 transition-colors text-default-400 ml-1"
+                className="p-1.5 rounded-md hover:bg-danger/10 text-default-400 hover:text-danger transition-colors ml-1"
                 title="Clear formatting"
                 type="button"
             >
-                <Trash2 size={14} />
+                <Trash2 size={16} />
             </button>
         </div>
     );
