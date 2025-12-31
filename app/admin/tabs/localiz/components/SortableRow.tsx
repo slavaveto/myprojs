@@ -138,6 +138,7 @@ export const SortableRow = ({
       <div
          ref={setRefs}
          id={item.item_id} // Add ID for easier finding if needed
+         
          style={style}
          className={clsx(
             "group grid gap-1 items-center min-h-[32px] rounded-lg border border-default-300 bg-content1 transition-colors outline-none",
