@@ -126,6 +126,7 @@ export const useLocalizCrud = ({ canLoad, onReady, showToast = true, texts }: Us
             en: '',
             tab_id: selectedTab,
             sort_order: newSortOrder,
+            item_type: null,
             updated_at: new Date().toISOString(),
             isNew: true,
             _tempId: tempId,
@@ -157,6 +158,7 @@ export const useLocalizCrud = ({ canLoad, onReady, showToast = true, texts }: Us
             en: '',
             tab_id: tabId,
             sort_order: 0, // Will be set by reindex
+            item_type: null,
             updated_at: new Date().toISOString(),
             isNew: true,
             _tempId: tempId,
@@ -246,6 +248,7 @@ export const useLocalizCrud = ({ canLoad, onReady, showToast = true, texts }: Us
                     en: item.en,
                     tab_id: item.tab_id,
                     sort_order: item.sort_order,
+                    item_type: item.item_type,
                 });
             });
 
@@ -278,16 +281,16 @@ export const useLocalizCrud = ({ canLoad, onReady, showToast = true, texts }: Us
     };
     
     const handleToggleSection = async (item: UIElement) => {
-        const newIsSection = !item.is_section;
+        const newType = item.item_type === 'group' ? null : 'group';
         const oldState = [...items];
   
         setItems((prev) =>
-           prev.map((i) => (i.item_id === item.item_id ? { ...i, is_section: newIsSection } : i))
+           prev.map((i) => (i.item_id === item.item_id ? { ...i, item_type: newType } : i))
         );
   
         try {
            await executeSave(async () => {
-               await updateItem(item.item_id, { is_section: newIsSection });
+               await updateItem(item.item_id, { item_type: newType });
            });
         } catch (err) {
            setItems(oldState);

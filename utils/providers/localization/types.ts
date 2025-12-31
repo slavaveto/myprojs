@@ -14,7 +14,7 @@ export interface UIElement {
     updated_at: string;
     tab_id?: string | null;
     sort_order?: number;
-    is_section?: boolean;
+    item_type?: string | null;
     config?: LocalizTab[]; // Поле для спец. строки (_FOLDERS_CONFIG)
     // Client-side only
     isNew?: boolean;

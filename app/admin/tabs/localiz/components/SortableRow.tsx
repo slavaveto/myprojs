@@ -141,7 +141,7 @@ export const SortableRow = ({
          style={style}
          className={clsx(
             "group grid gap-1 items-center min-h-[32px] rounded-lg border border-default-300 bg-content1 transition-colors outline-none",
-            item.is_section ? "grid-cols-[35px_1fr_120px]" : "grid-cols-[200px_1fr_1fr_1fr_120px]",
+            item.item_type === 'group' ? "grid-cols-[35px_1fr_120px]" : "grid-cols-[200px_1fr_1fr_1fr_120px]",
             !isDragging && !isOverlay && "hover:bg-default-50",
             highlightedItemId === item.item_id ? "!bg-warning-100 dark:!bg-warning-900/30 border-warning" : "",
             (isDragging || isOverlay) && "z-50 bg-content1 shadow-lg border-primary/50"
@@ -162,7 +162,7 @@ export const SortableRow = ({
                   <GripVertical size={14} />
                </div>
 
-               {!item.is_section && (
+               {item.item_type !== 'group' && (
                 <div className="flex flex-col min-w-0 w-full">
                     <EditableCell
                         value={item.item_id}
@@ -183,15 +183,15 @@ export const SortableRow = ({
          </div>
          <div className={clsx(
              "p-1 text-start relative whitespace-normal flex items-center pr-6 group/ru",
-             item.is_section ? "pl-0" : "border-l border-default-300"
+             item.item_type === 'group' ? "pl-0" : "border-l border-default-300"
          )}>
             <EditableCell
                value={item.ru}
                onSave={(val) => handleUpdate('ru', val)}
                isMultiline
-               className={clsx(item.is_section && "font-bold text-medium w-full")}
+               className={clsx(item.item_type === 'group' && "font-bold text-medium w-full")}
             />
-            {!item.is_section && item.ru && (
+            {item.item_type !== 'group' && item.ru && (
                <div className="absolute right-0.5 top-0 z-10 h-full flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
                   <Button
                      isIconOnly
@@ -207,7 +207,7 @@ export const SortableRow = ({
             )}
          </div>
 
-         {!item.is_section && (
+         {item.item_type !== 'group' && (
              <>
                 <div className="p-1 text-start relative whitespace-normal border-l border-default-300 flex items-center group/uk pr-6">
                     {isTranslatingUk || (isTranslating && !item.uk) ? (
@@ -278,14 +278,14 @@ export const SortableRow = ({
                     onClick={() => onToggleSection(item)}
                     className={clsx(
                         "p-0.5 rounded transition-colors",
-                        item.is_section ? "text-primary" : "text-default-400 hover:text-primary hover:bg-default-100"
+                        item.item_type === 'group' ? "text-primary" : "text-default-400 hover:text-primary hover:bg-default-100"
                     )}
                     title="Toggle Section"
                 >
                     <Heading size={16} />
                 </button>
 
-                {!item.is_section && (
+                {item.item_type !== 'group' && (
                     <Dropdown>
                         <DropdownTrigger>
                             <span className="text-lg text-default-400 cursor-pointer active:opacity-50 hover:text-primary p-0.5 rounded hover:bg-default-100 transition-colors">
@@ -311,7 +311,7 @@ export const SortableRow = ({
                     </Dropdown>
                 )}
 
-                {!item.is_section && (
+                {item.item_type !== 'group' && (
                     <span className="text-lg text-default-400 cursor-pointer active:opacity-50 hover:text-primary p-0.5 rounded hover:bg-default-100 transition-colors" onClick={() => onEdit(item)}>
                         <IconEdit size={16} />
                     </span>

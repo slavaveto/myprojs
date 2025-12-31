@@ -36,7 +36,7 @@ export const localizationService = {
      }
 
      // 2. Фильтруем данные (убираем спец. строки конфига из списка переводов)
-     const items = rawData.filter((i) => i.item_id !== '_FOLDERS_CONFIG' && !i.is_section); // is_section можно оставить если используется
+     const items = rawData.filter((i) => i.item_id !== '_FOLDERS_CONFIG' && i.item_type !== 'group'); // is_section -> type === 'group'
      // is_config мы не добавили в типы базы явно везде, но _FOLDERS_CONFIG фильтруем по ID.
      // UPD: В типах UIElement нет поля is_config, но оно нам и не нужно, фильтруем по ID.
 
@@ -61,6 +61,7 @@ export const localizationService = {
           en: item.en || '',
           tab_id: item.tab_id || 'misc',
           sort_order: item.sort_order || 0,
+          item_type: item.item_type || null,
           updated_at: new Date().toISOString(),
           config: item.config || null,
       };
