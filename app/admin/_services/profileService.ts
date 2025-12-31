@@ -9,6 +9,7 @@ export interface Profile {
   username?: string;
   full_name?: string;
   avatar_url?: string;
+  about_me?: string;
   updated_at?: string;
 }
 
@@ -17,7 +18,7 @@ export const profileService = {
   async getProfile(supabase: SupabaseClient, userId: string) {
     const { data, error } = await supabase
       .from(DB_TABLES.PROFILES)
-      .select('username, full_name, avatar_url')
+      .select('username, full_name, avatar_url, about_me')
       .eq('user_id', userId)
       .single();
 
@@ -39,7 +40,7 @@ export const profileService = {
   },
 
   // --- WRITE ---
-  async updateProfile(supabase: SupabaseClient, userId: string, updates: { username?: string; full_name?: string; avatar_url?: string }) {
+  async updateProfile(supabase: SupabaseClient, userId: string, updates: { username?: string; full_name?: string; avatar_url?: string; about_me?: string }) {
     const { error } = await supabase
       .from(DB_TABLES.PROFILES)
       .update({

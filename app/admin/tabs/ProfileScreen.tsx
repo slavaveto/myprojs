@@ -17,6 +17,7 @@ import { motion } from 'framer-motion';
 import { AvatarCropper } from '@/app/admin/tabs/components/AvatarCropper';
 import { AvatarCamera } from '@/app/admin/tabs/components/AvatarCamera';
 import { profileService } from '@/app/admin/_services/profileService';
+import { AdminRichEditor } from '@/app/admin/components/AdminRichEditor';
 
 
 const UPLOAD_CONFIG = {
@@ -45,8 +46,10 @@ export const ProfileScreen = ({ onReady, isActive, canLoad, texts, showToast = t
    
    const [username, setUsername] = useState<string>('');
    const [fullName, setFullName] = useState<string>('');
+   const [aboutMe, setAboutMe] = useState<string>('');
    const [initialUsername, setInitialUsername] = useState<string>('');
    const [initialFullName, setInitialFullName] = useState<string>('');
+   const [initialAboutMe, setInitialAboutMe] = useState<string>('');
    const [isLoading, setIsLoading] = useState(true);
    
    const [validationError, setValidationError] = useState<string | null>(null);
@@ -65,8 +68,10 @@ export const ProfileScreen = ({ onReady, isActive, canLoad, texts, showToast = t
          if (data) {
             setUsername(data.username || '');
             setFullName(data.full_name || '');
+            setAboutMe(data.about_me || '');
             setInitialUsername(data.username || '');
             setInitialFullName(data.full_name || '');
+            setInitialAboutMe(data.about_me || '');
             setInitialUrl(data.avatar_url || null);
          }
       } catch (err) {
@@ -167,14 +172,16 @@ export const ProfileScreen = ({ onReady, isActive, canLoad, texts, showToast = t
       const canEditUsername = can(PERMISSIONS.CUSTOM_USERNAME);
       const isFullNameChanged = fullName !== initialFullName;
       const isUsernameChanged = canEditUsername && (username !== initialUsername);
+      const isAboutMeChanged = aboutMe !== initialAboutMe;
 
-      if (!isFullNameChanged && !isUsernameChanged) return;
+      if (!isFullNameChanged && !isUsernameChanged && !isAboutMeChanged) return;
 
       try {
          await executeSave(async () => {
-            const updates: { username?: string; full_name?: string } = {};
+            const updates: { username?: string; full_name?: string; about_me?: string } = {};
             if (isFullNameChanged) updates.full_name = fullName;
             if (isUsernameChanged) updates.username = username;
+            if (isAboutMeChanged) updates.about_me = aboutMe;
             
             await updateProfile(user.id, updates);
             
@@ -184,6 +191,7 @@ export const ProfileScreen = ({ onReady, isActive, canLoad, texts, showToast = t
                triggerProfileUpdate(); // Обновляем имя в хедере
             }
             if (isUsernameChanged) setInitialUsername(username);
+            if (isAboutMeChanged) setInitialAboutMe(aboutMe);
          });
       } catch (err) { logger.error('Failed to update profile', err); }
    };
@@ -381,6 +389,16 @@ export const ProfileScreen = ({ onReady, isActive, canLoad, texts, showToast = t
                 {/* <Input label="Clerk ID" value={user.id} isReadOnly variant="flat" description="Ваш уникальный идентификатор в системе авторизации" /> */}
                 <Input label="Full Name" value={fullName} onValueChange={setFullName} onBlur={handleSave} onKeyDown={handleKeyDown} variant="bordered" placeholder="Enter your full name" maxLength={30} isInvalid={!!fullNameError} errorMessage={fullNameError} description={fullNameError ? undefined : (<div className="flex justify-end text-tiny text-default-400 gap-0"><span>{fullName.length}</span><span>/</span><span>30</span></div>)} />
                 <Input label="Username" value={username} onValueChange={(val) => { setUsername(val); setValidationError(null); }} onBlur={handleSave} onKeyDown={handleKeyDown} placeholder="No username set" variant={canEditUsername ? "bordered" : "flat"} isReadOnly={!canEditUsername} isDisabled={!canEditUsername} isInvalid={!!validationError || !!badgeError} errorMessage={validationError || badgeError} endContent={isValidating ? <Spinner size="sm" /> : null} maxLength={15} description={(validationError || badgeError) ? undefined : (canEditUsername ? (<div className="flex justify-end text-tiny text-default-400 gap-0"><span>{username.length}</span><span>/</span><span>15</span></div>) : "Изменение username доступно только на тарифе PRO")} />
+                
+                <div className="flex flex-col gap-1">
+                   <div className="text-small text-default-500">About Me</div>
+                   <AdminRichEditor 
+                      value={aboutMe} 
+                      onChange={setAboutMe} 
+                      onBlur={handleSave}
+                      placeholder="Tell us about yourself..." 
+                   />
+                </div>
             </div>
          </div>
          
