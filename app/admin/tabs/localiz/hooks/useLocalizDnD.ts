@@ -79,6 +79,7 @@ export const useLocalizDnD = ({
     const [isOverTab, setIsOverTab] = useState(false);
     const [hoveredTabId, setHoveredTabId] = useState<string | null>(null);
     
+    const currentHoveredTabRef = useRef<string | null>(null);
     const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const hoveredTabIdRef = useRef<string | null>(null);
     const isDraggingRef = useRef(false);
@@ -104,6 +105,9 @@ export const useLocalizDnD = ({
         // 1. Check tab headers
         const tabCollision = pointerCollisions.find(c => c.id.toString().startsWith('tab-'));
         
+        // Update Ref (Always track if we are over a tab)
+        currentHoveredTabRef.current = tabCollision ? tabCollision.id.toString() : null;
+
         if (tabCollision) {
             const tabIdFull = tabCollision.id.toString();
             
@@ -150,12 +154,15 @@ export const useLocalizDnD = ({
                     }, 300);
                 }
             }
-            return [tabCollision];
+            // IMPORTANT: We do NOT return the tab collision immediately.
+            // We fall through to closestCenter so the placeholder snaps to the list items (Fixed at top)
+            // UNLESS the list is empty (handled below).
         }
         
         // Reset if left tab area
-        if (hoveredTabIdRef.current) {
+        if (!tabCollision && hoveredTabIdRef.current) {
              hoveredTabIdRef.current = null;
+             currentHoveredTabRef.current = null;
              setTimeout(() => setHoveredTabId(null), 0);
              if (hoverTimeoutRef.current) {
                 clearTimeout(hoverTimeoutRef.current);
@@ -164,7 +171,19 @@ export const useLocalizDnD = ({
         }
 
         // 2. Use closestCenter for list items (Magnetic feel)
-        return closestCenter(args);
+        const itemCollisions = closestCenter(args);
+
+        // If we found item collisions, return them (Placeholder snaps to items)
+        if (itemCollisions.length > 0) {
+            return itemCollisions;
+        }
+
+        // If NO item collisions (empty list?) AND we are over a tab, return the tab.
+        if (tabCollision) {
+            return [tabCollision];
+        }
+
+        return itemCollisions;
     };
 
     const handleDragStart = (event: DragStartEvent) => {
@@ -227,11 +246,21 @@ export const useLocalizDnD = ({
         if (!activeItem) return;
 
         // 1. Drop on Tab (Directly)
-        if (over && over.id.toString().startsWith('tab-')) {
-           const targetTabId = over.id.toString().replace('tab-', '');
+        // Check both 'over' (if list empty) AND 'currentHoveredTabRef' (if masking as item)
+        const overTabIdRaw = (over && over.id.toString().startsWith('tab-')) 
+            ? over.id.toString() 
+            : currentHoveredTabRef.current;
+
+        if (overTabIdRaw && overTabIdRaw.startsWith('tab-')) {
+           const targetTabId = overTabIdRaw.replace('tab-', '');
+           // Only move if we are not already effectively in that tab (via timer logic)
            if (activeItem.tab_id !== targetTabId) {
               await onMoveToTabRef.current(activeItem, targetTabId);
            }
+           // Even if tab_id matches (timer finished), we might want to return here 
+           // to avoid re-sorting logic if we are strictly ON the tab header.
+           // BUT if timer finished, user sees items in new tab.
+           // If he drops on tab header, he probably just wants it in that tab.
            return;
         }
 
