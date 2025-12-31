@@ -122,9 +122,10 @@ export const RoomsScreen = ({ onReady, isActive, canLoad, texts, showToast = tru
    const sensors = useSensors(
       useSensor(PointerSensor, {
          activationConstraint: {
-            distance: 8, // Avoid accidental drags
+             delay: 0,
+             tolerance: 0,
          },
-      }),
+     }),
       useSensor(KeyboardSensor, {
          coordinateGetter: sortableKeyboardCoordinates,
       })

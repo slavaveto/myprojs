@@ -52,7 +52,7 @@ export function usePageLogic() {
       useSensor(PointerSensor, {
          activationConstraint: {
             delay: 0,
-            tolerance: 5,
+            tolerance: 0,
          },
       }),
       useSensor(KeyboardSensor, {
