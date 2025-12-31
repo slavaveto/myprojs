@@ -141,11 +141,12 @@ export const SortableRow = ({
          
          style={style}
          className={clsx(
-            "group grid gap-1 items-center min-h-[32px] rounded-lg border border-default-300 bg-content1 transition-colors outline-none",
+            "group grid gap-1 items-center min-h-[32px] rounded border border-default-300 bg-content1 transition-colors outline-none",
             item.item_type === 'group' ? "grid-cols-[35px_1fr_120px]" : "grid-cols-[200px_1fr_1fr_1fr_120px]",
             !isDragging && !isOverlay && "hover:bg-default-50",
+            'border-l-[3px]',
             highlightedItemId === item.item_id ? "!bg-warning-100 dark:!bg-warning-900/30 border-warning" : "",
-            (isDragging || isOverlay) && "z-50 bg-content1 shadow-lg border-primary/50"
+            (isDragging || isOverlay) && "z-50 bg-content1 border-primary/50"
          )}
          data-highlighted={highlightedItemId === item.item_id}
          onBlur={handleRowBlur}
