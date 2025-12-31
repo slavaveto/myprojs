@@ -24,12 +24,18 @@ export const LocalizContextMenu = ({
 
    const handleContextMenu = (e: React.MouseEvent) => {
       e.preventDefault();
-      e.stopPropagation(); // Stop propagation to prevent conflict with other context menus
-
-      // Simulate global click to close other menus
+      
       if (typeof document !== 'undefined') {
+         document.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+         document.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
          document.body.click();
       }
+
+      if (document.activeElement instanceof HTMLElement) {
+         document.activeElement.blur();
+      }
+
+      e.stopPropagation(); // Stop propagation to prevent conflict with other context menus
       
       setMenuPos({ x: e.clientX, y: e.clientY });
    };
