@@ -24,11 +24,8 @@ export const calculateGroupUpdates = (sortedTasks: Task[]): GroupUpdate[] => {
         // 1. Determine group for THIS task
         if (t.task_type === 'task' || t.task_type === 'note') {
             myNewGroupId = currentGroupId;
-        } else if (t.task_type === 'gap') {
-             // Gap is the tail of the group above it
-             myNewGroupId = currentGroupId; 
         } else {
-            // Group header itself doesn't have a parent
+            // Group header and GAP don't have a parent
             myNewGroupId = null;
         }
 

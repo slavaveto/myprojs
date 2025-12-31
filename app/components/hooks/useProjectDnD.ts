@@ -53,6 +53,7 @@ export const useProjectDnD = ({
     
     // Store initial state of the dragged item to prevent unnecessary saves
     const initialDragStateRef = useRef<{ folderId: string; index: number } | null>(null);
+    const draggedGapIdRef = useRef<string | null>(null); // Track gap associated with dragged group
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -66,6 +67,13 @@ export const useProjectDnD = ({
 
     const customCollisionDetection: CollisionDetection = (args) => {
         const { active } = args;
+        
+        // Prevent groups from being dragged into other folders (complex dependency)
+        const activeTask = tasks.find(t => t.id === active.id);
+        if (activeTask?.task_type === 'group') {
+             return closestCenter(args);
+        }
+
         const isDraggingFolder = active.id.toString().startsWith('folder-');
 
         // 1. Check folder tabs with pointerWithin
@@ -153,6 +161,7 @@ export const useProjectDnD = ({
     const handleDragStart = (event: DragStartEvent) => {
         setActiveId(event.active.id as string);
         isDraggingRef.current = true;
+        draggedGapIdRef.current = null;
 
         const task = tasks.find(t => t.id === event.active.id);
         if (task) {
@@ -160,6 +169,32 @@ export const useProjectDnD = ({
                 folderId: task.folder_id,
                 index: task.sort_order
             };
+
+            // If dragging a group, check if there's a GAP immediately after it (or its children)
+            if (task.task_type === 'group') {
+                const folderTasks = tasks
+                    .filter(t => t.folder_id === task.folder_id)
+                    .sort((a, b) => a.sort_order - b.sort_order);
+                
+                const taskIndex = folderTasks.findIndex(t => t.id === task.id);
+                if (taskIndex !== -1) {
+                    // Find end of group block
+                    let nextIndex = taskIndex + 1;
+                    while (nextIndex < folderTasks.length) {
+                        const next = folderTasks[nextIndex];
+                        
+                        if (next.group_id === task.id) {
+                            nextIndex++; // Skip child task/note
+                        } else {
+                            // Found something not in group (could be a GAP, or another task/group)
+                            if (next.task_type === 'gap') {
+                                draggedGapIdRef.current = next.id;
+                            }
+                            break; 
+                        }
+                    }
+                }
+            }
         }
     };
 
@@ -390,32 +425,63 @@ export const useProjectDnD = ({
             const groupIndex = finalFlatList.findIndex(t => t.id === activeIdString);
             if (groupIndex !== -1) {
                 // Determine how many children this group has
-                const children = hiddenChildrenMap.get(activeIdString) || [];
-                const lastMemberIndex = groupIndex + children.length;
+                let blockEndIndex = groupIndex;
+                for (let i = groupIndex + 1; i < finalFlatList.length; i++) {
+                    if (finalFlatList[i].group_id === activeIdString) {
+                        blockEndIndex = i;
+                    } else {
+                        break;
+                    }
+                }
                 
-                // Check what comes after the group block
-                if (lastMemberIndex < finalFlatList.length - 1) {
-                    const nextTask = finalFlatList[lastMemberIndex + 1];
-                    // If next task is a regular task/note, we need a separator
-                    if (nextTask && (nextTask.task_type === 'task' || nextTask.task_type === 'note')) {
-                        // Create a temporary GAP
-                        const gapId = crypto.randomUUID();
-                        gapToInsert = {
-                            id: gapId,
-                            folder_id: selectedFolderId,
-                            content: '',
-                            sort_order: 0, // Will be recalculated
-                            is_completed: false,
-                            task_type: 'gap',
-                            created_at: new Date().toISOString(),
-                            updated_at: new Date().toISOString(),
-                            isNew: true,
-                            // isDraft: false // Not in standard type but implied
-                        } as Task;
+                // OPTION 1: Move Existing Gap
+                if (draggedGapIdRef.current) {
+                    const existingGapIndex = finalFlatList.findIndex(t => t.id === draggedGapIdRef.current);
+                    if (existingGapIndex !== -1) {
+                        // Move it to blockEndIndex + 1 (the end of the newly positioned group block)
+                        const [gap] = finalFlatList.splice(existingGapIndex, 1);
                         
-                        // Insert gap into the list
-                        finalFlatList.splice(lastMemberIndex + 1, 0, gapToInsert);
-                        logger.info('Auto-inserting gap after closed group drag');
+                        // Recalculate blockEndIndex because splice might have shifted indices
+                        const newGroupIndex = finalFlatList.findIndex(t => t.id === activeIdString);
+                        let newBlockEndIndex = newGroupIndex;
+                         for (let i = newGroupIndex + 1; i < finalFlatList.length; i++) {
+                            if (finalFlatList[i].group_id === activeIdString) {
+                                newBlockEndIndex = i;
+                            } else {
+                                break;
+                            }
+                        }
+                        
+                        finalFlatList.splice(newBlockEndIndex + 1, 0, gap);
+                        logger.info('Moved existing gap with dragged group');
+                    }
+                } 
+                // OPTION 2: Create New Gap (Only if we didn't have one)
+                else {
+                    // Check what comes after the group block
+                    if (blockEndIndex < finalFlatList.length - 1) {
+                        const nextTask = finalFlatList[blockEndIndex + 1];
+                        // If next task is a regular task/note, we need a separator
+                        if (nextTask && (nextTask.task_type === 'task' || nextTask.task_type === 'note')) {
+                            // Create a temporary GAP
+                            const gapId = crypto.randomUUID();
+                            gapToInsert = {
+                                id: gapId,
+                                folder_id: selectedFolderId,
+                                content: '',
+                                sort_order: 0, // Will be recalculated
+                                is_completed: false,
+                                task_type: 'gap',
+                                created_at: new Date().toISOString(),
+                                updated_at: new Date().toISOString(),
+                                isNew: true,
+                                isDraft: false
+                            } as Task;
+                            
+                            // Insert gap into the list
+                            finalFlatList.splice(blockEndIndex + 1, 0, gapToInsert);
+                            logger.info('Auto-inserting gap after closed group drag');
+                        }
                     }
                 }
             }
@@ -449,7 +515,7 @@ export const useProjectDnD = ({
              const isSortOrderChanged = t.sort_order !== index;
              
              return {
-                 id: t.id,
+            id: t.id, 
                  sort_order: index,
                  group_id: newGroupId,
                  shouldUpdate: isGroupIdChanged || isSortOrderChanged
