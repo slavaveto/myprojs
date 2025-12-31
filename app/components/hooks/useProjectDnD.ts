@@ -322,32 +322,96 @@ export const useProjectDnD = ({
             .filter(t => t.folder_id === selectedFolderId)
             .sort((a, b) => a.sort_order - b.sort_order);
 
-        // Prepare updates for DB
-        // Recalculate Group IDs based on new order
-        // Sort first to ensure we process in visual order
-        const sortedTasks = [...currentFolderTasks].sort((a, b) => a.sort_order - b.sort_order);
+        // Filter tasks in the destination folder
+        // Use 'let' or unique name to avoid conflict if redeclared (it was declared above for check)
+        const currentFolderTasksForUpdate = tasks
+            .filter(t => t.folder_id === selectedFolderId)
+            .sort((a, b) => a.sort_order - b.sort_order);
+
+        // --- REHYDRATE LIST LOGIC ---
+        // We need to reconstruct the FULL list including hidden children of closed groups
+        // in the correct order relative to the new visual order.
+        
+        // Step 1: Separate items into Visible (Groups/Gaps/Orphans/Tasks in Open Groups) and Hidden (Tasks in Closed Groups).
+        const visibleItems: Task[] = [];
+        const hiddenChildrenMap = new Map<string, Task[]>(); // groupId -> children[]
+        
+        // We need a robust way to know if a task is hidden.
+        // We can look up parents.
+        
+        const groupMap = new Map<string, Task>();
+        currentFolderTasksForUpdate.forEach(t => {
+            if (t.task_type === 'group') groupMap.set(t.id, t);
+        });
+        
+        currentFolderTasksForUpdate.forEach(t => {
+            if (t.group_id) {
+                const parent = groupMap.get(t.group_id);
+                if (parent && parent.is_closed) {
+                    // Hidden child
+                    const kids = hiddenChildrenMap.get(parent.id) || [];
+                    kids.push(t);
+                    hiddenChildrenMap.set(parent.id, kids);
+                    return;
+                }
+            }
+            visibleItems.push(t);
+        });
+        
+        // Step 2: 'visibleItems' now contains the items in their *current database order*, minus hidden ones.
+        // BUT the active task has a new sort_order from dragOver.
+        // We need to sort 'visibleItems' by their current sort_order to reflect the drag result.
+        visibleItems.sort((a, b) => a.sort_order - b.sort_order);
+        
+        // Step 3: Reconstruct full list
+        const finalFlatList: Task[] = [];
+        
+        visibleItems.forEach(item => {
+            finalFlatList.push(item);
+            
+            // If this item is a closed group, immediately append its hidden children
+            if (item.task_type === 'group' && item.is_closed) {
+                const children = hiddenChildrenMap.get(item.id);
+                if (children) {
+                    // Sort children by their original order (to preserve internal order)
+                    children.sort((a, b) => a.sort_order - b.sort_order);
+                    finalFlatList.push(...children);
+                }
+            }
+        });
+        
+        // Now 'finalFlatList' is the correct sequence.
+        
+        // Step 4: Recalculate Group IDs and Sort Orders for everyone
+        const sortedTasks = finalFlatList; // Use this reconstructed list
         
         let currentGroupId: string | null = null;
 
         const tasksToUpdate = sortedTasks.map((t, index) => {
-             // 1. Determine the group ID for THIS task based on current context
+             // 1. Determine the group ID for THIS task
              let myNewGroupId: string | null = null;
 
              if (t.task_type === 'task' || t.task_type === 'note') {
-                 myNewGroupId = currentGroupId;
+                 // Optimization: If t is hidden (part of closed group), it MUST belong to that group.
+                 // We shouldn't accidentally reassign it if logic fails.
+                 const parent = t.group_id ? groupMap.get(t.group_id) : null;
+                 if (parent && parent.is_closed) {
+                     myNewGroupId = t.group_id || null; // Keep existing
+                 } else {
+                     myNewGroupId = currentGroupId;
+                 }
              } else {
-                 // Groups and Gaps don't have parents
                  myNewGroupId = null;
              }
 
              // 2. Update context for the NEXT tasks
              if (t.task_type === 'group') {
-                 currentGroupId = t.id; // Start of a new group
+                 currentGroupId = t.id; 
              } else if (t.task_type === 'gap') {
-                 currentGroupId = null; // Break the group
+                 currentGroupId = null;
              }
              
-             // Check if group_id changed or sort_order changed
+             // Check if changed
              const isGroupIdChanged = t.group_id !== myNewGroupId;
              const isSortOrderChanged = t.sort_order !== index;
              
