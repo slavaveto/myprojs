@@ -3,6 +3,7 @@ import { Task } from '@/app/types';
 import { calculateGroupUpdates } from './groupLogic';
 import { taskService } from '@/app/_services/taskService'; // New Service
 import { createLogger } from '@/utils/logger/Logger';
+import { GROUP_COLORS } from '@/app/constants';
 
 const logger = createLogger('UseTaskData');
 
@@ -174,13 +175,8 @@ export const useTaskData = (
 
        // Normal Update
        // Optimistic
-       const updatesWithTimestamp = { ...updates, updated_at: new Date().toISOString() };
+       // const updatesWithTimestamp = { ...updates, updated_at: new Date().toISOString() }; // Moved down
        
-       // --- OPTIMISTIC RECALCULATE GROUPS ---
-       let optimisticTasks = tasks.map(t => t.id === id ? { ...t, ...updatesWithTimestamp } : t);
-       let updatesForGroup: { id: string; sort_order: number; group_id: string | null }[] = [];
-       let needsGroupUpdate = false;
-
        // Trigger recalculation if type changed
        const newType = updates.task_type;
        const oldType = task.task_type;
@@ -188,6 +184,35 @@ export const useTaskData = (
            newType === 'group' || newType === 'gap' || 
            oldType === 'group' || oldType === 'gap'
        );
+
+       // Auto-assign random unused color for new groups BEFORE setting state
+       if (newType === 'group' && !updates.group_color) {
+           logger.info('DEBUG: calculating random color', { 
+               existingGroups: tasks.filter(t => t.folder_id === task.folder_id && t.task_type === 'group').length 
+           });
+
+           const currentFolderTasks = tasks.filter(t => t.folder_id === task.folder_id);
+           const usedColors = new Set(
+               currentFolderTasks
+                   .filter(t => t.task_type === 'group' && t.group_color)
+                   .map(t => t.group_color)
+           );
+           
+           const available = GROUP_COLORS.filter(c => !usedColors.has(c.value));
+           const pool = available.length > 0 ? available : GROUP_COLORS;
+           
+           logger.info('DEBUG: color pool', { pool: pool.map(c => c.name), used: Array.from(usedColors) });
+           const randomColor = pool[Math.floor(Math.random() * pool.length)].value;
+           
+           updates.group_color = randomColor;
+       }
+       
+       const updatesWithTimestamp = { ...updates, updated_at: new Date().toISOString() };
+
+       // --- OPTIMISTIC RECALCULATE GROUPS ---
+       let optimisticTasks = tasks.map(t => t.id === id ? { ...t, ...updatesWithTimestamp } : t);
+       let updatesForGroup: { id: string; sort_order: number; group_id: string | null }[] = [];
+       let needsGroupUpdate = false;
 
        if (isStructureChange) {
            const currentFolderTasks = optimisticTasks.filter(t => t.folder_id === task.folder_id).sort((a, b) => a.sort_order - b.sort_order);

@@ -275,7 +275,7 @@ export const TaskMenuItems = ({
          case 'makeGroup':
             if (!items.makeGroup) return null;
             return (
-               <DropdownItem key="make-group" onPress={() => { onUpdate?.(task.id, { task_type: 'group', group_color: '#3b82f6' }); handleClose(); }}>
+               <DropdownItem key="make-group" onPress={() => { onUpdate?.(task.id, { task_type: 'group' }); handleClose(); }}>
                   Make As Group
                </DropdownItem>
             );

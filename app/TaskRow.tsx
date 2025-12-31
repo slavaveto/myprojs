@@ -16,6 +16,7 @@ import { TaskContextMenu, TaskMenuItems } from './components/TaskContextMenu';
 import { TaskStyleControl } from './components/TaskStyleControl';
 import { TaskPinControl } from './components/TaskPinControl';
 import { TaskTodayControl } from './components/TaskTodayControl';
+import { GROUP_COLORS } from './constants';
 
 interface TaskRowProps {
    task: Task;
@@ -36,16 +37,8 @@ interface TaskRowProps {
 }
 
 // Group Colors Palette (Restored for More menu)
-const COLORS = [
-   { name: 'Blue', value: '#3b82f6' },
-   { name: 'Green', value: '#22c55e' },
-   { name: 'Orange', value: '#f97316' },
-   { name: 'Red', value: '#ef4444' },
-   { name: 'Purple', value: '#a855f7' },
-   { name: 'Cyan', value: '#06b6d4' },
-   { name: 'Pink', value: '#ec4899' },
-   { name: 'Gray', value: '#6b7280' },
-];
+// const COLORS = [ ... ] // Moved to constants.ts
+const COLORS = GROUP_COLORS;
 
 // Separate component for Gap to keep logic clean and handle hooks
 const GapRow = ({
