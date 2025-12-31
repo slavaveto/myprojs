@@ -41,7 +41,7 @@ interface UseLocalizDnDProps {
     setSelectedTab: (id: string) => void;
     onUpdateItems: (items: UIElement[]) => void;
     onSaveSortOrders: (updates: { item_id: string; sort_order: number }[]) => Promise<void>;
-    onMoveToTab: (item: UIElement, tabId: string) => Promise<void>;
+    onMoveToTab: (item: UIElement, tabId: string, cb?: (id: string) => void, sortOrder?: number) => Promise<void>;
     executeSave: (fn: () => Promise<void>) => Promise<void>;
 }
 
@@ -300,10 +300,20 @@ export const useLocalizDnD = ({
               try {
                   await executeSave(async () => {
                      if (tabChanged && activeItem.item_id) {
-                         await onMoveToTab(activeItem, endTabId);
+                         const activeUpdate = updates.find(u => u.item_id === activeItem.item_id);
+                         const newSortOrder = activeUpdate ? Math.round(activeUpdate.sort_order!) : undefined;
+                         
+                         await onMoveToTab(activeItem, endTabId, undefined, newSortOrder);
                      }
-                     if (dbUpdates.length > 0) {
-                         await onSaveSortOrders(dbUpdates);
+                     
+                     // 2. Update sort orders
+                     const cleanUpdates = dbUpdates.map(u => ({
+                         item_id: u.item_id,
+                         sort_order: Math.round(u.sort_order!) 
+                     }));
+    
+                     if (cleanUpdates.length > 0) {
+                         await onSaveSortOrders(cleanUpdates);
                      }
                   });
               } catch (err) {

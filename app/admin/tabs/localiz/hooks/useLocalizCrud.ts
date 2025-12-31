@@ -298,15 +298,17 @@ export const useLocalizCrud = ({ canLoad, onReady, showToast = true, texts }: Us
         setItems(newItems);
     }, []);
     
-    const moveItemToTab = async (item: UIElement, newTabId: string, highlightCallback?: (id: string) => void) => {
-        if (item.tab_id === newTabId) return;
+    const moveItemToTab = async (item: UIElement, newTabId: string, highlightCallback?: (id: string) => void, customSortOrder?: number) => {
+        if (item.tab_id === newTabId && customSortOrder === undefined) return;
 
         const currentTabItems = items.filter((i) =>
             newTabId === 'misc' ? !i.tab_id || i.tab_id === 'misc' : i.tab_id === newTabId
         );
 
         let newSortOrder = 0;
-        if (currentTabItems.length > 0) {
+        if (customSortOrder !== undefined) {
+            newSortOrder = customSortOrder;
+        } else if (currentTabItems.length > 0) {
             const minOrder = Math.min(...currentTabItems.map((i) => i.sort_order || 0));
             newSortOrder = minOrder - 1;
         }
