@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -8,12 +8,98 @@ import Highlight from '@tiptap/extension-highlight';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
 import { clsx } from 'clsx';
-import { Bold, Italic, Trash2, Highlighter, Baseline } from 'lucide-react';
+import { Bold, Italic, Trash2, Highlighter, Baseline, ChevronDown, Check } from 'lucide-react';
 import { createLogger } from '@/utils/logger/Logger';
 
 const logger = createLogger('AdminRichEditor');
 
-// Встроенный CustomBubbleMenu, так как стандартный из @tiptap/react иногда капризничает с типами
+const COLORS = [
+   { label: 'Default', value: null, class: 'bg-default-200' }, // Сброс
+   { label: 'Red', value: '#ef4444', class: 'bg-[#ef4444]' },
+   { label: 'Orange', value: '#f97316', class: 'bg-[#f97316]' },
+   { label: 'Yellow', value: '#eab308', class: 'bg-[#eab308]' },
+   { label: 'Green', value: '#22c55e', class: 'bg-[#22c55e]' },
+   { label: 'Blue', value: '#3b82f6', class: 'bg-[#3b82f6]' },
+   { label: 'Purple', value: '#a855f7', class: 'bg-[#a855f7]' },
+];
+
+const ColorPicker = ({ 
+   icon: Icon, 
+   activeColor, 
+   onChange, 
+   title 
+}: { 
+   icon: any, 
+   activeColor: string | null, 
+   onChange: (color: string | null) => void,
+   title: string
+}) => {
+   const [isOpen, setIsOpen] = useState(false);
+   const wrapperRef = useRef<HTMLDivElement>(null);
+
+   // Закрытие при клике вне
+   useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+         if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+            setIsOpen(false);
+         }
+      };
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+   }, []);
+
+   return (
+      <div className="relative" ref={wrapperRef}>
+         <button
+            onClick={() => setIsOpen(!isOpen)}
+            className={clsx(
+               "flex items-center gap-0.5 p-1.5 rounded-md transition-colors",
+               activeColor ? 'bg-default-100' : 'hover:bg-default-100'
+            )}
+            title={title}
+            type="button"
+         >
+            <Icon 
+               size={16} 
+               style={{ color: activeColor || 'currentColor' }} 
+               className={!activeColor ? "text-default-500" : ""}
+            />
+            <ChevronDown size={10} className="text-default-400" />
+         </button>
+
+         {isOpen && (
+            <div className="absolute top-full mt-1 left-0 p-2 bg-content1 rounded-lg shadow-lg border border-default-200 grid grid-cols-4 gap-1 z-50 w-[140px]">
+               {COLORS.map((color) => (
+                  <button
+                     key={color.label}
+                     onClick={() => {
+                        onChange(color.value);
+                        setIsOpen(false);
+                     }}
+                     className={clsx(
+                        "w-6 h-6 rounded-full flex items-center justify-center transition-transform hover:scale-110",
+                        color.class,
+                        // Для дефолтного цвета (сброс) добавим иконку крестика или просто серый круг
+                        color.value === null && "border border-default-300 relative"
+                     )}
+                     title={color.label}
+                     type="button"
+                  >
+                     {activeColor === color.value && (
+                        <Check size={12} className="text-white drop-shadow-md" strokeWidth={3} />
+                     )}
+                     {color.value === null && !activeColor && (
+                        <div className="w-full h-[1px] bg-default-400 absolute rotate-45" />
+                     )}
+                  </button>
+               ))}
+            </div>
+         )}
+      </div>
+   );
+};
+
+// Встроенный CustomBubbleMenu
 const AdminBubbleMenu = ({ editor }: { editor: any }) => {
    const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
 
@@ -26,31 +112,59 @@ const AdminBubbleMenu = ({ editor }: { editor: any }) => {
             return;
          }
 
-         // Get coordinates
          const { view } = editor;
-         // Защита от ошибок, если view еще не готов
          if (!view || !view.coordsAtPos) return;
 
          const start = view.coordsAtPos(from);
          const end = view.coordsAtPos(to);
          
-         // Calculate center
          const left = (start.left + end.right) / 2;
-         const top = start.top - 50; // Чуть выше из-за увеличения меню
+         const top = start.top - 50;
 
          setPosition({ top, left });
       };
 
       editor.on('selectionUpdate', updatePosition);
-      editor.on('blur', () => setPosition(null));
+      editor.on('blur', () => {
+         // Не скрываем сразу, если кликнули внутрь меню (например, в колорпикер)
+         // Но так как меню в портале или fixed, блюр редактора сработает.
+         // Оставим пока так, если будет закрываться при выборе цвета - поправим.
+         // UPD: Blur срабатывает при потере фокуса редактором. Клик в кнопку меню - это потеря фокуса.
+         // Чтобы меню не исчезало, нужно preventDefault на кнопках (уже есть onMouseDown).
+         // Но для попапа внутри меню...
+         // Сделаем простую задержку или проверку фокуса? 
+         // Самый простой способ: BubbleMenu титпапа сам хендлит это. 
+         // Но мы пишем свое. 
+         // Пока оставим setPosition(null), но кнопки должны иметь onMouseDown={(e) => e.preventDefault()}
+         // ColorPicker - это отдельный компонент, там кнопки тоже должны превентить.
+      });
 
       return () => {
          editor.off('selectionUpdate', updatePosition);
-         editor.off('blur', () => setPosition(null));
+         editor.off('blur', () => {}); // cleanup
       };
    }, [editor]);
 
+   // Чтобы меню не мигало/исчезало при клике, нужно аккуратно с блюром.
+   // В текущей реализации blur скрывает меню. Это проблема для ColorPicker.
+   // Решение: не скрывать меню по blur, если фокус ушел ВНУТРЬ меню.
+   // Но так как это fixed div, фокус может уйти в никуда.
+   // Просто уберем скрытие по blur для нашего кастомного меню, оно и так зависит от selection.
+   // Если selection empty -> menu hidden. Если кликнули мимо -> selection empty (обычно).
+   // НО selection остается, если кликнуть в UI.
+   // Tiptap обычно скрывает меню если фокус ушел из редактора.
+   
    if (!position) return null;
+
+   const getCurrentColor = (type: 'textStyle' | 'highlight') => {
+       // Ищем активный цвет среди наших констант
+       for (const color of COLORS) {
+           if (color.value && editor.isActive(type, { color: color.value })) {
+               return color.value;
+           }
+       }
+       return null;
+   };
 
    return (
       <div 
@@ -60,7 +174,10 @@ const AdminBubbleMenu = ({ editor }: { editor: any }) => {
              left: position.left, 
              transform: 'translateX(-50%)' 
          }}
-         onMouseDown={(e) => e.preventDefault()} // Prevent focus loss
+         onMouseDown={(e) => {
+            // Важно! Предотвращаем потерю фокуса редактором при клике на само меню
+            e.preventDefault(); 
+         }} 
       >
          <button
             onClick={() => editor.chain().focus().toggleBold().run()}
@@ -88,77 +205,27 @@ const AdminBubbleMenu = ({ editor }: { editor: any }) => {
 
          <div className="w-px h-4 bg-default-200 mx-1" />
 
-         {/* Highlights */}
-         <button
-            onClick={() => editor.chain().focus().toggleHighlight({ color: '#facc15' }).run()}
-            className={clsx(
-               "p-1.5 rounded-md transition-colors",
-               editor.isActive('highlight', { color: '#facc15' }) 
-                  ? 'bg-[#facc15]/20 text-[#facc15]' // Оставляем цвет, добавляем фон
-                  : 'text-[#facc15] hover:bg-default-100'
-            )}
-            title="Yellow Highlight"
-            type="button"
-         >
-           <Highlighter size={16} />
-         </button>
-         
-         <button
-            onClick={() => editor.chain().focus().toggleHighlight({ color: '#f87171' }).run()}
-            className={clsx(
-               "p-1.5 rounded-md transition-colors",
-               editor.isActive('highlight', { color: '#f87171' }) 
-                  ? 'bg-[#f87171]/20 text-[#f87171]' // Оставляем цвет, добавляем фон
-                  : 'text-[#f87171] hover:bg-default-100'
-            )}
-            title="Red Highlight"
-            type="button"
-         >
-            <Highlighter size={16} />
-         </button>
-
-         <div className="w-px h-4 bg-default-200 mx-1" />
-
-         {/* Text Colors */}
-         <button
-            onClick={() => {
-               if (editor.isActive('textStyle', { color: '#3b82f6' })) {
-                  editor.chain().focus().unsetColor().run();
-               } else {
-                  editor.chain().focus().setColor('#3b82f6').run();
-               }
+         {/* Highlight Picker */}
+         <ColorPicker 
+            icon={Highlighter}
+            title="Highlight Color"
+            activeColor={getCurrentColor('highlight')}
+            onChange={(color) => {
+               if (color) editor.chain().focus().toggleHighlight({ color }).run();
+               else editor.chain().focus().unsetHighlight().run();
             }}
-            className={clsx(
-               "p-1.5 rounded-md transition-colors",
-               editor.isActive('textStyle', { color: '#3b82f6' }) 
-                  ? 'bg-primary/10 text-[#3b82f6]' 
-                  : 'text-[#3b82f6] hover:bg-default-100'
-            )}
-            title="Blue Text"
-            type="button"
-         >
-            <Baseline size={16} />
-         </button>
+         />
 
-         <button
-            onClick={() => {
-               if (editor.isActive('textStyle', { color: '#ef4444' })) {
-                  editor.chain().focus().unsetColor().run();
-               } else {
-                  editor.chain().focus().setColor('#ef4444').run();
-               }
+         {/* Text Color Picker */}
+         <ColorPicker 
+            icon={Baseline}
+            title="Text Color"
+            activeColor={getCurrentColor('textStyle')}
+            onChange={(color) => {
+               if (color) editor.chain().focus().setColor(color).run();
+               else editor.chain().focus().unsetColor().run();
             }}
-            className={clsx(
-               "p-1.5 rounded-md transition-colors",
-               editor.isActive('textStyle', { color: '#ef4444' }) 
-                  ? 'bg-danger/10 text-[#ef4444]' 
-                  : 'text-[#ef4444] hover:bg-default-100'
-            )}
-            title="Red Text"
-            type="button"
-         >
-            <Baseline size={16} />
-         </button>
+         />
 
          <div className="w-px h-4 bg-default-200 mx-1" />
 
