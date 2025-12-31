@@ -75,6 +75,10 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlight
     const pinnedTasks = React.useMemo(() => tasks.filter(t => t.is_pinned), [tasks]);
     const unpinnedTasks = React.useMemo(() => tasks.filter(t => !t.is_pinned), [tasks]);
 
+    const allAreGaps = React.useMemo(() => {
+        return unpinnedTasks.length > 0 && unpinnedTasks.every(t => t.task_type === 'gap');
+    }, [unpinnedTasks]);
+
     const tasksWithGroupInfo = React.useMemo(() => {
         let currentGroupColor: string | null = null;
         // First pass: Calculate group counts
@@ -104,11 +108,11 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlight
             }
             if (task.task_type === 'gap') {
                 currentGroupColor = null;
-                return { task, activeGroupColor: null };
+                return { task, activeGroupColor: null, isLastStandingGap: allAreGaps };
             }
             return { task, activeGroupColor: currentGroupColor };
         });
-    }, [unpinnedTasks]);
+    }, [unpinnedTasks, allAreGaps]);
 
     // Find group color for active task
     const activeTaskInfo = tasksWithGroupInfo.find(t => t.task.id === menuState.taskId);
@@ -140,7 +144,7 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlight
              >
                <div className="flex flex-col gap-[3px] min-h-[50px] outline-none">
                   <AnimatePresence initial={false}>
-                      {tasksWithGroupInfo.map(({ task, activeGroupColor, groupCount }, index) => (
+                      {tasksWithGroupInfo.map(({ task, activeGroupColor, groupCount, isLastStandingGap }, index) => (
                          <TaskRow
                             key={task._tempId || task.id}
                             task={task}
@@ -156,6 +160,7 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlight
                             onOpenMenu={handleOpenMenu}
                             isMenuOpen={menuState.isOpen && menuState.taskId === task.id}
                             groupCount={groupCount}
+                            isLastStandingGap={isLastStandingGap}
                          />
                       ))}
                   </AnimatePresence>

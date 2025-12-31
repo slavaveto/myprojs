@@ -32,6 +32,7 @@ interface TaskRowProps {
    onOpenMenu?: (taskId: string, e: React.MouseEvent | React.TouchEvent) => void;
    isMenuOpen?: boolean; // New prop
    groupCount?: number;
+   isLastStandingGap?: boolean;
 }
 
 // Group Colors Palette (Restored for More menu)
@@ -60,6 +61,7 @@ const GapRow = ({
    onDelete,
    onOpenMenu, // Receive onOpenMenu
    isMenuOpen, // Receive isMenuOpen
+   isLastStandingGap // New prop
 }: any) => {
    const { active } = useDndContext();
    const isAnyDragging = !!active;
@@ -67,8 +69,8 @@ const GapRow = ({
 
    const gapClassName = clsx(
       'group relative flex items-center justify-center h-[12px] w-full rounded  outline-none transition-colors ',
-      // Show background if hovered (icon area), dragging this gap, dragging ANY item, OR MENU OPEN
-      isIconHovered || isDragging || isAnyDragging || isMenuOpen ? 'bg-default-100' : 'bg-transparent',
+      // Show background if hovered (icon area), dragging this gap, dragging ANY item, OR MENU OPEN OR LAST STANDING GAP
+      isIconHovered || isDragging || isAnyDragging || isMenuOpen || isLastStandingGap ? 'bg-default-100' : 'bg-transparent',
       // Cursor logic:
       isDragging ? 'cursor-grabbing' : 'cursor-default'
    );
@@ -150,6 +152,7 @@ export const TaskRow = React.memo(
       onOpenMenu,
       isMenuOpen,
       groupCount,
+      isLastStandingGap,
    }: TaskRowProps) => {
       const [isHovered, setIsHovered] = React.useState(false);
       const [optimisticCompleted, setOptimisticCompleted] = React.useState(task.is_completed);
@@ -200,6 +203,7 @@ export const TaskRow = React.memo(
                onDelete={onDelete}
                onOpenMenu={onOpenMenu} // Pass it down
                isMenuOpen={isMenuOpen} // Pass it down
+               isLastStandingGap={isLastStandingGap} // Pass it down
             />
          );
       }
