@@ -287,28 +287,23 @@ export const useProjectDnD = ({
         // The state (tasks) is already updated in handleDragOver.
         // We just need to persist the new folder_id and sort_orders for the current folder.
         
-        const activeTask = tasks.find(t => t.id === activeIdString);
-        if (!activeTask) return;
+        const activeTaskForSave = tasks.find(t => t.id === activeIdString);
+        if (!activeTaskForSave) return;
 
         // Optimization: Check if anything actually changed
         // We compare current state of activeTask with initial state
         // Note: activeTask is already updated in state via handleDragOver
         if (initialDragStateRef.current) {
             const { folderId: oldFolderId, index: oldIndex } = initialDragStateRef.current;
-            const currentFolderTasks = tasks
+            // Use fresh filtered list for check
+            const currentFolderTasksForCheck = tasks
                 .filter(t => t.folder_id === selectedFolderId)
                 .sort((a, b) => a.sort_order - b.sort_order);
             
             // Find current index in the filtered list to be sure about visual order
-            const currentIndex = currentFolderTasks.findIndex(t => t.id === activeIdString);
+            const currentIndex = currentFolderTasksForCheck.findIndex(t => t.id === activeIdString);
             
-            // If folder didn't change AND index is effectively the same (comparing sort_order might be tricky if we reindexed, 
-            // but checking index in sorted array is safer). 
-            // Actually, we reindex on DragOver, so sort_order matches index.
-            
-            // Wait, oldIndex comes from sort_order. If sort_order was 5, and we moved it to 5, it's same.
-            
-            if (activeTask.folder_id === oldFolderId && activeTask.sort_order === oldIndex) {
+            if (activeTaskForSave.folder_id === oldFolderId && activeTaskForSave.sort_order === oldIndex) {
                 logger.info('Drag ended with no changes, skipping save');
                 initialDragStateRef.current = null;
                 return;
@@ -382,6 +377,49 @@ export const useProjectDnD = ({
         
         // Now 'finalFlatList' is the correct sequence.
         
+        // --- AUTO-GAP LOGIC FOR CLOSED GROUPS ---
+        // If we dragged a CLOSED group, and it landed on top of other tasks,
+        // we must insert a GAP to prevent those tasks from merging into the closed group.
+        
+        let gapToInsert: Task | null = null;
+        const activeTaskForGap = tasks.find(t => t.id === activeIdString);
+        
+        if (activeTaskForGap && activeTaskForGap.task_type === 'group' && activeTaskForGap.is_closed) {
+            // Find where the group block ends in finalFlatList
+            const groupIndex = finalFlatList.findIndex(t => t.id === activeIdString);
+            if (groupIndex !== -1) {
+                // Determine how many children this group has
+                const children = hiddenChildrenMap.get(activeIdString) || [];
+                const lastMemberIndex = groupIndex + children.length;
+                
+                // Check what comes after the group block
+                if (lastMemberIndex < finalFlatList.length - 1) {
+                    const nextTask = finalFlatList[lastMemberIndex + 1];
+                    // If next task is a regular task/note, we need a separator
+                    if (nextTask && (nextTask.task_type === 'task' || nextTask.task_type === 'note')) {
+                        // Create a temporary GAP
+                        const gapId = crypto.randomUUID();
+                        gapToInsert = {
+                            id: gapId,
+                            folder_id: selectedFolderId,
+                            content: '',
+                            sort_order: 0, // Will be recalculated
+                            is_completed: false,
+                            task_type: 'gap',
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString(),
+                            isNew: true,
+                            // isDraft: false // Not in standard type but implied
+                        } as Task;
+                        
+                        // Insert gap into the list
+                        finalFlatList.splice(lastMemberIndex + 1, 0, gapToInsert);
+                        logger.info('Auto-inserting gap after closed group drag');
+                    }
+                }
+            }
+        }
+
         // Step 4: Recalculate Group IDs and Sort Orders for everyone
         const sortedTasks = finalFlatList; // Use this reconstructed list
         
@@ -429,27 +467,56 @@ export const useProjectDnD = ({
         const activeTaskUpdate = tasksToUpdate.find(u => u.id === activeIdString);
         
         // Update local state FULLY to match calculations
-        setTasks(prev => prev.map(t => {
-            const update = tasksToUpdate.find(u => u.id === t.id);
-            if (update) {
-                return { ...t, sort_order: update.sort_order, group_id: update.group_id };
+        setTasks(prev => {
+            // Update existing tasks
+            const updated = prev.map(t => {
+                const update = tasksToUpdate.find(u => u.id === t.id);
+                if (update) {
+                    return { ...t, sort_order: update.sort_order, group_id: update.group_id };
+                }
+                return t;
+            });
+            
+            // Append new GAP if created
+            if (gapToInsert) {
+                // Find gap update to get final props
+                const gapUpdate = tasksToUpdate.find(u => u.id === gapToInsert!.id);
+                if (gapUpdate) {
+                    // Update gap object with final calculated values
+                    gapToInsert.sort_order = gapUpdate.sort_order;
+                    gapToInsert.group_id = gapUpdate.group_id;
+                    // Add to state
+                    updated.push(gapToInsert);
+                }
             }
-            return t;
-        }));
+            
+            return updated;
+        });
 
         try {
             await executeSave(async () => {
                 // Execute updates in parallel
-                const promises: Promise<any>[] = [
-                    // 1. Update order for ALL tasks in the folder AND their group_id
-                    taskService.updateTaskOrder(updatesForOrder)
-                ];
+                const promises: Promise<any>[] = [];
+
+                // 0. Create Auto-Gap if needed
+                if (gapToInsert) {
+                    const gapUpdate = tasksToUpdate.find(u => u.id === gapToInsert!.id);
+                    if (gapUpdate) {
+                        promises.push(
+                            taskService.createTask(selectedFolderId, '', gapUpdate.sort_order)
+                                .then(created => taskService.updateTask(created.id, { task_type: 'gap' }))
+                        );
+                    }
+                }
+
+                // 1. Update order for ALL tasks in the folder AND their group_id
+                const updatesForExisting = updatesForOrder.filter(u => !gapToInsert || u.id !== gapToInsert.id);
+                promises.push(taskService.updateTaskOrder(updatesForExisting));
 
                 // 2. If active task changed folder, we still need updateTask for folder_id
-                if (activeTaskUpdate && activeTask.folder_id !== selectedFolderId) {
+                if (activeTaskUpdate && activeTaskForSave.folder_id !== selectedFolderId) {
                      promises.push(taskService.updateTask(activeIdString, { 
                         folder_id: selectedFolderId,
-                        // group_id is handled by updateTaskOrder now
                     }));
                 }
                 
