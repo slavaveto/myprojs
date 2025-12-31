@@ -218,10 +218,10 @@ export const TaskRow = React.memo(
       const currentGroupColor = task.group_color || '#3b82f6';
       const groupBackgroundColor = isGroup ? `${currentGroupColor}20` : '';
 
-      // Dynamic border style for groups
+      // Dynamic border style for groups OR tasks inside groups
       const borderStyle: React.CSSProperties | undefined = isGroup 
           ? { borderLeft: `3px solid ${currentGroupColor}` } 
-          : undefined;
+          : (activeGroupColor ? { borderLeft: `3px solid ${activeGroupColor}` } : undefined);
 
       const className = clsx(
          'group px-1 flex justify-between min-h-[30px] items-center rounded border border-default-300 bg-content1 transition-colors outline-none ',
@@ -233,7 +233,7 @@ export const TaskRow = React.memo(
          
          // Border Logic (Task & Note & Group)
          'border-l-[3px]', // Always apply border for non-gap items (as Gap is handled above)
-         (!isGroup && !isNote && !isHighlighted) && 'border-l-default-300', // Regular Task border color (gray if not highlighted)
+         (!isGroup && !isNote && !isHighlighted && !activeGroupColor) && 'border-l-default-300', // Regular Task border color (gray if not highlighted AND not in group)
          isHighlighted && '!border-l-orange-300', // Highlighted task border color
          
          isNote && 'bg-default-50/50 text-default-600 py-2 border-l-default-400' // Note specific
