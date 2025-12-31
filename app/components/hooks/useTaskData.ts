@@ -75,6 +75,15 @@ export const useTaskData = (
        }
        // Note: If inserting at 0, targetGroupId remains null (correct)
 
+       // Check if we are inserting into a CLOSED group. If so, auto-expand it.
+       let groupToExpandId: string | null = null;
+       if (targetGroupId) {
+           const parentGroup = activeTasks.find(t => t.id === targetGroupId);
+           if (parentGroup && parentGroup.is_closed) {
+               groupToExpandId = parentGroup.id;
+           }
+       }
+
        const tempId = crypto.randomUUID();
        const newTask: Task = {
           id: tempId,
@@ -95,11 +104,28 @@ export const useTaskData = (
        setTasks(prev => {
            const otherTasks = prev.filter(t => t.folder_id !== selectedFolderId || t.is_completed);
            const newActiveTasks = [...activeTasks];
+
+           // Auto-expand group in local state
+           if (groupToExpandId) {
+               const gIndex = newActiveTasks.findIndex(t => t.id === groupToExpandId);
+               if (gIndex !== -1) {
+                   newActiveTasks[gIndex] = { ...newActiveTasks[gIndex], is_closed: false };
+               }
+           }
+
            newActiveTasks.splice(insertIndex, 0, newTask);
            
            const reindexed = newActiveTasks.map((t, idx) => ({ ...t, sort_order: idx }));
            return [...otherTasks, ...reindexed];
        });
+
+       // Persist group expansion immediately
+       if (groupToExpandId) {
+           // Fire and forget (or await if critical, but we don't want to block UI for draft creation)
+           taskService.updateTask(groupToExpandId, { is_closed: false }).catch(err => {
+               logger.error('Failed to persist auto-expand group', err);
+           });
+       }
     };
 
     const handleUpdateTask = async (id: string, updates: Partial<Task>) => {
