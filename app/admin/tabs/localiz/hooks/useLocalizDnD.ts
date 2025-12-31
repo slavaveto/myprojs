@@ -146,8 +146,8 @@ export const useLocalizDnD = ({
              }
         }
 
-        // 2. Use pointerWithin for list items (Restore original behavior)
-        return pointerWithin(args);
+        // 2. Use closestCenter for list items
+        return closestCenter(args);
     };
 
     const handleDragStart = (event: DragStartEvent) => {
@@ -299,17 +299,20 @@ export const useLocalizDnD = ({
               
               try {
                   await executeSave(async () => {
+                     // 1. If we moved to another tab, update tab_id and use the NEW sort order
+                     // We find the new sort order for the active item from the 'updates' array
                      if (tabChanged && activeItem.item_id) {
                          const activeUpdate = updates.find(u => u.item_id === activeItem.item_id);
                          const newSortOrder = activeUpdate ? Math.round(activeUpdate.sort_order!) : undefined;
                          
+                         // Pass undefined as callback, and explicit sort order
                          await onMoveToTab(activeItem, endTabId, undefined, newSortOrder);
                      }
                      
-                     // 2. Update sort orders
-                     const cleanUpdates = dbUpdates.map(u => ({
+                     // 2. Update sort orders for everyone (including active item, to be safe/consistent)
+                     const cleanUpdates = updates.map(u => ({
                          item_id: u.item_id,
-                         sort_order: Math.round(u.sort_order!) 
+                         sort_order: Math.round(u.sort_order!) // Ensure integer
                      }));
     
                      if (cleanUpdates.length > 0) {
