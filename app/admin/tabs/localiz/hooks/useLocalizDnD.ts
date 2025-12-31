@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
    DragEndEvent,
    DragStartEvent,
@@ -19,11 +19,9 @@ import {
 } from '@dnd-kit/sortable';
 import { UIElement, LocalizTab } from '@/utils/providers/localization/types';
 import { createLogger } from '@/utils/logger/Logger';
-import { globalStorage } from '@/utils/storage';
 
 const logger = createLogger('UseLocalizDnD');
 
-// Moved from constants.ts
 const dropAnimationConfig: DropAnimation = {
     sideEffects: defaultDropAnimationSideEffects({
        styles: {
@@ -55,7 +53,25 @@ export const useLocalizDnD = ({
     onMoveToTab, 
     executeSave 
 }: UseLocalizDnDProps) => {
-    // --- Local UI State for DnD (Visuals only) ---
+    // --- Refs for fresh state access in DnD callbacks ---
+    const itemsRef = useRef(items);
+    const selectedTabRef = useRef(selectedTab);
+    const onUpdateItemsRef = useRef(onUpdateItems);
+    const onMoveToTabRef = useRef(onMoveToTab);
+    const onSaveSortOrdersRef = useRef(onSaveSortOrders);
+    const executeSaveRef = useRef(executeSave);
+
+    // Keep refs updated
+    useEffect(() => {
+        itemsRef.current = items;
+        selectedTabRef.current = selectedTab;
+        onUpdateItemsRef.current = onUpdateItems;
+        onMoveToTabRef.current = onMoveToTab;
+        onSaveSortOrdersRef.current = onSaveSortOrders;
+        executeSaveRef.current = executeSave;
+    }); // Update on every render
+
+    // --- Local UI State ---
     const [activeId, setActiveId] = useState<string | null>(null);
     const [dropAnimation, setDropAnimation] = useState<DropAnimation | null>(dropAnimationConfig);
     
@@ -67,7 +83,7 @@ export const useLocalizDnD = ({
     const hoveredTabIdRef = useRef<string | null>(null);
     const isDraggingRef = useRef(false);
     
-    // Store initial state of the dragged item to prevent unnecessary saves
+    // Store initial state
     const initialDragStateRef = useRef<{ tabId: string; index: number } | null>(null);
 
     const sensors = useSensors(
@@ -91,7 +107,7 @@ export const useLocalizDnD = ({
         if (tabCollision) {
             const tabIdFull = tabCollision.id.toString();
             
-            // Handle tab switch timer logic
+            // Handle tab switch timer
             if (hoveredTabIdRef.current !== tabIdFull) {
                 hoveredTabIdRef.current = tabIdFull;
                 
@@ -107,16 +123,17 @@ export const useLocalizDnD = ({
                 }
 
                 const targetId = tabIdFull.replace('tab-', '');
-                if (targetId !== selectedTab) {
+                if (targetId !== selectedTabRef.current) {
                     hoverTimeoutRef.current = setTimeout(() => {
                         setSelectedTab(targetId);
                         
-                        // Move active item to the new tab immediately (to the top)
+                        // Optimistic update via ref
                         if (isDraggingRef.current) {
-                             onUpdateItems(items.map(item => {
+                             const currentItems = itemsRef.current;
+                             onUpdateItemsRef.current(currentItems.map(item => {
                                 const itemId = item._tempId || item.item_id;
-                                if (itemId === activeId) {
-                                     const targetItems = items.filter(t => t.tab_id === targetId);
+                                if (itemId === args.active.id) {
+                                     const targetItems = currentItems.filter(t => t.tab_id === targetId);
                                      const minOrder = targetItems.length > 0 
                                          ? Math.min(...targetItems.map(t => t.sort_order || 0)) 
                                          : 0;
@@ -146,7 +163,7 @@ export const useLocalizDnD = ({
              }
         }
 
-        // 2. Use closestCenter for list items
+        // 2. Use closestCenter for list items (Magnetic feel)
         return closestCenter(args);
     };
 
@@ -156,7 +173,7 @@ export const useLocalizDnD = ({
         isDraggingRef.current = true;
 
         const itemId = event.active.id as string;
-        const item = items.find(i => (i._tempId || i.item_id) === itemId);
+        const item = itemsRef.current.find(i => (i._tempId || i.item_id) === itemId);
         if (item) {
             initialDragStateRef.current = {
                 tabId: item.tab_id || 'misc',
@@ -178,32 +195,14 @@ export const useLocalizDnD = ({
 
         if (!overId || active.id === overId) return;
 
-        const activeIdString = active.id as string;
-        const overIdString = overId as string;
-
-        if (activeIdString.startsWith('tab-') || overIdString.startsWith('tab-')) return;
-
-        const activeItem = items.find(t => (t._tempId || t.item_id) === activeIdString);
-        if (!activeItem) return;
-
-        // Only handle Cross-tab movement here (if needed instantly)
-        // But since we use timer for tab switch, we might not need this unless dragging over a LIST ITEM in another tab directly?
-        // But if tab switched, we are in that tab.
-        
-        // If we are in the SAME tab, we SKIP reordering here to restore original behavior 
-        // (let SortableContext handle visual, handleDragEnd handle logic)
-        // UNLESS the user really wants "project-like" live reordering.
-        // But since it's broken, let's revert to DragEnd sorting.
-        
-        // Check if we need to switch item's tab if we dragged it over a list item in another tab (rare case if tab didn't switch?)
-        // The timer handles the switch.
-        
-        // So for now: EMPTY DragOver for same-list sorting.
+        // Note: We removed manual sort logic here to rely on dnd-kit visual sorting (SortableContext)
+        // and avoid "jumping" issues.
     };
 
     const handleDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
         
+        // Reset states
         setActiveId(null);
         setIsOverTab(false); 
         setHoveredTabId(null);
@@ -222,27 +221,30 @@ export const useLocalizDnD = ({
         const activeIdString = active.id as string;
         if (activeIdString.startsWith('tab-')) return;
 
-        const activeItem = items.find(t => (t._tempId || t.item_id) === activeIdString);
+        // USE REFS for fresh data
+        const currentItems = itemsRef.current;
+        const activeItem = currentItems.find(t => (t._tempId || t.item_id) === activeIdString);
         if (!activeItem) return;
 
-        // 1. Drop on Tab
+        // 1. Drop on Tab (Directly)
         if (over && over.id.toString().startsWith('tab-')) {
            const targetTabId = over.id.toString().replace('tab-', '');
            if (activeItem.tab_id !== targetTabId) {
-              await onMoveToTab(activeItem, targetTabId);
+              await onMoveToTabRef.current(activeItem, targetTabId);
            }
            return;
         }
 
         // 2. Sorting / Reordering
-        // Capture logic from original handleDragEnd
         if (over && active.id !== over.id) {
-             const currentTabItems = items
+             const selectedTabVal = selectedTabRef.current;
+             
+             const currentTabItems = currentItems
               .filter((item) => {
-                 if (selectedTab === 'misc') {
+                 if (selectedTabVal === 'misc') {
                     return !item.tab_id || item.tab_id === 'misc' || !tabs.find(t => t.id === item.tab_id);
                  }
-                 return item.tab_id === selectedTab;
+                 return item.tab_id === selectedTabVal;
               })
               .sort((a, b) => {
                  if (a.isNew && !b.isNew) return -1;
@@ -254,69 +256,57 @@ export const useLocalizDnD = ({
            const newIndex = currentTabItems.findIndex((i) => (i._tempId || i.item_id) === over.id);
   
            if (oldIndex !== -1 && newIndex !== -1) {
-              // Calculate new order locally
+              // Calculate new order
               const newFiltered = arrayMove(currentTabItems, oldIndex, newIndex);
               
-              // Map to full items list
               const updates = newFiltered.map((item, index) => ({
                  ...item,
                  sort_order: index + 1,
               }));
               
               const updatedKeys = new Set(updates.map((u) => u._tempId || u.item_id));
-              const otherItems = items.filter(
+              const otherItems = currentItems.filter(
                  (item) => !updatedKeys.has(item._tempId || item.item_id)
               );
               
               // Optimistic update
               const finalItems = [...otherItems, ...updates];
-              onUpdateItems(finalItems);
+              onUpdateItemsRef.current(finalItems);
               
-              // Save to DB
-              const dbUpdates = updates
-                 .filter((u) => !u.isNew)
-                 .map((u) => ({ item_id: u.item_id, sort_order: u.sort_order! }));
-              
-              // Also check if we need to save tab change (if we switched tab via timer)
-              // If activeItem.tab_id !== initialDragStateRef (if we had it), we would save.
-              // But here updates contains the items with NEW tab_id (if they were updated in state).
-              // Wait, handleDragOver is empty now, so activeItem.tab_id is NOT updated in state yet?
-              // YES IT IS. The timer updates it!
-              
-              // So activeItem in 'items' has the new tab_id.
-              // We just need to ensure that change is persisted.
-              // onSaveSortOrders only saves order.
-              
-              // We need to call onMoveToTab if tab changed.
+              // Determine changes
               const startState = initialDragStateRef.current;
               initialDragStateRef.current = null;
               
               const startTabId = startState?.tabId;
-              const endTabId = activeItem.tab_id || 'misc'; // This comes from items, which was updated by timer
+              const endTabId = activeItem.tab_id || 'misc'; 
               
               const tabChanged = (startTabId !== endTabId) && 
                                     !((startTabId === 'misc' || !startTabId) && endTabId === 'misc');
               
+              const dbUpdates = updates
+                 .filter((u) => !u.isNew)
+                 .map((u) => ({ item_id: u.item_id, sort_order: u.sort_order! }));
+
               try {
-                  await executeSave(async () => {
-                     // 1. If we moved to another tab, update tab_id and use the NEW sort order
-                     // We find the new sort order for the active item from the 'updates' array
+                  await executeSaveRef.current(async () => {
+                     // 1. If tab changed, update it (and its pos)
                      if (tabChanged && activeItem.item_id) {
                          const activeUpdate = updates.find(u => u.item_id === activeItem.item_id);
                          const newSortOrder = activeUpdate ? Math.round(activeUpdate.sort_order!) : undefined;
                          
-                         // Pass undefined as callback, and explicit sort order
-                         await onMoveToTab(activeItem, endTabId, undefined, newSortOrder);
+                         await onMoveToTabRef.current(activeItem, endTabId, undefined, newSortOrder);
                      }
                      
-                     // 2. Update sort orders for everyone (including active item, to be safe/consistent)
-                     const cleanUpdates = updates.map(u => ({
-                         item_id: u.item_id,
-                         sort_order: Math.round(u.sort_order!) // Ensure integer
-                     }));
+                     // 2. Update everyone's sort order (excluding active if we just moved it to avoid race, or just all)
+                     // This ensures everyone ends up in the right spot visually and physically
+                     const cleanUpdates = dbUpdates
+                        .map(u => ({
+                             item_id: u.item_id,
+                             sort_order: Math.round(u.sort_order!) // Ensure integer
+                         }));
     
                      if (cleanUpdates.length > 0) {
-                         await onSaveSortOrders(cleanUpdates);
+                         await onSaveSortOrdersRef.current(cleanUpdates);
                      }
                   });
               } catch (err) {

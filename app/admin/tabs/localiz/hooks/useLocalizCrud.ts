@@ -299,7 +299,9 @@ export const useLocalizCrud = ({ canLoad, onReady, showToast = true, texts }: Us
     }, []);
     
     const moveItemToTab = async (item: UIElement, newTabId: string, highlightCallback?: (id: string) => void, customSortOrder?: number) => {
-        if (item.tab_id === newTabId && customSortOrder === undefined) return;
+        // if (item.tab_id === newTabId && customSortOrder === undefined) return;
+        // Commented out check because DnD might have already updated the item optimistically in 'items',
+        // but we still need to persist the change to DB.
 
         const currentTabItems = items.filter((i) =>
             newTabId === 'misc' ? !i.tab_id || i.tab_id === 'misc' : i.tab_id === newTabId
