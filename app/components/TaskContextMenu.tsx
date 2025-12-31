@@ -91,16 +91,29 @@ export const TaskMenuItems = ({
          'delete'
       ];
 
-      if (isGroup) return [
-         'revertToTask', 
-         'styles', 
-         'separator', 
-         'groupColor', 
-         'separator', 
-         'insertBelow', 
-         'separator', 
-         'delete'
-      ]; 
+      if (isGroup) {
+         if (task.is_closed) {
+            return [
+               'revertToTask', 
+               'styles', 
+               'separator', 
+               'groupColor', 
+            
+               'separator', 
+               'delete'
+            ];
+         }
+         return [
+            'revertToTask', 
+            'styles', 
+            'separator', 
+            'groupColor', 
+            'separator', 
+            'insertBelow', 
+            'separator', 
+            'delete'
+         ];
+      } 
 
       if (isNote) return [
          'revertToTask', 
