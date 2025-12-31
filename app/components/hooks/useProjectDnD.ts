@@ -68,10 +68,18 @@ export const useProjectDnD = ({
     const customCollisionDetection: CollisionDetection = (args) => {
         const { active } = args;
         
-        // Prevent groups from being dragged into other folders (complex dependency)
-        const activeTask = tasks.find(t => t.id === active.id);
-        if (activeTask?.task_type === 'group') {
-             return closestCenter(args);
+        // Prevent groups from being dragged into other folders
+        // Ensure ID comparison is safe (String)
+        const activeTask = tasks.find(t => t.id === String(active.id));
+        if (activeTask && activeTask.task_type === 'group') {
+             // Filter out folder drop zones from collision candidates to strictly prevent interaction
+             const filteredArgs = {
+                 ...args,
+                 droppableContainers: args.droppableContainers.filter(
+                     c => !c.id.toString().startsWith('folder-')
+                 )
+             };
+             return closestCenter(filteredArgs);
         }
 
         const isDraggingFolder = active.id.toString().startsWith('folder-');
