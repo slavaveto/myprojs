@@ -6,7 +6,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { useDndContext } from '@dnd-kit/core';
 import { FastCheckbox } from './components/FastCheckbox';
 import { Checkbox, Chip } from '@heroui/react'; // Restore Checkbox import
-import { GripVertical, Trash2, MoreVertical, Check, Pin } from 'lucide-react';
+import { GripVertical, Trash2, MoreVertical, Check, Pin, ChevronRight, ChevronDown } from 'lucide-react';
 import { Task } from './types';
 import { EditableCell } from './components/EditableCell';
 import { RichEditableCell } from './components/RichEditableCell';
@@ -229,7 +229,7 @@ export const TaskRow = React.memo(
          isDragging && '!opacity-50',
          isOverlay && 'z-50 bg-default-100 !border-primary/50 !border-l-[3px] pointer-events-none cursor-grabbing',
          isHighlighted && '!border-orange-300',
-         activeGroupColor && 'ml-[15px] -rounded-l-[4px]',
+         activeGroupColor && 'ml-[22px] -rounded-l-[4px]',
          
          // Border Logic (Task & Note & Group)
          'border-l-[3px]', // Always apply border for non-gap items (as Gap is handled above)
@@ -283,6 +283,18 @@ export const TaskRow = React.memo(
                      size="sm"
                      //   className="scale-90"
                   />
+               )}
+
+               {isGroup && (
+                  <div 
+                     className="cursor-pointer text-default-400 hover:text-default-600 mr-1 flex items-center justify-center w-[16px]"
+                     onClick={(e) => {
+                        e.stopPropagation();
+                        onUpdate(task.id, { is_closed: !task.is_closed });
+                     }}
+                  >
+                     {task.is_closed ? <ChevronRight strokeWidth={3}   size={16} /> : <ChevronDown strokeWidth={3} size={16} />}
+                  </div>
                )}
 
                {/* Replaced EditableCell with RichEditableCell for standard tasks */}
