@@ -264,8 +264,22 @@ export const useLocalizDnD = ({
            return;
         }
 
-        // 2. Sorting / Reordering
-        if (over && active.id !== over.id) {
+        // 2. Sorting / Reordering OR Tab Change Persist
+        // If we moved to a new tab (via hover) but didn't drop on another item to trigger 'reorder',
+        // we still need to persist the tab change.
+        const isReorder = over && active.id !== over.id;
+        
+        // Determine changes
+        const startState = initialDragStateRef.current;
+        initialDragStateRef.current = null;
+        
+        const startTabId = startState?.tabId;
+        const endTabId = activeItem.tab_id || 'misc'; 
+        
+        const tabChanged = (startTabId !== endTabId) && 
+                              !((startTabId === 'misc' || !startTabId) && endTabId === 'misc');
+
+        if (isReorder) {
              const selectedTabVal = selectedTabRef.current;
              
              const currentTabItems = currentItems
@@ -302,16 +316,6 @@ export const useLocalizDnD = ({
               const finalItems = [...otherItems, ...updates];
               onUpdateItemsRef.current(finalItems);
               
-              // Determine changes
-              const startState = initialDragStateRef.current;
-              initialDragStateRef.current = null;
-              
-              const startTabId = startState?.tabId;
-              const endTabId = activeItem.tab_id || 'misc'; 
-              
-              const tabChanged = (startTabId !== endTabId) && 
-                                    !((startTabId === 'misc' || !startTabId) && endTabId === 'misc');
-              
               const dbUpdates = updates
                  .filter((u) => !u.isNew)
                  .map((u) => ({ item_id: u.item_id, sort_order: u.sort_order! }));
@@ -326,12 +330,11 @@ export const useLocalizDnD = ({
                          await onMoveToTabRef.current(activeItem, endTabId, undefined, newSortOrder);
                      }
                      
-                     // 2. Update everyone's sort order (excluding active if we just moved it to avoid race, or just all)
-                     // This ensures everyone ends up in the right spot visually and physically
+                     // 2. Update everyone's sort order
                      const cleanUpdates = dbUpdates
                         .map(u => ({
                              item_id: u.item_id,
-                             sort_order: Math.round(u.sort_order!) // Ensure integer
+                             sort_order: Math.round(u.sort_order!) 
                          }));
     
                      if (cleanUpdates.length > 0) {
@@ -342,6 +345,20 @@ export const useLocalizDnD = ({
                  logger.error('Failed to update sort order', err);
               }
            }
+        } else if (tabChanged) {
+            // Case: Moved to new tab, dropped without reordering (e.g. into empty space or same position relative to others)
+            // Just persist the new tab ID.
+             try {
+                await executeSaveRef.current(async () => {
+                    if (activeItem.item_id) {
+                        // Use current sort_order (which might be the optimistic min - 1000)
+                        // Or better, let the API/Service handle placement, but here we just save the tab change.
+                        await onMoveToTabRef.current(activeItem, endTabId, undefined, activeItem.sort_order);
+                    }
+                });
+            } catch (err) {
+                logger.error('Failed to save tab change', err);
+            }
         }
     };
 

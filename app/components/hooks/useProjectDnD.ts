@@ -334,11 +334,15 @@ export const useProjectDnD = ({
         const activeTaskForSave = tasks.find(t => t.id === activeIdString);
         if (!activeTaskForSave) return;
 
+        let startFolderId: string | null = null;
+
         // Optimization: Check if anything actually changed
         // We compare current state of activeTask with initial state
         // Note: activeTask is already updated in state via handleDragOver
         if (initialDragStateRef.current) {
             const { folderId: oldFolderId, index: oldIndex } = initialDragStateRef.current;
+            startFolderId = oldFolderId;
+
             // Use fresh filtered list for check
             const currentFolderTasksForCheck = tasks
                 .filter(t => t.folder_id === selectedFolderId)
@@ -347,6 +351,10 @@ export const useProjectDnD = ({
             // Find current index in the filtered list to be sure about visual order
             const currentIndex = currentFolderTasksForCheck.findIndex(t => t.id === activeIdString);
             
+            // Check if active task is back to original folder AND position
+            // Note: activeTaskForSave.folder_id is potentially updated (optimistic), so compare carefully.
+            // If we didn't change folder (activeTaskForSave.folder_id === oldFolderId) AND position same -> return.
+            // If we changed folder (activeTaskForSave.folder_id !== oldFolderId) -> proceed.
             if (activeTaskForSave.folder_id === oldFolderId && activeTaskForSave.sort_order === oldIndex) {
                 logger.info('Drag ended with no changes, skipping save');
                 initialDragStateRef.current = null;
@@ -583,7 +591,7 @@ export const useProjectDnD = ({
                 promises.push(taskService.updateTaskOrder(updatesForExisting));
 
                 // 2. If active task changed folder, we still need updateTask for folder_id
-                if (activeTaskUpdate && activeTaskForSave.folder_id !== selectedFolderId) {
+                if (activeTaskUpdate && startFolderId && startFolderId !== selectedFolderId) {
                      promises.push(taskService.updateTask(activeIdString, { 
                         folder_id: selectedFolderId,
                     }));
