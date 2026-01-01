@@ -169,6 +169,12 @@ export function usePageLogic() {
       if (!parentProject) return;
 
       if (isEnabled) {
+         // Check if already exists to prevent duplicates
+         const existing = projects.find(p => p.parent_proj_id === parentId && p.proj_type === type);
+         if (existing) {
+             return;
+         }
+
          // Create
          try {
              const title = `${parentProject.title} ${type.toUpperCase()}`;

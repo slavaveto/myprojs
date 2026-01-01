@@ -171,13 +171,7 @@ export const EditProjectPopover = ({
                             
                             {!isSatellite && (
                                 <div className="px-1 flex flex-col gap-2">
-                                    <Checkbox 
-                                        isSelected={showDocs} 
-                                        onValueChange={setShowDocs}
-                                        size="sm"
-                                    >
-                                        Show Docs Button
-                                    </Checkbox>
+                            
 
                                     <Checkbox 
                                         isSelected={isHighlighted} 
