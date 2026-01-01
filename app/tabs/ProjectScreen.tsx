@@ -157,6 +157,8 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
    
    // Removing the redeclaration:
    
+   const isDocsLayout = project.proj_type === 'docs';
+
    return (
     <RichTextProvider>
       <div 
@@ -229,60 +231,118 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
          >
              {/* SPLIT VIEW CONTENT (Main Container) */}
              <div className="flex flex-grow min-h-0 overflow-hidden">
-                {/* LEFT COLUMN: Folders + Task List */}
-                <div className="flex-grow flex flex-col min-h-0">
-                    {/* Folder Tabs Row */}
-                    <div className="px-6 py-2  bg-background/50 flex-none z-10">
-                         <FolderTabs 
-                            folders={folders}
-                            selectedFolderId={selectedFolderId}
-                            onSelect={(id) => {
-                                setSelectedFolderId(id);
-                                globalStorage.setItem(`active_folder_${project.id}`, id);
-                            }}
-                            onAddFolder={handleAddFolder}
-                            onUpdateFolder={handleUpdateFolder}
-                            onDeleteFolder={handleDeleteFolder}
-                            onMoveFolder={handleMoveFolder}
-                            getTaskCount={getFolderTaskCount}
-                            projectId={project.id}
-                            hoveredFolderId={hoveredFolderId}
-                        />
-                    </div>
+                {isDocsLayout ? (
+                    // --- VERTICAL LAYOUT (Docs) ---
+                    <>
+                        <div className="w-[240px] flex-shrink-0 border-r border-default-200 bg-default-50 flex flex-col min-h-0">
+                           <div className="flex-grow p-4 overflow-y-auto">
+                                <FolderTabs 
+                                    folders={folders}
+                                    selectedFolderId={selectedFolderId}
+                                    onSelect={(id) => {
+                                        setSelectedFolderId(id);
+                                        globalStorage.setItem(`active_folder_${project.id}`, id);
+                                    }}
+                                    onAddFolder={handleAddFolder}
+                                    onUpdateFolder={handleUpdateFolder}
+                                    onDeleteFolder={handleDeleteFolder}
+                                    onMoveFolder={handleMoveFolder}
+                                    getTaskCount={getFolderTaskCount}
+                                    projectId={project.id}
+                                    hoveredFolderId={hoveredFolderId}
+                                    orientation="vertical"
+                                />
+                           </div>
+                        </div>
 
-                    {/* Task List Scrollable Area */}
-                    <div 
-                        className="flex-grow flex flex-col min-h-0 overflow-y-auto overflow-x-hidden"
-                        onDoubleClick={handleDoubleClick}
-                        onContextMenu={handleBackgroundContextMenu}
-                    >
-                         <div className="flex-grow px-6 py-4 pt-2">
-                            {selectedFolderId ? (
-                               <TaskList  
-                                    key={selectedFolderId}
-                                    tasks={filteredTasks}
-                                    onUpdateTask={handleUpdateTask}
-                                    onDeleteTask={handleDeleteTask}
-                                    isEmpty={filteredTasks.length === 0}
-                                    highlightedTaskId={highlightedTaskId}
-                                    onAddGap={handleAddGap} 
-                                    onInsertTask={handleAddTask} 
-                                    onInsertNote={(index: number) => handleAddTask(index, 'note')}
-                                    projectColor={project.proj_color} 
-                                    projectsStructure={projectsStructure}
-                                    onMoveTask={handleMoveTask}
-                                    currentProjectId={project.id}
-                                    onSelectTask={setSelectedTaskId}
-                                    selectedTaskId={selectedTaskId}
-                               />
-                            ) : (
-                                <div className="text-center py-20 text-default-400">
-                                    Create a folder to start adding tasks.
-                                </div>
-                            )}
-                         </div>
+                        <div 
+                            className="flex-grow flex flex-col min-h-0 overflow-y-auto overflow-x-hidden bg-background"
+                            onDoubleClick={handleDoubleClick}
+                            onContextMenu={handleBackgroundContextMenu}
+                        >
+                             <div className="flex-grow px-6 py-4 pt-2">
+                                {selectedFolderId ? (
+                                   <TaskList  
+                                        key={selectedFolderId}
+                                        tasks={filteredTasks}
+                                        onUpdateTask={handleUpdateTask}
+                                        onDeleteTask={handleDeleteTask}
+                                        isEmpty={filteredTasks.length === 0}
+                                        highlightedTaskId={highlightedTaskId}
+                                        onAddGap={handleAddGap} 
+                                        onInsertTask={handleAddTask} 
+                                        onInsertNote={(index: number) => handleAddTask(index, 'note')}
+                                        projectColor={project.proj_color} 
+                                        projectsStructure={projectsStructure}
+                                        onMoveTask={handleMoveTask}
+                                        currentProjectId={project.id}
+                                        onSelectTask={setSelectedTaskId}
+                                        selectedTaskId={selectedTaskId}
+                                   />
+                                ) : (
+                                    <div className="text-center py-20 text-default-400">
+                                        Select a folder to view tasks.
+                                    </div>
+                                )}
+                             </div>
+                        </div>
+                    </>
+                ) : (
+                    // --- HORIZONTAL LAYOUT (Standard) ---
+                    <div className="flex-grow flex flex-col min-h-0">
+                        {/* Folder Tabs Row */}
+                        <div className="px-6 py-2  bg-background/50 flex-none z-10">
+                             <FolderTabs 
+                                folders={folders}
+                                selectedFolderId={selectedFolderId}
+                                onSelect={(id) => {
+                                    setSelectedFolderId(id);
+                                    globalStorage.setItem(`active_folder_${project.id}`, id);
+                                }}
+                                onAddFolder={handleAddFolder}
+                                onUpdateFolder={handleUpdateFolder}
+                                onDeleteFolder={handleDeleteFolder}
+                                onMoveFolder={handleMoveFolder}
+                                getTaskCount={getFolderTaskCount}
+                                projectId={project.id}
+                                hoveredFolderId={hoveredFolderId}
+                            />
+                        </div>
+
+                        {/* Task List Scrollable Area */}
+                        <div 
+                            className="flex-grow flex flex-col min-h-0 overflow-y-auto overflow-x-hidden"
+                            onDoubleClick={handleDoubleClick}
+                            onContextMenu={handleBackgroundContextMenu}
+                        >
+                             <div className="flex-grow px-6 py-4 pt-2">
+                                {selectedFolderId ? (
+                                   <TaskList  
+                                        key={selectedFolderId}
+                                        tasks={filteredTasks}
+                                        onUpdateTask={handleUpdateTask}
+                                        onDeleteTask={handleDeleteTask}
+                                        isEmpty={filteredTasks.length === 0}
+                                        highlightedTaskId={highlightedTaskId}
+                                        onAddGap={handleAddGap} 
+                                        onInsertTask={handleAddTask} 
+                                        onInsertNote={(index: number) => handleAddTask(index, 'note')}
+                                        projectColor={project.proj_color} 
+                                        projectsStructure={projectsStructure}
+                                        onMoveTask={handleMoveTask}
+                                        currentProjectId={project.id}
+                                        onSelectTask={setSelectedTaskId}
+                                        selectedTaskId={selectedTaskId}
+                                   />
+                                ) : (
+                                    <div className="text-center py-20 text-default-400">
+                                        Create a folder to start adding tasks.
+                                    </div>
+                                )}
+                             </div>
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {/* RIGHT COLUMN: Task Details */}
                 <div className="w-[400px] flex-shrink-0 border-l border-default-200 bg-content2/50 p-6 overflow-y-auto transition-all h-full right-panel">

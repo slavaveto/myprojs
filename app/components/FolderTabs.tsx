@@ -24,6 +24,7 @@ interface FolderTabProps {
     canMoveRight?: boolean;
     isDragging?: boolean;
     isOver?: boolean;
+    orientation?: 'horizontal' | 'vertical';
 }
 
 export const FolderTab = ({ 
@@ -38,7 +39,8 @@ export const FolderTab = ({
     canMoveLeft,
     canMoveRight,
     isDragging,
-    isOver
+    isOver,
+    orientation = 'horizontal'
 }: FolderTabProps) => {
     const { setNodeRef } = useDroppable({
         id: `folder-${folder.id}`,
@@ -50,7 +52,8 @@ export const FolderTab = ({
           ref={setNodeRef}
           onClick={onClick}
           className={clsx(
-             'group/tab relative flex items-center gap-1 px-1 h-[40px] select-none transition-colors min-w-fit outline-none rounded-lg border-2 border-transparent',
+             'group/tab relative flex items-center gap-2 select-none transition-colors outline-none rounded-lg border-2 border-transparent',
+             orientation === 'horizontal' ? 'px-1 h-[40px] min-w-fit' : 'w-full min-h-[40px] px-3 py-2 justify-between',
              // 1. Dragging state (highest priority for cursor/bg)
              isDragging && 'cursor-grabbing bg-default-100 ring-1 ring-primary/30',
              
@@ -61,12 +64,15 @@ export const FolderTab = ({
              !isOver && isActive && 'text-primary font-medium cursor-pointer',
              
              // 4. Default state
-             !isDragging && !isOver && !isActive && 'text-default-500 hover:text-default-700 cursor-pointer'
+             !isDragging && !isOver && !isActive && 'text-default-500 hover:text-default-700 cursor-pointer',
+             
+             // Vertical active bg
+             orientation === 'vertical' && isActive && !isOver && !isDragging && 'bg-primary/10'
           )}
        >
-          <span className="relative z-10">{folder.title}</span>
+          <span className="relative z-10 truncate flex-grow">{folder.title}</span>
 
-          <div className="relative flex items-center justify-center min-w-[20px] -mt-[1px] h-5">
+          <div className="relative flex items-center justify-center min-w-[20px] -mt-[1px] h-5 flex-shrink-0">
               {/* Chip - visible by default, hidden on hover if actions exist */}
               <div 
                   className={clsx(
@@ -118,11 +124,21 @@ export const FolderTab = ({
           {/* Action Button */}
           
 
-          {/* Active Indicator (Underline) with Framer Motion */}
-          {isActive && !isDragging && (
+          {/* Active Indicator (Underline) with Framer Motion - Only Horizontal */}
+          {isActive && !isDragging && orientation === 'horizontal' && (
               <motion.div 
                   layoutId={`${layoutIdPrefix}-underline`}
                   className="absolute bottom-0 left-0 w-full h-[2px] bg-primary z-0"
+                  initial={false}
+                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
+              />
+          )}
+          
+          {/* Active Indicator (Left Border) - Only Vertical */}
+           {isActive && !isDragging && orientation === 'vertical' && (
+              <motion.div 
+                  layoutId={`${layoutIdPrefix}-left-border`}
+                  className="absolute left-0 top-0 bottom-0 w-[3px] bg-primary z-0 rounded-l-lg"
                   initial={false}
                   transition={{ type: "spring", stiffness: 500, damping: 30 }}
               />
@@ -143,6 +159,7 @@ interface FolderTabsProps {
     getTaskCount: (folderId: string) => number;
     projectId: string;
     hoveredFolderId?: string | null;
+    orientation?: 'horizontal' | 'vertical';
 }
 
 export const FolderTabs = ({ 
@@ -155,8 +172,54 @@ export const FolderTabs = ({
     onMoveFolder, 
     getTaskCount,
     projectId,
-    hoveredFolderId 
+    hoveredFolderId,
+    orientation = 'horizontal'
 }: FolderTabsProps) => {
+    if (orientation === 'vertical') {
+        return (
+            <div className="flex flex-col gap-4 w-full h-full">
+               <div className="flex-grow overflow-y-auto scrollbar-hide flex flex-col gap-1">
+                   {folders.map((folder, index) => (
+                         <FolderTab 
+                            key={folder.id}
+                            folder={folder}
+                            count={getTaskCount(folder.id)}
+                            isActive={selectedFolderId === folder.id}
+                            layoutIdPrefix={`project-${projectId}`}
+                            onClick={() => onSelect(folder.id)}
+                            isOver={hoveredFolderId === `folder-${folder.id}`}
+                            onUpdate={onUpdateFolder ? (title) => onUpdateFolder(folder.id, title) : undefined}
+                            onDelete={onDeleteFolder ? () => onDeleteFolder(folder.id) : undefined}
+                            onMove={onMoveFolder ? (direction) => onMoveFolder(folder.id, direction) : undefined}
+                            canMoveLeft={index > 0}
+                            canMoveRight={index < folders.length - 1}
+                            orientation="vertical"
+                         />
+                   ))}
+               </div>
+               
+               <div className="flex-shrink-0 mt-2 flex justify-center pb-4">
+                   <CreateItemPopover 
+                       title="New Folder" 
+                       inputPlaceholder="Folder Name"
+                       onCreate={onAddFolder}
+                       placement="right"
+                   >
+                       <Button 
+                           variant="flat" 
+                           className="w-full"
+                           size="sm" 
+                           color="success"
+                           startContent={<Plus size={16} />}
+                       >
+                           New Folder
+                       </Button>
+                   </CreateItemPopover>
+               </div>
+            </div>
+        );
+    }
+
     return (
         <div className="flex items-center gap-4 w-full">
            <div className="flex-grow overflow-x-auto scrollbar-hide flex items-center gap-2">
