@@ -73,7 +73,7 @@ export const taskService = {
                     projects (
                         id,
                         title,
-                        color
+                        proj_color
                     )
                 )
             `)
@@ -147,7 +147,7 @@ export const taskService = {
                     projects (
                         id,
                         title,
-                        color
+                        proj_color
                     )
                 )
             `
@@ -201,7 +201,7 @@ export const taskService = {
                     projects (
                         id,
                         title,
-                        color
+                        proj_color
                     )
                 )
             `
