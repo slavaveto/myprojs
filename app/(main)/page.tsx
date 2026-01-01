@@ -303,51 +303,56 @@ function AppContent() {
                      items={sidebarProjects.map((p: Project) => p.id)}
                      strategy={verticalListSortingStrategy}
                   >
-                     {sidebarProjects.map((project) => (
-                        <SortableProjectItem
-                           key={project.id}
-                           project={project}
-                           isActive={activeProjectId === project.id}
-                           satelliteId={satellitesMap[project.id]} // Pass satellite ID
-                           onClick={() => {
-                              setActiveProjectId(project.id);
-                              setActiveSystemTab(null);
-                              setProjectScreenMode('tasks'); // Default to tasks
-                              globalStorage.setItem('active_project_id', project.id);
-                           }}
-                           onDocsClick={() => {
-                              setActiveProjectId(project.id);
-                              setActiveSystemTab(null);
-                              setProjectScreenMode('docs'); // Switch to docs
-                              globalStorage.setItem('active_project_id', project.id);
-                           }}
-                           onUiClick={() => {
-                              const satId = satellitesMap[project.id];
-                              if (satId) {
-                                 setActiveProjectId(satId);
+                     {sidebarProjects.map((project) => {
+                        const satId = satellitesMap[project.id];
+                        // Active if self is active OR satellite is active
+                        const isSelfOrSatelliteActive = activeProjectId === project.id || (satId && activeProjectId === satId);
+                        
+                        return (
+                           <SortableProjectItem
+                              key={project.id}
+                              project={project}
+                              isActive={!!isSelfOrSatelliteActive}
+                              satelliteId={satId} // Pass satellite ID
+                              onClick={() => {
+                                 setActiveProjectId(project.id);
                                  setActiveSystemTab(null);
-                                 setProjectScreenMode('tasks'); // UI projects likely use task/default view
-                                 globalStorage.setItem('active_project_id', satId);
-                              }
-                           }}
-                        >
-                           <EditProjectPopover
-                              initialTitle={project.title}
-                              initialColor={project.proj_color}
-                              initialShowDocs={project.show_docs_btn || false}
-                              initialIsHighlighted={project.is_highlighted || false}
-                              onUpdate={(t, c, sd, ih) => handleUpdateProject(project.id, t, c, sd, ih)}
-                              onDelete={() => handleDeleteProject(project.id)}
+                                 setProjectScreenMode('tasks'); // Default to tasks
+                                 globalStorage.setItem('active_project_id', project.id);
+                              }}
+                              onDocsClick={() => {
+                                 setActiveProjectId(project.id);
+                                 setActiveSystemTab(null);
+                                 setProjectScreenMode('docs'); // Switch to docs
+                                 globalStorage.setItem('active_project_id', project.id);
+                              }}
+                              onUiClick={() => {
+                                 if (satId) {
+                                    setActiveProjectId(satId);
+                                    setActiveSystemTab(null);
+                                    setProjectScreenMode('tasks'); // UI projects likely use task/default view
+                                    globalStorage.setItem('active_project_id', satId);
+                                 }
+                              }}
                            >
-                              <button
-                                 type="button"
-                                 className=" w-8 h-8 flex items-center justify-center text-default-400 hover:text-primary transition-colors outline-none cursor-pointer"
+                              <EditProjectPopover
+                                 initialTitle={project.title}
+                                 initialColor={project.proj_color}
+                                 initialShowDocs={project.show_docs_btn || false}
+                                 initialIsHighlighted={project.is_highlighted || false}
+                                 onUpdate={(t, c, sd, ih) => handleUpdateProject(project.id, t, c, sd, ih)}
+                                 onDelete={() => handleDeleteProject(project.id)}
                               >
-                                 <EllipsisVertical size={18} />
-                              </button>
-                           </EditProjectPopover>
-                        </SortableProjectItem>
-                     ))}
+                                 <button
+                                    type="button"
+                                    className=" w-8 h-8 flex items-center justify-center text-default-400 hover:text-primary transition-colors outline-none cursor-pointer"
+                                 >
+                                    <EllipsisVertical size={18} />
+                                 </button>
+                              </EditProjectPopover>
+                           </SortableProjectItem>
+                        );
+                     })}
                   </SortableContext>
                </DndContext>
 
