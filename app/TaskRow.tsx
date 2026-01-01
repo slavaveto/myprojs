@@ -227,12 +227,12 @@ export const TaskRow = React.memo(
          isDragging && '!opacity-50',
          isOverlay && 'z-50 bg-content1 !border-primary/50 !border-l-[3px] pointer-events-none cursor-grabbing',
          isHighlighted && '!border-orange-300',
-         isSelected && 'bg-primary/5 border-l-primary', // Selection Style
+         isSelected && 'bg-primary/5', // Selection Style
          activeGroupColor && 'ml-[22px] -rounded-l-[4px]',
          
          // Border Logic (Task & Note & Group)
          'border-l-[3px]', // Always apply border for non-gap items (as Gap is handled above)
-         (!isGroup && !isNote && !isHighlighted && !activeGroupColor && !isSelected) && 'border-l-default-300', // Regular Task border color (gray if not highlighted AND not in group)
+         (!isGroup && !isNote && !isHighlighted && !activeGroupColor) && 'border-l-default-300', // Regular Task border color (gray if not highlighted AND not in group)
          isHighlighted && '!border-l-orange-300', // Highlighted task border color
          
          isNote && 'bg-default-50/50 text-default-600 py-2 border-l-default-400' // Note specific
@@ -434,9 +434,9 @@ export const TaskRow = React.memo(
                transition: { duration: 0.2, ease: 'easeInOut' }, // Smoother exit
             }}
             transition={{ duration: 0.2 }}
-            onMouseDown={(e) => {
-               // Allow selection on click (snappier)
-               if (e.button === 0 && !isGroup) {
+            onClick={(e) => {
+               // Allow selection on click
+               if (!isGroup) {
                    onSelect?.();
                }
             }}
