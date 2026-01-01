@@ -164,7 +164,7 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
           )}
       >
          {/* HEADER SECTION (Full Width) */}
-         <div className="flex-none px-6 py-4 border-b border-default-100 bg-background z-10 flex flex-col gap-4">
+         <div className="flex-none px-6 py-4 border-b border-default-200 bg-background z-10 flex flex-col gap-4">
              {/* Title Row */}
              <div className="grid grid-cols-[1fr_auto_1fr] items-center min-h-[40px] gap-4">
                 <div className="flex items-center gap-2 justify-self-start pl-1">
