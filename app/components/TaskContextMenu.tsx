@@ -371,7 +371,7 @@ export const TaskMenuItems = ({
                                <div key={project.id} className={clsx('relative group/project w-full', isCurrentProject && 'opacity-50 pointer-events-none')}>
                                   <div className="flex items-center justify-between px-2 py-1.5 rounded-small hover:bg-default-100 cursor-default transition-colors w-full">
                                      <div className="flex items-center gap-2">
-                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: project.color || '#3b82f6' }} />
+                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: project.proj_color || '#3b82f6' }} />
                                         <span className="text-small truncate max-w-[140px]">{project.title}</span>
                                      </div>
                                      {project.folders && project.folders.length > 0 && !isCurrentProject && (<ArrowRight size={12} className="text-default-400" />)}

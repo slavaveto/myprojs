@@ -1,7 +1,7 @@
 export interface Project {
    id: string;
    title: string;
-   color: string;
+   proj_color: string;
    sort_order: number;
    created_at: string;
    updated_at: string;

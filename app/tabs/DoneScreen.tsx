@@ -88,7 +88,7 @@ const DoneTaskRow = ({ task, onRestore, onDelete }: { task: any, onRestore: (t: 
                                 <div className="flex items-center gap-1">
                                     <div 
                                         className="w-1.5 h-1.5 rounded-full flex-shrink-0" 
-                                        style={{ backgroundColor: task.folders.projects.color || '#3b82f6' }}
+                                        style={{ backgroundColor: task.folders.projects.proj_color || '#3b82f6' }}
                                     />
                                     <span className="truncate max-w-[120px]">{task.folders.projects.title}</span>
                                 </div>

@@ -103,7 +103,7 @@ const SortableProjectItem = ({
             >
                <div
                   className="w-3 h-3 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: project.color || '#3b82f6' }}
+                  style={{ backgroundColor: project.proj_color || '#3b82f6' }}
                />
             </div>
 
@@ -278,7 +278,7 @@ function AppContent() {
                         >
                            <EditProjectPopover
                               initialTitle={project.title}
-                              initialColor={project.color}
+                              initialColor={project.proj_color}
                               initialShowDocs={project.show_docs_btn || false}
                               initialIsHighlighted={project.is_highlighted || false}
                               onUpdate={(t, c, sd, ih) => handleUpdateProject(project.id, t, c, sd, ih)}

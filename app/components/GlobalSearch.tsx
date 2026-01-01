@@ -21,7 +21,7 @@ interface SearchItem {
         projects?: {
             id: string;
             title: string;
-            color: string;
+            proj_color: string;
         };
     };
 }
@@ -204,7 +204,7 @@ export const GlobalSearch = ({ onNavigate, className, currentProjectId, currentF
                                     <>
                                         <div 
                                             className="w-2.5 h-2.5 rounded-full flex-shrink-0 shadow-sm border border-white/10" 
-                                            style={{ backgroundColor: item.folders.projects.color || '#3b82f6' }}
+                                            style={{ backgroundColor: item.folders.projects.proj_color || '#3b82f6' }}
                                         />
                                         <span className="">{item.folders.projects.title}</span>
                                         <span className="opacity-40">/</span>

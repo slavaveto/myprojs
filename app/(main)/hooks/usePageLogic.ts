@@ -154,10 +154,10 @@ export function usePageLogic() {
    };
 
    const handleUpdateProject = async (projectId: string, title: string, color: string, showDocs?: boolean, isHighlighted?: boolean) => {
-      setProjects((prev) => prev.map((p) => (p.id === projectId ? { ...p, title, color, show_docs_btn: showDocs, is_highlighted: isHighlighted } : p)));
+      setProjects((prev) => prev.map((p) => (p.id === projectId ? { ...p, title, proj_color: color, show_docs_btn: showDocs, is_highlighted: isHighlighted } : p)));
       try {
          await executeSidebarAction(async () => {
-            await projectService.updateProject(projectId, { title, color, show_docs_btn: showDocs, is_highlighted: isHighlighted });
+            await projectService.updateProject(projectId, { title, proj_color: color, show_docs_btn: showDocs, is_highlighted: isHighlighted });
          });
       } catch (err) {
          logger.error('Failed to update project', err);

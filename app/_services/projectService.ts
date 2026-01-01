@@ -67,7 +67,7 @@ export const projectService = {
             .from(DB_TABLES.PROJECTS)
             .insert({
                 title,
-                color,
+                proj_color: color,
                 sort_order,
                 is_deleted: false,
                 updated_at: new Date().toISOString(),
@@ -122,7 +122,7 @@ export const projectService = {
         // 2. Determine Type
         let updateType = undefined;
         if (updates.title) updateType = ProjectUpdateTypes.RENAME;
-        else if (updates.color) updateType = ProjectUpdateTypes.RECOLOR;
+        else if (updates.proj_color) updateType = ProjectUpdateTypes.RECOLOR;
         else if ('show_docs_btn' in updates || 'is_highlighted' in updates) updateType = ProjectUpdateTypes.UPDATE_SETTINGS; 
 
         // 3. Update

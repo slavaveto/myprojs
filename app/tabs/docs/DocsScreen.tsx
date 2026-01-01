@@ -60,7 +60,7 @@ export const DocsScreen = (props: DocsScreenProps) => {
                     projectId={project.id} 
                     projectLocalPath={project.local_path}
                     projectTitle={project.title}
-                    projectColor={project.color}
+                    projectColor={project.proj_color}
                 />
              </div>
         </div>

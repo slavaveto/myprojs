@@ -43,7 +43,7 @@ interface ProjectScreenProps {
     onReady: () => void;
     globalStatus?: ActionStatus;
     canLoad?: boolean;
-    onUpdateProject: (updates: { title?: string; color?: string; show_docs_btn?: boolean; is_highlighted?: boolean }) => void;
+    onUpdateProject: (updates: { title?: string; proj_color?: string; show_docs_btn?: boolean; is_highlighted?: boolean }) => void;
     onDeleteProject: () => void;
     onNavigate?: (target: NavigationTarget) => void;
 }
@@ -170,12 +170,12 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
                 <div className="flex items-center gap-2 justify-self-start pl-1">
                     <div 
                         className="w-4 h-4 rounded-full flex-shrink-0 shadow-sm border border-white/10" 
-                        style={{ backgroundColor: project.color || '#3b82f6' }}
+                        style={{ backgroundColor: project.proj_color || '#3b82f6' }}
                     />
                     <h1 className="text-2xl font-bold truncate">{project.title}</h1>
                     <EditProjectPopover  
                         initialTitle={project.title}
-                        initialColor={project.color}
+                        initialColor={project.proj_color}
                         initialShowDocs={project.show_docs_btn || false}
                         initialIsHighlighted={project.is_highlighted || false}
                         onUpdate={handleEditProject}
@@ -257,7 +257,7 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
                                     onAddGap={handleAddGap} 
                                     onInsertTask={handleAddTask} 
                                     onInsertNote={(index: number) => handleAddTask(index, 'note')}
-                                    projectColor={project.color} 
+                                    projectColor={project.proj_color} 
                                     projectsStructure={projectsStructure}
                                     onMoveTask={handleMoveTask}
                                     currentProjectId={project.id}
