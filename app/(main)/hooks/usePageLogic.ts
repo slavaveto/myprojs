@@ -338,9 +338,9 @@ export function usePageLogic() {
 
       if (active.id !== over?.id) {
          setProjects((allProjects) => {
-            // 1. Separate visible and hidden (satellite) projects
-            const visibleProjects = allProjects.filter(p => p.proj_type !== 'ui');
-            const satelliteProjects = allProjects.filter(p => p.proj_type === 'ui');
+            // 1. Separate visible and hidden (satellite/personal) projects
+            const visibleProjects = allProjects.filter(p => p.proj_type !== 'ui' && p.proj_type !== 'docs' && p.proj_type !== 'personal');
+            const satelliteProjects = allProjects.filter(p => p.proj_type === 'ui' || p.proj_type === 'docs' || p.proj_type === 'personal');
 
             // 2. Find indices in the VISIBLE list only
             const oldIndex = visibleProjects.findIndex((i) => i.id === active.id);
