@@ -21,9 +21,11 @@ interface TaskListProps {
     projectsStructure?: any[];
     onMoveTask?: (taskId: string, projectId: string, folderId: string) => void;
     currentProjectId?: string;
+    onSelectTask?: (taskId: string) => void;
+    selectedTaskId?: string | null;
 }
 
-export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlightedTaskId, onAddGap, onInsertTask, onInsertNote, projectColor, projectsStructure, onMoveTask, currentProjectId }: TaskListProps) => {
+export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlightedTaskId, onAddGap, onInsertTask, onInsertNote, projectColor, projectsStructure, onMoveTask, currentProjectId, onSelectTask, selectedTaskId }: TaskListProps) => {
     // Global Menu State
     const [menuState, setMenuState] = useState<{
        taskId: string | null;
@@ -193,6 +195,8 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlight
                             isMenuOpen={menuState.isOpen && menuState.taskId === task.id}
                             groupCount={groupCount}
                             isLastStandingGap={isLastStandingGap}
+                            onSelect={() => onSelectTask?.(task.id)}
+                            isSelected={selectedTaskId === task.id}
                          />
                       ))}
                   </AnimatePresence>

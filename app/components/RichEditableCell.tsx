@@ -275,8 +275,7 @@ export const RichEditableCell = ({
                 <div 
                     onMouseDown={(e) => {
                         if (e.button !== 0) return; // Only left click
-                        e.stopPropagation(); 
-                        e.preventDefault();
+                        // Allow propagation for row selection
                         activate(finalId, value || '', { onSave, onBlur, onCancel }, e);
                     }}
                     className={clsx(
