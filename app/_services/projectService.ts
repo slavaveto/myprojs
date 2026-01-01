@@ -1,6 +1,7 @@
 import { supabase } from '@/utils/supabase/supabaseClient';
 import { Project } from '@/app/types';
 import { logService } from './logService';
+import { folderService } from './folderService';
 import { BaseActions, EntityTypes, ProjectUpdateTypes } from './actions';
 import { createLogger } from '@/utils/logger/Logger';
 import { DB_TABLES } from '@/utils/supabase/db_tables';
@@ -77,6 +78,19 @@ export const projectService = {
         if (error) {
             logger.error('Failed to create project', error);
             throw error;
+        }
+
+        // Create default folders
+        try {
+            await Promise.all([
+                folderService.createFolder(data.id, 'Folder 1', 0),
+                folderService.createFolder(data.id, 'Folder 2', 1),
+                folderService.createFolder(data.id, 'Folder 3', 2)
+            ]);
+            logger.info('Default folders created for project', { projectId: data.id });
+        } catch (folderError) {
+            logger.error('Failed to create default folders', folderError);
+            // Non-blocking error, proceed with project return
         }
         
         await logService.logAction(
