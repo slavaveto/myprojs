@@ -25,7 +25,7 @@ import { useProjectDnD } from '@/app/components/hooks/useProjectDnD';
 import { GlobalSearch, NavigationTarget } from '@/app/components/GlobalSearch';
 
 import { RichTextProvider } from '@/app/components/RichTextProvider';
-import { RichEditableCell } from '@/app/components/RichEditableCell';
+import { NoteEditor } from '@/app/components/NoteEditor';
 
 const logger = createLogger('ProjectScreen');
 
@@ -281,17 +281,23 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
                                 {selectedTask.content.replace(/<[^>]*>/g, '')}
                              </h2>
                              
-                             <div className="flex flex-col gap-2">
+                             <div className="flex flex-col gap-2 flex-grow min-h-0">
                                 <label className="text-xs font-semibold text-default-400 uppercase tracking-wider">
                                     Notes
                                 </label>
-                                <div className="min-h-[150px] bg-background rounded-lg border border-default-200 shadow-sm p-3">
-                                     <RichEditableCell 
+                                <div className="flex-grow min-h-[200px] bg-background rounded-lg border border-default-200 shadow-sm p-4 overflow-y-auto cursor-text"
+                                     onClick={(e) => {
+                                         // Focus editor container if clicked outside
+                                         const editorDiv = e.currentTarget.querySelector('.ProseMirror') as HTMLElement;
+                                         if (editorDiv) editorDiv.focus();
+                                     }}
+                                >
+                                     <NoteEditor 
                                         id={`task-notes-${selectedTask.id}`}
                                         value={selectedTask.task_notes || ''}
                                         onSave={(val) => handleUpdateTask(selectedTask.id, { task_notes: val })}
                                         placeholder="Add notes..."
-                                        className="min-h-[100px]"
+                                        className="min-h-[180px]"
                                      />
                                 </div>
                              </div>
