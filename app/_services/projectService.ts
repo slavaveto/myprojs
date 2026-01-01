@@ -118,7 +118,8 @@ export const projectService = {
         if (existing) {
             if (existing.is_deleted) {
                 logger.info('Restoring soft-deleted satellite', { id: existing.id });
-                // Restore it
+                
+                // 1. Restore Project
                 const { data: restored, error: restoreError } = await supabase
                     .from(DB_TABLES.PROJECTS)
                     .update({ 
@@ -130,6 +131,31 @@ export const projectService = {
                     .single();
                     
                 if (restoreError) throw restoreError;
+
+                // 2. Restore Folders & Tasks
+                // Find all folders for this project (even deleted ones)
+                const { data: folders } = await supabase
+                    .from(DB_TABLES.FOLDERS)
+                    .select('id')
+                    .eq('project_id', existing.id)
+                    .or('is_deleted.eq.true,is_deleted.eq.false'); // Get all
+
+                if (folders && folders.length > 0) {
+                    const folderIds = folders.map(f => f.id);
+                    
+                    // Restore Folders
+                    await supabase
+                        .from(DB_TABLES.FOLDERS)
+                        .update({ is_deleted: false })
+                        .in('id', folderIds);
+
+                    // Restore Tasks
+                    await supabase
+                        .from(DB_TABLES.TASKS)
+                        .update({ is_deleted: false })
+                        .in('folder_id', folderIds);
+                }
+
                 return restored as Project;
             } else {
                 logger.warning('Active satellite already exists, returning it', { id: existing.id });
@@ -160,11 +186,13 @@ export const projectService = {
             throw error;
         }
 
-        // Create default folder for satellite
-        try {
-            await folderService.createFolder(data.id, 'General', 0);
-        } catch (folderError) {
-            logger.error('Failed to create default folder for satellite', folderError);
+        // Create default folder for satellite (only for docs, UI doesn't need folders by default)
+        if (type !== 'ui') {
+            try {
+                await folderService.createFolder(data.id, 'General', 0);
+            } catch (folderError) {
+                logger.error('Failed to create default folder for satellite', folderError);
+            }
         }
         
         logger.success('Satellite created', { id: data.id });
