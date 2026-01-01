@@ -49,6 +49,7 @@ interface SortableProjectItemProps {
    onDocsClick: () => void;
    onUiClick?: () => void; // New handler for UI Satellite
    satelliteId?: string; // New prop
+   isUiActive?: boolean; // New prop: true if satellite is currently active
    children?: React.ReactNode;
 }
 
@@ -59,6 +60,7 @@ const SortableProjectItem = ({
    onDocsClick,
    onUiClick,
    satelliteId,
+   isUiActive,
    children,
 }: SortableProjectItemProps) => {
    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -78,7 +80,7 @@ const SortableProjectItem = ({
             <div
                onClick={onClick}
                className={clsx(
-                  'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors w-full text-left select-none pr-3 min-h-[40px]', // Added min-h-[40px]
+                  'flex items-center gap-3 px-3 pr-2 py-2 rounded-lg transition-colors w-full text-left select-none  min-h-[40px]', // Added min-h-[40px]
 
                   // Dragging state (cursor, z-index, ring)
                   isDragging && 'z-20 ring-1 ring-primary/30',
@@ -119,7 +121,8 @@ const SortableProjectItem = ({
                   <div 
                      className={clsx(
                         "flex items-center gap-1 bg-purple-100 hover:bg-purple-200 px-2 py-[6px] rounded-lg text-[10px] font-medium text-purple-600 transition-all",
-                        isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                        isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+                        isUiActive && "ring-2 ring-purple-500 ring-offset-1" // Highlight active UI button
                      )}
                      onClick={(e) => {
                         e.stopPropagation();
@@ -246,7 +249,7 @@ function AppContent() {
    return (
       <div className="flex h-screen w-full overflow-hidden bg-background">
          {/* Sidebar */}
-         <aside className="w-64 flex-shrink-0 border-r border-default-200 bg-content1 flex flex-col z-20">
+         <aside className="w-[300px] flex-shrink-0 border-r border-default-200 bg-content1 flex flex-col z-20">
             <div className="p-4 border-b border-default-200 flex items-center justify-between">
                <div className="flex items-center gap-2 font-bold text-lg min-w-0">
                   <LayoutGrid size={24} className="text-primary flex-shrink-0" />
@@ -307,6 +310,7 @@ function AppContent() {
                         const satId = satellitesMap[project.id];
                         // Active if self is active OR satellite is active
                         const isSelfOrSatelliteActive = activeProjectId === project.id || (satId && activeProjectId === satId);
+                        const isUiActive = satId ? activeProjectId === satId : false;
                         
                         return (
                            <SortableProjectItem
@@ -314,6 +318,7 @@ function AppContent() {
                               project={project}
                               isActive={!!isSelfOrSatelliteActive}
                               satelliteId={satId} // Pass satellite ID
+                              isUiActive={isUiActive} // Pass UI active state
                               onClick={() => {
                                  setActiveProjectId(project.id);
                                  setActiveSystemTab(null);
