@@ -278,22 +278,35 @@ export function usePageLogic() {
       const { active, over } = event;
 
       if (active.id !== over?.id) {
-         setProjects((items) => {
-            const oldIndex = items.findIndex((i) => i.id === active.id);
-            const newIndex = items.findIndex((i) => i.id === over?.id);
+         setProjects((allProjects) => {
+            // 1. Separate visible and hidden (satellite) projects
+            const visibleProjects = allProjects.filter(p => p.proj_type !== 'ui');
+            const satelliteProjects = allProjects.filter(p => p.proj_type === 'ui');
 
-            const newItems = arrayMove(items, oldIndex, newIndex);
+            // 2. Find indices in the VISIBLE list only
+            const oldIndex = visibleProjects.findIndex((i) => i.id === active.id);
+            const newIndex = visibleProjects.findIndex((i) => i.id === over?.id);
 
-            // Save to DB
-            const updates = newItems.map((p, index) => ({ id: p.id, sort_order: index }));
+            // Safety check
+            if (oldIndex === -1 || newIndex === -1) return allProjects;
 
+            // 3. Move items within visible list
+            const newVisibleProjects = arrayMove(visibleProjects, oldIndex, newIndex);
+
+            // 4. Update sort_order for visible projects
+            const updates = newVisibleProjects.map((p, index) => ({ id: p.id, sort_order: index }));
+
+            // 5. Send updates to backend
             executeSidebarAction(async () => {
                await projectService.updateProjectOrder(updates);
             }).catch((err) => {
                logger.error('Failed to reorder projects', err);
             });
 
-            return newItems;
+            // 6. Merge back: Visible (sorted) + Satellites (unchanged)
+            // We put satellites at the end just to keep them out of the way, or keep original relative positions?
+            // Since they are never visible in the list, appending them at the end is safest for future index calculations.
+            return [...newVisibleProjects, ...satelliteProjects];
          });
       }
    };

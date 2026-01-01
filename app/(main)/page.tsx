@@ -198,6 +198,9 @@ function AppContent() {
       sensors,
    } = usePageLogic();
 
+   // Filter out satellite projects (proj_type === 'ui') from the sidebar
+   const sidebarProjects = projects.filter(p => p.proj_type !== 'ui');
+
    return (
       <div className="flex h-screen w-full overflow-hidden bg-background">
          {/* Sidebar */}
@@ -255,10 +258,10 @@ function AppContent() {
                   modifiers={[restrictToVerticalAxis]}
                >
                   <SortableContext
-                     items={projects.map((p: Project) => p.id)}
+                     items={sidebarProjects.map((p: Project) => p.id)}
                      strategy={verticalListSortingStrategy}
                   >
-                     {projects.map((project) => (
+                     {sidebarProjects.map((project) => (
                         <SortableProjectItem
                            key={project.id}
                            project={project}
