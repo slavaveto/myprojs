@@ -221,16 +221,26 @@ function AppContent() {
    // Filter out satellite projects (proj_type === 'ui') from the sidebar
    const sidebarProjects = projects.filter(p => p.proj_type !== 'ui');
 
-   // Map parent projects to their satellites
+   // Map parent projects to their satellites and store parent colors
    // { parentId: satelliteId }
-   const satellitesMap = React.useMemo(() => {
-      const map: Record<string, string> = {};
+   const { satellitesMap, parentColorsMap } = React.useMemo(() => {
+      const satMap: Record<string, string> = {};
+      const colorMap: Record<string, string> = {}; // { parentId: color }
+
+      // First pass: collect parent colors
+      projects.forEach(p => {
+          if (p.proj_type !== 'ui') {
+              colorMap[p.id] = p.proj_color;
+          }
+      });
+
+      // Second pass: map satellites
       projects.forEach(p => {
          if (p.proj_type === 'ui' && p.parent_proj_id) {
-            map[p.parent_proj_id] = p.id;
+            satMap[p.parent_proj_id] = p.id;
          }
       });
-      return map;
+      return { satellitesMap: satMap, parentColorsMap: colorMap };
    }, [projects]);
 
    return (
@@ -434,38 +444,45 @@ function AppContent() {
                />
             </div>
 
-            {projects.map((project) => (
-               <div
-                  key={project.id}
-                  className={clsx(
-                     'absolute inset-0 w-full h-full bg-background transition-opacity duration-300',
-                     activeProjectId === project.id
-                        ? 'z-10 block'
-                        : 'z-0 hidden'
-                  )}
-               >
-                  <div className={clsx("h-full w-full", projectScreenMode === 'tasks' ? 'block' : 'hidden')}>
-                     <ProjectScreen
-                        project={project}
-                        isActive={activeProjectId === project.id && projectScreenMode === 'tasks'}
-                        canLoad={activeProjectId === project.id || canLoadBackground}
-                        onReady={() => handleProjectReady(project.id)}
-                        globalStatus={sidebarStatus}
-                        onNavigate={handleNavigate}
-                        onUpdateProject={(updates) => updateProjectInState(project.id, updates)}
-                        onDeleteProject={() => removeProjectFromState(project.id)}
-                     />
-                  </div>
+            {projects.map((project) => {
+               // If satellite, inherit color from parent
+               const projectToRender = (project.proj_type === 'ui' && project.parent_proj_id && parentColorsMap[project.parent_proj_id])
+                  ? { ...project, proj_color: parentColorsMap[project.parent_proj_id] }
+                  : project;
 
-                  <div className={clsx("h-full w-full", projectScreenMode === 'docs' ? 'block' : 'hidden')}>
-                     <DocsScreen 
-                        project={project}
-                        isActive={activeProjectId === project.id && projectScreenMode === 'docs'}
-                        canLoad={canLoadBackground && !!readyProjects[project.id]} 
-                     />
+               return (
+                  <div
+                     key={project.id}
+                     className={clsx(
+                        'absolute inset-0 w-full h-full bg-background transition-opacity duration-300',
+                        activeProjectId === project.id
+                           ? 'z-10 block'
+                           : 'z-0 hidden'
+                     )}
+                  >
+                     <div className={clsx("h-full w-full", projectScreenMode === 'tasks' ? 'block' : 'hidden')}>
+                        <ProjectScreen
+                           project={projectToRender}
+                           isActive={activeProjectId === project.id && projectScreenMode === 'tasks'}
+                           canLoad={activeProjectId === project.id || canLoadBackground}
+                           onReady={() => handleProjectReady(project.id)}
+                           globalStatus={sidebarStatus}
+                           onNavigate={handleNavigate}
+                           onUpdateProject={(updates) => updateProjectInState(project.id, updates)}
+                           onDeleteProject={() => removeProjectFromState(project.id)}
+                        />
+                     </div>
+
+                     <div className={clsx("h-full w-full", projectScreenMode === 'docs' ? 'block' : 'hidden')}>
+                        <DocsScreen 
+                           project={projectToRender}
+                           isActive={activeProjectId === project.id && projectScreenMode === 'docs'}
+                           canLoad={canLoadBackground && !!readyProjects[project.id]} 
+                        />
+                     </div>
                   </div>
-               </div>
-            ))}
+               );
+            })}
 
             {projects.length === 0 && isInit && (
                <div className="flex items-center justify-center h-full text-default-400">
