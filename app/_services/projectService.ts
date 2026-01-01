@@ -105,20 +105,36 @@ export const projectService = {
     },
 
     async createSatellite(parentId: string, type: 'ui' | 'docs', title: string, color: string) {
-        logger.info('Creating satellite project', { parentId, type });
+        logger.info('Creating/Restoring satellite project', { parentId, type });
         
-        // Double check existence in DB to prevent duplicates
+        // Check existence (including deleted ones)
         const { data: existing } = await supabase
             .from(DB_TABLES.PROJECTS)
             .select('*')
             .eq('parent_proj_id', parentId)
             .eq('proj_type', type)
-            .or('is_deleted.eq.false,is_deleted.is.null')
-            .maybeSingle();
+            .maybeSingle(); // Don't filter by is_deleted
             
         if (existing) {
-            logger.warning('Active satellite already exists, returning it', { id: existing.id });
-            return existing as Project;
+            if (existing.is_deleted) {
+                logger.info('Restoring soft-deleted satellite', { id: existing.id });
+                // Restore it
+                const { data: restored, error: restoreError } = await supabase
+                    .from(DB_TABLES.PROJECTS)
+                    .update({ 
+                        is_deleted: false,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', existing.id)
+                    .select()
+                    .single();
+                    
+                if (restoreError) throw restoreError;
+                return restored as Project;
+            } else {
+                logger.warning('Active satellite already exists, returning it', { id: existing.id });
+                return existing as Project;
+            }
         }
         
         // Find max sort_order to put at end (though satellites are not in main list usually)
