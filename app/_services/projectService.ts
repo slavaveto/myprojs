@@ -107,6 +107,20 @@ export const projectService = {
     async createSatellite(parentId: string, type: 'ui' | 'docs', title: string, color: string) {
         logger.info('Creating satellite project', { parentId, type });
         
+        // Double check existence in DB to prevent duplicates
+        const { data: existing } = await supabase
+            .from(DB_TABLES.PROJECTS)
+            .select('*')
+            .eq('parent_proj_id', parentId)
+            .eq('proj_type', type)
+            .or('is_deleted.eq.false,is_deleted.is.null')
+            .maybeSingle();
+            
+        if (existing) {
+            logger.warning('Active satellite already exists, returning it', { id: existing.id });
+            return existing as Project;
+        }
+        
         // Find max sort_order to put at end (though satellites are not in main list usually)
         // Or just use 0, order doesn't matter much for satellites as they are hidden.
         
