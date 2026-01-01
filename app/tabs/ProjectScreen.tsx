@@ -215,29 +215,30 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
          >
-             <div className="flex flex-col flex-grow min-h-0">
-                {/* Folder Tabs Row */}
-                <div className="px-6 py-2 border-b border-default-100 bg-background/50 flex-none">
-                     <FolderTabs 
-                        folders={folders}
-                        selectedFolderId={selectedFolderId}
-                        onSelect={(id) => {
-                            setSelectedFolderId(id);
-                            globalStorage.setItem(`active_folder_${project.id}`, id);
-                        }}
-                        onAddFolder={handleAddFolder}
-                        onUpdateFolder={handleUpdateFolder}
-                        onDeleteFolder={handleDeleteFolder}
-                        onMoveFolder={handleMoveFolder}
-                        getTaskCount={getFolderTaskCount}
-                        projectId={project.id}
-                        hoveredFolderId={hoveredFolderId}
-                    />
-                </div>
+             {/* SPLIT VIEW CONTENT (Main Container) */}
+             <div className="flex flex-grow min-h-0 overflow-hidden">
+                {/* LEFT COLUMN: Folders + Task List */}
+                <div className="flex-grow flex flex-col min-h-0">
+                    {/* Folder Tabs Row */}
+                    <div className="px-6 py-2  bg-background/50 flex-none z-10">
+                         <FolderTabs 
+                            folders={folders}
+                            selectedFolderId={selectedFolderId}
+                            onSelect={(id) => {
+                                setSelectedFolderId(id);
+                                globalStorage.setItem(`active_folder_${project.id}`, id);
+                            }}
+                            onAddFolder={handleAddFolder}
+                            onUpdateFolder={handleUpdateFolder}
+                            onDeleteFolder={handleDeleteFolder}
+                            onMoveFolder={handleMoveFolder}
+                            getTaskCount={getFolderTaskCount}
+                            projectId={project.id}
+                            hoveredFolderId={hoveredFolderId}
+                        />
+                    </div>
 
-                {/* SPLIT VIEW CONTENT */}
-                <div className="flex flex-grow min-h-0 overflow-hidden">
-                    {/* LEFT: Task List */}
+                    {/* Task List Scrollable Area */}
                     <div 
                         className="flex-grow flex flex-col min-h-0 overflow-y-auto overflow-x-hidden"
                         onDoubleClick={handleDoubleClick}
@@ -269,20 +270,20 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
                             )}
                          </div>
                     </div>
+                </div>
 
-                    {/* RIGHT: Task Details */}
-                    <div className="w-[400px] flex-shrink-0 border-l border-default-200 bg-content2/50 p-6 overflow-y-auto transition-all">
-                        {selectedTask ? (
-                             <div className="flex flex-col gap-4">
-                                 <h2 className="text-xl font-bold break-words">{selectedTask.content.replace(/<[^>]*>/g, '')}</h2>
-                                 {/* <div className="text-sm text-default-400">Task Details Placeholder</div> */}
-                             </div>
-                         ) : (
-                             <div className="h-full flex items-center justify-center text-default-400">
-                                 Select a task to view details
-                             </div>
-                         )}
-                    </div>
+                {/* RIGHT COLUMN: Task Details */}
+                <div className="w-[400px] flex-shrink-0 border-l border-default-200 bg-content2/50 p-6 overflow-y-auto transition-all h-full">
+                    {selectedTask ? (
+                         <div className="flex flex-col gap-4">
+                             <h2 className="text-xl font-bold break-words">{selectedTask.content.replace(/<[^>]*>/g, '')}</h2>
+                             {/* <div className="text-sm text-default-400">Task Details Placeholder</div> */}
+                         </div>
+                     ) : (
+                         <div className="h-full flex items-center justify-center text-default-400">
+                             Select a task to view details
+                         </div>
+                     )}
                 </div>
              </div>
 

@@ -158,7 +158,7 @@ export const FolderTabs = ({
     hoveredFolderId 
 }: FolderTabsProps) => {
     return (
-        <div className="flex items-end gap-4 w-full">
+        <div className="flex items-end gap-4 w-full ">
            <div className="flex-grow overflow-x-auto scrollbar-hide flex items-center gap-2">
                {folders.map((folder, index) => (
                      <FolderTab 
@@ -178,7 +178,7 @@ export const FolderTabs = ({
                ))}
            </div>
            
-           <div className="flex-shrink-0 ml-2">
+           <div className="flex-shrink-0 ml-2 flex ">
                <CreateItemPopover 
                    title="New Folder" 
                    inputPlaceholder="Folder Name"
