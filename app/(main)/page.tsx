@@ -46,10 +46,12 @@ interface SortableProjectItemProps {
    isActive: boolean;
    // isFirst removed as we use project.is_highlighted
    onClick: () => void;
-   onDocsClick: () => void;
-   onUiClick?: () => void; // New handler for UI Satellite
-   satelliteId?: string; // New prop
-   isUiActive?: boolean; // New prop: true if satellite is currently active
+   onUiClick?: () => void; // Handler for UI Satellite
+   onDocsClick?: () => void; // Handler for Docs Satellite
+   satelliteId?: string; // UI Satellite ID
+   docsSatelliteId?: string; // Docs Satellite ID
+   isUiActive?: boolean; // UI active state
+   isDocsActive?: boolean; // Docs active state
    children?: React.ReactNode;
 }
 
@@ -60,7 +62,9 @@ const SortableProjectItem = ({
    onDocsClick,
    onUiClick,
    satelliteId,
+   docsSatelliteId,
    isUiActive,
+   isDocsActive,
    children,
 }: SortableProjectItemProps) => {
    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -130,6 +134,22 @@ const SortableProjectItem = ({
                      }}
                   >
                      <span>UI</span>
+                  </div>
+               )}
+
+               {docsSatelliteId && (
+                  <div 
+                     className={clsx(
+                        "flex items-center gap-1 bg-orange-100 hover:bg-orange-200 px-2 py-[6px] rounded-lg text-[10px] font-medium text-orange-600 transition-all",
+                        isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+                        isDocsActive && "ring-2 ring-orange-500 ring-offset-1" // Highlight active Docs button
+                     )}
+                     onClick={(e) => {
+                        e.stopPropagation();
+                        onDocsClick?.();
+                     }}
+                  >
+                     <span>Docs</span>
                   </div>
                )}
                
@@ -221,26 +241,33 @@ function AppContent() {
       sensors,
    } = usePageLogic();
 
-   // Filter out satellite projects (proj_type === 'ui') from the sidebar
-   const sidebarProjects = projects.filter(p => p.proj_type !== 'ui');
+   // Filter out satellite projects (ui/docs) from the sidebar
+   const sidebarProjects = projects.filter(p => p.proj_type !== 'ui' && p.proj_type !== 'docs');
 
    // Map parent projects to their satellites and store parent colors
-   // { parentId: satelliteId }
+   // { parentId: { ui: satelliteId, docs: satelliteId } }
    const { satellitesMap, parentColorsMap } = React.useMemo(() => {
-      const satMap: Record<string, string> = {};
+      const satMap: Record<string, { ui?: string, docs?: string }> = {};
       const colorMap: Record<string, string> = {}; // { parentId: color }
 
       // First pass: collect parent colors
       projects.forEach(p => {
-          if (p.proj_type !== 'ui') {
+          if (p.proj_type !== 'ui' && p.proj_type !== 'docs') {
               colorMap[p.id] = p.proj_color;
           }
       });
 
       // Second pass: map satellites
       projects.forEach(p => {
-         if (p.proj_type === 'ui' && p.parent_proj_id) {
-            satMap[p.parent_proj_id] = p.id;
+         if (p.parent_proj_id) {
+             if (p.proj_type === 'ui') {
+                 if (!satMap[p.parent_proj_id]) satMap[p.parent_proj_id] = {};
+                 satMap[p.parent_proj_id].ui = p.id;
+             }
+             if (p.proj_type === 'docs') {
+                 if (!satMap[p.parent_proj_id]) satMap[p.parent_proj_id] = {};
+                 satMap[p.parent_proj_id].docs = p.id;
+             }
          }
       });
       return { satellitesMap: satMap, parentColorsMap: colorMap };
@@ -307,18 +334,27 @@ function AppContent() {
                      strategy={verticalListSortingStrategy}
                   >
                      {sidebarProjects.map((project) => {
-                        const satId = satellitesMap[project.id];
-                        // Active if self is active OR satellite is active
-                        const isSelfOrSatelliteActive = activeProjectId === project.id || (satId && activeProjectId === satId);
-                        const isUiActive = satId ? activeProjectId === satId : false;
+                        const sats = satellitesMap[project.id] || {};
+                        const uiId = sats.ui;
+                        const docsId = sats.docs;
+                        
+                        // Active if self is active OR any satellite is active
+                        const isSelfOrSatelliteActive = activeProjectId === project.id || 
+                           (uiId && activeProjectId === uiId) || 
+                           (docsId && activeProjectId === docsId);
+                           
+                        const isUiActive = uiId ? activeProjectId === uiId : false;
+                        const isDocsActive = docsId ? activeProjectId === docsId : false;
                         
                         return (
                            <SortableProjectItem
                               key={project.id}
                               project={project}
                               isActive={!!isSelfOrSatelliteActive}
-                              satelliteId={satId} // Pass satellite ID
+                              satelliteId={uiId} // Pass UI Satellite ID
+                              docsSatelliteId={docsId} // Pass Docs Satellite ID
                               isUiActive={isUiActive} // Pass UI active state
+                              isDocsActive={isDocsActive} // Pass Docs active state
                               onClick={() => {
                                  setActiveProjectId(project.id);
                                  setActiveSystemTab(null);
@@ -326,17 +362,19 @@ function AppContent() {
                                  globalStorage.setItem('active_project_id', project.id);
                               }}
                               onDocsClick={() => {
-                                 setActiveProjectId(project.id);
-                                 setActiveSystemTab(null);
-                                 setProjectScreenMode('docs'); // Switch to docs
-                                 globalStorage.setItem('active_project_id', project.id);
+                                 if (docsId) {
+                                    setActiveProjectId(docsId);
+                                    setActiveSystemTab(null);
+                                    setProjectScreenMode('tasks'); // Docs project is a separate project, render it fully
+                                    globalStorage.setItem('active_project_id', docsId);
+                                 }
                               }}
                               onUiClick={() => {
-                                 if (satId) {
-                                    setActiveProjectId(satId);
+                                 if (uiId) {
+                                    setActiveProjectId(uiId);
                                     setActiveSystemTab(null);
                                     setProjectScreenMode('tasks'); // UI projects likely use task/default view
-                                    globalStorage.setItem('active_project_id', satId);
+                                    globalStorage.setItem('active_project_id', uiId);
                                  }
                               }}
                            >
@@ -455,8 +493,9 @@ function AppContent() {
             </div>
 
             {projects.map((project) => {
-               // If satellite, inherit color from parent
-               const projectToRender = (project.proj_type === 'ui' && project.parent_proj_id && parentColorsMap[project.parent_proj_id])
+               // If satellite (ui or docs), inherit color from parent
+               const isSatellite = (project.proj_type === 'ui' || project.proj_type === 'docs');
+               const projectToRender = (isSatellite && project.parent_proj_id && parentColorsMap[project.parent_proj_id])
                   ? { ...project, proj_color: parentColorsMap[project.parent_proj_id] }
                   : project;
 
