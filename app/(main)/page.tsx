@@ -299,6 +299,9 @@ function AppContent() {
       // Second pass: map satellites
       projects.forEach(p => {
          if (p.parent_proj_id) {
+             // Ignore disabled satellites for UI controls (checkboxes and buttons)
+             if (p.is_disabled) return;
+
              if (p.proj_type === 'ui') {
                  if (!satMap[p.parent_proj_id]) satMap[p.parent_proj_id] = {};
                  satMap[p.parent_proj_id].ui = p.id;

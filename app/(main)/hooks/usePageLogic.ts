@@ -169,15 +169,19 @@ export function usePageLogic() {
       if (!parentProject) return;
 
       if (isEnabled) {
-         // Check if already exists to prevent duplicates
+         // Check local existence first for Optimistic UI
          const existing = projects.find(p => p.parent_proj_id === parentId && p.proj_type === type);
          
-         // If exists and active, do nothing
-         if (existing && !existing.is_disabled && !existing.is_deleted) {
-             return;
+         if (existing) {
+            // Optimistic Enable
+            if (existing.is_disabled || existing.is_deleted) {
+                 setProjects(prev => prev.map(p => p.id === existing.id ? { ...p, is_disabled: false, is_deleted: false } : p));
+            } else {
+                 return; // Already active
+            }
          }
 
-         // Create or Enable
+         // Network Request
          try {
              const title = `${parentProject.title} ${type.toUpperCase()}`;
              const color = parentProject.proj_color;
@@ -185,17 +189,19 @@ export function usePageLogic() {
              const satellite = await projectService.createSatellite(parentId, type, title, color);
              
              setProjects(prev => {
-                // If it existed (even disabled), we update it in list
                 const idx = prev.findIndex(p => p.id === satellite.id);
                 if (idx !== -1) {
                     return prev.map(p => p.id === satellite.id ? satellite : p);
                 }
-                // Else add new
                 return [...prev, satellite];
              });
              
              toast.success(`${type.toUpperCase()} module enabled`);
          } catch (err) {
+             // Revert optimistic if needed (complex for 'create', but handled for 'update')
+             if (existing) {
+                 setProjects(prev => prev.map(p => p.id === existing.id ? { ...p, is_disabled: true } : p));
+             }
              logger.error('Failed to create satellite', err);
              toast.error('Failed to enable module');
          }
@@ -203,19 +209,21 @@ export function usePageLogic() {
          // Disable
          const satellite = projects.find(p => p.parent_proj_id === parentId && p.proj_type === type);
          if (satellite) {
+             // Optimistic Disable
+             setProjects(prev => prev.map(p => p.id === satellite.id ? { ...p, is_disabled: true } : p));
+             
+             // If active, switch immediately
+             if (activeProjectId === satellite.id) {
+                 setActiveProjectId(parentId);
+                 setProjectScreenMode('tasks');
+             }
+
              try {
-                 await projectService.disableProject(satellite.id); // Use disable
-                 
-                 // Update local state: mark as disabled
-                 setProjects(prev => prev.map(p => p.id === satellite.id ? { ...p, is_disabled: true } : p));
-                 
-                 // If we were on that satellite, switch to parent
-                 if (activeProjectId === satellite.id) {
-                     setActiveProjectId(parentId);
-                     setProjectScreenMode('tasks');
-                 }
+                 await projectService.disableProject(satellite.id);
                  toast.success(`${type.toUpperCase()} module disabled`);
              } catch (err) {
+                 // Revert
+                 setProjects(prev => prev.map(p => p.id === satellite.id ? { ...p, is_disabled: false } : p));
                  logger.error('Failed to disable satellite', err);
                  toast.error('Failed to disable module');
              }
