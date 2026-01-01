@@ -133,7 +133,7 @@ const SortableProjectItem = ({
                   </div>
                )}
                
-               {project.show_docs_btn && (
+               {/* {project.show_docs_btn && (
                   <div 
                      className={clsx(
                         "flex items-center gap-1 bg-orange-100 hover:bg-orange-200 px-2 py-[6px] rounded-lg text-[10px] font-medium text-default-500 transition-all",
@@ -146,7 +146,7 @@ const SortableProjectItem = ({
                   >
                      <span>Docs</span>
                   </div>
-               )}
+               )} */}
             </div>
          </div>
 
