@@ -25,6 +25,7 @@ import { useProjectDnD } from '@/app/components/hooks/useProjectDnD';
 import { GlobalSearch, NavigationTarget } from '@/app/components/GlobalSearch';
 
 import { RichTextProvider } from '@/app/components/RichTextProvider';
+import { RichEditableCell } from '@/app/components/RichEditableCell';
 
 const logger = createLogger('ProjectScreen');
 
@@ -244,7 +245,7 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
                         onDoubleClick={handleDoubleClick}
                         onContextMenu={handleBackgroundContextMenu}
                     >
-                         <div className="flex-grow px-6 py-4">
+                         <div className="flex-grow px-6 py-4 pt-2">
                             {selectedFolderId ? (
                                <TaskList  
                                     key={selectedFolderId}
@@ -275,9 +276,25 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
                 {/* RIGHT COLUMN: Task Details */}
                 <div className="w-[400px] flex-shrink-0 border-l border-default-200 bg-content2/50 p-6 overflow-y-auto transition-all h-full">
                     {selectedTask ? (
-                         <div className="flex flex-col gap-4">
-                             <h2 className="text-xl font-bold break-words">{selectedTask.content.replace(/<[^>]*>/g, '')}</h2>
-                             {/* <div className="text-sm text-default-400">Task Details Placeholder</div> */}
+                         <div className="flex flex-col gap-6">
+                             <h2 className="text-xl font-bold break-words leading-tight">
+                                {selectedTask.content.replace(/<[^>]*>/g, '')}
+                             </h2>
+                             
+                             <div className="flex flex-col gap-2">
+                                <label className="text-xs font-semibold text-default-400 uppercase tracking-wider">
+                                    Notes
+                                </label>
+                                <div className="min-h-[150px] bg-background rounded-lg border border-default-200 shadow-sm p-3">
+                                     <RichEditableCell 
+                                        id={`task-notes-${selectedTask.id}`}
+                                        value={selectedTask.task_notes || ''}
+                                        onSave={(val) => handleUpdateTask(selectedTask.id, { task_notes: val })}
+                                        placeholder="Add notes..."
+                                        className="min-h-[100px]"
+                                     />
+                                </div>
+                             </div>
                          </div>
                      ) : (
                          <div className="h-full flex items-center justify-center text-default-400">

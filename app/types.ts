@@ -41,4 +41,5 @@ export interface Task {
    isDraft?: boolean;
    _tempId?: string;
    _isSaving?: boolean; // Флаг активного сохранения
+   task_notes?: string; // Rich Text notes
 }
