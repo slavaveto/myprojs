@@ -105,25 +105,27 @@ export const projectService = {
     },
 
     async createSatellite(parentId: string, type: 'ui' | 'docs', title: string, color: string) {
-        logger.info('Creating/Restoring satellite project', { parentId, type });
+        logger.info('Creating/Enabling satellite project', { parentId, type });
         
-        // Check existence (including deleted ones)
+        // Check existence (including disabled ones)
         const { data: existing } = await supabase
             .from(DB_TABLES.PROJECTS)
             .select('*')
             .eq('parent_proj_id', parentId)
             .eq('proj_type', type)
-            .maybeSingle(); // Don't filter by is_deleted
+            .maybeSingle(); 
             
         if (existing) {
-            if (existing.is_deleted) {
-                logger.info('Restoring soft-deleted satellite', { id: existing.id });
+            // Enable if disabled or deleted
+            if (existing.is_disabled || existing.is_deleted) {
+                logger.info('Enabling satellite', { id: existing.id });
                 
-                // 1. Restore Project
+                // Just enable the project. Do NOT restore tasks/folders (they were never deleted by disable logic).
                 const { data: restored, error: restoreError } = await supabase
                     .from(DB_TABLES.PROJECTS)
                     .update({ 
-                        is_deleted: false,
+                        is_disabled: false,
+                        is_deleted: false, 
                         updated_at: new Date().toISOString()
                     })
                     .eq('id', existing.id)
@@ -131,31 +133,6 @@ export const projectService = {
                     .single();
                     
                 if (restoreError) throw restoreError;
-
-                // 2. Restore Folders & Tasks
-                // Find all folders for this project (even deleted ones)
-                const { data: folders } = await supabase
-                    .from(DB_TABLES.FOLDERS)
-                    .select('id')
-                    .eq('project_id', existing.id)
-                    .or('is_deleted.eq.true,is_deleted.eq.false'); // Get all
-
-                if (folders && folders.length > 0) {
-                    const folderIds = folders.map(f => f.id);
-                    
-                    // Restore Folders
-                    await supabase
-                        .from(DB_TABLES.FOLDERS)
-                        .update({ is_deleted: false })
-                        .in('id', folderIds);
-
-                    // Restore Tasks
-                    await supabase
-                        .from(DB_TABLES.TASKS)
-                        .update({ is_deleted: false })
-                        .in('folder_id', folderIds);
-                }
-
                 return restored as Project;
             } else {
                 logger.warning('Active satellite already exists, returning it', { id: existing.id });
@@ -163,9 +140,7 @@ export const projectService = {
             }
         }
         
-        // Find max sort_order to put at end (though satellites are not in main list usually)
-        // Or just use 0, order doesn't matter much for satellites as they are hidden.
-        
+        // Create NEW
         const { data, error } = await supabase
             .from(DB_TABLES.PROJECTS)
             .insert({
@@ -173,6 +148,7 @@ export const projectService = {
                 proj_color: color,
                 sort_order: 9999, // Push to end
                 is_deleted: false,
+                is_disabled: false,
                 proj_type: type,
                 parent_proj_id: parentId,
                 updated_at: new Date().toISOString(),
@@ -197,6 +173,22 @@ export const projectService = {
         
         logger.success('Satellite created', { id: data.id });
         return data as Project;
+    },
+
+    async disableProject(id: string) {
+        logger.info('Disabling project', { id });
+        const { error } = await supabase
+            .from(DB_TABLES.PROJECTS)
+            .update({
+                is_disabled: true,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', id);
+            
+        if (error) {
+            logger.error('Failed to disable project', error);
+            throw error;
+        }
     },
 
     async updateProject(id: string, updates: Partial<Project>) {

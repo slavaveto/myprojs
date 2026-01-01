@@ -73,7 +73,8 @@ export const taskService = {
                     projects (
                         id,
                         title,
-                        proj_color
+                        proj_color,
+                        is_disabled
                     )
                 )
             `)
@@ -95,15 +96,21 @@ export const taskService = {
          throw error;
       }
 
-      // 3. Merge and Sort
-      let mergedTasks = (data || []).map((task: any) => {
-         // Use log time if available, otherwise fallback to updated_at
-         const realCompletedAt = logMap.get(task.id) || task.updated_at;
-         return {
-            ...task,
-            updated_at: realCompletedAt, // Override for UI sorting
-         };
-      });
+      // 3. Merge and Sort + FILTER DISABLED PROJECTS
+      let mergedTasks = (data || [])
+         .filter((task: any) => {
+             // Filter out tasks from disabled projects
+             const project = task.folders?.projects;
+             return !project?.is_disabled;
+         })
+         .map((task: any) => {
+             // Use log time if available, otherwise fallback to updated_at
+             const realCompletedAt = logMap.get(task.id) || task.updated_at;
+             return {
+                ...task,
+                updated_at: realCompletedAt, // Override for UI sorting
+             };
+         });
 
       // 4. Apply Time Filter in Memory
       if (timeFilter !== 'all') {
@@ -147,7 +154,8 @@ export const taskService = {
                     projects (
                         id,
                         title,
-                        proj_color
+                        proj_color,
+                        is_disabled
                     )
                 )
             `
@@ -161,8 +169,15 @@ export const taskService = {
          logger.error('Failed to fetch today tasks', error);
          throw error;
       }
-      logger.info('Today tasks loaded', { count: data?.length });
-      return data as any[];
+      
+      // Filter disabled projects
+      const filtered = (data || []).filter((t: any) => {
+          const project = t.folders?.projects;
+          return !project?.is_disabled;
+      });
+
+      logger.info('Today tasks loaded', { count: filtered.length });
+      return filtered as any[];
    },
 
    async getInboxTasks() {
@@ -201,7 +216,8 @@ export const taskService = {
                     projects (
                         id,
                         title,
-                        proj_color
+                        proj_color,
+                        is_disabled
                     )
                 )
             `
@@ -213,8 +229,11 @@ export const taskService = {
          logger.error('Failed to fetch search index', error);
          return [];
       }
+      
+      // Filter disabled
+      const filtered = (data || []).filter((t: any) => !t.folders?.projects?.is_disabled);
 
-      return data || [];
+      return filtered;
    },
 
    async moveTaskToFolder(taskId: string, folderId: string) {

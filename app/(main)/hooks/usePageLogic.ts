@@ -171,29 +171,43 @@ export function usePageLogic() {
       if (isEnabled) {
          // Check if already exists to prevent duplicates
          const existing = projects.find(p => p.parent_proj_id === parentId && p.proj_type === type);
-         if (existing) {
+         
+         // If exists and active, do nothing
+         if (existing && !existing.is_disabled && !existing.is_deleted) {
              return;
          }
 
-         // Create
+         // Create or Enable
          try {
              const title = `${parentProject.title} ${type.toUpperCase()}`;
              const color = parentProject.proj_color;
              
              const satellite = await projectService.createSatellite(parentId, type, title, color);
-             setProjects(prev => [...prev, satellite]);
+             
+             setProjects(prev => {
+                // If it existed (even disabled), we update it in list
+                const idx = prev.findIndex(p => p.id === satellite.id);
+                if (idx !== -1) {
+                    return prev.map(p => p.id === satellite.id ? satellite : p);
+                }
+                // Else add new
+                return [...prev, satellite];
+             });
+             
              toast.success(`${type.toUpperCase()} module enabled`);
          } catch (err) {
              logger.error('Failed to create satellite', err);
              toast.error('Failed to enable module');
          }
       } else {
-         // Delete (Soft)
+         // Disable
          const satellite = projects.find(p => p.parent_proj_id === parentId && p.proj_type === type);
          if (satellite) {
              try {
-                 await projectService.deleteProject(satellite.id);
-                 setProjects(prev => prev.filter(p => p.id !== satellite.id));
+                 await projectService.disableProject(satellite.id); // Use disable
+                 
+                 // Update local state: mark as disabled
+                 setProjects(prev => prev.map(p => p.id === satellite.id ? { ...p, is_disabled: true } : p));
                  
                  // If we were on that satellite, switch to parent
                  if (activeProjectId === satellite.id) {
@@ -202,7 +216,7 @@ export function usePageLogic() {
                  }
                  toast.success(`${type.toUpperCase()} module disabled`);
              } catch (err) {
-                 logger.error('Failed to delete satellite', err);
+                 logger.error('Failed to disable satellite', err);
                  toast.error('Failed to disable module');
              }
          }
