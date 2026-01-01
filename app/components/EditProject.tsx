@@ -23,13 +23,13 @@ interface EditProjectPopoverProps {
     initialColor: string;
     initialShowDocs: boolean;
     initialIsHighlighted: boolean;
-    onUpdate: (title: string, color: string, showDocs: boolean, isHighlighted: boolean) => Promise<void> | void;
+    // Updated signature to include modules
+    onUpdate: (title: string, color: string, showDocs: boolean, isHighlighted: boolean, hasUi: boolean, hasDocs: boolean) => Promise<void> | void;
     onDelete: () => Promise<void> | void;
     placement?: PopoverProps['placement'];
-    isSatellite?: boolean; // New prop to limit functionality
+    isSatellite?: boolean; 
     hasUiSatellite?: boolean;
     hasDocsSatellite?: boolean;
-    onToggleSatellite?: (type: 'ui' | 'docs', enabled: boolean) => void;
 }
 
 export const EditProjectPopover = ({ 
@@ -44,32 +44,53 @@ export const EditProjectPopover = ({
     isSatellite = false,
     hasUiSatellite = false,
     hasDocsSatellite = false,
-    onToggleSatellite
 }: EditProjectPopoverProps) => {
     const [isOpen, setIsOpen] = useState(false);
+    
+    // Form State
     const [title, setTitle] = useState(initialTitle);
     const [selectedColor, setSelectedColor] = useState(initialColor);
     const [showDocs, setShowDocs] = useState(initialShowDocs);
     const [isHighlighted, setIsHighlighted] = useState(initialIsHighlighted);
+    
+    // Modules State
+    const [hasUi, setHasUi] = useState(hasUiSatellite);
+    const [hasDocs, setHasDocs] = useState(hasDocsSatellite);
+
     const [isLoading, setIsLoading] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isModified, setIsModified] = useState(false);
 
-    // Sync state with props when popover is closed (or just use key on component to reset)
+    // Reset state when popover opens or props change
     useEffect(() => {
-        setTitle(initialTitle);
-        setSelectedColor(initialColor || COLORS[0].value);
-        setShowDocs(initialShowDocs);
-        setIsHighlighted(initialIsHighlighted);
-    }, [initialTitle, initialColor, initialShowDocs, initialIsHighlighted]);
-
-    const handleOpenChange = (open: boolean) => {
-        setIsOpen(open);
-        if (open) {
+        if (isOpen) {
             setTitle(initialTitle);
             setSelectedColor(initialColor || COLORS[0].value);
             setShowDocs(initialShowDocs);
             setIsHighlighted(initialIsHighlighted);
+            setHasUi(hasUiSatellite);
+            setHasDocs(hasDocsSatellite);
+            setIsModified(false);
+        }
+    }, [isOpen, initialTitle, initialColor, initialShowDocs, initialIsHighlighted, hasUiSatellite, hasDocsSatellite]);
+
+    // Track modifications for Save button state
+    useEffect(() => {
+        const isChanged = 
+            title !== initialTitle || 
+            selectedColor !== initialColor || 
+            isHighlighted !== initialIsHighlighted ||
+            hasUi !== hasUiSatellite ||
+            hasDocs !== hasDocsSatellite;
+            
+        setIsModified(isChanged);
+    }, [title, selectedColor, isHighlighted, hasUi, hasDocs, initialTitle, initialColor, initialIsHighlighted, hasUiSatellite, hasDocsSatellite]);
+
+
+    const handleOpenChange = (open: boolean) => {
+        setIsOpen(open);
+        if (open) {
             setIsDeleting(false);
         }
     };
@@ -77,10 +98,11 @@ export const EditProjectPopover = ({
     const handleSubmit = async (e?: React.FormEvent) => {
         e?.preventDefault();
         if (!title.trim()) return;
+        if (!isModified) return;
 
         setIsLoading(true);
         try {
-            await onUpdate(title, selectedColor, showDocs, isHighlighted);
+            await onUpdate(title, selectedColor, showDocs, isHighlighted, hasUi, hasDocs);
             setIsOpen(false);
         } catch (err) {
             console.error(err);
@@ -90,7 +112,7 @@ export const EditProjectPopover = ({
     };
 
     const handleDeleteClick = () => {
-        setIsOpen(false); // Close popover first
+        setIsOpen(false); 
         setIsDeleteModalOpen(true);
     };
 
@@ -98,7 +120,6 @@ export const EditProjectPopover = ({
         setIsDeleting(true); 
         try {
             await onDelete();
-            // Popover will be unmounted by parent usually
         } catch (err) {
             console.error(err);
             setIsDeleting(false);
@@ -185,12 +206,12 @@ export const EditProjectPopover = ({
                             )}
 
                             {/* Modules Section */}
-                            {!isSatellite && onToggleSatellite && (
+                            {!isSatellite && (
                                 <div className="px-1 flex flex-col gap-2 pt-2 border-t border-divider mt-1">
                                     <span className="text-tiny text-default-500 font-semibold uppercase">Modules</span>
                                     <Checkbox 
-                                        isSelected={hasUiSatellite} 
-                                        onValueChange={(val) => onToggleSatellite('ui', val)}
+                                        isSelected={hasUi} 
+                                        onValueChange={setHasUi}
                                         size="sm"
                                         color="secondary"
                                         classNames={{ label: "text-small" }}
@@ -198,8 +219,8 @@ export const EditProjectPopover = ({
                                         Enable UI Project
                                     </Checkbox>
                                     <Checkbox 
-                                        isSelected={hasDocsSatellite} 
-                                        onValueChange={(val) => onToggleSatellite('docs', val)}
+                                        isSelected={hasDocs} 
+                                        onValueChange={setHasDocs}
                                         size="sm"
                                         color="warning"
                                         classNames={{ label: "text-small" }}
@@ -236,7 +257,7 @@ export const EditProjectPopover = ({
                                         color="primary"
                                         type="submit" 
                                         isLoading={isLoading}
-                                        isDisabled={!title.trim() || isDeleting}
+                                        isDisabled={!title.trim() || isDeleting || !isModified}
                                     >
                                         Save
                                     </Button>

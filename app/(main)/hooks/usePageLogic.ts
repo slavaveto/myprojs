@@ -153,18 +153,30 @@ export function usePageLogic() {
       }
    };
 
-   const handleUpdateProject = async (projectId: string, title: string, color: string, showDocs?: boolean, isHighlighted?: boolean) => {
+   const handleUpdateProject = async (projectId: string, title: string, color: string, showDocs?: boolean, isHighlighted?: boolean, hasUi?: boolean, hasDocs?: boolean) => {
       setProjects((prev) => prev.map((p) => (p.id === projectId ? { ...p, title, proj_color: color, show_docs_btn: showDocs, is_highlighted: isHighlighted } : p)));
       try {
          await executeSidebarAction(async () => {
             await projectService.updateProject(projectId, { title, proj_color: color, show_docs_btn: showDocs, is_highlighted: isHighlighted });
          });
+
+         // Handle Modules
+         if (hasUi !== undefined) {
+             const uiSat = projects.find(p => p.parent_proj_id === projectId && p.proj_type === 'ui');
+             const isUiEnabled = uiSat && !uiSat.is_disabled && !uiSat.is_deleted;
+             if (hasUi !== !!isUiEnabled) await handleToggleSatellite(projectId, 'ui', hasUi, true);
+         }
+         if (hasDocs !== undefined) {
+             const docsSat = projects.find(p => p.parent_proj_id === projectId && p.proj_type === 'docs');
+             const isDocsEnabled = docsSat && !docsSat.is_disabled && !docsSat.is_deleted;
+             if (hasDocs !== !!isDocsEnabled) await handleToggleSatellite(projectId, 'docs', hasDocs, true);
+         }
       } catch (err) {
          logger.error('Failed to update project', err);
       }
    };
 
-   const handleToggleSatellite = async (parentId: string, type: 'ui' | 'docs', isEnabled: boolean) => {
+   const handleToggleSatellite = async (parentId: string, type: 'ui' | 'docs', isEnabled: boolean, silent = false) => {
       const parentProject = projects.find(p => p.id === parentId);
       if (!parentProject) return;
 
@@ -196,14 +208,14 @@ export function usePageLogic() {
                 return [...prev, satellite];
              });
              
-             toast.success(`${type.toUpperCase()} module enabled`);
+             if (!silent) toast.success(`${type.toUpperCase()} module enabled`);
          } catch (err) {
              // Revert optimistic if needed (complex for 'create', but handled for 'update')
              if (existing) {
                  setProjects(prev => prev.map(p => p.id === existing.id ? { ...p, is_disabled: true } : p));
              }
              logger.error('Failed to create satellite', err);
-             toast.error('Failed to enable module');
+             if (!silent) toast.error('Failed to enable module');
          }
       } else {
          // Disable
@@ -220,12 +232,12 @@ export function usePageLogic() {
 
              try {
                  await projectService.disableProject(satellite.id);
-                 toast.success(`${type.toUpperCase()} module disabled`);
+                 if (!silent) toast.success(`${type.toUpperCase()} module disabled`);
              } catch (err) {
                  // Revert
                  setProjects(prev => prev.map(p => p.id === satellite.id ? { ...p, is_disabled: false } : p));
                  logger.error('Failed to disable satellite', err);
-                 toast.error('Failed to disable module');
+                 if (!silent) toast.error('Failed to disable module');
              }
          }
       }

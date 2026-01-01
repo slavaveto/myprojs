@@ -43,16 +43,15 @@ interface ProjectScreenProps {
     onReady: () => void;
     globalStatus?: ActionStatus;
     canLoad?: boolean;
-    onUpdateProject: (updates: { title?: string; proj_color?: string; show_docs_btn?: boolean; is_highlighted?: boolean }) => void;
+    onUpdateProject: (updates: { title?: string; proj_color?: string; show_docs_btn?: boolean; is_highlighted?: boolean; hasUi?: boolean; hasDocs?: boolean }) => void;
     onDeleteProject: () => void;
     onNavigate?: (target: NavigationTarget) => void;
     hasUiSatellite?: boolean;
     hasDocsSatellite?: boolean;
-    onToggleSatellite?: (type: 'ui' | 'docs', enabled: boolean) => void;
 }
 
 export const ProjectScreen = (props: ProjectScreenProps) => {
-   const { project, onNavigate, hasUiSatellite, hasDocsSatellite, onToggleSatellite } = props;
+   const { project, onNavigate, hasUiSatellite, hasDocsSatellite } = props;
    
    // 1. Data Management Hook
    const {
@@ -193,7 +192,6 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
                         isSatellite={project.proj_type === 'ui' || project.proj_type === 'docs'}
                         hasUiSatellite={hasUiSatellite}
                         hasDocsSatellite={hasDocsSatellite}
-                        onToggleSatellite={onToggleSatellite}
                     >
                         <Button isIconOnly size="sm" variant="light" className="text-default-400 hover:text-default-600">
                             <EllipsisVertical size={18} />

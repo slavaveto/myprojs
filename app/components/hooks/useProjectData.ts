@@ -18,7 +18,7 @@ interface UseProjectDataProps {
     isActive: boolean;
     onReady: () => void;
     canLoad?: boolean;
-    onUpdateProject: (updates: { title?: string; proj_color?: string; show_docs_btn?: boolean; is_highlighted?: boolean }) => void;
+    onUpdateProject: (updates: { title?: string; proj_color?: string; show_docs_btn?: boolean; is_highlighted?: boolean; hasUi?: boolean; hasDocs?: boolean }) => void;
     onDeleteProject: () => void;
     globalStatus?: ActionStatus;
     onNavigate?: (target: NavigationTarget) => void;
@@ -263,11 +263,11 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
    };
 
    // --- Project Actions ---
-   const handleEditProject = async (title: string, color: string, showDocs: boolean, isHighlighted: boolean) => {
+   const handleEditProject = async (title: string, color: string, showDocs: boolean, isHighlighted: boolean, hasUi: boolean, hasDocs: boolean) => {
        try {
            await executeSave(async () => {
                await projectService.updateProject(project.id, { title, proj_color: color, show_docs_btn: showDocs, is_highlighted: isHighlighted });
-               onUpdateProject({ title, proj_color: color, show_docs_btn: showDocs, is_highlighted: isHighlighted });
+               onUpdateProject({ title, proj_color: color, show_docs_btn: showDocs, is_highlighted: isHighlighted, hasUi, hasDocs });
            });
        } catch (err) {
            logger.error('Failed to update project', err);

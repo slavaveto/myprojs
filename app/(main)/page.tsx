@@ -466,11 +466,10 @@ function AppContent() {
                                  initialColor={project.proj_color}
                                  initialShowDocs={project.show_docs_btn || false}
                                  initialIsHighlighted={project.is_highlighted || false}
-                                 onUpdate={(t, c, sd, ih) => handleUpdateProject(project.id, t, c, sd, ih)}
+                                 onUpdate={(t, c, sd, ih, hasUi, hasDocs) => handleUpdateProject(project.id, t, c, sd, ih, hasUi, hasDocs)}
                                  onDelete={() => handleDeleteProject(project.id)}
                                  hasUiSatellite={!!uiId}
                                  hasDocsSatellite={!!docsId}
-                                 onToggleSatellite={(type: 'ui' | 'docs', enabled: boolean) => handleToggleSatellite(project.id, type, enabled)}
                               >
                                  <button
                                     type="button"
@@ -608,11 +607,15 @@ function AppContent() {
                            onReady={() => handleProjectReady(project.id)}
                            globalStatus={sidebarStatus}
                            onNavigate={handleNavigate}
-                           onUpdateProject={(updates) => updateProjectInState(project.id, updates)}
+                           onUpdateProject={(updates) => {
+                               updateProjectInState(project.id, updates);
+                               const { hasUi, hasDocs } = updates as any;
+                               if (hasUi !== undefined) handleToggleSatellite(project.id, 'ui', hasUi, true);
+                               if (hasDocs !== undefined) handleToggleSatellite(project.id, 'docs', hasDocs, true);
+                           }}
                            onDeleteProject={() => removeProjectFromState(project.id)}
                            hasUiSatellite={!!sats.ui}
                            hasDocsSatellite={!!sats.docs}
-                           onToggleSatellite={showModules ? (type, enabled) => handleToggleSatellite(project.id, type, enabled) : undefined}
                         />
                      </div>
 
