@@ -6,7 +6,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { useDndContext } from '@dnd-kit/core';
 import { FastCheckbox } from './components/FastCheckbox';
 import { Checkbox, Chip } from '@heroui/react'; // Restore Checkbox import
-import { GripVertical, Trash2, MoreVertical, Check, Pin, ChevronRight, ChevronDown } from 'lucide-react';
+import { GripVertical, Trash2, MoreVertical, Check, Pin, ChevronRight, ChevronDown, FileText } from 'lucide-react';
 import { Task } from './types';
 import { EditableCell } from './components/EditableCell';
 import { RichEditableCell } from './components/RichEditableCell';
@@ -208,6 +208,7 @@ export const TaskRow = React.memo(
       // --- STANDARD TASK RENDER ---
       const isGroup = task.task_type === 'group';
       const isNote = task.task_type === 'note';
+      const hasNotes = task.task_notes && task.task_notes.replace(/<[^>]*>/g, '').trim().length > 0;
 
       // Group Color Logic
       // Use task.group_color or default project blue (#3b82f6) with 50% opacity (80 hex)
@@ -370,6 +371,13 @@ export const TaskRow = React.memo(
                      {/* Today Button */}
                      <TaskTodayControl task={task} onUpdate={onUpdate} />
                   </>
+               )}
+
+               {/* Notes Indicator */}
+               {hasNotes && !isGroup && (
+                  <div className="text-primary opacity-70 " title="Has notes">
+                     <FileText size={16} />
+                  </div>
                )}
 
                <button
