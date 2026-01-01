@@ -108,7 +108,7 @@ const SortableProjectItem = ({
             <div
                {...attributes}
                {...listeners}
-               className="p-1 -m-1 flex items-center justify-center cursor-grab active:cursor-grabbing outline-none"
+               className="w-[20px] flex items-center justify-center flex-shrink-0 cursor-grab active:cursor-grabbing outline-none"
                onClick={(e) => e.stopPropagation()}
             >
                <div
@@ -205,7 +205,7 @@ const PersonalProjectItem = ({
                isActive && 'bg-primary/10 text-primary font-medium cursor-pointer'
             )}
          >
-            <div className="p-1 w-[20px] -m-1 flex items-center justify-center">
+            <div className="w-[20px] flex items-center justify-center flex-shrink-0">
                <div
                   className="w-3 h-3 rounded-full flex-shrink-0"
                   style={{ backgroundColor: project.proj_color || '#3b82f6' }}
