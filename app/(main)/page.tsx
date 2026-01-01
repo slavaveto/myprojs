@@ -578,9 +578,14 @@ function AppContent() {
             {projects.map((project) => {
                // If satellite (ui or docs), inherit color from parent
                const isSatellite = (project.proj_type === 'ui' || project.proj_type === 'docs');
+               const isPersonal = project.proj_type === 'personal';
+               
                const projectToRender = (isSatellite && project.parent_proj_id && parentColorsMap[project.parent_proj_id])
                   ? { ...project, proj_color: parentColorsMap[project.parent_proj_id] }
                   : project;
+
+               const sats = satellitesMap[project.id] || {};
+               const showModules = !isSatellite && !isPersonal;
 
                return (
                   <div
@@ -602,6 +607,9 @@ function AppContent() {
                            onNavigate={handleNavigate}
                            onUpdateProject={(updates) => updateProjectInState(project.id, updates)}
                            onDeleteProject={() => removeProjectFromState(project.id)}
+                           hasUiSatellite={!!sats.ui}
+                           hasDocsSatellite={!!sats.docs}
+                           onToggleSatellite={showModules ? (type, enabled) => handleToggleSatellite(project.id, type, enabled) : undefined}
                         />
                      </div>
 
