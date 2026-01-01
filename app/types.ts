@@ -6,7 +6,7 @@ export interface Project {
    created_at: string;
    updated_at: string;
     local_path?: string; // Name of the folder in ~/Projs/
-   proj_type?: string; // 'ui' for satellite projects
+   proj_type?: string; // 'ui', 'docs', 'personal'
    parent_proj_id?: string; // ID of the parent project for satellites
    is_deleted?: boolean; // Added for Soft Delete
    show_docs_btn?: boolean; // Toggle for Docs button visibility
