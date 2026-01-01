@@ -187,6 +187,7 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
                         initialIsHighlighted={project.is_highlighted || false}
                         onUpdate={handleEditProject}
                         onDelete={handleRemoveProject}
+                        isSatellite={project.proj_type === 'ui' || project.proj_type === 'docs'}
                     >
                         <Button isIconOnly size="sm" variant="light" className="text-default-400 hover:text-default-600">
                             <EllipsisVertical size={18} />

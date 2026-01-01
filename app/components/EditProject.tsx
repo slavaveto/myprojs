@@ -26,6 +26,7 @@ interface EditProjectPopoverProps {
     onUpdate: (title: string, color: string, showDocs: boolean, isHighlighted: boolean) => Promise<void> | void;
     onDelete: () => Promise<void> | void;
     placement?: PopoverProps['placement'];
+    isSatellite?: boolean; // New prop to limit functionality
 }
 
 export const EditProjectPopover = ({ 
@@ -36,7 +37,8 @@ export const EditProjectPopover = ({
     initialIsHighlighted = false,
     onUpdate,
     onDelete,
-    placement = "bottom-end"
+    placement = "bottom-end",
+    isSatellite = false
 }: EditProjectPopoverProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const [title, setTitle] = useState(initialTitle);
@@ -135,60 +137,70 @@ export const EditProjectPopover = ({
                             />
 
                             <div className="flex flex-col gap-1.5">
-                                <span className="text-tiny text-default-500">Color</span>
-                                <div className="flex flex-wrap gap-2 justify-between px-1">
-                                    {COLORS.map((color) => (
-                                        <button
-                                            key={color.value}
-                                            type="button"
-                                            onClick={() => setSelectedColor(color.value)}
-                                            className={clsx(
-                                                "w-6 h-6 rounded-full transition-transform hover:scale-110 flex items-center justify-center outline-none ring-offset-1 ring-offset-content1",
-                                                selectedColor?.toLowerCase() === color.value.toLowerCase() && "ring-2 ring-primary scale-110"
-                                            )}
-                                            style={{ backgroundColor: color.value }}
-                                            title={color.name}
-                                        >
-                                            {selectedColor?.toLowerCase() === color.value.toLowerCase() && (
-                                                <Check size={14} className="text-white drop-shadow-sm" />
-                                            )}
-                                        </button>
-                                    ))}
-                                </div>
+                                {!isSatellite && (
+                                    <>
+                                        <span className="text-tiny text-default-500">Color</span>
+                                        <div className="flex flex-wrap gap-2 justify-between px-1">
+                                            {COLORS.map((color) => (
+                                                <button
+                                                    key={color.value}
+                                                    type="button"
+                                                    onClick={() => setSelectedColor(color.value)}
+                                                    className={clsx(
+                                                        "w-6 h-6 rounded-full transition-transform hover:scale-110 flex items-center justify-center outline-none ring-offset-1 ring-offset-content1",
+                                                        selectedColor?.toLowerCase() === color.value.toLowerCase() && "ring-2 ring-primary scale-110"
+                                                    )}
+                                                    style={{ backgroundColor: color.value }}
+                                                    title={color.name}
+                                                >
+                                                    {selectedColor?.toLowerCase() === color.value.toLowerCase() && (
+                                                        <Check size={14} className="text-white drop-shadow-sm" />
+                                                    )}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
                             </div>
                             
-                            <div className="px-1 flex flex-col gap-2">
-                                <Checkbox 
-                                    isSelected={showDocs} 
-                                    onValueChange={setShowDocs}
-                                    size="sm"
-                                >
-                                    Show Docs Button
-                                </Checkbox>
+                            {!isSatellite && (
+                                <div className="px-1 flex flex-col gap-2">
+                                    <Checkbox 
+                                        isSelected={showDocs} 
+                                        onValueChange={setShowDocs}
+                                        size="sm"
+                                    >
+                                        Show Docs Button
+                                    </Checkbox>
 
-                                <Checkbox 
-                                    isSelected={isHighlighted} 
-                                    onValueChange={setIsHighlighted}
-                                    size="sm"
-                                    color="secondary"
-                                >
-                                    Highlight Project
-                                </Checkbox>
-                            </div>
+                                    <Checkbox 
+                                        isSelected={isHighlighted} 
+                                        onValueChange={setIsHighlighted}
+                                        size="sm"
+                                        color="secondary"
+                                    >
+                                        Highlight Project
+                                    </Checkbox>
+                                </div>
+                            )}
 
                             <div className="flex gap-2 justify-between pt-2 border-t border-divider mt-1">
-                                <Button 
-                                    size="sm" 
-                                    color="danger" 
-                                    variant="light" 
-                                    isIconOnly
-                                    onPress={handleDeleteClick}
-                                    isLoading={isDeleting}
-                                    isDisabled={isLoading}
-                                    title="Delete Project"
-                                >
-                                    <Trash2 size={18} />
-                                </Button>
+                                {!isSatellite ? (
+                                    <Button 
+                                        size="sm" 
+                                        color="danger" 
+                                        variant="light" 
+                                        isIconOnly
+                                        onPress={handleDeleteClick}
+                                        isLoading={isDeleting}
+                                        isDisabled={isLoading}
+                                        title="Delete Project"
+                                    >
+                                        <Trash2 size={18} />
+                                    </Button>
+                                ) : (
+                                    <div /> // Spacer if delete button is hidden
+                                )}
 
                                 <div className="flex gap-2">
                                     <Button size="sm" variant="light" onPress={() => setIsOpen(false)} isDisabled={isDeleting || isLoading}>
@@ -221,4 +233,3 @@ export const EditProjectPopover = ({
         </>
     );
 };
-

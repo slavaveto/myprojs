@@ -365,7 +365,9 @@ export const TaskMenuItems = ({
                          <ArrowRight size={14} className="text-default-400" />
                       </div>
                       <div className="absolute right-[100%] top-[-4px] mr-1 w-[200px] hidden group-hover/move:flex flex-col bg-content1 rounded-medium shadow-small border-small border-default-200 p-1 z-50 overflow-visible">
-                         {projectsStructure.map((project) => {
+                         {projectsStructure
+                            .filter(p => p.proj_type !== 'ui' && p.proj_type !== 'docs') // Exclude satellites
+                            .map((project) => {
                             const isCurrentProject = currentProjectId ? String(project.id) === String(currentProjectId) : String(project.id) === String(task.project_id);
                             return (
                                <div key={project.id} className={clsx('relative group/project w-full', isCurrentProject && 'opacity-50 pointer-events-none')}>
