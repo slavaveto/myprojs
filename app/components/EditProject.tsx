@@ -21,10 +21,9 @@ interface EditProjectPopoverProps {
     children: React.ReactNode;
     initialTitle: string;
     initialColor: string;
-    initialShowDocs: boolean;
     initialIsHighlighted: boolean;
     // Updated signature to include modules
-    onUpdate: (title: string, color: string, showDocs: boolean, isHighlighted: boolean, hasUi: boolean, hasDocs: boolean) => Promise<void> | void;
+    onUpdate: (title: string, color: string, isHighlighted: boolean, hasUi: boolean, hasDocs: boolean) => Promise<void> | void;
     onDelete: () => Promise<void> | void;
     placement?: PopoverProps['placement'];
     isSatellite?: boolean; 
@@ -36,7 +35,6 @@ export const EditProjectPopover = ({
     children, 
     initialTitle,
     initialColor,
-    initialShowDocs = false,
     initialIsHighlighted = false,
     onUpdate,
     onDelete,
@@ -50,7 +48,6 @@ export const EditProjectPopover = ({
     // Form State
     const [title, setTitle] = useState(initialTitle);
     const [selectedColor, setSelectedColor] = useState(initialColor);
-    const [showDocs, setShowDocs] = useState(initialShowDocs);
     const [isHighlighted, setIsHighlighted] = useState(initialIsHighlighted);
     
     // Modules State
@@ -67,13 +64,12 @@ export const EditProjectPopover = ({
         if (isOpen) {
             setTitle(initialTitle);
             setSelectedColor(initialColor || COLORS[0].value);
-            setShowDocs(initialShowDocs);
             setIsHighlighted(initialIsHighlighted);
             setHasUi(hasUiSatellite);
             setHasDocs(hasDocsSatellite);
             setIsModified(false);
         }
-    }, [isOpen, initialTitle, initialColor, initialShowDocs, initialIsHighlighted, hasUiSatellite, hasDocsSatellite]);
+    }, [isOpen, initialTitle, initialColor, initialIsHighlighted, hasUiSatellite, hasDocsSatellite]);
 
     // Track modifications for Save button state
     useEffect(() => {
@@ -102,7 +98,7 @@ export const EditProjectPopover = ({
 
         setIsLoading(true);
         try {
-            await onUpdate(title, selectedColor, showDocs, isHighlighted, hasUi, hasDocs);
+            await onUpdate(title, selectedColor, isHighlighted, hasUi, hasDocs);
             setIsOpen(false);
         } catch (err) {
             console.error(err);

@@ -43,7 +43,7 @@ interface ProjectScreenProps {
     onReady: () => void;
     globalStatus?: ActionStatus;
     canLoad?: boolean;
-    onUpdateProject: (updates: { title?: string; proj_color?: string; show_docs_btn?: boolean; is_highlighted?: boolean; hasUi?: boolean; hasDocs?: boolean }) => void;
+    onUpdateProject: (updates: { title?: string; proj_color?: string; is_highlighted?: boolean; hasUi?: boolean; hasDocs?: boolean }) => void;
     onDeleteProject: () => void;
     onNavigate?: (target: NavigationTarget) => void;
     hasUiSatellite?: boolean;
@@ -185,7 +185,6 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
                     <EditProjectPopover  
                         initialTitle={project.title}
                         initialColor={project.proj_color}
-                        initialShowDocs={project.show_docs_btn || false}
                         initialIsHighlighted={project.is_highlighted || false}
                         onUpdate={handleEditProject}
                         onDelete={handleRemoveProject}

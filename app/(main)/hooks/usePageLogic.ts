@@ -153,11 +153,11 @@ export function usePageLogic() {
       }
    };
 
-   const handleUpdateProject = async (projectId: string, title: string, color: string, showDocs?: boolean, isHighlighted?: boolean, hasUi?: boolean, hasDocs?: boolean) => {
-      setProjects((prev) => prev.map((p) => (p.id === projectId ? { ...p, title, proj_color: color, show_docs_btn: showDocs, is_highlighted: isHighlighted } : p)));
+   const handleUpdateProject = async (projectId: string, title: string, color: string, isHighlighted?: boolean, hasUi?: boolean, hasDocs?: boolean) => {
+      setProjects((prev) => prev.map((p) => (p.id === projectId ? { ...p, title, proj_color: color, is_highlighted: isHighlighted } : p)));
       try {
          await executeSidebarAction(async () => {
-            await projectService.updateProject(projectId, { title, proj_color: color, show_docs_btn: showDocs, is_highlighted: isHighlighted });
+            await projectService.updateProject(projectId, { title, proj_color: color, is_highlighted: isHighlighted });
          });
 
          // Handle Modules

@@ -152,21 +152,7 @@ const SortableProjectItem = ({
                      <span>Docs</span>
                   </div>
                )}
-               
-               {/* {project.show_docs_btn && (
-                  <div 
-                     className={clsx(
-                        "flex items-center gap-1 bg-orange-100 hover:bg-orange-200 px-2 py-[6px] rounded-lg text-[10px] font-medium text-default-500 transition-all",
-                        isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                     )}
-                     onClick={(e) => {
-                        e.stopPropagation();
-                        onDocsClick();
-                     }}
-                  >
-                     <span>Docs</span>
-                  </div>
-               )} */}
+   
 
             </div>
          </div>
@@ -385,9 +371,8 @@ function AppContent() {
                               <EditProjectPopover
                                  initialTitle={project.title}
                                  initialColor={project.proj_color}
-                                 initialShowDocs={project.show_docs_btn || false}
                                  initialIsHighlighted={project.is_highlighted || false}
-                                 onUpdate={(t, c, sd, ih) => handleUpdateProject(project.id, t, c, sd, ih)}
+                                 onUpdate={(t, c, ih, hasUi, hasDocs) => handleUpdateProject(project.id, t, c, ih, hasUi, hasDocs)}
                                  onDelete={() => handleDeleteProject(project.id)}
                               >
                                  <button
@@ -465,9 +450,8 @@ function AppContent() {
                               <EditProjectPopover
                                  initialTitle={project.title}
                                  initialColor={project.proj_color}
-                                 initialShowDocs={project.show_docs_btn || false}
                                  initialIsHighlighted={project.is_highlighted || false}
-                                 onUpdate={(t, c, sd, ih, hasUi, hasDocs) => handleUpdateProject(project.id, t, c, sd, ih, hasUi, hasDocs)}
+                                 onUpdate={(t, c, ih, hasUi, hasDocs) => handleUpdateProject(project.id, t, c, ih, hasUi, hasDocs)}
                                  onDelete={() => handleDeleteProject(project.id)}
                                  hasUiSatellite={!!uiId}
                                  hasDocsSatellite={!!docsId}

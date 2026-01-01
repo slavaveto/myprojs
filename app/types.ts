@@ -10,7 +10,6 @@ export interface Project {
    parent_proj_id?: string; // ID of the parent project for satellites
    is_deleted?: boolean; // Added for Soft Delete
    is_disabled?: boolean; // Toggled state for satellites
-   show_docs_btn?: boolean; // Toggle for Docs button visibility
    is_highlighted?: boolean; // Special styling for important projects
 }
 
