@@ -164,6 +164,45 @@ export function usePageLogic() {
       }
    };
 
+   const handleToggleSatellite = async (parentId: string, type: 'ui' | 'docs', isEnabled: boolean) => {
+      const parentProject = projects.find(p => p.id === parentId);
+      if (!parentProject) return;
+
+      if (isEnabled) {
+         // Create
+         try {
+             const title = `${parentProject.title} ${type.toUpperCase()}`;
+             const color = parentProject.proj_color;
+             
+             const satellite = await projectService.createSatellite(parentId, type, title, color);
+             setProjects(prev => [...prev, satellite]);
+             toast.success(`${type.toUpperCase()} module enabled`);
+         } catch (err) {
+             logger.error('Failed to create satellite', err);
+             toast.error('Failed to enable module');
+         }
+      } else {
+         // Delete (Soft)
+         const satellite = projects.find(p => p.parent_proj_id === parentId && p.proj_type === type);
+         if (satellite) {
+             try {
+                 await projectService.deleteProject(satellite.id);
+                 setProjects(prev => prev.filter(p => p.id !== satellite.id));
+                 
+                 // If we were on that satellite, switch to parent
+                 if (activeProjectId === satellite.id) {
+                     setActiveProjectId(parentId);
+                     setProjectScreenMode('tasks');
+                 }
+                 toast.success(`${type.toUpperCase()} module disabled`);
+             } catch (err) {
+                 logger.error('Failed to delete satellite', err);
+                 toast.error('Failed to disable module');
+             }
+         }
+      }
+   };
+
    // Pure state update (for when deletion is handled by child component)
    const removeProjectFromState = (projectId: string) => {
       if (activeProjectId === projectId) {
@@ -345,6 +384,7 @@ export function usePageLogic() {
       handleRestoreTaskFromDone,
       handleProjectReady,
       updateProjectInState,
+      handleToggleSatellite, // Export new handler
       
       // Props
       sensors,

@@ -104,6 +104,43 @@ export const projectService = {
         return data as Project;
     },
 
+    async createSatellite(parentId: string, type: 'ui' | 'docs', title: string, color: string) {
+        logger.info('Creating satellite project', { parentId, type });
+        
+        // Find max sort_order to put at end (though satellites are not in main list usually)
+        // Or just use 0, order doesn't matter much for satellites as they are hidden.
+        
+        const { data, error } = await supabase
+            .from(DB_TABLES.PROJECTS)
+            .insert({
+                title,
+                proj_color: color,
+                sort_order: 9999, // Push to end
+                is_deleted: false,
+                proj_type: type,
+                parent_proj_id: parentId,
+                updated_at: new Date().toISOString(),
+                created_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+            
+        if (error) {
+            logger.error('Failed to create satellite project', error);
+            throw error;
+        }
+
+        // Create default folder for satellite
+        try {
+            await folderService.createFolder(data.id, 'General', 0);
+        } catch (folderError) {
+            logger.error('Failed to create default folder for satellite', folderError);
+        }
+        
+        logger.success('Satellite created', { id: data.id });
+        return data as Project;
+    },
+
     async updateProject(id: string, updates: Partial<Project>) {
         logger.info('Updating project', { id, updates });
         
@@ -209,6 +246,21 @@ export const projectService = {
         if (error) {
             logger.error('Failed to delete project', error);
             throw error;
+        }
+
+        // 5. Soft delete satellites (UI/Docs projects)
+        // We do this after main project delete to ensure consistency
+        const { error: satellitesError } = await supabase
+            .from(DB_TABLES.PROJECTS)
+            .update({
+                is_deleted: true,
+                updated_at: new Date().toISOString()
+            })
+            .eq('parent_proj_id', id);
+
+        if (satellitesError) {
+             logger.error('Failed to delete satellites', satellitesError);
+             // Non-blocking, main project is already deleted
         }
         
         await logService.logAction(

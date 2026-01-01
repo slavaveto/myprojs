@@ -27,6 +27,9 @@ interface EditProjectPopoverProps {
     onDelete: () => Promise<void> | void;
     placement?: PopoverProps['placement'];
     isSatellite?: boolean; // New prop to limit functionality
+    hasUiSatellite?: boolean;
+    hasDocsSatellite?: boolean;
+    onToggleSatellite?: (type: 'ui' | 'docs', enabled: boolean) => void;
 }
 
 export const EditProjectPopover = ({ 
@@ -38,7 +41,10 @@ export const EditProjectPopover = ({
     onUpdate,
     onDelete,
     placement = "bottom-end",
-    isSatellite = false
+    isSatellite = false,
+    hasUiSatellite = false,
+    hasDocsSatellite = false,
+    onToggleSatellite
 }: EditProjectPopoverProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const [title, setTitle] = useState(initialTitle);
@@ -180,6 +186,31 @@ export const EditProjectPopover = ({
                                         color="secondary"
                                     >
                                         Highlight Project
+                                    </Checkbox>
+                                </div>
+                            )}
+
+                            {/* Modules Section */}
+                            {!isSatellite && onToggleSatellite && (
+                                <div className="px-1 flex flex-col gap-2 pt-2 border-t border-divider mt-1">
+                                    <span className="text-tiny text-default-500 font-semibold uppercase">Modules</span>
+                                    <Checkbox 
+                                        isSelected={hasUiSatellite} 
+                                        onValueChange={(val) => onToggleSatellite('ui', val)}
+                                        size="sm"
+                                        color="secondary"
+                                        classNames={{ label: "text-small" }}
+                                    >
+                                        Enable UI Project
+                                    </Checkbox>
+                                    <Checkbox 
+                                        isSelected={hasDocsSatellite} 
+                                        onValueChange={(val) => onToggleSatellite('docs', val)}
+                                        size="sm"
+                                        color="warning"
+                                        classNames={{ label: "text-small" }}
+                                    >
+                                        Enable Docs Project
                                     </Checkbox>
                                 </div>
                             )}

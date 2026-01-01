@@ -271,6 +271,7 @@ function AppContent() {
       handleProjectReady,
       updateProjectInState,
       removeProjectFromState,
+      handleToggleSatellite, // Import new handler
       
       // Props
       sensors,
@@ -363,35 +364,38 @@ function AppContent() {
                      {/* <div className="px-2 pb-2 text-xs font-semibold text-default-400 uppercase tracking-wider">
                         Personal
                      </div> */}
-                     {personalProjects.map(project => (
-                        <PersonalProjectItem
-                           key={project.id}
-                           project={project}
-                           isActive={activeProjectId === project.id}
-                           onClick={() => {
-                              setActiveProjectId(project.id);
-                              setActiveSystemTab(null);
-                              setProjectScreenMode('tasks');
-                              globalStorage.setItem('active_project_id', project.id);
-                           }}
-                        >
-                           <EditProjectPopover
-                              initialTitle={project.title}
-                              initialColor={project.proj_color}
-                              initialShowDocs={project.show_docs_btn || false}
-                              initialIsHighlighted={project.is_highlighted || false}
-                              onUpdate={(t, c, sd, ih) => handleUpdateProject(project.id, t, c, sd, ih)}
-                              onDelete={() => handleDeleteProject(project.id)}
+                     {personalProjects.map(project => {
+                        const sats = satellitesMap[project.id] || {};
+                        return (
+                           <PersonalProjectItem
+                              key={project.id}
+                              project={project}
+                              isActive={activeProjectId === project.id}
+                              onClick={() => {
+                                 setActiveProjectId(project.id);
+                                 setActiveSystemTab(null);
+                                 setProjectScreenMode('tasks');
+                                 globalStorage.setItem('active_project_id', project.id);
+                              }}
                            >
-                              <button
-                                 type="button"
-                                 className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-default-400 hover:text-primary transition-colors outline-none cursor-pointer opacity-0 group-hover:opacity-100"
+                              <EditProjectPopover
+                                 initialTitle={project.title}
+                                 initialColor={project.proj_color}
+                                 initialShowDocs={project.show_docs_btn || false}
+                                 initialIsHighlighted={project.is_highlighted || false}
+                                 onUpdate={(t, c, sd, ih) => handleUpdateProject(project.id, t, c, sd, ih)}
+                                 onDelete={() => handleDeleteProject(project.id)}
                               >
-                                 <EllipsisVertical size={18} />
-                              </button>
-                           </EditProjectPopover>
-                        </PersonalProjectItem>
-                     ))}
+                                 <button
+                                    type="button"
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-default-400 hover:text-primary transition-colors outline-none cursor-pointer opacity-0 group-hover:opacity-100"
+                                 >
+                                    <EllipsisVertical size={18} />
+                                 </button>
+                              </EditProjectPopover>
+                           </PersonalProjectItem>
+                        );
+                     })}
                   </div>
                )}
 
@@ -461,6 +465,9 @@ function AppContent() {
                                  initialIsHighlighted={project.is_highlighted || false}
                                  onUpdate={(t, c, sd, ih) => handleUpdateProject(project.id, t, c, sd, ih)}
                                  onDelete={() => handleDeleteProject(project.id)}
+                                 hasUiSatellite={!!uiId}
+                                 hasDocsSatellite={!!docsId}
+                                 onToggleSatellite={(type: 'ui' | 'docs', enabled: boolean) => handleToggleSatellite(project.id, type, enabled)}
                               >
                                  <button
                                     type="button"
