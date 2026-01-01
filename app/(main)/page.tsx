@@ -47,6 +47,8 @@ interface SortableProjectItemProps {
    // isFirst removed as we use project.is_highlighted
    onClick: () => void;
    onDocsClick: () => void;
+   onUiClick?: () => void; // New handler for UI Satellite
+   satelliteId?: string; // New prop
    children?: React.ReactNode;
 }
 
@@ -55,6 +57,8 @@ const SortableProjectItem = ({
    isActive,
    onClick,
    onDocsClick,
+   onUiClick,
+   satelliteId,
    children,
 }: SortableProjectItemProps) => {
    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -110,21 +114,37 @@ const SortableProjectItem = ({
             <span className="truncate flex-grow">{project.title}</span>
             
             {/* Docs Chip */}
-            {project.show_docs_btn && (
-               <div 
-                  className={clsx(
-                     "flex items-center gap-1 bg-orange-100 hover:bg-orange-200 px-2 py-[6px] rounded-lg text-[10px] font-medium text-default-500 transition-all",
-                     isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                  )}
-                  onClick={(e) => {
-                     e.stopPropagation();
-                     onDocsClick();
-                  }}
-               >
-                  {/* <Book size={12} /> */}
-                  <span>Docs</span>
-               </div>
-            )}
+            <div className="flex items-center gap-1">
+               {satelliteId && (
+                  <div 
+                     className={clsx(
+                        "flex items-center gap-1 bg-purple-100 hover:bg-purple-200 px-2 py-[6px] rounded-lg text-[10px] font-medium text-purple-600 transition-all",
+                        isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                     )}
+                     onClick={(e) => {
+                        e.stopPropagation();
+                        onUiClick?.();
+                     }}
+                  >
+                     <span>UI</span>
+                  </div>
+               )}
+               
+               {project.show_docs_btn && (
+                  <div 
+                     className={clsx(
+                        "flex items-center gap-1 bg-orange-100 hover:bg-orange-200 px-2 py-[6px] rounded-lg text-[10px] font-medium text-default-500 transition-all",
+                        isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                     )}
+                     onClick={(e) => {
+                        e.stopPropagation();
+                        onDocsClick();
+                     }}
+                  >
+                     <span>Docs</span>
+                  </div>
+               )}
+            </div>
          </div>
 
          {/* {children && (
@@ -201,6 +221,18 @@ function AppContent() {
    // Filter out satellite projects (proj_type === 'ui') from the sidebar
    const sidebarProjects = projects.filter(p => p.proj_type !== 'ui');
 
+   // Map parent projects to their satellites
+   // { parentId: satelliteId }
+   const satellitesMap = React.useMemo(() => {
+      const map: Record<string, string> = {};
+      projects.forEach(p => {
+         if (p.proj_type === 'ui' && p.parent_proj_id) {
+            map[p.parent_proj_id] = p.id;
+         }
+      });
+      return map;
+   }, [projects]);
+
    return (
       <div className="flex h-screen w-full overflow-hidden bg-background">
          {/* Sidebar */}
@@ -266,6 +298,7 @@ function AppContent() {
                            key={project.id}
                            project={project}
                            isActive={activeProjectId === project.id}
+                           satelliteId={satellitesMap[project.id]} // Pass satellite ID
                            onClick={() => {
                               setActiveProjectId(project.id);
                               setActiveSystemTab(null);
@@ -277,6 +310,15 @@ function AppContent() {
                               setActiveSystemTab(null);
                               setProjectScreenMode('docs'); // Switch to docs
                               globalStorage.setItem('active_project_id', project.id);
+                           }}
+                           onUiClick={() => {
+                              const satId = satellitesMap[project.id];
+                              if (satId) {
+                                 setActiveProjectId(satId);
+                                 setActiveSystemTab(null);
+                                 setProjectScreenMode('tasks'); // UI projects likely use task/default view
+                                 globalStorage.setItem('active_project_id', satId);
+                              }
                            }}
                         >
                            <EditProjectPopover
