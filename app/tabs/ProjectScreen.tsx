@@ -162,6 +162,13 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
             "h-full w-full overflow-hidden flex flex-col",
             activeId ? "cursor-grabbing *:[cursor:grabbing]" : ""
           )}
+          onClick={(e) => {
+              const target = e.target as HTMLElement;
+              // Reset selection if clicking outside of a task and outside of the right details panel
+              if (!target.closest('[data-task-row]') && !target.closest('.right-panel')) {
+                  setSelectedTaskId(null);
+              }
+          }}
       >
          {/* HEADER SECTION (Full Width) */}
          <div className="flex-none px-6 py-4 border-b border-default-200 bg-background z-10 flex flex-col gap-4">
@@ -274,7 +281,7 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
                 </div>
 
                 {/* RIGHT COLUMN: Task Details */}
-                <div className="w-[400px] flex-shrink-0 border-l border-default-200 bg-content2/50 p-6 overflow-y-auto transition-all h-full">
+                <div className="w-[400px] flex-shrink-0 border-l border-default-200 bg-content2/50 p-6 overflow-y-auto transition-all h-full right-panel">
                     {selectedTask ? (
                          <div className="flex flex-col gap-6">
                              <h2 className="text-xl font-bold break-words leading-tight">
