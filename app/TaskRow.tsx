@@ -434,9 +434,12 @@ export const TaskRow = React.memo(
                transition: { duration: 0.2, ease: 'easeInOut' }, // Smoother exit
             }}
             transition={{ duration: 0.2 }}
-            onClick={(e) => {
+            onMouseDown={(e) => {
                // Allow selection on click
-               if (!isGroup) {
+               // Prevent selection when clicking drag handle to avoid conflict with dnd-kit
+               if ((e.target as HTMLElement).closest('.cursor-grab')) return;
+               
+               if (e.button === 0 && !isGroup) {
                    onSelect?.();
                }
             }}
