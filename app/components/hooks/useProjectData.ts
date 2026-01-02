@@ -129,7 +129,13 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
        handleDeleteTask,
        handleAddGap,
        removeTasksForFolder
-   } = useTaskData(project.id, selectedFolderId, executeSave, activeServices.taskService); // Pass service
+   } = useTaskData(
+       project.id, 
+       selectedFolderId, 
+       executeSave, 
+       activeServices.taskService,
+       project.proj_type === 'ui' // Pass isUiProject flag
+   );
 
    useEffect(() => {
        // Only start loading when services are initialized (for remote projects)

@@ -10,7 +10,8 @@ export const useTaskData = (
     projectId: string, 
     selectedFolderId: string, 
     executeSave: (fn: () => Promise<void>) => Promise<void>,
-    service: any // Injected service
+    service: any, // Injected service
+    isUiProject: boolean = false // NEW: Flag for UI logic
 ) => {
     const [tasks, setTasks] = useState<Task[]>([]);
     
@@ -90,6 +91,7 @@ export const useTaskData = (
           _tempId: tempId,
           folder_id: selectedFolderId,
           content: '',
+          item_id: isUiProject ? '' : undefined, // Initialize item_id for UI
           sort_order: insertIndex,
           is_completed: false,
           task_type: type, // Use passed type
@@ -134,6 +136,66 @@ export const useTaskData = (
 
        // Handle Draft Saving
        if (task.isDraft) {
+           // --- UI PROJECT LOGIC ---
+           if (isUiProject) {
+               if (updates.item_id !== undefined) {
+                   const itemId = updates.item_id.trim();
+                   if (!itemId) {
+                       handleDeleteTask(id);
+                       return;
+                   }
+
+                   const updatesWithTimestamp = { ...updates, updated_at: new Date().toISOString() };
+                   const realTask = { ...task, ...updatesWithTimestamp, isDraft: false, isNew: false, _isSaving: true };
+                   
+                   setTasks(prev => prev.map(t => t.id === id ? realTask : t));
+
+                   try {
+                      await executeSave(async () => {
+                          // Create in DB with empty content (content not used for UI)
+                          const data = await service.createTask(realTask.folder_id, '', realTask.sort_order);
+                          
+                          // Immediately update with item_id and other props
+                          const updatesToApply: any = {
+                              item_id: itemId,
+                          };
+                          
+                          if (realTask.task_type !== 'task') {
+                              updatesToApply.task_type = realTask.task_type;
+                          }
+                          if (realTask.group_id) {
+                              updatesToApply.group_id = realTask.group_id;
+                          }
+                          
+                          await service.updateTask(data.id, updatesToApply);
+
+                          // Persist Order
+                          const currentFolderTasks = tasks.filter(t => t.folder_id === realTask.folder_id).sort((a, b) => a.sort_order - b.sort_order);
+                          const updatesForOrder = currentFolderTasks.map((t, idx) => ({ 
+                              id: t.id === id ? data.id : t.id, 
+                              sort_order: idx 
+                          }));
+                          
+                          await service.updateTaskOrder(updatesForOrder);
+
+                          setTasks(prev => prev.map(t => t.id === id ? { 
+                              ...data, 
+                              _tempId: realTask._tempId, 
+                              _isSaving: false,
+                              item_id: itemId,
+                              group_id: realTask.group_id,
+                              task_type: realTask.task_type
+                          } : t));
+                      });
+                   } catch (err) {
+                      logger.error('Failed to create UI item from draft', err);
+                      setTasks(prev => prev.map(t => t.id === id ? { ...t, _isSaving: false } : t));
+                   }
+               }
+               return;
+           }
+
+           // --- STANDARD PROJECT LOGIC ---
            if (updates.content !== undefined) {
                const content = updates.content.trim();
                if (!content) {
