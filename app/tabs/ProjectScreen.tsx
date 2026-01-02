@@ -241,7 +241,7 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
                 {isDocsLayout ? (
                     // --- VERTICAL LAYOUT (Docs) ---
                     <>
-                        <div className="w-[240px] flex-shrink-0 border-r border-default-200 bg-default-50 flex flex-col min-h-0">
+                        <div className="w-[200px] flex-shrink-0 border-r border-default-200 bg-default-50 flex flex-col min-h-0">
                            <div className="flex-grow p-4 overflow-y-auto">
                                 <FolderTabs 
                                     folders={folders}

@@ -173,7 +173,7 @@ export const AdminScreen = ({
 
         <div className="flex flex-grow overflow-hidden">
              {/* Left Sidebar Menu */}
-             <div className="w-48 border-r border-default-200 bg-default-50 flex flex-col pt-4 flex-shrink-0">
+             <div className="w-[150px] border-r border-default-200 bg-default-50 flex flex-col pt-4 flex-shrink-0">
                  {/* <div className="px-4 mb-4 text-xs font-semibold text-default-400 uppercase">
                      Admin Panel
                  </div> */}
@@ -189,7 +189,7 @@ export const AdminScreen = ({
                                      if (e.button === 0) handleTabChange(tab.id as AdminTab);
                                  }}
                                  className={clsx(
-                                     "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors text-left cursor-pointer select-none",
+                                     "flex items-center gap-3 px-3 py-2 rounded-lg font-medium text transition-colors text-left cursor-pointer select-none",
                                      isTabActive 
                                          ? "bg-primary/10 text-primary font-medium" 
                                          : "text-default-600 hover:bg-default-200"
