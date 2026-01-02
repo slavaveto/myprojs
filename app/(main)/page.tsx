@@ -217,6 +217,25 @@ const SidebarItem = ({
    </button>
 );
 
+// --- Memoized Screen Wrappers ---
+// Prevent re-rendering of hidden screens unless they become active/inactive
+const MemoizedProjectScreen = React.memo(ProjectScreen, (prev, next) => {
+   // If it was hidden and stays hidden, don't re-render
+   if (!prev.isActive && !next.isActive) return true;
+   // Otherwise, let React check props (or always re-render if active)
+   return false;
+});
+
+const MemoizedDocsScreen = React.memo(DocsScreen, (prev, next) => {
+   if (!prev.isActive && !next.isActive) return true;
+   return false;
+});
+
+const MemoizedAdminScreen = React.memo(AdminScreen, (prev, next) => {
+   if (!prev.isActive && !next.isActive) return true;
+   return false;
+});
+
 function AppContent() {
    const {
       // State
@@ -564,7 +583,7 @@ function AppContent() {
                      )}
                   >
                      <div className={clsx("h-full w-full", projectScreenMode === 'tasks' ? 'block' : 'hidden')}>
-                        <ProjectScreen
+                        <MemoizedProjectScreen
                            project={projectToRender}
                            isActive={activeProjectId === project.id && projectScreenMode === 'tasks'}
                            canLoad={activeProjectId === project.id || canLoadBackground}
@@ -584,7 +603,7 @@ function AppContent() {
                      </div>
 
                      <div className={clsx("h-full w-full", projectScreenMode === 'docs' ? 'block' : 'hidden')}>
-                        <DocsScreen 
+                        <MemoizedDocsScreen 
                            project={projectToRender}
                            isActive={activeProjectId === project.id && projectScreenMode === 'docs'}
                            canLoad={canLoadBackground && !!readyProjects[project.id]} 
@@ -592,7 +611,7 @@ function AppContent() {
                      </div>
 
                      <div className={clsx("h-full w-full", projectScreenMode === 'admin' ? 'block' : 'hidden')}>
-                        <AdminScreen 
+                        <MemoizedAdminScreen 
                            project={projectToRender}
                            uiSatellite={uiProject}
                            docsSatellite={docsProject}
