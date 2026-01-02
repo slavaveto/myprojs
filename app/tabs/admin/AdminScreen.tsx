@@ -19,6 +19,7 @@ import { EllipsisVertical } from 'lucide-react'; // Import Icon
 import { globalStorage } from '@/utils/storage'; // Import globalStorage
 
 import { ActionStatus } from '@/utils/supabase/useAsyncAction'; // Import ActionStatus
+import { OverloadScanner } from '@/app/components/remote/scanners/OverloadScanner'; // Import Scanner
 
 // Заглушки для экранов
 const PlaceholderScreen = ({ title }: { title: string }) => (
@@ -196,6 +197,15 @@ export const AdminScreen = ({
                 </div>
 
                 <div className="flex items-center gap-2 justify-self-end">
+                    {/* Add OverloadScanner for Docs tab */}
+                    {activeTab === 'docs' && (
+                        <OverloadScanner 
+                            // We don't have projectLocalPath in Project type yet?
+                            // Assuming it might be added or we pass undefined for now and it works with defaults or fails gracefully
+                            projectLocalPath={undefined} 
+                        />
+                    )}
+                    
                     <StatusBadge 
                         status={projectStatus.status} 
                         loadingText="Saving..."
