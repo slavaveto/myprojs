@@ -44,7 +44,7 @@ export const UiRow = React.memo(
          'group px-1 flex justify-between min-h-[30px] items-center rounded border border-default-300 bg-content1 transition-colors outline-none ',
          !isDragging && !isOverlay && 'hover:bg-default-50',
          isDragging && '!opacity-50',
-         isOverlay && 'z-50 bg-content1 !border-primary/50 !border-l-[3px] pointer-events-none cursor-grabbing shadow-lg',
+         isOverlay && 'z-50 bg-content1 !border-primary/50 !border-l-[3px] pointer-events-none cursor-grabbing',
          isHighlighted && '!border-orange-300',
          isSelected && 'bg-primary/5 border-primary/30', 
          
