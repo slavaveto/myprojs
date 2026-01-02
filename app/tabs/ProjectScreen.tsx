@@ -26,6 +26,7 @@ import { GlobalSearch, NavigationTarget } from '@/app/components/GlobalSearch';
 
 import { RichTextProvider } from '@/app/components/RichTextProvider';
 import { NoteEditor } from '@/app/components/NoteEditor';
+import { UiEditor } from '@/app/components/remote/UiEditor'; // Import UI Editor
 
 const logger = createLogger('ProjectScreen');
 
@@ -158,6 +159,7 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
    // Removing the redeclaration:
    
    const isDocsLayout = project.proj_type === 'docs';
+   const isUiProject = project.proj_type === 'ui';
 
    return (
     <RichTextProvider>
@@ -333,10 +335,11 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
                                         currentProjectId={project.id}
                                         onSelectTask={setSelectedTaskId}
                                         selectedTaskId={selectedTaskId}
+                                        isUiProject={isUiProject}
                                    />
                                 ) : (
                                     <div className="text-center py-20 text-default-400">
-                                        Create a folder to start adding tasks.
+                                        {isUiProject ? 'Create a screen (folder) to start adding elements.' : 'Create a folder to start adding tasks.'}
                                     </div>
                                 )}
                              </div>
@@ -347,35 +350,42 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
                 {/* RIGHT COLUMN: Task Details */}
                 <div className="w-[400px] flex-shrink-0 border-l border-default-200 bg-content2/50 p-6 overflow-y-auto transition-all h-full right-panel">
                     {selectedTask ? (
-                         <div className="flex flex-col gap-6">
-                             <h2 className="text-xl font-bold break-words leading-tight">
-                                {selectedTask.content.replace(/<[^>]*>/g, '')}
-                             </h2>
-                             
-                             <div className="flex flex-col gap-2 flex-grow min-h-0">
-                                <label className="text-xs font-semibold text-default-400 uppercase tracking-wider">
-                                    Notes
-                                </label>
-                                <div className="flex-grow min-h-[200px] bg-background rounded-lg border border-default-200 shadow-sm p-4 overflow-y-auto cursor-text"
-                                     onClick={(e) => {
-                                         // Focus editor container if clicked outside
-                                         const editorDiv = e.currentTarget.querySelector('.ProseMirror') as HTMLElement;
-                                         if (editorDiv) editorDiv.focus();
-                                     }}
-                                >
-                                     <NoteEditor 
-                                        id={`task-notes-${selectedTask.id}`}
-                                        value={selectedTask.task_notes || ''}
-                                        onSave={(val) => handleUpdateTask(selectedTask.id, { task_notes: val })}
-                                        placeholder="Add notes..."
-                                        className="min-h-[180px]"
-                                     />
-                                </div>
+                         isUiProject ? (
+                             <UiEditor 
+                                task={selectedTask}
+                                onUpdate={handleUpdateTask}
+                             />
+                         ) : (
+                             <div className="flex flex-col gap-6">
+                                 <h2 className="text-xl font-bold break-words leading-tight">
+                                    {selectedTask.content.replace(/<[^>]*>/g, '')}
+                                 </h2>
+                                 
+                                 <div className="flex flex-col gap-2 flex-grow min-h-0">
+                                    <label className="text-xs font-semibold text-default-400 uppercase tracking-wider">
+                                        Notes
+                                    </label>
+                                    <div className="flex-grow min-h-[200px] bg-background rounded-lg border border-default-200 shadow-sm p-4 overflow-y-auto cursor-text"
+                                         onClick={(e) => {
+                                             // Focus editor container if clicked outside
+                                             const editorDiv = e.currentTarget.querySelector('.ProseMirror') as HTMLElement;
+                                             if (editorDiv) editorDiv.focus();
+                                         }}
+                                    >
+                                         <NoteEditor 
+                                            id={`task-notes-${selectedTask.id}`}
+                                            value={selectedTask.task_notes || ''}
+                                            onSave={(val) => handleUpdateTask(selectedTask.id, { task_notes: val })}
+                                            placeholder="Add notes..."
+                                            className="min-h-[180px]"
+                                         />
+                                    </div>
+                                 </div>
                              </div>
-                         </div>
+                         )
                      ) : (
                          <div className="h-full flex items-center justify-center text-default-400">
-                             Select a task to view details
+                             Select an item to view details
                          </div>
                      )}
                 </div>

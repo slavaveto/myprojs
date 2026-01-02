@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Task } from '@/app/types';
 import { TaskRow } from '@/app/TaskRow';
+import { UiRow } from '@/app/components/remote/UiRow'; // Import UiRow
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { AnimatePresence } from 'framer-motion';
 import { Dropdown, DropdownTrigger, DropdownMenu } from '@heroui/react';
@@ -23,9 +24,10 @@ interface TaskListProps {
     currentProjectId?: string;
     onSelectTask?: (taskId: string) => void;
     selectedTaskId?: string | null;
+    isUiProject?: boolean; // NEW PROP
 }
 
-export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlightedTaskId, onAddGap, onInsertTask, onInsertNote, projectColor, projectsStructure, onMoveTask, currentProjectId, onSelectTask, selectedTaskId }: TaskListProps) => {
+export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlightedTaskId, onAddGap, onInsertTask, onInsertNote, projectColor, projectsStructure, onMoveTask, currentProjectId, onSelectTask, selectedTaskId, isUiProject }: TaskListProps) => {
     // Global Menu State
     const [menuState, setMenuState] = useState<{
        taskId: string | null;
@@ -155,60 +157,90 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlight
 
     return (
         <div className="w-full pr-0 pb-10">
-             {pinnedTasks.length > 0 && (
-                 <div className="flex flex-col gap-[3px] mb-6 pb-2  outline-none">
-                     {pinnedTasks.map(task => (
-                         <TaskRow 
-                             key={task.id}
-                             task={task}
-                             onUpdate={onUpdateTask}
-                             onDelete={onDeleteTask}
-                             isHighlighted={highlightedTaskId === task.id}
-                             projectColor={projectColor}
-                             onOpenMenu={handleOpenMenu}
-                             // Pinned tasks are not draggable, so onAddGap is not needed here or behaves differently
-                         />
-                     ))}
-                 </div>
-             )}
+             {/* INVISIBLE SPACER for double click area */}
+             <div className="h-px w-full" />
 
-             <SortableContext
-                items={unpinnedTasks.map(t => t.id)}
-                strategy={verticalListSortingStrategy}
-             >
-               <div className="flex flex-col gap-[3px] min-h-[50px] outline-none">
-                  <AnimatePresence initial={false}>
-                      {tasksWithGroupInfo.map(({ task, activeGroupColor, groupCount, isLastStandingGap }, index) => (
-                         <TaskRow
-                            key={task._tempId || task.id}
-                            task={task}
-                            onUpdate={onUpdateTask}
-                            onDelete={onDeleteTask}
-                            isHighlighted={highlightedTaskId === task.id}
-                            onAddGap={() => onAddGap?.(index)}
-                            projectColor={projectColor}
-                            activeGroupColor={activeGroupColor}
-                            projectsStructure={projectsStructure}
-                            onMove={onMoveTask}
-                            currentProjectId={currentProjectId}
-                            onOpenMenu={handleOpenMenu}
-                            isMenuOpen={menuState.isOpen && menuState.taskId === task.id}
-                            groupCount={groupCount}
-                            isLastStandingGap={isLastStandingGap}
-                            onSelect={() => onSelectTask?.(task.id)}
-                            isSelected={selectedTaskId === task.id}
-                         />
-                      ))}
-                  </AnimatePresence>
+             {/* RENDER LIST: Switch between TaskRow and UiRow */}
+             <div className="flex flex-col gap-[3px] min-h-[50px] outline-none">
+                  {/* Pinned Tasks (Only for standard mode for now, or adapt UI row for pinned?) */}
+                  {/* Assuming UI mode doesn't rely heavily on pinned tasks yet, or use standard logic if needed. */}
+                  {/* Actually, let's keep pinned logic simple: render pinned items first. */}
+                  
+                  {pinnedTasks.length > 0 && (
+                     <div className="flex flex-col gap-[3px] mb-6 pb-2 outline-none">
+                         {pinnedTasks.map(task => (
+                             isUiProject ? (
+                                 <UiRow
+                                     key={task.id}
+                                     task={task}
+                                     onUpdate={onUpdateTask}
+                                     onDelete={onDeleteTask}
+                                     isHighlighted={highlightedTaskId === task.id}
+                                     onSelect={() => onSelectTask?.(task.id)}
+                                     isSelected={selectedTaskId === task.id}
+                                 />
+                             ) : (
+                                 <TaskRow 
+                                     key={task.id}
+                                     task={task}
+                                     onUpdate={onUpdateTask}
+                                     onDelete={onDeleteTask}
+                                     isHighlighted={highlightedTaskId === task.id}
+                                     projectColor={projectColor}
+                                     onOpenMenu={handleOpenMenu}
+                                 />
+                             )
+                         ))}
+                     </div>
+                  )}
+
+                  <SortableContext
+                    items={unpinnedTasks.map(t => t.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                      <AnimatePresence initial={false}>
+                          {tasksWithGroupInfo.map(({ task, activeGroupColor, groupCount, isLastStandingGap }, index) => (
+                             isUiProject ? (
+                                 <UiRow
+                                    key={task._tempId || task.id}
+                                    task={task}
+                                    onUpdate={onUpdateTask}
+                                    onDelete={onDeleteTask}
+                                    isHighlighted={highlightedTaskId === task.id}
+                                    onSelect={() => onSelectTask?.(task.id)}
+                                    isSelected={selectedTaskId === task.id}
+                                 />
+                             ) : (
+                                 <TaskRow
+                                    key={task._tempId || task.id}
+                                    task={task}
+                                    onUpdate={onUpdateTask}
+                                    onDelete={onDeleteTask}
+                                    isHighlighted={highlightedTaskId === task.id}
+                                    onAddGap={() => onAddGap?.(index)}
+                                    projectColor={projectColor}
+                                    activeGroupColor={activeGroupColor}
+                                    projectsStructure={projectsStructure}
+                                    onMove={onMoveTask}
+                                    currentProjectId={currentProjectId}
+                                    onOpenMenu={handleOpenMenu}
+                                    isMenuOpen={menuState.isOpen && menuState.taskId === task.id}
+                                    groupCount={groupCount}
+                                    isLastStandingGap={isLastStandingGap}
+                                    onSelect={() => onSelectTask?.(task.id)}
+                                    isSelected={selectedTaskId === task.id}
+                                 />
+                             )
+                          ))}
+                      </AnimatePresence>
+                  </SortableContext>
+                  
                   {isEmpty && (
                        <div className="text-center py-10 text-default-400">
-                           No tasks in this folder.
+                           {isUiProject ? 'No UI elements in this screen.' : 'No tasks in this folder.'}
                        </div>
                    )}
-                </div>
-             </SortableContext>
-             {/* Invisible spacer to prevent selecting last task text on double click below list */}
-             <div className="h-px w-full" />
+             </div>
 
              {/* GLOBAL MENU */}
              {activeTask && (
