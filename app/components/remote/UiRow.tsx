@@ -3,10 +3,11 @@
 import * as React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Trash2, Globe } from 'lucide-react';
+import { GripVertical, Trash2 } from 'lucide-react';
 import { Task } from '@/app/types';
 import { clsx } from 'clsx';
 import { motion } from 'framer-motion';
+import { RichEditableCell } from '@/app/components/RichEditableCell'; // Import Editor
 
 interface UiRowProps {
    task: Task;
@@ -40,48 +41,57 @@ export const UiRow = React.memo(
       };
 
       const className = clsx(
-         'group px-2 flex justify-between min-h-[40px] items-center rounded border border-default-300 bg-content1 transition-colors outline-none mb-1',
+         'group px-1 flex justify-between min-h-[30px] items-center rounded border border-default-300 bg-content1 transition-colors outline-none ',
          !isDragging && !isOverlay && 'hover:bg-default-50',
          isDragging && '!opacity-50',
          isOverlay && 'z-50 bg-content1 !border-primary/50 !border-l-[3px] pointer-events-none cursor-grabbing shadow-lg',
          isHighlighted && '!border-orange-300',
          isSelected && 'bg-primary/5 border-primary/30', 
          
-         // Style for UI items
-         'border-l-[3px] border-l-purple-400' 
+         // Standard Task Style
+         'border-l-[3px] border-l-default-300' 
       );
 
       const content = (
          <>
             {/* Drag Handle */}
-            <div
-                {...attributes}
-                {...listeners}
-                className={clsx(
-                'cursor-grab p-[4px] mr-2 active:cursor-grabbing text-default-400 hover:text-default-600 outline-none hover:bg-default-100 rounded text-center'
-                )}
-            >
-                <GripVertical size={16} />
-            </div>
+            <div className="flex flex-1 gap-1 flex-row items-center">
+                <div
+                    {...attributes}
+                    {...listeners}
+                    className={clsx(
+                    'cursor-grab p-[2px] active:cursor-grabbing text-default-400 hover:text-default-600 outline-none hover:bg-default-100 rounded text-center'
+                    )}
+                >
+                    <GripVertical size={16} />
+                </div>
 
-            {/* Main Content: Item ID + Preview */}
-            <div className="flex-grow flex flex-col justify-center min-w-0 py-1" onClick={onSelect}>
-                <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-bold text-purple-700 truncate">
-                        {task.item_id || <span className="text-default-300 italic">no_id</span>}
-                    </span>
-                    {task.isNew && <span className="text-[10px] bg-blue-100 text-blue-600 px-1 rounded">NEW</span>}
+                {/* Main Content: Item ID (Editable) */}
+                <div className="flex-1 min-w-0" onClick={(e) => {
+                    if ((e.target as HTMLElement).closest('.ProseMirror')) return;
+                    onSelect?.();
+                }}>
+                    <RichEditableCell
+                        id={`ui-item-${task.id}`}
+                        value={task.item_id || ''}
+                        onSave={(val) => {
+                            const cleanVal = val.replace(/<[^>]*>/g, '').trim();
+                            onUpdate(task.id, { item_id: cleanVal });
+                        }}
+                        autoFocus={task.isNew}
+                        placeholder="item_id"
+                        className="w-full"
+                    />
                 </div>
-                {/* Preview of translation (RU or EN) */}
-                <div className="text-xs text-default-500 truncate h-4">
-                    {task.ru || task.en || <span className="opacity-50">...</span>}
-                </div>
+                
+                {/* Preview (Small gray text on the right or hidden? Let's hide it to look like standard task, or keep subtle) */}
+                {/* Let's remove the preview to match standard look perfectly as requested */}
             </div>
 
             {/* Actions */}
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="p-0 text-center relative flex justify-center items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                <button
-                  className="p-1 text-default-400 hover:text-danger hover:bg-danger/10 rounded transition-colors"
+                  className="p-[2px] text-default-400 hover:text-danger hover:bg-danger/10 rounded transition-colors"
                   onClick={(e) => {
                      e.stopPropagation();
                      if (confirm('Delete UI element?')) {
@@ -89,11 +99,12 @@ export const UiRow = React.memo(
                      }
                   }}
                >
-                  <Trash2 size={14} />
+                  <Trash2 size={16} />
                </button>
             </div>
          </>
       );
+
 
       if (isOverlay) {
          return (
@@ -116,9 +127,12 @@ export const UiRow = React.memo(
             initial={task.isNew ? { opacity: 0, height: 0 } : false}
             animate={{ opacity: 1, height: 'auto' }}
             transition={{ duration: 0.2 }}
-            onClick={(e) => {
-                // Allow selection on row click
-                if (!(e.target as HTMLElement).closest('.cursor-grab') && !(e.target as HTMLElement).closest('button')) {
+            onMouseDown={(e) => {
+                // Allow selection on click
+                // Prevent selection when clicking drag handle to avoid conflict with dnd-kit
+                if ((e.target as HTMLElement).closest('.cursor-grab')) return;
+                
+                if (e.button === 0) {
                     onSelect?.();
                 }
             }}
@@ -128,5 +142,6 @@ export const UiRow = React.memo(
       );
    }
 );
+
 UiRow.displayName = 'UiRow';
 

@@ -17,7 +17,8 @@ export const createRemoteFolderService = (client: SupabaseClient, isUi: boolean 
                 .from(TABLES.folders)
                 .select('*')
                 .eq('project_id', projectId)
-                .is('is_deleted', false) // Use .is() for boolean null/false check if needed, or just .eq if not nullable
+                // .is('is_deleted', false) // Removed strict check
+                .neq('is_deleted', true) // Allow false OR null
                 .order('sort_order');
 
             if (error) throw error;
@@ -94,7 +95,8 @@ export const createRemoteTaskService = (client: SupabaseClient, isUi: boolean = 
                     folder: ${TABLES.folders}!inner(project_id)
                 `)
                 .eq(`${TABLES.folders}.project_id`, projectId)
-                .is('is_deleted', false) // Assuming tasks have soft delete too
+                // .is('is_deleted', false) 
+                .neq('is_deleted', true) // Allow false OR null
                 .order('sort_order');
 
             if (error) throw error;

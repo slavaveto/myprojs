@@ -27,6 +27,7 @@ import { GlobalSearch, NavigationTarget } from '@/app/components/GlobalSearch';
 import { RichTextProvider } from '@/app/components/RichTextProvider';
 import { NoteEditor } from '@/app/components/NoteEditor';
 import { UiEditor } from '@/app/components/remote/UiEditor'; // Import UI Editor
+import { UiRow } from '@/app/components/remote/UiRow';
 
 const logger = createLogger('ProjectScreen');
 
@@ -423,12 +424,21 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
                           onClick={() => {}}
                        />
                    ) : (
-                      <TaskRow
-                         task={tasks.find(t => t.id === activeId)!}
-                         onUpdate={() => {}}
-                         onDelete={() => {}}
-                         isOverlay
-                      />
+                      isUiProject ? (
+                          <UiRow
+                             task={tasks.find(t => t.id === activeId)!}
+                             onUpdate={() => {}}
+                             onDelete={() => {}}
+                             isOverlay
+                          />
+                      ) : (
+                          <TaskRow
+                             task={tasks.find(t => t.id === activeId)!}
+                             onUpdate={() => {}}
+                             onDelete={() => {}}
+                             isOverlay
+                          />
+                      )
                    )
                ) : null}
             </DragOverlay>
