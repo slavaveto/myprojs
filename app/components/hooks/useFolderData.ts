@@ -1,25 +1,28 @@
 import { useState, useCallback } from 'react';
 import { Folder } from '@/app/types';
-import { folderService } from '@/app/_services/folderService';
 import { createLogger } from '@/utils/logger/Logger';
 import { toast } from 'react-hot-toast';
 import { arrayMove } from '@dnd-kit/sortable';
 
 const logger = createLogger('UseFolderData');
 
-export const useFolderData = (projectId: string, executeSave: (fn: () => Promise<void>) => Promise<void>) => {
+export const useFolderData = (
+    projectId: string, 
+    executeSave: (fn: () => Promise<void>) => Promise<void>,
+    service: any // Injected service (local or remote)
+) => {
     const [folders, setFolders] = useState<Folder[]>([]);
 
     const loadFolders = useCallback(async () => {
         try {
-            const data = await folderService.getFolders(projectId);
+            const data = await service.getFolders(projectId);
             setFolders(data);
             return data;
         } catch (err) {
             logger.error('Failed to load folders', err);
             return [];
         }
-    }, [projectId]);
+    }, [projectId, service]);
 
     const handleAddFolder = async (title: string): Promise<Folder | null> => {
        const newOrder = folders.length > 0 
@@ -38,15 +41,10 @@ export const useFolderData = (projectId: string, executeSave: (fn: () => Promise
        
        setFolders(prev => [...prev, newFolder]);
        
-       // Return the tempId so caller can select it immediately if needed
-       // Or handle selection logic outside? 
-       // In original code: setSelectedFolderId(data.id) was called.
-       // We can return the PROMISE of the real folder or just the temp folder.
-       
        try {
            let createdFolder: Folder | null = null;
            await executeSave(async () => {
-               const data = await folderService.createFolder(projectId, title, newOrder);
+               const data = await service.createFolder(projectId, title, newOrder);
                createdFolder = data;
                setFolders(prev => prev.map(f => f.id === tempId ? data : f));
            });
@@ -62,7 +60,7 @@ export const useFolderData = (projectId: string, executeSave: (fn: () => Promise
        setFolders(prev => prev.map(f => f.id === folderId ? { ...f, title, updated_at: new Date().toISOString() } : f));
        try {
            await executeSave(async () => {
-               await folderService.updateFolder(folderId, { title });
+               await service.updateFolder(folderId, { title });
            });
        } catch (err) {
            logger.error('Failed to update folder', err);
@@ -76,7 +74,7 @@ export const useFolderData = (projectId: string, executeSave: (fn: () => Promise
        
        try {
            await executeSave(async () => {
-               await folderService.deleteFolder(folderId);
+               await service.deleteFolder(folderId);
            });
            toast.success('Folder deleted');
            return true;
@@ -102,7 +100,7 @@ export const useFolderData = (projectId: string, executeSave: (fn: () => Promise
        
        try {
            await executeSave(async () => {
-               await folderService.updateFolderOrder(updates);
+               await service.updateFolderOrder(updates);
            });
        } catch (err) {
            logger.error('Failed to move folder', err);

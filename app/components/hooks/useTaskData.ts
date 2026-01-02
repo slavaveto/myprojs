@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Task } from '@/app/types';
 import { calculateGroupUpdates } from './groupLogic';
-import { taskService } from '@/app/_services/taskService'; // New Service
 import { createLogger } from '@/utils/logger/Logger';
 import { GROUP_COLORS } from '@/app/constants';
 
@@ -10,7 +9,8 @@ const logger = createLogger('UseTaskData');
 export const useTaskData = (
     projectId: string, 
     selectedFolderId: string, 
-    executeSave: (fn: () => Promise<void>) => Promise<void>
+    executeSave: (fn: () => Promise<void>) => Promise<void>,
+    service: any // Injected service
 ) => {
     const [tasks, setTasks] = useState<Task[]>([]);
     
@@ -20,7 +20,7 @@ export const useTaskData = (
     
     const loadTasks = async () => {
         try {
-            const data = await taskService.getTasks(projectId);
+            const data = await service.getTasks(projectId);
             
             // Merge logic to preserve _tempId from previous state
             setTasks(prevTasks => {
@@ -122,7 +122,7 @@ export const useTaskData = (
        // Persist group expansion immediately
        if (groupToExpandId) {
            // Fire and forget (or await if critical, but we don't want to block UI for draft creation)
-           taskService.updateTask(groupToExpandId, { is_closed: false }).catch(err => {
+           service.updateTask(groupToExpandId, { is_closed: false }).catch((err: any) => {
                logger.error('Failed to persist auto-expand group', err);
            });
        }
@@ -159,7 +159,7 @@ export const useTaskData = (
                try {
                   await executeSave(async () => {
                       // Create in DB
-                      const data = await taskService.createTask(snapshotBeforeSave.folder_id, content, snapshotBeforeSave.sort_order);
+                      const data = await service.createTask(snapshotBeforeSave.folder_id, content, snapshotBeforeSave.sort_order);
                       
                       // If created as gap OR NOTE (via draft logic) OR if it has group_id
                       const updatesToApply: any = {};
@@ -171,7 +171,7 @@ export const useTaskData = (
                       }
                       
                       if (Object.keys(updatesToApply).length > 0) {
-                          await taskService.updateTask(data.id, updatesToApply);
+                          await service.updateTask(data.id, updatesToApply);
                       }
 
                       // Persist Order
@@ -181,7 +181,7 @@ export const useTaskData = (
                           sort_order: idx 
                       }));
                       
-                      await taskService.updateTaskOrder(updatesForOrder);
+                      await service.updateTaskOrder(updatesForOrder);
 
                       // --- RESAVE LOGIC (Simplified) ---
                       // If task changed during save, we need to resave.
@@ -276,11 +276,11 @@ export const useTaskData = (
        try {
           await executeSave(async () => {
               // 1. Update the target task
-              await taskService.updateTask(id, updates);
+              await service.updateTask(id, updates);
 
               // 2. Update affected neighbors if needed
               if (needsGroupUpdate) {
-                  await taskService.updateTaskOrder(updatesForGroup);
+                  await service.updateTaskOrder(updatesForGroup);
               }
           });
        } catch (err) {
@@ -300,7 +300,7 @@ export const useTaskData = (
 
        try {
           await executeSave(async () => {
-              await taskService.deleteTask(id);
+              await service.deleteTask(id);
 
               // --- RECALCULATE GROUPS if structure changed ---
               if (taskToDelete && (taskToDelete.task_type === 'group' || taskToDelete.task_type === 'gap')) {
@@ -323,7 +323,7 @@ export const useTaskData = (
                   });
 
                   if (updatesForGroup.length > 0) {
-                      await taskService.updateTaskOrder(updatesForGroup);
+                      await service.updateTaskOrder(updatesForGroup);
                       // Update local state for all affected
                       setTasks(prev => prev.map(t => {
                           const update = updatesForGroup.find(u => u.id === t.id);
@@ -373,8 +373,8 @@ export const useTaskData = (
 
         try {
             await executeSave(async () => {
-                const data = await taskService.createTask(selectedFolderId, '', insertIndex);
-                await taskService.updateTask(data.id, { task_type: 'gap' });
+                const data = await service.createTask(selectedFolderId, '', insertIndex);
+                await service.updateTask(data.id, { task_type: 'gap' });
                 
                 // --- RECALCULATE GROUPS for inserted GAP ---
                 // Inserting a GAP might break an existing group into two (or terminate one).
@@ -413,7 +413,7 @@ export const useTaskData = (
                     });
                 });
 
-                await taskService.updateTaskOrder(updatesForGroup);
+                await service.updateTaskOrder(updatesForGroup);
 
                  setTasks(prev => prev.map(t => {
                      if (t.id === tempId) {

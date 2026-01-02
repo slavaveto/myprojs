@@ -1,15 +1,19 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Task, Project } from '@/app/types';
 import { globalStorage } from '@/utils/storage';
 import { toast } from 'react-hot-toast';
 import { projectService } from '@/app/_services/projectService';
-import { taskService } from '@/app/_services/taskService';
+import { taskService as localTaskService } from '@/app/_services/taskService';
+import { folderService as localFolderService } from '@/app/_services/folderService';
 import { useAsyncAction, ActionStatus } from '@/utils/supabase/useAsyncAction';
 import { createLogger } from '@/utils/logger/Logger';
 import { useFolderData } from './useFolderData';
 import { useTaskData } from './useTaskData';
 import { loadingService } from '@/app/_services/loadingLogsService';
 import { NavigationTarget } from '@/app/components/GlobalSearch';
+import { getProjectClient } from '@/utils/supabase/projectClientFactory';
+import { createRemoteFolderService, createRemoteTaskService } from '@/utils/supabase/remoteServices';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 const logger = createLogger('ProjectScreenHook');
 
@@ -31,7 +35,43 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
    const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null);
    const [projectsStructure, setProjectsStructure] = useState<any[]>([]);
    
+   // Remote Client State
+   const [remoteServices, setRemoteServices] = useState<{ taskService: any, folderService: any } | null>(null);
+
    const loadStartedRef = useRef(false);
+
+   // --- Initialize Services (Local vs Remote) ---
+   useEffect(() => {
+       const initServices = async () => {
+           // If UI project, we need remote client
+           if (project.proj_type === 'ui' && project.remote_proj_slug) {
+               try {
+                   const client = await getProjectClient(project.remote_proj_slug);
+                   if (client) {
+                       setRemoteServices({
+                           taskService: createRemoteTaskService(client, true), // isUi = true
+                           folderService: createRemoteFolderService(client, true) // isUi = true
+                       });
+                   } else {
+                       logger.error('Failed to initialize remote client for UI project');
+                       // Fallback to local? Or error state?
+                       // For now, if failed, hooks below will crash if we don't handle null.
+                       // We should probably show an error UI.
+                   }
+               } catch (e) {
+                   logger.error('Error initializing remote client', e);
+               }
+           } else {
+               // Local project - use standard services
+               setRemoteServices({
+                   taskService: localTaskService,
+                   folderService: localFolderService
+               });
+           }
+       };
+
+       initServices();
+   }, [project.id, project.proj_type, project.remote_proj_slug]);
 
    useEffect(() => {
        projectService.getProjectsWithFolders()
@@ -58,16 +98,27 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
 
    const displayStatus = globalStatus !== 'idle' ? globalStatus : (saveStatus !== 'idle' ? saveStatus : quickSaveStatus);
 
-   // --- Use Sub-Hooks ---
+   // --- Use Sub-Hooks (Only when services are ready) ---
+   // We pass null services initially, hooks need to handle that or we render null until ready?
+   // Better to pass services as props to hooks.
+   // But hooks are currently importing services directly.
+   // We need to refactor useFolderData and useTaskData to accept services as arguments!
+   
+   // WAIT! Modifying existing hooks signature might break other usages if any.
+   // Let's check usages. (checked: only used here).
+   // So I will modify useFolderData and useTaskData to accept `services` object.
+   
+   const activeServices = remoteServices || { taskService: localTaskService, folderService: localFolderService };
+
    const { 
        folders, 
-       setFolders, // Expose for DND if needed
+       setFolders, 
        loadFolders,
        handleAddFolder: addFolderApi,
        handleUpdateFolder,
        handleDeleteFolder: deleteFolderApi,
        handleMoveFolder
-   } = useFolderData(project.id, executeSave);
+   } = useFolderData(project.id, executeSave, activeServices.folderService); // Pass service
 
    const {
        tasks,
@@ -78,9 +129,12 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
        handleDeleteTask,
        handleAddGap,
        removeTasksForFolder
-   } = useTaskData(project.id, selectedFolderId, executeSave);
+   } = useTaskData(project.id, selectedFolderId, executeSave, activeServices.taskService); // Pass service
 
    useEffect(() => {
+       // Only start loading when services are initialized (for remote projects)
+       if (project.proj_type === 'ui' && !remoteServices) return;
+
        // If already loaded or load initiated, do nothing
        if (isDataLoaded || loadStartedRef.current) return;
        // If not allowed to load (e.g. background project waiting for active one), do nothing
@@ -239,7 +293,10 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
            // Optimistic update
            setTasks(prev => prev.filter(t => t.id !== taskId));
            
-           await taskService.moveTaskToFolder(taskId, folderId);
+           // Use unified helper (we need to inject active service for cross-project move? 
+           // Or assume default service for cross-project? 
+           // For now, let's use the active task service from hook props/state
+           await activeServices.taskService.moveTaskToFolder(taskId, folderId);
            logger.success('Task moved to project');
            
            // Switch to target project if different
@@ -261,6 +318,8 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
            loadTasks(); // Revert
        }
    };
+
+
 
    // --- Project Actions ---
    const handleEditProject = async (title: string, color: string, isHighlighted: boolean, hasUi: boolean, hasDocs: boolean) => {

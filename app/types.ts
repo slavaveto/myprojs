@@ -11,6 +11,7 @@ export interface Project {
    is_deleted?: boolean; // Added for Soft Delete
    is_disabled?: boolean; // Toggled state for satellites
    is_highlighted?: boolean; // Special styling for important projects
+   remote_proj_slug?: string; // Slug for remote projects (e.g. 'psyhelp') to find keys in .env
 }
 
 export interface Folder {
@@ -44,4 +45,9 @@ export interface Task {
    _tempId?: string;
    _isSaving?: boolean; // Флаг активного сохранения
    task_notes?: string; // Rich Text notes
+   // UI Project specific fields
+   item_id?: string;
+   ru?: string;
+   en?: string;
+   uk?: string;
 }
