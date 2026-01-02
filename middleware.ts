@@ -4,13 +4,23 @@ import { NextResponse } from 'next/server';
 const isProtectedRoute = createRouteMatcher(['/admin(.*)']);
 const isLoginPage = createRouteMatcher(['/admin/auth/login']);
 const isSignUpPage = createRouteMatcher(['/admin/auth/signup']);
+const isAppAuthPage = createRouteMatcher(['/auth(.*)', '/sso-callback']);
 
 export default clerkMiddleware(async (auth, req) => {
+  const { userId } = await auth();
+
   // 1. Защита роутов админки
   if (isProtectedRoute(req) && !isLoginPage(req) && !isSignUpPage(req)) {
-     const { userId } = await auth();
      if (!userId) {
         return NextResponse.redirect(new URL('/admin/auth/login', req.url));
+     }
+  }
+
+  // 2. Защита основного приложения
+  // Если это не админка, не страницы авторизации и не API -> проверяем вход
+  if (!isProtectedRoute(req) && !isAppAuthPage(req) && !req.nextUrl.pathname.startsWith('/api')) {
+     if (!userId) {
+        return NextResponse.redirect(new URL('/auth/login', req.url));
      }
   }
 
