@@ -174,11 +174,11 @@ export const AdminScreen = ({
         <div className="flex flex-grow overflow-hidden">
              {/* Left Sidebar Menu */}
              <div className="w-48 border-r border-default-200 bg-default-50 flex flex-col pt-4 flex-shrink-0">
-                 <div className="px-4 mb-4 text-xs font-semibold text-default-400 uppercase">
+                 {/* <div className="px-4 mb-4 text-xs font-semibold text-default-400 uppercase">
                      Admin Panel
-                 </div>
+                 </div> */}
                  
-                 <div className="flex flex-col gap-1 px-2">
+                 <div className="flex flex-col gap-1 px-2 pt-3">
                      {tabs.map(tab => {
                          const Icon = tab.icon;
                          const isTabActive = activeTab === tab.id;

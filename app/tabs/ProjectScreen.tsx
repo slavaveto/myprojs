@@ -353,7 +353,7 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
                 )}
 
                 {/* RIGHT COLUMN: Task Details */}
-                <div className="w-[400px] flex-shrink-0 border-l border-default-200 bg-content2/50 p-6 overflow-y-auto transition-all h-full right-panel">
+                <div className="w-[500px] flex-shrink-0 border-l border-default-200 bg-content2/50 p-6 overflow-y-auto transition-all h-full right-panel">
                     {selectedTask ? (
                          isUiProject ? (
                              <UiEditor 
