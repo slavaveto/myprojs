@@ -20,6 +20,7 @@ import { globalStorage } from '@/utils/storage'; // Import globalStorage
 import { ActionStatus } from '@/utils/supabase/useAsyncAction'; // Import ActionStatus
 import { OverloadScanner } from '@/app/components/remote/scanners/OverloadScanner'; // Import Scanner
 import { FlowScanner } from '@/app/components/remote/scanners/FlowScanner'; // Import Flow Scanner
+import { UserHeaderMenu } from '@/app/components/UserHeaderMenu'; // Import UserHeaderMenu
 
 // Заглушки для экранов
 const PlaceholderScreen = ({ title }: { title: string }) => (
@@ -215,6 +216,7 @@ export const AdminScreen = ({
                         successText="Saved"
                         errorMessage={projectStatus.error?.message}
                     />
+                    <UserHeaderMenu />
                 </div>
              </div>
         </div>

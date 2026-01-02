@@ -28,6 +28,7 @@ import { RichTextProvider } from '@/app/components/RichTextProvider';
 import { NoteEditor } from '@/app/components/NoteEditor';
 import { UiEditor } from '@/app/components/remote/UiEditor'; // Import UI Editor
 import { UiRow } from '@/app/components/remote/UiRow';
+import { UserHeaderMenu } from '@/app/components/UserHeaderMenu';
 
 const logger = createLogger('ProjectScreen');
 
@@ -231,6 +232,7 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
                             successText="Saved"
                             errorMessage={saveError?.message}
                         />
+                        <UserHeaderMenu />
                     </div>
                  </div>
             </div>
