@@ -48,10 +48,12 @@ export function checkPermission(permission: Permission, user: UserAccessContext)
       case PERMISSIONS.MANAGE_OWN_ROOMS:
       case PERMISSIONS.MANAGE_OWN_PROFILE:
          case PERMISSIONS.MANAGE_USERS:
+         
          return true; // Доступно всем админам
 
       case PERMISSIONS.CUSTOM_ROOM_ID: // Редактирование ID комнаты
       case PERMISSIONS.CUSTOM_USERNAME: // Редактирование username
+      
          return user.plan === 'pro' || user.isSuperAdmin; // PRO или Супер-Админ
 
      

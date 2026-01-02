@@ -6,7 +6,6 @@ export const DB_TABLES = {
     PROFILES: '_profiles',
     LOGS_ADMIN: '_logs',
     
-
     ROOMS: 'rooms', 
 
     PROJECTS: 'projects',
