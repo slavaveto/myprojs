@@ -47,6 +47,7 @@ export const EditFolderPopover = ({
     const handleSubmit = async (e?: React.FormEvent) => {
         e?.preventDefault();
         if (!title.trim()) return;
+        if (title === initialTitle) return;
 
         setIsLoading(true);
         try {
@@ -161,7 +162,7 @@ export const EditFolderPopover = ({
                                         color="primary"
                                         type="submit" 
                                         isLoading={isLoading}
-                                        isDisabled={!title.trim() || isDeleting}
+                                        isDisabled={!title.trim() || isDeleting || title === initialTitle}
                                     >
                                         Save
                                     </Button>
