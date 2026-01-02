@@ -170,7 +170,7 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
        };
 
        load();
-   }, [isActive, project.id, isDataLoaded, canLoad]);
+   }, [isActive, project.id, isDataLoaded, canLoad, remoteServices]);
 
     // --- Sync active folder from storage when becoming active ---
     useEffect(() => {
