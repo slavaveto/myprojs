@@ -140,7 +140,7 @@ export const AdminScreen = ({
                         className="w-4 h-4 rounded-full flex-shrink-0 shadow-sm border border-white/10" 
                         style={{ backgroundColor: project.proj_color || '#3b82f6' }}
                     />
-                    <h1 className="text-2xl font-bold truncate">{project.title} - Admin Dashboard</h1>
+                    <h1 className="text-2xl font-bold truncate">{project.title} - Admin</h1>
                 </div>
                 
                 <div className="w-full max-w-[240px] justify-self-center">
