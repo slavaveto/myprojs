@@ -41,6 +41,13 @@ interface AdminScreenProps {
 
 type AdminTab = 'ui' | 'docs' | 'users' | 'logs';
 
+// Memoized components to prevent re-rendering when hidden
+const MemoizedProjectScreen = React.memo(ProjectScreen, (prev, next) => {
+   // If it was hidden and stays hidden, don't re-render
+   if (!prev.isActive && !next.isActive) return true;
+   return false;
+});
+
 export const AdminScreen = ({
    project,
    uiSatellite,
@@ -77,7 +84,7 @@ export const AdminScreen = ({
           <>
             <div className={clsx("h-full w-full", activeTab === 'ui' ? 'block' : 'hidden')}>
                 {uiSatellite ? (
-                    <ProjectScreen 
+                    <MemoizedProjectScreen 
                         project={uiSatellite}
                         isActive={isActive && activeTab === 'ui'}
                         canLoad={canLoad}
@@ -95,7 +102,7 @@ export const AdminScreen = ({
 
             <div className={clsx("h-full w-full", activeTab === 'docs' ? 'block' : 'hidden')}>
                 {docsSatellite ? (
-                    <ProjectScreen 
+                    <MemoizedProjectScreen 
                         project={docsSatellite}
                         isActive={isActive && activeTab === 'docs'}
                         canLoad={canLoad} 
