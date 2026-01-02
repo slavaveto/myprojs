@@ -361,6 +361,7 @@ function AppContent() {
                                  initialIsHighlighted={project.is_highlighted || false}
                                  onUpdate={(t, c, ih, hasUi, hasDocs) => handleUpdateProject(project.id, t, c, ih, hasUi, hasDocs)}
                                  onDelete={() => handleDeleteProject(project.id)}
+                                 isPersonal={true}
                               >
                                  <button
                                     type="button"

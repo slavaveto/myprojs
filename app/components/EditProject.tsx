@@ -29,6 +29,7 @@ interface EditProjectPopoverProps {
     isSatellite?: boolean; 
     hasUiSatellite?: boolean;
     hasDocsSatellite?: boolean;
+    isPersonal?: boolean;
 }
 
 export const EditProjectPopover = ({ 
@@ -42,6 +43,7 @@ export const EditProjectPopover = ({
     isSatellite = false,
     hasUiSatellite = false,
     hasDocsSatellite = false,
+    isPersonal = false,
 }: EditProjectPopoverProps) => {
     const [isOpen, setIsOpen] = useState(false);
     
@@ -204,7 +206,7 @@ export const EditProjectPopover = ({
                             )}
 
                             {/* Modules Section */}
-                            {!isSatellite && (
+                            {!isSatellite && !isPersonal && (
                                 <div className="px-1 flex flex-col gap-2 pt-0  mt-0">
                                     <Switch 
                                         isSelected={hasAdminPanel} 

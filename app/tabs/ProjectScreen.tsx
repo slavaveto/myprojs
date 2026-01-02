@@ -196,6 +196,7 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
                         isSatellite={project.proj_type === 'ui' || project.proj_type === 'docs'}
                         hasUiSatellite={hasUiSatellite}
                         hasDocsSatellite={hasDocsSatellite}
+                        isPersonal={project.proj_type === 'personal'}
                     >
                         <Button isIconOnly size="sm" variant="light" className="text-default-400 hover:text-default-600">
                             <EllipsisVertical size={18} />
