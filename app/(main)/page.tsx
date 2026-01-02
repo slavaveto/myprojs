@@ -493,10 +493,10 @@ function AppContent() {
             {/* System Screens */}
             <div
                className={clsx(
-                  'absolute inset-0 w-full h-full bg-background transition-opacity duration-300',
+                  'absolute inset-0 w-full h-full bg-background',
                   activeSystemTab === 'logs'
-                     ? 'z-30 opacity-100 pointer-events-auto'
-                     : 'z-0 opacity-0 pointer-events-none'
+                     ? 'z-30 block'
+                     : 'z-0 hidden'
                )}
             >
                {/* System Screen: Logs */}
@@ -509,10 +509,10 @@ function AppContent() {
 
             <div
                className={clsx(
-                  'absolute inset-0 w-full h-full bg-background transition-opacity duration-300',
+                  'absolute inset-0 w-full h-full bg-background',
                   activeSystemTab === 'inbox'
-                     ? 'z-30 opacity-100 pointer-events-auto'
-                     : 'z-0 opacity-0 pointer-events-none'
+                     ? 'z-30 block'
+                     : 'z-0 hidden'
                )}
             >
                <InboxScreen
@@ -526,10 +526,10 @@ function AppContent() {
 
             <div
                className={clsx(
-                  'absolute inset-0 w-full h-full bg-background transition-opacity duration-300',
+                  'absolute inset-0 w-full h-full bg-background',
                   activeSystemTab === 'today'
-                     ? 'z-30 opacity-100 pointer-events-auto'
-                     : 'z-0 opacity-0 pointer-events-none'
+                     ? 'z-30 block'
+                     : 'z-0 hidden'
                )}
             >
                <TodayScreen
@@ -543,10 +543,10 @@ function AppContent() {
 
             <div
                className={clsx(
-                  'absolute inset-0 w-full h-full bg-background transition-opacity duration-300',
+                  'absolute inset-0 w-full h-full bg-background',
                   activeSystemTab === 'done'
-                     ? 'z-30 opacity-100 pointer-events-auto'
-                     : 'z-0 opacity-0 pointer-events-none'
+                     ? 'z-30 block'
+                     : 'z-0 hidden'
                )}
             >
                <DoneScreen
@@ -576,7 +576,7 @@ function AppContent() {
                   <div
                      key={project.id}
                      className={clsx(
-                        'absolute inset-0 w-full h-full bg-background transition-opacity duration-300',
+                        'absolute inset-0 w-full h-full bg-background',
                         activeProjectId === project.id
                            ? 'z-10 block'
                            : 'z-0 hidden'
