@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Popover, PopoverTrigger, PopoverContent, Input } from '@heroui/react';
 import { FileWarning, RefreshCw, AlertTriangle, FileCode } from 'lucide-react';
-import { OverloadFile, scanOverloadedFiles } from './scanOverload';
+import { OverloadFile, scanOverloadedFiles, ScanResult } from './scanOverload';
 import { clsx } from 'clsx';
 import { createLogger } from '@/utils/logger/Logger';
 import { globalStorage } from '@/utils/storage';
@@ -16,6 +16,7 @@ interface OverloadScannerProps {
 
 export const OverloadScanner = ({ projectLocalPath }: OverloadScannerProps) => {
     const [files, setFiles] = useState<OverloadFile[]>([]);
+    const [scannedPath, setScannedPath] = useState<string>('');
     const [isLoading, setIsLoading] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const [hasScanned, setHasScanned] = useState(false);
@@ -41,7 +42,7 @@ export const OverloadScanner = ({ projectLocalPath }: OverloadScannerProps) => {
     };
 
     useEffect(() => {
-        if (isOpen) {
+        if (isOpen && !hasScanned) {
             handleScan();
         }
     }, [isOpen]);
@@ -50,9 +51,10 @@ export const OverloadScanner = ({ projectLocalPath }: OverloadScannerProps) => {
         setIsLoading(true);
         try {
             const result = await scanOverloadedFiles(projectLocalPath, threshold);
-            setFiles(result);
+            setFiles(result.files);
+            setScannedPath(result.scannedPath);
             setHasScanned(true);
-            logger.info('Overload scan completed', { count: result.length, threshold });
+            logger.info('Overload scan completed', { count: result.files.length, threshold, path: result.scannedPath });
         } catch (e) {
             logger.error('Overload scan failed', e);
         } finally {
@@ -83,12 +85,27 @@ export const OverloadScanner = ({ projectLocalPath }: OverloadScannerProps) => {
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="p-0 w-[420px] max-h-[500px] flex flex-col shadow-xl border border-gray-200 rounded-lg overflow-hidden">
-                <div className="flex items-center justify-between p-3 border-b bg-gray-50/80 backdrop-blur gap-3">
-                    <div className="flex flex-col gap-1 flex-grow">
-                        <span className="font-semibold text-sm text-gray-900 flex items-center gap-2">
-                            <AlertTriangle size={14} className="text-orange-500"/>
-                            Overloaded Files
-                        </span>
+                <div className="flex flex-col border-b bg-gray-50/80 backdrop-blur">
+                    <div className="flex items-center justify-between p-3 pb-2 gap-3">
+                        <div className="flex flex-col gap-1 flex-grow">
+                            <span className="font-semibold text-sm text-gray-900 flex items-center gap-2">
+                                <AlertTriangle size={14} className="text-orange-500"/>
+                                Overloaded Files
+                            </span>
+                        </div>
+                        <Button 
+                            size="sm" 
+                            isIconOnly 
+                            variant="light" 
+                            onPress={handleScan} 
+                            isLoading={isLoading} 
+                            className="text-gray-500 hover:text-gray-900"
+                        >
+                            <RefreshCw size={14} />
+                        </Button>
+                    </div>
+                    
+                    <div className="px-3 pb-2 flex flex-col gap-2">
                         <div className="flex items-center gap-2 text-[10px] uppercase font-bold tracking-wider text-gray-500 w-full">
                            <span className="flex-shrink-0">Threshold:</span>
                            <input 
@@ -103,17 +120,13 @@ export const OverloadScanner = ({ projectLocalPath }: OverloadScannerProps) => {
                                <span className="ml-auto text-orange-600 truncate flex-shrink-1 text-right min-w-0">Found: {files.length}</span>
                            )}
                         </div>
+                        
+                        {scannedPath && (
+                            <div className="text-[10px] text-gray-400 truncate font-mono bg-gray-100/50 px-1.5 py-0.5 rounded" title={scannedPath}>
+                                Path: {scannedPath}
+                            </div>
+                        )}
                     </div>
-                    <Button 
-                        size="sm" 
-                        isIconOnly 
-                        variant="light" 
-                        onPress={handleScan} 
-                        isLoading={isLoading} 
-                        className="text-gray-500 hover:text-gray-900"
-                    >
-                        <RefreshCw size={14} />
-                    </Button>
                 </div>
                 
                 <div className="overflow-y-auto flex-grow min-h-0 bg-white p-1">

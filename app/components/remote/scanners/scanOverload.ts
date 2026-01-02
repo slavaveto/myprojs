@@ -10,7 +10,12 @@ export interface OverloadFile {
   lineCount: number;
 }
 
-export async function scanOverloadedFiles(projectFolderName?: string, threshold: number = 500): Promise<OverloadFile[]> {
+export interface ScanResult {
+  files: OverloadFile[];
+  scannedPath: string;
+}
+
+export async function scanOverloadedFiles(projectFolderName?: string, threshold: number = 500): Promise<ScanResult> {
   let rootPath = process.cwd();
   // Standard ignore patterns only, as requested
   const ignorePatterns = ['**/node_modules/**', '**/dist/**', '**/build/**', '**/.next/**'];
@@ -47,6 +52,9 @@ export async function scanOverloadedFiles(projectFolderName?: string, threshold:
   }
 
   // Sort by line count descending
-  return overloadedFiles.sort((a, b) => b.lineCount - a.lineCount);
+  return {
+      files: overloadedFiles.sort((a, b) => b.lineCount - a.lineCount),
+      scannedPath: rootPath
+  };
 }
 
