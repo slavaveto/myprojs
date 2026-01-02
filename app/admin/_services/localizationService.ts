@@ -16,7 +16,7 @@ export const localizationService = {
   // --- READ ---
   async getAllItems(supabase: SupabaseClient) {
      const { data, error } = await supabase
-        .from(DB_TABLES.UI)
+        .from(DB_TABLES.UI_ITEMS)
         .select('*')
         .order('sort_order', { ascending: true, nullsFirst: false })
         .order('item_id', { ascending: true });
@@ -45,7 +45,7 @@ export const localizationService = {
 
   async checkIdExists(supabase: SupabaseClient, itemId: string) {
      const { data } = await supabase
-        .from(DB_TABLES.UI)
+        .from(DB_TABLES.UI_ITEMS)
         .select('item_id')
         .eq('item_id', itemId)
         .maybeSingle();
@@ -67,7 +67,7 @@ export const localizationService = {
       };
 
       const { data, error } = await supabase
-        .from(DB_TABLES.UI)
+        .from(DB_TABLES.UI_ITEMS)
         .insert(payload)
         .select();
         
@@ -90,7 +90,7 @@ export const localizationService = {
      const cleanUpdates = { ...updates, updated_at: new Date().toISOString() };
      
      const { error } = await supabase
-        .from(DB_TABLES.UI)
+        .from(DB_TABLES.UI_ITEMS)
         .update(cleanUpdates)
         .eq('item_id', itemId);
 
@@ -98,14 +98,14 @@ export const localizationService = {
   },
 
   async deleteItem(supabase: SupabaseClient, itemId: string) {
-     const { error } = await supabase.from(DB_TABLES.UI).delete().eq('item_id', itemId);
+     const { error } = await supabase.from(DB_TABLES.UI_ITEMS).delete().eq('item_id', itemId);
      if (error) throw error;
   },
 
   async updateSortOrders(supabase: SupabaseClient, updates: { item_id: string; sort_order: number }[]) {
      const promises = updates.map(u => 
           supabase
-             .from(DB_TABLES.UI)
+             .from(DB_TABLES.UI_ITEMS)
              .update({ sort_order: u.sort_order, updated_at: new Date().toISOString() })
              .eq('item_id', u.item_id)
       );
@@ -121,7 +121,7 @@ export const localizationService = {
       
       // Используем upsert, так как запись может не существовать
       const { error } = await supabase
-        .from(DB_TABLES.UI)
+        .from(DB_TABLES.UI_ITEMS)
         .upsert({ 
             item_id: '_FOLDERS_CONFIG', 
             ...payload

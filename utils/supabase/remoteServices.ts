@@ -1,11 +1,12 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { supabase } from '@/utils/supabase/supabaseClient';
 import { Folder, Task } from '@/app/types';
+import { DB_TABLES } from '@/utils/supabase/db_tables';
 
 // Helper to determine table names
 const getTables = (isUi: boolean) => ({
-    folders: isUi ? '_ui_folders' : 'folders',
-    tasks: isUi ? '_ui_items' : 'tasks'
+    folders: isUi ? DB_TABLES.UI_FOLDERS : 'folders',
+    tasks: isUi ? DB_TABLES.UI_ITEMS : 'tasks'
 });
 
 export const createRemoteFolderService = (client: SupabaseClient, isUi: boolean = false) => {

@@ -26,7 +26,7 @@ export function useUIElements() {
 
    const loadUITable = async () => {
       try {
-         const cacheKey = `ui_${DB_TABLES.UI}`;
+         const cacheKey = `ui_${DB_TABLES.UI_ITEMS}`;
          const cached = typeof window !== 'undefined' ? globalStorage.getItem(cacheKey) : null;
 
          let shouldLoadFromDB = true;
@@ -43,7 +43,7 @@ export function useUIElements() {
 
             // Проверяем актуальность кэша (только активные элементы типа 'item')
             const { data: dbTimestamps } = await supabase
-               .from(DB_TABLES.UI)
+               .from(DB_TABLES.UI_ITEMS)
                .select('item_id, updated_at')
                .eq('is_deleted', false)
                .in('task_type', ['item']);
@@ -71,7 +71,7 @@ export function useUIElements() {
 
                   const itemIds = outdatedItems.map((item) => item.item_id);
                   const { data: freshData } = await supabase
-                     .from(DB_TABLES.UI)
+                     .from(DB_TABLES.UI_ITEMS)
                      .select('*')
                      .in('item_id', itemIds)
                      .eq('is_deleted', false)
@@ -109,7 +109,7 @@ export function useUIElements() {
             logger.start('Загрузка UI из БД (кэш отсутствует или устарел)');
 
             const { data, error } = await supabase
-               .from(DB_TABLES.UI)
+               .from(DB_TABLES.UI_ITEMS)
                .select('*')
                .eq('is_deleted', false)
                .in('task_type', ['item']);

@@ -1,9 +1,11 @@
 
 export const DB_TABLES = {
     USERS: '_users',
+    UI_ITEMS: '_ui_items',
+    UI_FOLDERS: '_ui_folders',
     PROFILES: '_profiles',
     LOGS_ADMIN: '_logs',
-    UI: '_ui_items',
+    
 
     ROOMS: 'rooms', 
 
@@ -11,5 +13,4 @@ export const DB_TABLES = {
     TASKS: 'tasks',
     FOLDERS: 'folders',
     LOGS: 'logs',
-
   } as const;
