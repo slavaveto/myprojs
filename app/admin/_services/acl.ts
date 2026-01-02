@@ -4,19 +4,15 @@
 export const PERMISSIONS = {
    // --- SUPER ADMIN ONLY ---
    MANAGE_USERS: 'manage_users', // Управление пользователями
-   VIEW_AUDIT_LOGS: 'view_audit_logs', // Просмотр логов
    SHOW_ADMIN_DEV_INFO: 'show_admin_dev_info', // Дебаг-панель
    SHOW_DEBUG_PANEL: 'show_debug_panel', // Дебаг-панель
-   MANAGE_ALL_ROOMS: 'manage_all_rooms', // Доступ ко всем комнатам
    MANAGE_LOGGER: 'manage_logger', // Редактирование логгера
 
    // --- PRO PLAN ---
-   CUSTOM_ROOM_ID: 'custom_room_id', // Редактирование ID комнаты
    CUSTOM_USERNAME: 'custom_username', // Редактирование username
 
    // --- BASIC ADMIN ---
    VIEW_ADMIN_PANEL: 'view_admin_panel', // Вход в админку
-   MANAGE_OWN_ROOMS: 'manage_own_rooms', // Свои комнаты
    MANAGE_OWN_PROFILE: 'manage_own_profile', // Свой профиль
 } as const;
 
@@ -44,24 +40,16 @@ export function checkPermission(permission: Permission, user: UserAccessContext)
    // Логика для остальных
    switch (permission) {
       case PERMISSIONS.VIEW_ADMIN_PANEL:
-      case PERMISSIONS.MANAGE_OWN_ROOMS:
       case PERMISSIONS.MANAGE_OWN_PROFILE:
          case PERMISSIONS.MANAGE_USERS:
          
          return true; // Доступно всем админам
 
-      case PERMISSIONS.CUSTOM_ROOM_ID: // Редактирование ID комнаты
       case PERMISSIONS.CUSTOM_USERNAME: // Редактирование username
       
          return user.plan === 'pro' || user.isSuperAdmin; // PRO или Супер-Админ
 
      
-      case PERMISSIONS.MANAGE_ALL_ROOMS:
-      case PERMISSIONS.VIEW_AUDIT_LOGS:
-         // return user.isSuperAdmin; // Только Супер-Админ (везде)
-         return user.isLocal;
-
-
       case PERMISSIONS.SHOW_DEBUG_PANEL:
          return user.isLocal; // Показывать дебаг-консоль локально всегда (даже без логина)
 

@@ -23,24 +23,6 @@ export const ADMIN_TABS_DATA: Record<TabId, AdminTabStaticConfig> = {
          refreshSuccess: 'Список актуален',
       }
    },
-   rooms: {
-      label: 'My Rooms',
-      texts: {
-         saveLoading: 'Сохраняем комнату...',
-         saveSuccess: 'Комната сохранена!',
-         refreshLoading: 'Обновляем комнаты...',
-         refreshSuccess: 'Готово',
-      }
-   },
-   logs: {
-      label: 'Logs',
-      texts: {
-         saveLoading: 'Сохранение...',
-         saveSuccess: 'Сохранено',
-         refreshLoading: 'Обновляем логи...',
-         refreshSuccess: 'Логи обновлены',
-      }
-   },
    logger: {
       label: 'Logger',
       texts: {

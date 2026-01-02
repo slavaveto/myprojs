@@ -4,11 +4,9 @@ import React, { useState, useEffect, useMemo, useLayoutEffect, useCallback, useR
 import { useDevice } from '@/utils/providers/MobileDetect';
 import { usePermission } from '@/app/admin/_services/usePermission';
 import { PERMISSIONS } from '@/app/admin/_services/acl';
-import { RoomsScreen } from './tabs/RoomsScreen';
 import { UsersScreen } from './tabs/UsersScreen';
-import { LogsScreen } from './tabs/LogsScreen';
 import { ProfileScreen } from './tabs/ProfileScreen';
-import { LayoutGrid, Users, FileText, Bug, UserCircle } from 'lucide-react';
+import { Users, FileText, Bug, UserCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useUser, useClerk } from '@clerk/nextjs';
 import clsx from 'clsx';
@@ -35,7 +33,7 @@ export default function AdminPage() {
       adminLoadingService.logInit();
    }, [setGlobalLoading]);
 
-   const [activeTab, setActiveTab] = useState<TabId>('rooms');
+   const [activeTab, setActiveTab] = useState<TabId>('profile');
 
    useEffect(() => {
        activeTabFinishedRef.current = false;
@@ -69,25 +67,11 @@ export default function AdminPage() {
             isVisible: (can) => can(PERMISSIONS.MANAGE_OWN_PROFILE),
          },
          {
-            id: 'rooms',
-            label: 'My Rooms',
-            icon: LayoutGrid,
-            component: (props) => <RoomsScreen {...props} texts={ADMIN_TABS_DATA.rooms.texts} showToast={ADMIN_SETTINGS.showToast} />,
-            isVisible: (can) => can(PERMISSIONS.MANAGE_OWN_ROOMS),
-         },
-         {
             id: 'users',
             label: 'Users',
             icon: Users,
             component: (props) => <UsersScreen {...props} texts={ADMIN_TABS_DATA.users.texts} showToast={ADMIN_SETTINGS.showToast} />,
             isVisible: (can) => can(PERMISSIONS.MANAGE_USERS),
-         },
-         {
-            id: 'logs',
-            label: 'Logs',
-            icon: FileText,
-            component: (props) => <LogsScreen {...props} texts={ADMIN_TABS_DATA.logs.texts} showToast={ADMIN_SETTINGS.showToast} />,
-            isVisible: (can) => can(PERMISSIONS.VIEW_AUDIT_LOGS),
          },
       ],
       []

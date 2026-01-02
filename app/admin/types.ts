@@ -1,7 +1,7 @@
 import React from 'react';
 import { Permission } from '@/app/admin/_services/acl';
 
-export type TabId = 'rooms' | 'users' | 'logs' | 'logger' | 'profile';
+export type TabId = 'users' | 'logger' | 'profile';
 
 export interface AdminTabTexts {
    saveLoading: string;
