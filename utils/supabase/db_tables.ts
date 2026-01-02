@@ -3,7 +3,7 @@ export const DB_TABLES = {
     USERS: '_users',
     PROFILES: '_profiles',
     LOGS_ADMIN: '_logs',
-    UI: '_ui',
+    UI: '_ui_items',
 
     ROOMS: 'rooms', 
 

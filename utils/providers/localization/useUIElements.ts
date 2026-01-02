@@ -41,10 +41,12 @@ export function useUIElements() {
          } else if (cached) {
             const cachedData: CachedData<UIElement> = JSON.parse(cached);
 
-            // Проверяем актуальность кэша
+            // Проверяем актуальность кэша (только активные элементы типа 'item')
             const { data: dbTimestamps } = await supabase
                .from(DB_TABLES.UI)
-               .select('item_id, updated_at');
+               .select('item_id, updated_at')
+               .eq('is_deleted', false)
+               .in('task_type', ['item']);
 
             if (dbTimestamps) {
                const outdatedItems = dbTimestamps.filter((dbItem) => {
@@ -71,7 +73,9 @@ export function useUIElements() {
                   const { data: freshData } = await supabase
                      .from(DB_TABLES.UI)
                      .select('*')
-                     .in('item_id', itemIds);
+                     .in('item_id', itemIds)
+                     .eq('is_deleted', false)
+                     .in('task_type', ['item']);
 
                   if (freshData) {
                      freshData.forEach((item) => {
@@ -101,10 +105,14 @@ export function useUIElements() {
          }
 
          if (shouldLoadFromDB) {
-            // Загружаем все данные
+            // Загружаем все данные (только активные элементы типа 'item')
             logger.start('Загрузка UI из БД (кэш отсутствует или устарел)');
 
-            const { data, error } = await supabase.from(DB_TABLES.UI).select('*');
+            const { data, error } = await supabase
+               .from(DB_TABLES.UI)
+               .select('*')
+               .eq('is_deleted', false)
+               .in('task_type', ['item']);
 
             if (data && !error) {
                setUIData(data);
