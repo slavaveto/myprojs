@@ -43,8 +43,9 @@ type AdminTab = 'ui' | 'docs' | 'users' | 'logs';
 
 // Memoized components to prevent re-rendering when hidden
 const MemoizedProjectScreen = React.memo(ProjectScreen, (prev, next) => {
-   // If it was hidden and stays hidden, don't re-render
-   if (!prev.isActive && !next.isActive) return true;
+   if (prev.isActive !== next.isActive) return false;
+   if (prev.canLoad !== next.canLoad) return false;
+   if (!next.isActive) return true;
    return false;
 });
 
@@ -76,9 +77,7 @@ export const AdminScreen = ({
        globalStorage.setItem(`active_admin_tab_${project.id}`, tab);
    };
 
-   // Если экран не активен, ничего не рендерим
-   if (!isActive) return null;
-
+   // Render content regardless of active state (handled by parent visibility)
    const renderContent = () => {
       return (
           <>

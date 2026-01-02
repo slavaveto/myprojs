@@ -220,19 +220,27 @@ const SidebarItem = ({
 // --- Memoized Screen Wrappers ---
 // Prevent re-rendering of hidden screens unless they become active/inactive
 const MemoizedProjectScreen = React.memo(ProjectScreen, (prev, next) => {
-   // If it was hidden and stays hidden, don't re-render
-   if (!prev.isActive && !next.isActive) return true;
-   // Otherwise, let React check props (or always re-render if active)
+   // Update if visibility changed
+   if (prev.isActive !== next.isActive) return false;
+   // Update if loading permission changed (e.g. background load started)
+   if (prev.canLoad !== next.canLoad) return false;
+   // If hidden and staying hidden (and canLoad same) -> skip
+   if (!next.isActive) return true;
+   // Active -> always update
    return false;
 });
 
 const MemoizedDocsScreen = React.memo(DocsScreen, (prev, next) => {
-   if (!prev.isActive && !next.isActive) return true;
+   if (prev.isActive !== next.isActive) return false;
+   if (prev.canLoad !== next.canLoad) return false;
+   if (!next.isActive) return true;
    return false;
 });
 
 const MemoizedAdminScreen = React.memo(AdminScreen, (prev, next) => {
-   if (!prev.isActive && !next.isActive) return true;
+   if (prev.isActive !== next.isActive) return false;
+   if (prev.canLoad !== next.canLoad) return false;
+   if (!next.isActive) return true;
    return false;
 });
 
