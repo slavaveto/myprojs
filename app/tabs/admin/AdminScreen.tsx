@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { clsx } from 'clsx';
 import { 
    LayoutTemplate, 
@@ -16,6 +16,7 @@ import { StatusBadge } from '@/utils/supabase/StatusBadge'; // Import StatusBadg
 import { EditProjectPopover } from '@/app/components/EditProject'; // Import EditProject
 import { Button } from '@heroui/react'; // Import Button
 import { EllipsisVertical } from 'lucide-react'; // Import Icon
+import { globalStorage } from '@/utils/storage'; // Import globalStorage
 
 // Заглушки для экранов
 const PlaceholderScreen = ({ title }: { title: string }) => (
@@ -52,6 +53,21 @@ export const AdminScreen = ({
    onProjectReady
 }: AdminScreenProps) => {
    const [activeTab, setActiveTab] = useState<AdminTab>('ui');
+
+   // Load saved tab on mount or project change
+   useEffect(() => {
+       const savedTab = globalStorage.getItem(`active_admin_tab_${project.id}`);
+       if (savedTab && ['ui', 'docs', 'users', 'logs'].includes(savedTab)) {
+           setActiveTab(savedTab as AdminTab);
+       } else {
+           setActiveTab('ui'); // Default
+       }
+   }, [project.id]);
+
+   const handleTabChange = (tab: AdminTab) => {
+       setActiveTab(tab);
+       globalStorage.setItem(`active_admin_tab_${project.id}`, tab);
+   };
 
    // Если экран не активен, ничего не рендерим
    if (!isActive) return null;
@@ -162,7 +178,7 @@ export const AdminScreen = ({
                          return (
                              <button
                                  key={tab.id}
-                                 onClick={() => setActiveTab(tab.id as AdminTab)}
+                                 onClick={() => handleTabChange(tab.id as AdminTab)}
                                  className={clsx(
                                      "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors text-left cursor-pointer",
                                      isTabActive 
