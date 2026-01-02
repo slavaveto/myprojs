@@ -95,6 +95,22 @@ export const AdminScreen = ({
        globalStorage.setItem(`active_admin_tab_${project.id}`, tab);
    };
 
+   // Helper to avoid unnecessary state updates
+   const updateStatusIfChanged = React.useCallback((newStatus: StatusState) => {
+       setProjectStatus(prev => {
+           if (prev.status === newStatus.status && prev.error === newStatus.error) return prev;
+           return newStatus;
+       });
+   }, []);
+
+   const handleUiStatusChange = React.useCallback((status: StatusState) => {
+       if (activeTab === 'ui') updateStatusIfChanged(status);
+   }, [activeTab, updateStatusIfChanged]);
+
+   const handleDocsStatusChange = React.useCallback((status: StatusState) => {
+       if (activeTab === 'docs') updateStatusIfChanged(status);
+   }, [activeTab, updateStatusIfChanged]);
+
    // Render content regardless of active state (handled by parent visibility)
    const renderContent = () => {
       return (
@@ -111,7 +127,7 @@ export const AdminScreen = ({
                         onUpdateProject={(updates) => onUpdateProject(uiSatellite.id, updates)}
                         onDeleteProject={() => {}} 
                         hideHeader={true}
-                        onStatusChange={(status) => activeTab === 'ui' && setProjectStatus(status)}
+                        onStatusChange={handleUiStatusChange}
                     />
                 ) : (
                     <div className="flex items-center justify-center h-full text-default-400">UI Project not enabled or not found</div>
@@ -130,7 +146,7 @@ export const AdminScreen = ({
                         onUpdateProject={(updates) => onUpdateProject(docsSatellite.id, updates)}
                         onDeleteProject={() => {}} 
                         hideHeader={true}
-                        onStatusChange={(status) => activeTab === 'docs' && setProjectStatus(status)}
+                        onStatusChange={handleDocsStatusChange}
                     />
                 ) : (
                     <div className="flex items-center justify-center h-full text-default-400">Docs Project not enabled or not found</div>
