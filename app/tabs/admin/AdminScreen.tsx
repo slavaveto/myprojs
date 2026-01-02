@@ -80,10 +80,16 @@ export const AdminScreen = ({
                 return <div className="flex items-center justify-center h-full text-default-400">Docs Project not enabled or not found</div>;
             }
             return (
-                <DocsScreen 
+                <ProjectScreen 
                    project={docsSatellite}
                    isActive={isActive && activeTab === 'docs'}
                    canLoad={canLoad} 
+                   globalStatus={globalStatus}
+                   onNavigate={onNavigate}
+                   onReady={() => onProjectReady(docsSatellite.id)}
+                   onUpdateProject={(updates) => onUpdateProject(docsSatellite.id, updates)}
+                   onDeleteProject={() => {}} 
+                   hideHeader={true}
                 />
             );
          case 'users':
@@ -96,10 +102,10 @@ export const AdminScreen = ({
    };
 
    const tabs = [
-      { id: 'ui', label: 'UI', icon: LayoutTemplate },
-      { id: 'docs', label: 'Docs', icon: Book },
       { id: 'users', label: 'Users', icon: Users },
+      { id: 'ui', label: 'UI', icon: LayoutTemplate },
       { id: 'logs', label: 'Logs', icon: FileText },
+      { id: 'docs', label: 'Docs', icon: Book },
    ];
 
    return (
@@ -153,7 +159,7 @@ export const AdminScreen = ({
                                  key={tab.id}
                                  onClick={() => setActiveTab(tab.id as AdminTab)}
                                  className={clsx(
-                                     "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors text-left",
+                                     "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors text-left cursor-pointer",
                                      isTabActive 
                                          ? "bg-primary/10 text-primary font-medium" 
                                          : "text-default-600 hover:bg-default-200"
