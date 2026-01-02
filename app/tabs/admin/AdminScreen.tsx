@@ -199,9 +199,7 @@ export const AdminScreen = ({
                     {/* Add OverloadScanner for Docs tab */}
                     {activeTab === 'docs' && (
                         <OverloadScanner 
-                            // We don't have projectLocalPath in Project type yet?
-                            // Assuming it might be added or we pass undefined for now and it works with defaults or fails gracefully
-                            projectLocalPath={undefined} 
+                            projectLocalPath={project.local_path} 
                         />
                     )}
                     
