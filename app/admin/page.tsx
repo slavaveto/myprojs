@@ -5,11 +5,10 @@ import { useDevice } from '@/utils/providers/MobileDetect';
 import { usePermission } from '@/app/admin/_services/usePermission';
 import { PERMISSIONS } from '@/app/admin/_services/acl';
 import { RoomsScreen } from './tabs/RoomsScreen';
-import { LocalizScreen } from './tabs/localiz/LocalizScreen';
 import { UsersScreen } from './tabs/UsersScreen';
 import { LogsScreen } from './tabs/LogsScreen';
 import { ProfileScreen } from './tabs/ProfileScreen';
-import { LayoutGrid, Languages, Users, FileText, Bug, UserCircle } from 'lucide-react';
+import { LayoutGrid, Users, FileText, Bug, UserCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useUser, useClerk } from '@clerk/nextjs';
 import clsx from 'clsx';
@@ -75,13 +74,6 @@ export default function AdminPage() {
             icon: LayoutGrid,
             component: (props) => <RoomsScreen {...props} texts={ADMIN_TABS_DATA.rooms.texts} showToast={ADMIN_SETTINGS.showToast} />,
             isVisible: (can) => can(PERMISSIONS.MANAGE_OWN_ROOMS),
-         },
-         {
-            id: 'localization',
-            label: 'Localization',
-            icon: Languages,
-            component: (props) => <LocalizScreen {...props} texts={ADMIN_TABS_DATA.localization.texts} showToast={ADMIN_SETTINGS.showToast} />,
-            isVisible: (can) => can(PERMISSIONS.MANAGE_LOCALIZATION),
          },
          {
             id: 'users',

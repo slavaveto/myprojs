@@ -4,7 +4,6 @@
 export const PERMISSIONS = {
    // --- SUPER ADMIN ONLY ---
    MANAGE_USERS: 'manage_users', // Управление пользователями
-   MANAGE_LOCALIZATION: 'manage_localization', // Редактирование переводов
    VIEW_AUDIT_LOGS: 'view_audit_logs', // Просмотр логов
    SHOW_ADMIN_DEV_INFO: 'show_admin_dev_info', // Дебаг-панель
    SHOW_DEBUG_PANEL: 'show_debug_panel', // Дебаг-панель
@@ -66,7 +65,6 @@ export function checkPermission(permission: Permission, user: UserAccessContext)
       case PERMISSIONS.SHOW_DEBUG_PANEL:
          return user.isLocal; // Показывать дебаг-консоль локально всегда (даже без логина)
 
-      case PERMISSIONS.MANAGE_LOCALIZATION:
       case PERMISSIONS.MANAGE_LOGGER:
       case PERMISSIONS.SHOW_ADMIN_DEV_INFO:
          // Супер-Админ + ОБЯЗАТЕЛЬНО Local environment

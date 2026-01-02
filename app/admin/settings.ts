@@ -32,15 +32,6 @@ export const ADMIN_TABS_DATA: Record<TabId, AdminTabStaticConfig> = {
          refreshSuccess: 'Готово',
       }
    },
-   localization: {
-      label: 'Localization',
-      texts: {
-         saveLoading: 'Сохраняем перевод...',
-         saveSuccess: 'Перевод сохранен!',
-         refreshLoading: 'Обновляем переводы...',
-         refreshSuccess: 'Переводы обновлены',
-      }
-   },
    logs: {
       label: 'Logs',
       texts: {
