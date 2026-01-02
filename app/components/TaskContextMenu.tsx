@@ -94,13 +94,11 @@ export const TaskMenuItems = ({
       if (isGroup) {
          if (task.is_closed) {
             return [
-               'revertToTask', 
+              
                'styles', 
                'separator', 
                'groupColor', 
             
-               'separator', 
-               'delete'
             ];
          }
          return [
@@ -110,8 +108,7 @@ export const TaskMenuItems = ({
             'groupColor', 
             'separator', 
             'insertBelow', 
-            'separator', 
-            'delete'
+           
          ];
       } 
 

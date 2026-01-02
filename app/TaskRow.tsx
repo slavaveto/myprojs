@@ -335,11 +335,11 @@ export const TaskRow = React.memo(
                />
                
                {/* DEBUG: Show group ID suffix for tasks inside a group */}
-               {!isGroup && task.group_id && (
+               {/* {!isGroup && task.group_id && (
                   <span className="text-[10px] text-default-300 ml-2 font-mono">
                      {task.group_id.substring(0, 3)}
                   </span>
-               )}
+               )} */}
 
                {isGroup && (groupCount !== undefined) && groupCount > 0 && (
                   <div className="flex-1 flex items-center">

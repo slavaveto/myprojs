@@ -189,7 +189,14 @@ export const useTaskData = (
                       // Assuming basic flow for now.
                       
                       // Update ID from Temp to Real
-                      setTasks(prev => prev.map(t => t.id === id ? { ...data, _tempId: realTask._tempId, _isSaving: false } : t));
+                      setTasks(prev => prev.map(t => t.id === id ? { 
+                          ...data, 
+                          _tempId: realTask._tempId, 
+                          _isSaving: false,
+                          // Keep local state for these fields as 'data' from server (createTask) might not have them yet
+                          group_id: snapshotBeforeSave.group_id,
+                          task_type: snapshotBeforeSave.task_type
+                      } : t));
                   });
                } catch (err) {
                   logger.error('Failed to create task from draft', err);
