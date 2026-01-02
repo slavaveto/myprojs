@@ -140,7 +140,7 @@ export const UiEditableCell = ({
             onBlur={handleBlur}
             onKeyDownCapture={handleKeyDown}
             className={clsx(
-               "w-full bg-transparent border-none outline-none resize-none p-0.5 -m-0.5 rounded text-small leading-tight overflow-hidden focus:ring-0 placeholder:text-default-300 transition-colors",
+               "w-full min-h-[28px] bg-transparent border-none outline-none resize-none  rounded text-small leading-tight overflow-hidden focus:ring-0 placeholder:text-default-300 transition-colors",
                error ? "bg-danger-50 text-danger focus:bg-danger-100 placeholder:text-danger-300" : "focus:bg-primary-50/50 dark:focus:bg-primary-900/20",
                className
             )}
