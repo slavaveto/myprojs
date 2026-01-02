@@ -7,7 +7,7 @@ import { GripVertical, Trash2, MoreVertical } from 'lucide-react';
 import { Task } from '@/app/types';
 import { clsx } from 'clsx';
 import { motion } from 'framer-motion';
-import { RichEditableCell } from '@/app/components/RichEditableCell'; // Import Editor
+import { UiEditableCell } from '@/app/components/remote/UiEditableCell'; // Use new component
 
 interface UiRowProps {
    task: Task;
@@ -18,6 +18,7 @@ interface UiRowProps {
    onSelect?: () => void;
    isSelected?: boolean;
    onOpenMenu?: (taskId: string, e: React.MouseEvent | React.TouchEvent) => void;
+   onValidateId?: (id: string) => string | null; // Add validation prop
 }
 
 export const UiRow = React.memo(
@@ -30,6 +31,7 @@ export const UiRow = React.memo(
       onSelect,
       isSelected,
       onOpenMenu,
+      onValidateId,
    }: UiRowProps) => {
       const creationTimeRef = React.useRef(Date.now());
       
@@ -71,24 +73,26 @@ export const UiRow = React.memo(
 
                 {/* Main Content: Item ID (Editable) */}
                 <div className="flex-1 min-w-0" onClick={(e) => {
-                    if ((e.target as HTMLElement).closest('.ProseMirror')) return;
+                    // if ((e.target as HTMLElement).closest('.ProseMirror')) return; // No longer needed
+                    if ((e.target as HTMLElement).tagName === 'TEXTAREA') return;
                     onSelect?.();
                 }}>
-                    <RichEditableCell
+                    <UiEditableCell
                         id={`ui-item-${task.id}`}
                         value={task.item_id || ''}
                         onSave={(val) => {
-                            const cleanVal = val.replace(/<[^>]*>/g, '').trim();
+                            const cleanVal = val.trim();
                             onUpdate(task.id, { item_id: cleanVal });
                         }}
+                        onValidate={onValidateId}
                         autoFocus={task.isDraft}
                         placeholder="item_id"
-                        className="w-full"
+                        className="w-full font-mono text-sm"
                         onCancel={() => {
                            if (task.isDraft) onDelete(task.id);
                         }}
                         onBlur={(val) => {
-                           const cleanVal = val.replace(/<[^>]*>/g, '').trim();
+                           const cleanVal = val.trim();
                            const timeSinceCreation = Date.now() - creationTimeRef.current;
                            
                            if (task.isDraft && !cleanVal) {

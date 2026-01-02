@@ -156,6 +156,33 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlight
     const isInsideGroup = !!activeTaskInfo?.activeGroupColor;
 
 
+    // Validation helper for UiRow
+    const validateItemId = React.useCallback((id: string) => {
+        if (!id.trim()) return 'ID cannot be empty';
+        if (!/^[a-zA-Z0-9_-]+$/.test(id)) return 'Only Latin letters, numbers, "-" and "_" allowed';
+        
+        // Check existence in CURRENT list
+        // Note: This checks against already loaded tasks. 
+        // If duplicates exist across folders (should not happen if ID is unique per project?), 
+        // we might need broader check, but usually uniqueness is per list/table.
+        // Assuming item_id must be unique within the project? Or folder?
+        // Let's assume global uniqueness within loaded tasks for now (which is per folder usually).
+        // Wait, standard tasks don't have item_id. Only UI tasks.
+        
+        const exists = tasks.some(t => t.item_id === id && !t.isNew); // Exclude self if new?
+        // Actually we need to exclude SELF by ID, not just isNew.
+        // But validateItemId takes a string 'id' (the value).
+        // We can't easily exclude "current row" unless we pass current row ID to validator factory.
+        // BUT, UiRow calls this validator with the VALUE.
+        
+        // Correction: The validator in LocalizScreen checks:
+        // const exists = items.some((i) => i.item_id === id && !i.isNew);
+        // This means it prevents entering an ID that belongs to an EXISTING SAVED item.
+        // It doesn't check against other drafts.
+        
+        return exists ? 'ID already exists' : null;
+    }, [tasks]);
+
     return (
         <div className="w-full pr-0 pb-10">
              {/* INVISIBLE SPACER for double click area */}
@@ -180,6 +207,17 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlight
                                      onSelect={() => onSelectTask?.(task.id)}
                                      isSelected={selectedTaskId === task.id}
                                      onOpenMenu={handleOpenMenu}
+                                     onValidateId={(val) => {
+                                         // Self-exclusion check
+                                         if (val === task.item_id && !task.isNew) return null;
+                                         // Basic validation
+                                         if (!val.trim()) return 'ID cannot be empty';
+                                         if (!/^[a-zA-Z0-9_-]+$/.test(val)) return 'Only Latin letters, numbers, "-" and "_" allowed';
+                                         
+                                         // Check duplicates against OTHER tasks
+                                         const exists = tasks.some(t => t.item_id === val && t.id !== task.id);
+                                         return exists ? 'ID already exists' : null;
+                                     }}
                                  />
                              ) : (
                                  <TaskRow 
@@ -212,6 +250,17 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlight
                                     onSelect={() => onSelectTask?.(task.id)}
                                     isSelected={selectedTaskId === task.id}
                                     onOpenMenu={handleOpenMenu}
+                                    onValidateId={(val) => {
+                                         // Self-exclusion check
+                                         if (val === task.item_id && !task.isNew) return null;
+                                         // Basic validation
+                                         if (!val.trim()) return 'ID cannot be empty';
+                                         if (!/^[a-zA-Z0-9_-]+$/.test(val)) return 'Only Latin letters, numbers, "-" and "_" allowed';
+                                         
+                                         // Check duplicates against OTHER tasks
+                                         const exists = tasks.some(t => t.item_id === val && t.id !== task.id);
+                                         return exists ? 'ID already exists' : null;
+                                     }}
                                  />
                              ) : (
                                  <TaskRow
