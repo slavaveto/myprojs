@@ -12,7 +12,4 @@ export const DB_TABLES = {
     FOLDERS: 'folders',
     LOGS: 'logs',
 
-    DOCS_FLOWS: 'docs_flows',
-    DOCS_STEPS: 'docs_steps',
-
   } as const;
