@@ -185,9 +185,11 @@ export const AdminScreen = ({
                          return (
                              <button
                                  key={tab.id}
-                                 onClick={() => handleTabChange(tab.id as AdminTab)}
+                                 onMouseDown={(e) => {
+                                     if (e.button === 0) handleTabChange(tab.id as AdminTab);
+                                 }}
                                  className={clsx(
-                                     "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors text-left cursor-pointer",
+                                     "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors text-left cursor-pointer select-none",
                                      isTabActive 
                                          ? "bg-primary/10 text-primary font-medium" 
                                          : "text-default-600 hover:bg-default-200"
