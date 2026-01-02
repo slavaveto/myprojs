@@ -292,7 +292,7 @@ function AppContent() {
    return (
       <div className="flex h-screen w-full overflow-hidden bg-background">
          {/* Sidebar */}
-         <aside className="w-[300px] flex-shrink-0 border-r border-default-200 bg-content1 flex flex-col z-20">
+         <aside className="w-[250px] flex-shrink-0 border-r border-default-200 bg-content1 flex flex-col z-20">
             <div className="p-4 border-b border-default-200 flex items-center justify-between">
                <div className="flex items-center gap-2 font-bold text-lg min-w-0">
                   <LayoutGrid size={24} className="text-primary flex-shrink-0" />

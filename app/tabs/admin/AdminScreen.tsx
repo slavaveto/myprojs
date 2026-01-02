@@ -11,7 +11,11 @@ import {
 import { Project } from '@/app/types';
 import { ProjectScreen } from '@/app/tabs/ProjectScreen';
 import { DocsScreen } from '@/app/tabs/docs/DocsScreen';
-import { NavigationTarget } from '@/app/components/GlobalSearch';
+import { NavigationTarget, GlobalSearch } from '@/app/components/GlobalSearch'; // Import GlobalSearch
+import { StatusBadge } from '@/utils/supabase/StatusBadge'; // Import StatusBadge
+import { EditProjectPopover } from '@/app/components/EditProject'; // Import EditProject
+import { Button } from '@heroui/react'; // Import Button
+import { EllipsisVertical } from 'lucide-react'; // Import Icon
 
 // Заглушки для экранов
 const PlaceholderScreen = ({ title }: { title: string }) => (
@@ -68,6 +72,7 @@ export const AdminScreen = ({
                     onReady={() => onProjectReady(uiSatellite.id)}
                     onUpdateProject={(updates) => onUpdateProject(uiSatellite.id, updates)}
                     onDeleteProject={() => {}} // Satellites are deleted via parent
+                    hideHeader={true}
                 />
             );
          case 'docs':
@@ -98,40 +103,75 @@ export const AdminScreen = ({
    ];
 
    return (
-      <div className="flex h-full w-full bg-background">
-         {/* Left Sidebar Menu */}
-         <div className="w-48 border-r border-default-200 bg-default-50 flex flex-col pt-4">
-             <div className="px-4 mb-4 text-xs font-semibold text-default-400 uppercase">
-                 Admin Panel
-             </div>
-             
-             <div className="flex flex-col gap-1 px-2">
-                 {tabs.map(tab => {
-                     const Icon = tab.icon;
-                     const isTabActive = activeTab === tab.id;
-                     return (
-                         <button
-                             key={tab.id}
-                             onClick={() => setActiveTab(tab.id as AdminTab)}
-                             className={clsx(
-                                 "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors text-left",
-                                 isTabActive 
-                                     ? "bg-primary/10 text-primary font-medium" 
-                                     : "text-default-600 hover:bg-default-200"
-                             )}
-                         >
-                             <Icon size={18} />
-                             <span>{tab.label}</span>
-                         </button>
-                     );
-                 })}
-             </div>
-         </div>
+      <div className="flex flex-col h-full w-full bg-background overflow-hidden">
+         {/* HEADER SECTION (Copied from ProjectScreen) */}
+         <div className="flex-none px-6 py-4 border-b border-default-200 bg-background z-10 flex flex-col gap-4">
+             {/* Title Row */}
+             <div className="grid grid-cols-[1fr_auto_1fr] items-center min-h-[40px] gap-4">
+                <div className="flex items-center gap-2 justify-self-start pl-1">
+                    <div 
+                        className="w-4 h-4 rounded-full flex-shrink-0 shadow-sm border border-white/10" 
+                        style={{ backgroundColor: project.proj_color || '#3b82f6' }}
+                    />
+                    <h1 className="text-2xl font-bold truncate">{project.title} - Admin Dashboard</h1>
+                </div>
+                
+                <div className="w-full max-w-[240px] justify-self-center">
+                    {onNavigate && (
+                        <GlobalSearch 
+                            onNavigate={onNavigate} 
+                            currentProjectId={project.id}
+                            // No current folder ID for Admin Screen root
+                        />
+                    )}
+                </div>
 
-         {/* Main Content Area */}
-         <div className="flex-grow h-full overflow-hidden bg-background relative">
-             {renderContent()}
-         </div>
+                <div className="flex items-center gap-2 justify-self-end">
+                    <StatusBadge 
+                        status={globalStatus?.status || 'idle'} // Use global status
+                        loadingText="Saving..."
+                        successText="Saved"
+                        errorMessage={globalStatus?.error?.message}
+                    />
+                </div>
+             </div>
+        </div>
+
+        <div className="flex flex-grow overflow-hidden">
+             {/* Left Sidebar Menu */}
+             <div className="w-48 border-r border-default-200 bg-default-50 flex flex-col pt-4 flex-shrink-0">
+                 <div className="px-4 mb-4 text-xs font-semibold text-default-400 uppercase">
+                     Admin Panel
+                 </div>
+                 
+                 <div className="flex flex-col gap-1 px-2">
+                     {tabs.map(tab => {
+                         const Icon = tab.icon;
+                         const isTabActive = activeTab === tab.id;
+                         return (
+                             <button
+                                 key={tab.id}
+                                 onClick={() => setActiveTab(tab.id as AdminTab)}
+                                 className={clsx(
+                                     "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors text-left",
+                                     isTabActive 
+                                         ? "bg-primary/10 text-primary font-medium" 
+                                         : "text-default-600 hover:bg-default-200"
+                                 )}
+                             >
+                                 <Icon size={18} />
+                                 <span>{tab.label}</span>
+                             </button>
+                         );
+                     })}
+                 </div>
+             </div>
+
+             {/* Main Content Area */}
+             <div className="flex-grow h-full overflow-hidden bg-background relative">
+                 {renderContent()}
+             </div>
+        </div>
       </div>
    );
 };

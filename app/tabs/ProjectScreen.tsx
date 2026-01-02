@@ -50,10 +50,11 @@ interface ProjectScreenProps {
     onNavigate?: (target: NavigationTarget) => void;
     hasUiSatellite?: boolean;
     hasDocsSatellite?: boolean;
+    hideHeader?: boolean;
 }
 
 export const ProjectScreen = (props: ProjectScreenProps) => {
-   const { project, onNavigate, hasUiSatellite, hasDocsSatellite } = props;
+   const { project, onNavigate, hasUiSatellite, hasDocsSatellite, hideHeader } = props;
    
    // 1. Data Management Hook
    const {
@@ -178,52 +179,54 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
           }}
       >
          {/* HEADER SECTION (Full Width) */}
-         <div className="flex-none px-6 py-4 border-b border-default-200 bg-background z-10 flex flex-col gap-4">
-             {/* Title Row */}
-             <div className="grid grid-cols-[1fr_auto_1fr] items-center min-h-[40px] gap-4">
-                <div className="flex items-center gap-2 justify-self-start pl-1">
-                    <div 
-                        className="w-4 h-4 rounded-full flex-shrink-0 shadow-sm border border-white/10" 
-                        style={{ backgroundColor: project.proj_color || '#3b82f6' }}
-                    />
-                    <h1 className="text-2xl font-bold truncate">{project.title}</h1>
-                    <EditProjectPopover  
-                        initialTitle={project.title}
-                        initialColor={project.proj_color}
-                        initialIsHighlighted={project.is_highlighted || false}
-                        onUpdate={handleEditProject}
-                        onDelete={handleRemoveProject}
-                        isSatellite={project.proj_type === 'ui' || project.proj_type === 'docs'}
-                        hasUiSatellite={hasUiSatellite}
-                        hasDocsSatellite={hasDocsSatellite}
-                        isPersonal={project.proj_type === 'personal'}
-                    >
-                        <Button isIconOnly size="sm" variant="light" className="text-default-400 hover:text-default-600">
-                            <EllipsisVertical size={18} />
-                        </Button>
-                    </EditProjectPopover>
-                </div>
-                
-                <div className="w-full max-w-[240px] justify-self-center">
-                    {onNavigate && (
-                        <GlobalSearch 
-                            onNavigate={onNavigate} 
-                            currentProjectId={project.id}
-                            currentFolderId={selectedFolderId}
+         {!hideHeader && (
+             <div className="flex-none px-6 py-4 border-b border-default-200 bg-background z-10 flex flex-col gap-4">
+                 {/* Title Row */}
+                 <div className="grid grid-cols-[1fr_auto_1fr] items-center min-h-[40px] gap-4">
+                    <div className="flex items-center gap-2 justify-self-start pl-1">
+                        <div 
+                            className="w-4 h-4 rounded-full flex-shrink-0 shadow-sm border border-white/10" 
+                            style={{ backgroundColor: project.proj_color || '#3b82f6' }}
                         />
-                    )}
-                </div>
+                        <h1 className="text-2xl font-bold truncate">{project.title}</h1>
+                        <EditProjectPopover  
+                            initialTitle={project.title}
+                            initialColor={project.proj_color}
+                            initialIsHighlighted={project.is_highlighted || false}
+                            onUpdate={handleEditProject}
+                            onDelete={handleRemoveProject}
+                            isSatellite={project.proj_type === 'ui' || project.proj_type === 'docs'}
+                            hasUiSatellite={hasUiSatellite}
+                            hasDocsSatellite={hasDocsSatellite}
+                            isPersonal={project.proj_type === 'personal'}
+                        >
+                            <Button isIconOnly size="sm" variant="light" className="text-default-400 hover:text-default-600">
+                                <EllipsisVertical size={18} />
+                            </Button>
+                        </EditProjectPopover>
+                    </div>
+                    
+                    <div className="w-full max-w-[240px] justify-self-center">
+                        {onNavigate && (
+                            <GlobalSearch 
+                                onNavigate={onNavigate} 
+                                currentProjectId={project.id}
+                                currentFolderId={selectedFolderId}
+                            />
+                        )}
+                    </div>
 
-                <div className="flex items-center gap-2 justify-self-end">
-                    <StatusBadge 
-                        status={displayStatus}
-                        loadingText="Saving..."
-                        successText="Saved"
-                        errorMessage={saveError?.message}
-                    />
-                </div>
-             </div>
-        </div>
+                    <div className="flex items-center gap-2 justify-self-end">
+                        <StatusBadge 
+                            status={displayStatus}
+                            loadingText="Saving..."
+                            successText="Saved"
+                            errorMessage={saveError?.message}
+                        />
+                    </div>
+                 </div>
+            </div>
+         )}
 
         {/* DND CONTEXT WRAPPER */}
          <DndContext
