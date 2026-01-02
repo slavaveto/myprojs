@@ -10,7 +10,6 @@ import {
 } from 'lucide-react';
 import { Project } from '@/app/types';
 import { ProjectScreen } from '@/app/tabs/ProjectScreen';
-import { DocsScreen } from '@/app/tabs/docs/DocsScreen';
 import { NavigationTarget, GlobalSearch } from '@/app/components/GlobalSearch'; // Import GlobalSearch
 import { StatusBadge } from '@/utils/supabase/StatusBadge'; // Import StatusBadge
 import { EditProjectPopover } from '@/app/components/EditProject'; // Import EditProject

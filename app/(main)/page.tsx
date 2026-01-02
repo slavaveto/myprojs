@@ -14,7 +14,6 @@ import {
 } from 'lucide-react';
 import { AppLoaderProvider, useAppLoader } from '@/app/AppLoader';
 import { ProjectScreen } from '@/app/tabs/ProjectScreen';
-import { DocsScreen } from '@/app/tabs/docs/DocsScreen';
 import { AdminScreen } from '@/app/tabs/admin/AdminScreen';
 import { CreateItemPopover } from '@/app/components/CreateItem';
 import { LogsScreen } from '@/app/tabs/LogsScreen';
@@ -227,13 +226,6 @@ const MemoizedProjectScreen = React.memo(ProjectScreen, (prev, next) => {
    // If hidden and staying hidden (and canLoad same) -> skip
    if (!next.isActive) return true;
    // Active -> always update
-   return false;
-});
-
-const MemoizedDocsScreen = React.memo(DocsScreen, (prev, next) => {
-   if (prev.isActive !== next.isActive) return false;
-   if (prev.canLoad !== next.canLoad) return false;
-   if (!next.isActive) return true;
    return false;
 });
 
@@ -610,13 +602,7 @@ function AppContent() {
                         />
                      </div>
 
-                     <div className={clsx("h-full w-full", projectScreenMode === 'docs' ? 'block' : 'hidden')}>
-                        <MemoizedDocsScreen 
-                           project={projectToRender}
-                           isActive={activeProjectId === project.id && projectScreenMode === 'docs'}
-                           canLoad={canLoadBackground && !!readyProjects[project.id]} 
-                        />
-                     </div>
+                     {/* DocsScreen removed as replaced by satellite */}
 
                      <div className={clsx("h-full w-full", projectScreenMode === 'admin' ? 'block' : 'hidden')}>
                         <MemoizedAdminScreen 
