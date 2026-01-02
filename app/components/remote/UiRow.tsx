@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Trash2 } from 'lucide-react';
+import { GripVertical, Trash2, MoreVertical } from 'lucide-react';
 import { Task } from '@/app/types';
 import { clsx } from 'clsx';
 import { motion } from 'framer-motion';
@@ -93,15 +93,14 @@ export const UiRow = React.memo(
             {/* Actions */}
             <div className="p-0 text-center relative flex justify-center items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                <button
-                  className="p-[2px] text-default-400 hover:text-danger hover:bg-danger/10 rounded transition-colors"
+                  className="p-[0px] text-default-400 cursor-pointer hover:text-default-600 rounded transition-all outline-none"
+                  aria-label="Task settings"
                   onClick={(e) => {
                      e.stopPropagation();
-                     if (confirm('Delete UI element?')) {
-                         onDelete(task.id);
-                     }
+                     onOpenMenu?.(task.id, e);
                   }}
                >
-                  <Trash2 size={16} />
+                  <MoreVertical size={16} />
                </button>
             </div>
          </>
