@@ -57,48 +57,53 @@ export const AdminScreen = ({
    if (!isActive) return null;
 
    const renderContent = () => {
-      switch (activeTab) {
-         case 'ui':
-            if (!uiSatellite) {
-                return <div className="flex items-center justify-center h-full text-default-400">UI Project not enabled or not found</div>;
-            }
-            return (
-                <ProjectScreen 
-                    project={uiSatellite}
-                    isActive={isActive && activeTab === 'ui'}
-                    canLoad={canLoad}
-                    globalStatus={globalStatus}
-                    onNavigate={onNavigate}
-                    onReady={() => onProjectReady(uiSatellite.id)}
-                    onUpdateProject={(updates) => onUpdateProject(uiSatellite.id, updates)}
-                    onDeleteProject={() => {}} // Satellites are deleted via parent
-                    hideHeader={true}
-                />
-            );
-         case 'docs':
-            if (!docsSatellite) {
-                return <div className="flex items-center justify-center h-full text-default-400">Docs Project not enabled or not found</div>;
-            }
-            return (
-                <ProjectScreen 
-                   project={docsSatellite}
-                   isActive={isActive && activeTab === 'docs'}
-                   canLoad={canLoad} 
-                   globalStatus={globalStatus}
-                   onNavigate={onNavigate}
-                   onReady={() => onProjectReady(docsSatellite.id)}
-                   onUpdateProject={(updates) => onUpdateProject(docsSatellite.id, updates)}
-                   onDeleteProject={() => {}} 
-                   hideHeader={true}
-                />
-            );
-         case 'users':
-            return <PlaceholderScreen title="Users Management" />;
-         case 'logs':
-            return <PlaceholderScreen title="Logs Viewer" />;
-         default:
-            return null;
-      }
+      return (
+          <>
+            <div className={clsx("h-full w-full", activeTab === 'ui' ? 'block' : 'hidden')}>
+                {uiSatellite ? (
+                    <ProjectScreen 
+                        project={uiSatellite}
+                        isActive={isActive && activeTab === 'ui'}
+                        canLoad={canLoad}
+                        globalStatus={globalStatus}
+                        onNavigate={onNavigate}
+                        onReady={() => onProjectReady(uiSatellite.id)}
+                        onUpdateProject={(updates) => onUpdateProject(uiSatellite.id, updates)}
+                        onDeleteProject={() => {}} 
+                        hideHeader={true}
+                    />
+                ) : (
+                    <div className="flex items-center justify-center h-full text-default-400">UI Project not enabled or not found</div>
+                )}
+            </div>
+
+            <div className={clsx("h-full w-full", activeTab === 'docs' ? 'block' : 'hidden')}>
+                {docsSatellite ? (
+                    <ProjectScreen 
+                        project={docsSatellite}
+                        isActive={isActive && activeTab === 'docs'}
+                        canLoad={canLoad} 
+                        globalStatus={globalStatus}
+                        onNavigate={onNavigate}
+                        onReady={() => onProjectReady(docsSatellite.id)}
+                        onUpdateProject={(updates) => onUpdateProject(docsSatellite.id, updates)}
+                        onDeleteProject={() => {}} 
+                        hideHeader={true}
+                    />
+                ) : (
+                    <div className="flex items-center justify-center h-full text-default-400">Docs Project not enabled or not found</div>
+                )}
+            </div>
+
+            <div className={clsx("h-full w-full", activeTab === 'users' ? 'block' : 'hidden')}>
+                <PlaceholderScreen title="Users Management" />
+            </div>
+
+            <div className={clsx("h-full w-full", activeTab === 'logs' ? 'block' : 'hidden')}>
+                <PlaceholderScreen title="Logs Viewer" />
+            </div>
+          </>
+      );
    };
 
    const tabs = [
