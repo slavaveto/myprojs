@@ -15,6 +15,7 @@ import {
 import { AppLoaderProvider, useAppLoader } from '@/app/AppLoader';
 import { ProjectScreen } from '@/app/tabs/ProjectScreen';
 import { DocsScreen } from '@/app/tabs/docs/DocsScreen';
+import { AdminScreen } from '@/app/tabs/admin/AdminScreen';
 import { CreateItemPopover } from '@/app/components/CreateItem';
 import { LogsScreen } from '@/app/tabs/LogsScreen';
 import { DoneScreen } from '@/app/tabs/DoneScreen';
@@ -48,10 +49,12 @@ interface SortableProjectItemProps {
    onClick: () => void;
    onUiClick?: () => void; // Handler for UI Satellite
    onDocsClick?: () => void; // Handler for Docs Satellite
+   onAdminClick?: () => void; // Handler for Admin Panel
    satelliteId?: string; // UI Satellite ID
    docsSatelliteId?: string; // Docs Satellite ID
    isUiActive?: boolean; // UI active state
    isDocsActive?: boolean; // Docs active state
+   isAdminActive?: boolean; // Admin active state
    children?: React.ReactNode;
 }
 
@@ -61,10 +64,12 @@ const SortableProjectItem = ({
    onClick,
    onDocsClick,
    onUiClick,
+   onAdminClick,
    satelliteId,
    docsSatelliteId,
    isUiActive,
    isDocsActive,
+   isAdminActive,
    children,
 }: SortableProjectItemProps) => {
    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -119,41 +124,23 @@ const SortableProjectItem = ({
 
             <span className="truncate flex-grow">{project.title}</span>
             
-            {/* Docs Chip */}
+            {/* Admin Chip */}
             <div className="flex items-center gap-1">
-               {satelliteId && (
+               {(satelliteId || docsSatelliteId) && (
                   <div 
                      className={clsx(
-                        "flex items-center gap-1 bg-purple-100 hover:bg-purple-200 px-2 py-[6px] rounded-lg text-[10px] font-medium text-purple-600 transition-all",
+                        "flex items-center gap-1 bg-orange-100 hover:bg-orange-200 px-2 py-[6px] rounded-lg text-[10px] font-medium text-default-600 transition-all",
                         isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100",
-                        isUiActive && "ring-2 ring-purple-500 ring-offset-1" // Highlight active UI button
+                        isAdminActive && "ring-2 ring-orange-500 ring-offset-1" // Highlight active Admin button
                      )}
                      onClick={(e) => {
                         e.stopPropagation();
-                        onUiClick?.();
+                        onAdminClick?.();
                      }}
                   >
-                     <span>UI</span>
+                     <span>Admin</span>
                   </div>
                )}
-
-               {docsSatelliteId && (
-                  <div 
-                     className={clsx(
-                        "flex items-center gap-1 bg-orange-100 hover:bg-orange-200 px-2 py-[6px] rounded-lg text-[10px] font-medium text-orange-600 transition-all",
-                        isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100",
-                        isDocsActive && "ring-2 ring-orange-500 ring-offset-1" // Highlight active Docs button
-                     )}
-                     onClick={(e) => {
-                        e.stopPropagation();
-                        onDocsClick?.();
-                     }}
-                  >
-                     <span>Docs</span>
-                  </div>
-               )}
-   
-
             </div>
          </div>
 
@@ -412,8 +399,7 @@ function AppContent() {
                            (uiId && activeProjectId === uiId) || 
                            (docsId && activeProjectId === docsId);
                            
-                        const isUiActive = uiId ? activeProjectId === uiId : false;
-                        const isDocsActive = docsId ? activeProjectId === docsId : false;
+                        const isAdminActive = activeProjectId === project.id && projectScreenMode === 'admin';
                         
                         return (
                            <SortableProjectItem
@@ -422,29 +408,18 @@ function AppContent() {
                               isActive={!!isSelfOrSatelliteActive}
                               satelliteId={uiId} // Pass UI Satellite ID
                               docsSatelliteId={docsId} // Pass Docs Satellite ID
-                              isUiActive={isUiActive} // Pass UI active state
-                              isDocsActive={isDocsActive} // Pass Docs active state
+                              isAdminActive={isAdminActive}
                               onClick={() => {
                                  setActiveProjectId(project.id);
                                  setActiveSystemTab(null);
                                  setProjectScreenMode('tasks'); // Default to tasks
                                  globalStorage.setItem('active_project_id', project.id);
                               }}
-                              onDocsClick={() => {
-                                 if (docsId) {
-                                    setActiveProjectId(docsId);
-                                    setActiveSystemTab(null);
-                                    setProjectScreenMode('tasks'); // Docs project is a separate project, render it fully
-                                    globalStorage.setItem('active_project_id', docsId);
-                                 }
-                              }}
-                              onUiClick={() => {
-                                 if (uiId) {
-                                    setActiveProjectId(uiId);
-                                    setActiveSystemTab(null);
-                                    setProjectScreenMode('tasks'); // UI projects likely use task/default view
-                                    globalStorage.setItem('active_project_id', uiId);
-                                 }
+                              onAdminClick={() => {
+                                 setActiveProjectId(project.id);
+                                 setActiveSystemTab(null);
+                                 setProjectScreenMode('admin');
+                                 globalStorage.setItem('active_project_id', project.id);
                               }}
                            >
                               <EditProjectPopover
@@ -572,6 +547,9 @@ function AppContent() {
                   : project;
 
                const sats = satellitesMap[project.id] || {};
+               const uiProject = sats.ui ? projects.find(p => p.id === sats.ui) : undefined;
+               const docsProject = sats.docs ? projects.find(p => p.id === sats.docs) : undefined;
+               
                const showModules = !isSatellite && !isPersonal;
 
                return (
@@ -609,6 +587,20 @@ function AppContent() {
                            project={projectToRender}
                            isActive={activeProjectId === project.id && projectScreenMode === 'docs'}
                            canLoad={canLoadBackground && !!readyProjects[project.id]} 
+                        />
+                     </div>
+
+                     <div className={clsx("h-full w-full", projectScreenMode === 'admin' ? 'block' : 'hidden')}>
+                        <AdminScreen 
+                           project={projectToRender}
+                           uiSatellite={uiProject}
+                           docsSatellite={docsProject}
+                           isActive={activeProjectId === project.id && projectScreenMode === 'admin'}
+                           canLoad={canLoadBackground}
+                           globalStatus={sidebarStatus}
+                           onNavigate={handleNavigate}
+                           onUpdateProject={updateProjectInState}
+                           onProjectReady={handleProjectReady}
                         />
                      </div>
                   </div>

@@ -23,7 +23,7 @@ export function usePageLogic() {
    const [projects, setProjects] = useState<Project[]>([]);
    const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
    const [activeSystemTab, setActiveSystemTab] = useState<string | null>(null); // 'inbox' | 'today' | 'done' | null
-   const [projectScreenMode, setProjectScreenMode] = useState<'tasks' | 'docs'>('tasks');
+   const [projectScreenMode, setProjectScreenMode] = useState<'tasks' | 'docs' | 'admin'>('tasks');
    const { setLoading: setGlobalLoading } = useAppLoader();
 
    // Словарик готовности проектов: { [projectId]: true }

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Popover, PopoverTrigger, PopoverContent, Button, Input, PopoverProps, Checkbox } from '@heroui/react';
+import { Popover, PopoverTrigger, PopoverContent, Button, Input, PopoverProps, Checkbox, Switch } from '@heroui/react';
 import { clsx } from 'clsx';
 import { Check, Trash2 } from 'lucide-react';
 import { DeleteConfirmationModal } from '@/app/components/DeleteModal';
@@ -53,6 +53,7 @@ export const EditProjectPopover = ({
     // Modules State
     const [hasUi, setHasUi] = useState(hasUiSatellite);
     const [hasDocs, setHasDocs] = useState(hasDocsSatellite);
+    const [hasAdminPanel, setHasAdminPanel] = useState(hasUiSatellite || hasDocsSatellite);
 
     const [isLoading, setIsLoading] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -67,6 +68,7 @@ export const EditProjectPopover = ({
             setIsHighlighted(initialIsHighlighted);
             setHasUi(hasUiSatellite);
             setHasDocs(hasDocsSatellite);
+            setHasAdminPanel(hasUiSatellite || hasDocsSatellite);
             setIsModified(false);
         }
     }, [isOpen, initialTitle, initialColor, initialIsHighlighted, hasUiSatellite, hasDocsSatellite]);
@@ -203,26 +205,20 @@ export const EditProjectPopover = ({
 
                             {/* Modules Section */}
                             {!isSatellite && (
-                                <div className="px-1 flex flex-col gap-2 pt-2 border-t border-divider mt-1">
-                                    <span className="text-tiny text-default-500 font-semibold uppercase">Modules</span>
-                                    <Checkbox 
-                                        isSelected={hasUi} 
-                                        onValueChange={setHasUi}
+                                <div className="px-1 flex flex-col gap-2 pt-0  mt-0">
+                                    <Switch 
+                                        isSelected={hasAdminPanel} 
+                                        onValueChange={(isSelected) => {
+                                            setHasAdminPanel(isSelected);
+                                            setHasUi(isSelected);
+                                            setHasDocs(isSelected);
+                                        }}
                                         size="sm"
-                                        color="secondary"
+                                        color="primary"
                                         classNames={{ label: "text-small" }}
                                     >
-                                        Enable UI Project
-                                    </Checkbox>
-                                    <Checkbox 
-                                        isSelected={hasDocs} 
-                                        onValueChange={setHasDocs}
-                                        size="sm"
-                                        color="warning"
-                                        classNames={{ label: "text-small" }}
-                                    >
-                                        Enable Docs Project
-                                    </Checkbox>
+                                        Enable Admin Panel
+                                    </Switch>
                                 </div>
                             )}
 
