@@ -359,7 +359,7 @@ export const TaskRow = React.memo(
             </div>
 
             {/* Actions */}
-            <div className="p-0 text-center relative flex justify-center items-center gap-1">
+            <div className="pl-1 text-center relative flex justify-center items-center gap-1">
                {/* Style Button */}
                {!isGroup && (
                   <>

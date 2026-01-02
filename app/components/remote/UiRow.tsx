@@ -91,7 +91,7 @@ export const UiRow = React.memo(
             </div>
 
             {/* Actions */}
-            <div className="p-0 text-center relative flex justify-center items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="pl-1 text-center relative flex justify-center items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                <button
                   className="p-[0px] text-default-400 cursor-pointer hover:text-default-600 rounded transition-all outline-none"
                   aria-label="Task settings"
