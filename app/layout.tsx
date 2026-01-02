@@ -28,24 +28,6 @@ export async function generateMetadata(): Promise<Metadata> {
    const pathname = headersList.get('x-pathname') || '';
    const normalizedHost = host.replace(/^www\./, '');
 
-   // Извлекаем roomId из pathname (например, /m3n-7o3-p9e -> m3n-7o3-p9e)
-   const roomIdMatch = pathname.match(/^\/([^\/]+)$/);
-   const roomId = roomIdMatch ? roomIdMatch[1] : null;
-
-   // Получаем название комнаты из БД
-   let roomTitle = null;
-   if (roomId) {
-      const { data } = await supabase
-         .from(DB_TABLES.ROOMS)
-         .select('room_title')
-         .eq('room_id', roomId)
-         .maybeSingle();
-      
-      if (data) {
-         roomTitle = data.room_title;
-      }
-   }
-
    const domainData: Record<string, { title: string; description: string; favicon: string }> = {
       'groups.slavaveto.com': {
          title: 'Group',
@@ -66,11 +48,9 @@ export async function generateMetadata(): Promise<Metadata> {
       favicon: '/favicons/local.png?v=1',
    };
 
-   // Если есть roomTitle - добавляем его к заголовку
-   const finalTitle = roomTitle ? `${roomTitle} • ${data.title}` : data.title;
 
    return {
-      title: finalTitle,
+      title: "Daysync",
       description: data.description,
       icons: {
          icon: data.favicon,
