@@ -1,5 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { getRemoteKeys } from '@/app/_actions/getRemoteKeys';
+import { getRemoteKeys } from '@/utils/supabase/getRemoteKeys';
 import { supabase as localClient } from '@/utils/supabase/supabaseClient';
 
 // Cache clients to avoid recreating them on every render/request
