@@ -8,6 +8,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { AnimatePresence } from 'framer-motion';
 import { Dropdown, DropdownTrigger, DropdownMenu } from '@heroui/react';
 import { TaskMenuItems } from '@/app/components/TaskContextMenu';
+import { UiContextMenu } from '@/app/components/remote/UiContextMenu'; // Import UiContextMenu
 
 interface TaskListProps {
     tasks: Task[];
@@ -178,6 +179,7 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlight
                                      isHighlighted={highlightedTaskId === task.id}
                                      onSelect={() => onSelectTask?.(task.id)}
                                      isSelected={selectedTaskId === task.id}
+                                     onOpenMenu={handleOpenMenu}
                                  />
                              ) : (
                                  <TaskRow 
@@ -209,6 +211,7 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlight
                                     isHighlighted={highlightedTaskId === task.id}
                                     onSelect={() => onSelectTask?.(task.id)}
                                     isSelected={selectedTaskId === task.id}
+                                    onOpenMenu={handleOpenMenu}
                                  />
                              ) : (
                                  <TaskRow
@@ -266,43 +269,63 @@ export const TaskList = ({ tasks, onUpdateTask, onDeleteTask, isEmpty, highlight
                       />
                    </DropdownTrigger>
                    <DropdownMenu aria-label="Task Actions" className="overflow-visible">
-                      {TaskMenuItems({
-                         task: activeTask,
-                         onUpdate: onUpdateTask,
-                         onDelete: onDeleteTask,
-                         onAddGap: () => {
-                             // Find index in the FULL list of tasks (filtered by folder), not just unpinned
-                             const index = tasks.findIndex(t => t.id === activeTask.id);
-                             if (index !== -1 && onAddGap) onAddGap(index); 
-                         },
-                         onInsertTask: (position) => {
-                             // Find index in the FULL list of tasks
-                             const index = tasks.findIndex(t => t.id === activeTask.id);
-                             if (index !== -1 && onInsertTask) {
-                                 onInsertTask(position === 'above' ? index : index + 1);
-                             }
-                         },
-                         onInsertNote: (position) => {
-                             const index = tasks.findIndex(t => t.id === activeTask.id);
-                             if (index !== -1 && onInsertNote) {
-                                 onInsertNote(position === 'above' ? index : index + 1);
-                             }
-                         },
-                         onMove: onMoveTask,
-                         projectsStructure: projectsStructure,
-                         isInsideGroup: isInsideGroup,
-                         currentProjectId: currentProjectId,
-                         items: {
-                            delete: true,
-                            makeGap: true,
-                            makeGroup: true,
-                            makeNote: true,
-                            today: true,
-                            move: true,
-                            styles: true
-                         },
-                         closeMenu: closeMenu
-                      })}
+                      {isUiProject ? (
+                          UiContextMenu({
+                              task: activeTask,
+                              onUpdate: onUpdateTask,
+                              onDelete: onDeleteTask,
+                              onAddGap: () => {
+                                  const index = tasks.findIndex(t => t.id === activeTask.id);
+                                  if (index !== -1 && onAddGap) onAddGap(index); 
+                              },
+                              onInsertTask: (position) => {
+                                  const index = tasks.findIndex(t => t.id === activeTask.id);
+                                  if (index !== -1 && onInsertTask) {
+                                      onInsertTask(position === 'above' ? index : index + 1);
+                                  }
+                              },
+                              isInsideGroup: isInsideGroup,
+                              closeMenu: closeMenu
+                          })
+                      ) : (
+                          TaskMenuItems({
+                             task: activeTask,
+                             onUpdate: onUpdateTask,
+                             onDelete: onDeleteTask,
+                             onAddGap: () => {
+                                 // Find index in the FULL list of tasks (filtered by folder), not just unpinned
+                                 const index = tasks.findIndex(t => t.id === activeTask.id);
+                                 if (index !== -1 && onAddGap) onAddGap(index); 
+                             },
+                             onInsertTask: (position) => {
+                                 // Find index in the FULL list of tasks
+                                 const index = tasks.findIndex(t => t.id === activeTask.id);
+                                 if (index !== -1 && onInsertTask) {
+                                     onInsertTask(position === 'above' ? index : index + 1);
+                                 }
+                             },
+                             onInsertNote: (position) => {
+                                 const index = tasks.findIndex(t => t.id === activeTask.id);
+                                 if (index !== -1 && onInsertNote) {
+                                     onInsertNote(position === 'above' ? index : index + 1);
+                                 }
+                             },
+                             onMove: onMoveTask,
+                             projectsStructure: projectsStructure,
+                             isInsideGroup: isInsideGroup,
+                             currentProjectId: currentProjectId,
+                             items: {
+                                delete: true,
+                                makeGap: true,
+                                makeGroup: true,
+                                makeNote: true,
+                                today: true,
+                                move: true,
+                                styles: true
+                             },
+                             closeMenu: closeMenu
+                          })
+                      )}
                    </DropdownMenu>
                 </Dropdown>
              )}

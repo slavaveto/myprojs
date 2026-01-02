@@ -17,6 +17,7 @@ interface UiRowProps {
    isHighlighted?: boolean;
    onSelect?: () => void;
    isSelected?: boolean;
+   onOpenMenu?: (taskId: string, e: React.MouseEvent | React.TouchEvent) => void;
 }
 
 export const UiRow = React.memo(
@@ -28,6 +29,7 @@ export const UiRow = React.memo(
       isHighlighted,
       onSelect,
       isSelected,
+      onOpenMenu,
    }: UiRowProps) => {
       
       const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -128,13 +130,18 @@ export const UiRow = React.memo(
             animate={{ opacity: 1, height: 'auto' }}
             transition={{ duration: 0.2 }}
             onMouseDown={(e) => {
-                // Allow selection on click
-                // Prevent selection when clicking drag handle to avoid conflict with dnd-kit
-                if ((e.target as HTMLElement).closest('.cursor-grab')) return;
-                
-                if (e.button === 0) {
-                    onSelect?.();
-                }
+               // Allow selection on click
+               // Prevent selection when clicking drag handle to avoid conflict with dnd-kit
+               if ((e.target as HTMLElement).closest('.cursor-grab')) return;
+               
+               if (e.button === 0) {
+                   onSelect?.();
+               }
+            }}
+            onContextMenu={(e) => {
+               e.preventDefault();
+               onSelect?.(); // Select on right click too
+               onOpenMenu?.(task.id, e);
             }}
          >
             {content}
