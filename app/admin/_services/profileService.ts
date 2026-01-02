@@ -18,12 +18,15 @@ export const profileService = {
   async getProfile(supabase: SupabaseClient, userId: string) {
     const { data, error } = await supabase
       .from(DB_TABLES.PROFILES)
-      .select('username, full_name, avatar_url, about_me')
+      .select('*') // Select all to avoid errors if specific columns (like about_me) are missing
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
 
-    if (error) throw error;
-    return data as Partial<Profile>;
+    if (error) {
+       // logger.error('Profile fetch error', error); // Logger is not available here easily without importing
+       throw error;
+    }
+    return (data || {}) as Partial<Profile>;
   },
 
   async checkUsernameAvailability(supabase: SupabaseClient, username: string, currentUserId: string): Promise<boolean> {
