@@ -18,6 +18,8 @@ import { Button } from '@heroui/react'; // Import Button
 import { EllipsisVertical } from 'lucide-react'; // Import Icon
 import { globalStorage } from '@/utils/storage'; // Import globalStorage
 
+import { ActionStatus } from '@/utils/supabase/useAsyncAction'; // Import ActionStatus
+
 // Заглушки для экранов
 const PlaceholderScreen = ({ title }: { title: string }) => (
    <div className="flex items-center justify-center h-full text-default-400">
@@ -45,9 +47,19 @@ type AdminTab = 'ui' | 'docs' | 'users' | 'logs';
 const MemoizedProjectScreen = React.memo(ProjectScreen, (prev, next) => {
    if (prev.isActive !== next.isActive) return false;
    if (prev.canLoad !== next.canLoad) return false;
-   if (!next.isActive) return true;
+   // Re-render if hidden status changes (to stop spinner/reset state) - actually handled by internal logic
+   if (!next.isActive) return true; // Don't re-render if staying hidden? Wait, if we hide it, we want it to freeze?
+   // Actually, the previous logic was:
+   // if (!next.isActive) return true;
+   // This means if the component is hidden (isActive=false), we return TRUE (props are equal), so NO RENDER.
+   // This is good for performance.
    return false;
 });
+
+interface StatusState {
+    status: ActionStatus;
+    error: Error | null;
+}
 
 export const AdminScreen = ({
    project,
@@ -61,6 +73,7 @@ export const AdminScreen = ({
    onProjectReady
 }: AdminScreenProps) => {
    const [activeTab, setActiveTab] = useState<AdminTab>('ui');
+   const [projectStatus, setProjectStatus] = useState<StatusState>({ status: 'idle', error: null });
 
    // Load saved tab on mount or project change
    useEffect(() => {
@@ -71,6 +84,11 @@ export const AdminScreen = ({
            setActiveTab('ui'); // Default
        }
    }, [project.id]);
+
+   // Reset status on tab change
+   useEffect(() => {
+       setProjectStatus({ status: 'idle', error: null });
+   }, [activeTab]);
 
    const handleTabChange = (tab: AdminTab) => {
        setActiveTab(tab);
@@ -93,6 +111,7 @@ export const AdminScreen = ({
                         onUpdateProject={(updates) => onUpdateProject(uiSatellite.id, updates)}
                         onDeleteProject={() => {}} 
                         hideHeader={true}
+                        onStatusChange={(status) => activeTab === 'ui' && setProjectStatus(status)}
                     />
                 ) : (
                     <div className="flex items-center justify-center h-full text-default-400">UI Project not enabled or not found</div>
@@ -111,6 +130,7 @@ export const AdminScreen = ({
                         onUpdateProject={(updates) => onUpdateProject(docsSatellite.id, updates)}
                         onDeleteProject={() => {}} 
                         hideHeader={true}
+                        onStatusChange={(status) => activeTab === 'docs' && setProjectStatus(status)}
                     />
                 ) : (
                     <div className="flex items-center justify-center h-full text-default-400">Docs Project not enabled or not found</div>
@@ -161,10 +181,10 @@ export const AdminScreen = ({
 
                 <div className="flex items-center gap-2 justify-self-end">
                     <StatusBadge 
-                        status={globalStatus?.status || 'idle'} // Use global status
+                        status={projectStatus.status} 
                         loadingText="Saving..."
                         successText="Saved"
-                        errorMessage={globalStatus?.error?.message}
+                        errorMessage={projectStatus.error?.message}
                     />
                 </div>
              </div>

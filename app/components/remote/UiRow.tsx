@@ -31,6 +31,7 @@ export const UiRow = React.memo(
       isSelected,
       onOpenMenu,
    }: UiRowProps) => {
+      const creationTimeRef = React.useRef(Date.now());
       
       const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
          id: task.id,
@@ -80,9 +81,23 @@ export const UiRow = React.memo(
                             const cleanVal = val.replace(/<[^>]*>/g, '').trim();
                             onUpdate(task.id, { item_id: cleanVal });
                         }}
-                        autoFocus={task.isNew}
+                        autoFocus={task.isDraft}
                         placeholder="item_id"
                         className="w-full"
+                        onCancel={() => {
+                           if (task.isDraft) onDelete(task.id);
+                        }}
+                        onBlur={(val) => {
+                           const cleanVal = val.replace(/<[^>]*>/g, '').trim();
+                           const timeSinceCreation = Date.now() - creationTimeRef.current;
+                           
+                           if (task.isDraft && !cleanVal) {
+                              if (task.isNew && timeSinceCreation < 500) {
+                                 return;
+                              }
+                              onDelete(task.id);
+                           }
+                        }}
                     />
                 </div>
                 

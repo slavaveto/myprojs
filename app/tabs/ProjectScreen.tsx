@@ -51,10 +51,11 @@ interface ProjectScreenProps {
     hasUiSatellite?: boolean;
     hasDocsSatellite?: boolean;
     hideHeader?: boolean;
+    onStatusChange?: (state: { status: ActionStatus; error: Error | null }) => void;
 }
 
 export const ProjectScreen = (props: ProjectScreenProps) => {
-   const { project, onNavigate, hasUiSatellite, hasDocsSatellite, hideHeader } = props;
+   const { project, onNavigate, hasUiSatellite, hasDocsSatellite, hideHeader, onStatusChange } = props;
    
    // 1. Data Management Hook
    const {
@@ -84,6 +85,13 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
        projectsStructure,
        handleMoveTask
    } = useProjectData(props);
+
+   // Report status to parent if needed (e.g. for AdminScreen)
+   React.useEffect(() => {
+       if (onStatusChange) {
+           onStatusChange({ status: displayStatus, error: saveError || null });
+       }
+   }, [displayStatus, saveError, onStatusChange]);
 
    // 2. Drag and Drop Hook
    const {
