@@ -12,7 +12,7 @@ const logger = createLogger('ProjectService');
 export const projectService = {
 
 
-    //@ref:8a2b3c
+    // @ref:8a2b3c
     // загрузка списка проектов
     async getProjects() {
         logger.info('Fetching projects...');

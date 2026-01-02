@@ -14,7 +14,12 @@ export interface CodeRef {
   debug?: string; // Debug info
 }
 
-export async function scanFlowRefs(projectFolderName?: string): Promise<CodeRef[]> {
+export interface ScanFlowResult {
+  refs: CodeRef[];
+  scannedPath: string;
+}
+
+export async function scanFlowRefs(projectFolderName?: string): Promise<ScanFlowResult> {
   // Determine root path
   // If projectFolderName is provided, look in /Users/me/Projs/{folderName}
   // Otherwise default to process.cwd() (current project)
@@ -110,5 +115,5 @@ export async function scanFlowRefs(projectFolderName?: string): Promise<CodeRef[
       }
   }
 
-  return refs;
+  return { refs, scannedPath: rootPath };
 }

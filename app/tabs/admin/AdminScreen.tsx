@@ -19,6 +19,7 @@ import { globalStorage } from '@/utils/storage'; // Import globalStorage
 
 import { ActionStatus } from '@/utils/supabase/useAsyncAction'; // Import ActionStatus
 import { OverloadScanner } from '@/app/components/remote/scanners/OverloadScanner'; // Import Scanner
+import { FlowScanner } from '@/app/components/remote/scanners/FlowScanner'; // Import Flow Scanner
 
 // Заглушки для экранов
 const PlaceholderScreen = ({ title }: { title: string }) => (
@@ -196,11 +197,16 @@ export const AdminScreen = ({
                 </div>
 
                 <div className="flex items-center gap-2 justify-self-end">
-                    {/* Add OverloadScanner for Docs tab */}
+                    {/* Add OverloadScanner and FlowScanner for Docs tab */}
                     {activeTab === 'docs' && (
-                        <OverloadScanner 
-                            projectLocalPath={project.local_path} 
-                        />
+                        <>
+                            <FlowScanner 
+                                projectLocalPath={project.local_path}
+                            />
+                            <OverloadScanner 
+                                projectLocalPath={project.local_path} 
+                            />
+                        </>
                     )}
                     
                     <StatusBadge 
