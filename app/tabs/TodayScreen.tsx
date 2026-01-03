@@ -419,20 +419,77 @@ export const TodayScreen = ({
             {tasks.length === 0 ? (
                <div className="text-center py-20 text-default-400">No tasks for today.</div>
             ) : (
-               <div className="flex flex-col gap-[6px]">
-                  <AnimatePresence initial={false} mode="popLayout">
-                     {tasks.map((task) => (
-                        <TodayTaskRow
-                           key={task.id}
-                           task={task}
-                           onUpdate={handleUpdate}
-                           onDelete={handleDelete}
-                           projectsStructure={projectsStructure}
-                           onMove={handleMove}
-                           isHighlighted={highlightedTaskId === task.id}
-                        />
-                     ))}
-                  </AnimatePresence>
+               <div className="flex flex-col gap-6">
+                  {(() => {
+                     // 1. Group tasks by Project (handling Inbox items)
+                     const groups = tasks.reduce((acc, task) => {
+                        const projectId = task.folders?.projects?.id || 'inbox';
+                        const projectTitle = task.folders?.projects?.title || 'Inbox';
+                        const projectColor = task.folders?.projects?.proj_color || '#a1a1aa'; // Zinc-400 for Inbox
+
+                        if (!acc[projectId]) {
+                           acc[projectId] = {
+                              title: projectTitle,
+                              color: projectColor,
+                              tasks: []
+                           };
+                        }
+                        acc[projectId].tasks.push(task);
+                        return acc;
+                     }, {} as Record<string, { title: string; color: string; tasks: any[] }>);
+
+                     // 2. Sort groups based on projectsStructure
+                     const sortedProjectIds = Object.keys(groups).sort((a, b) => {
+                        // Always put Inbox at the top
+                        if (a === 'inbox') return -1;
+                        if (b === 'inbox') return 1;
+
+                        const indexA = projectsStructure.findIndex((p: any) => p.id === a);
+                        const indexB = projectsStructure.findIndex((p: any) => p.id === b);
+                        
+                        if (indexA === -1 && indexB === -1) return 0;
+                        if (indexA === -1) return 1;
+                        if (indexB === -1) return -1;
+                        return indexA - indexB;
+                     });
+
+                     // 3. Render Groups
+                     return sortedProjectIds.map((projectId) => {
+                        const group = groups[projectId];
+                        return (
+                           <div key={projectId} className="flex flex-col gap-2">
+                              {/* Project Header */}
+                              <div className="flex items-center gap-2 px-1 sticky top-0 bg-background/95 backdrop-blur-sm z-10 py-2">
+                                 <div 
+                                    className="w-3 h-3 rounded-full flex-shrink-0"
+                                    style={{ backgroundColor: group.color }}
+                                 />
+                                 <h3 className="font-semibold text-default-700">{group.title}</h3>
+                                 <Chip size="sm" variant="flat" className="ml-2 h-5 min-w-5 px-1 text-[12px] bg-default-100 text-default-500">
+                                    {group.tasks.length}
+                                 </Chip>
+                              </div>
+      
+                              {/* Tasks List */}
+                              <div className="flex flex-col gap-[6px]">
+                                 <AnimatePresence initial={false} mode="popLayout">
+                                    {group.tasks.map((task: any) => (
+                                       <TodayTaskRow
+                                          key={task.id}
+                                          task={task}
+                                          onUpdate={handleUpdate}
+                                          onDelete={handleDelete}
+                                          projectsStructure={projectsStructure}
+                                          onMove={handleMove}
+                                          isHighlighted={highlightedTaskId === task.id}
+                                       />
+                                    ))}
+                                 </AnimatePresence>
+                              </div>
+                           </div>
+                        );
+                     });
+                  })()}
                </div>
             )}
          </div>
