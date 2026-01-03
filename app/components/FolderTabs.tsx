@@ -3,7 +3,7 @@
 import React from 'react';
 import { Folder } from '@/app/types';
 import { Button, Chip } from '@heroui/react';
-import { Plus, EllipsisVertical } from 'lucide-react';
+import { Plus, EllipsisVertical, Info } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion } from 'framer-motion';
 import { useDroppable } from '@dnd-kit/core';
@@ -70,7 +70,10 @@ export const FolderTab = ({
              orientation === 'vertical' && isActive && !isOver && !isDragging && 'bg-primary/10'
           )}
        >
-          <span className="relative z-10 truncate flex-grow">{folder.title}</span>
+          <span className="relative z-10 flex-grow min-w-0 flex items-center gap-1">
+             {folder.title.toLowerCase() === 'info' && <Info size={16} className="flex-shrink-0" />}
+             <span className="truncate">{folder.title}</span>
+          </span>
 
           <div className="relative flex items-center justify-center min-w-[20px] -mt-[1px] h-5 flex-shrink-0">
               {/* Chip - visible by default, hidden on hover if actions exist */}
