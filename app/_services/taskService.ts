@@ -181,14 +181,38 @@ export const taskService = {
    },
 
    async getDoingNowTasks() {
-      logger.info('Fetching doing now tasks...');
-      // Using !inner on folders to filter by folder title
+      logger.info('Fetching doing now tasks (GROUP based)...');
+      
+      // 1. Find GROUPS matching the pattern
+      const { data: groups, error: groupError } = await supabase
+          .from(DB_TABLES.TASKS)
+          .select('id, folder_id, content, folders!inner(project_id)') // Join folders to check project status
+          .eq('task_type', 'group')
+          .ilike('content', '%Делаю%Прямо%Сейчас%')
+          .or('is_deleted.eq.false,is_deleted.is.null');
+
+      if (groupError) {
+          logger.error('Failed to fetch doing now groups', groupError);
+          throw groupError;
+      }
+
+      if (!groups || groups.length === 0) {
+          logger.info('No "Doing Now" groups found');
+          return [];
+      }
+
+      // Filter groups from disabled projects
+      // We need to fetch project info or trust that if we join later we filter it.
+      // But let's get IDs first.
+      const groupIds = groups.map(g => g.id);
+
+      // 2. Fetch TASKS that belong to these groups
       const { data, error } = await supabase
          .from(DB_TABLES.TASKS)
          .select(
             `
                 *,
-                folders!inner (
+                folders (
                     id,
                     title,
                     projects (
@@ -200,13 +224,13 @@ export const taskService = {
                 )
             `
          )
-         .ilike('folders.title', 'Делаю Прямо Сейчас')
+         .in('group_id', groupIds) // Tasks belonging to found groups
          .eq('is_completed', false)
          .or('is_deleted.eq.false,is_deleted.is.null')
          .order('sort_order', { ascending: true });
 
       if (error) {
-         logger.error('Failed to fetch doing now tasks', error);
+         logger.error('Failed to fetch tasks in doing now groups', error);
          throw error;
       }
 
