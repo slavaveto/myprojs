@@ -63,7 +63,7 @@ const GapRow = ({
    const [isIconHovered, setIsIconHovered] = React.useState(false); // New state for icon hover
 
    const gapClassName = clsx(
-      'group relative flex items-center justify-center h-[12px] w-full rounded !bg-blue-50  outline-none transition-colors ',
+      'group relative flex items-center justify-center h-[12px] w-full rounded !bg-blue-50 dark:!bg-blue-950  outline-none transition-colors ',
       // Show background if hovered (icon area), dragging this gap, dragging ANY item, OR MENU OPEN OR LAST STANDING GAP
       isIconHovered || isDragging || isAnyDragging || isMenuOpen || isLastStandingGap ? 'bg-default-100' : 'bg-transparent',
       // Cursor logic:
