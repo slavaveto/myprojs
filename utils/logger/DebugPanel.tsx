@@ -49,8 +49,8 @@ interface WindowState {
 const DEFAULT_STATE: WindowState = {
    x: 150,
    y: 100,
-   width: 300,
-   height: 600,
+   width: 350,
+   height: 450,
    isMinimized: false,
    isOpen: false,
    showSettings: false,
