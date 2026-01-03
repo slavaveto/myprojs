@@ -29,6 +29,7 @@ export function usePageLogic() {
    const [activeSystemTab, setActiveSystemTab] = useState<string | null>(null); // 'inbox' | 'today' | 'done' | null
    const [projectScreenMode, setProjectScreenMode] = useState<'tasks' | 'docs' | 'admin'>('tasks');
    const [doingNowCount, setDoingNowCount] = useState<number>(0);
+   const [doingNowMap, setDoingNowMap] = useState<Record<string, number>>({});
    const [todayCount, setTodayCount] = useState<number>(0);
    const [inboxCount, setInboxCount] = useState<number>(0);
    const { setLoading: setGlobalLoading } = useAppLoader();
@@ -81,6 +82,16 @@ export function usePageLogic() {
             // Fetch Doing Now Count
             taskService.getDoingNowTasks().then(tasks => {
                 setDoingNowCount(tasks?.length || 0);
+                
+                // Group by project
+                const map: Record<string, number> = {};
+                (tasks || []).forEach((t: any) => {
+                    const pid = t.folders?.projects?.id;
+                    if (pid) {
+                        map[pid] = (map[pid] || 0) + 1;
+                    }
+                });
+                setDoingNowMap(map);
             }).catch(err => {
                 console.error('Failed to fetch doing now count', err);
             });
@@ -120,6 +131,16 @@ export function usePageLogic() {
       const unsubscribe = taskUpdateEvents.subscribe(() => {
          taskService.getDoingNowTasks().then(tasks => {
              setDoingNowCount(tasks?.length || 0);
+             
+             // Group by project
+             const map: Record<string, number> = {};
+             (tasks || []).forEach((t: any) => {
+                 const pid = t.folders?.projects?.id;
+                 if (pid) {
+                     map[pid] = (map[pid] || 0) + 1;
+                 }
+             });
+             setDoingNowMap(map);
          }).catch(err => console.error(err));
 
          taskService.getTodayTasks().then(tasks => {
@@ -401,6 +422,16 @@ export function usePageLogic() {
       // Refresh count on navigation/action
       taskService.getDoingNowTasks().then(tasks => {
           setDoingNowCount(tasks?.length || 0);
+          
+          // Group by project
+          const map: Record<string, number> = {};
+          (tasks || []).forEach((t: any) => {
+              const pid = t.folders?.projects?.id;
+              if (pid) {
+                  map[pid] = (map[pid] || 0) + 1;
+              }
+          });
+          setDoingNowMap(map);
       }).catch(err => console.error(err));
 
       taskService.getTodayTasks().then(tasks => {
@@ -488,6 +519,7 @@ export function usePageLogic() {
       
       doingNowCount, // Export count
       setDoingNowCount, // Export setter for manual refresh
+      doingNowMap, // Export map
       
       todayCount,
       setTodayCount,

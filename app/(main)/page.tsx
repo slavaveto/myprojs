@@ -60,6 +60,7 @@ interface SortableProjectItemProps {
    isDocsActive?: boolean; // Docs active state
    isAdminActive?: boolean; // Admin active state
    children?: React.ReactNode;
+   doingNowCount?: number;
 }
 
 const SortableProjectItem = ({
@@ -75,6 +76,7 @@ const SortableProjectItem = ({
    isDocsActive,
    isAdminActive,
    children,
+   doingNowCount,
 }: SortableProjectItemProps) => {
    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
       id: project.id,
@@ -94,7 +96,7 @@ const SortableProjectItem = ({
             <div
                onClick={onClick}
                className={clsx(
-                  'flex items-center gap-3 px-3 pr-2 py-2 rounded-lg transition-colors w-full text-left select-none  min-h-[40px]', // Added min-h-[40px]
+                  'flex items-center gap-2 px-3 pr-2 py-2 rounded-lg transition-colors w-full text-left select-none  min-h-[40px]', // Added min-h-[40px]
 
                   // Dragging state (cursor, z-index, ring)
                   isDragging && 'z-20 ring-1 ring-primary/30',
@@ -127,8 +129,15 @@ const SortableProjectItem = ({
                />
             </div>
 
-            <span className="truncate flex-grow">{project.title}</span>
-            
+            <div className="flex-grow flex items-center gap-2 min-w-0">
+               <span className="truncate">{project.title}</span>
+               {doingNowCount !== undefined && doingNowCount > 0 && (
+                  <Chip size="sm" variant="flat" className="h-5 min-w-5 px-1 text-[10px] bg-danger/10 text-danger font-medium flex-shrink-0">
+                     {doingNowCount}
+                  </Chip>
+               )}
+            </div>
+
             {/* Admin Chip */}
             <div className="flex items-center gap-1">
                {(satelliteId || docsSatelliteId) && (
@@ -168,18 +177,20 @@ const PersonalProjectItem = ({
    isActive,
    onClick,
    children,
+   doingNowCount,
 }: {
    project: Project;
    isActive: boolean;
    onClick: () => void;
    children?: React.ReactNode;
+   doingNowCount?: number;
 }) => {
    return (
       <div className={clsx("w-full mb-1 group relative", project.is_highlighted && "mb-0 border border-default-200 rounded-lg")}>
          <div
             onClick={onClick}
             className={clsx(
-               'flex items-center gap-3 px-3 pr-2 py-2 rounded-lg transition-colors w-full text-left select-none min-h-[40px]',
+               'flex items-center gap-2 px-3 pr-2 py-2 rounded-lg transition-colors w-full text-left select-none min-h-[40px]',
                !isActive && 'cursor-pointer hover:bg-default-100',
                isActive && 'bg-primary/10 text-primary font-medium cursor-pointer'
             )}
@@ -190,7 +201,14 @@ const PersonalProjectItem = ({
                   style={{ backgroundColor: project.proj_color || '#3b82f6' }}
                />
             </div>
-            <span className="truncate flex-grow">{project.title}</span>
+            <div className="flex-grow flex items-center gap-2 min-w-0">
+               <span className="truncate">{project.title}</span>
+               {doingNowCount !== undefined && doingNowCount > 0 && (
+                  <Chip size="sm" variant="flat" className="h-5 min-w-5 px-1 text-[10px] bg-danger/10 text-danger font-medium flex-shrink-0">
+                     {doingNowCount}
+                  </Chip>
+               )}
+            </div>
          </div>
          {children}
       </div>
@@ -302,6 +320,7 @@ function AppContent() {
       
       doingNowCount, // Count from logic
       setDoingNowCount, // Setter to refresh count from screens
+      doingNowMap, // Map of doing now counts by project
       
       todayCount,
       
@@ -417,11 +436,13 @@ function AppContent() {
                      </div> */}
                      {personalProjects.map(project => {
                         const sats = satellitesMap[project.id] || {};
+                        const count = doingNowMap[project.id] || 0;
                         return (
                            <PersonalProjectItem
                               key={project.id}
                               project={project}
                               isActive={activeProjectId === project.id}
+                              doingNowCount={count}
                               onClick={() => {
                                  setActiveProjectId(project.id);
                                  setActiveSystemTab(null);
@@ -468,6 +489,7 @@ function AppContent() {
                         const sats = satellitesMap[project.id] || {};
                         const uiId = sats.ui;
                         const docsId = sats.docs;
+                        const count = doingNowMap[project.id] || 0;
                         
                         // Active if self is active OR any satellite is active
                         const isSelfOrSatelliteActive = activeProjectId === project.id || 
@@ -484,6 +506,7 @@ function AppContent() {
                               satelliteId={uiId} // Pass UI Satellite ID
                               docsSatelliteId={docsId} // Pass Docs Satellite ID
                               isAdminActive={isAdminActive}
+                              doingNowCount={count}
                               onClick={() => {
                                  setActiveProjectId(project.id);
                                  setActiveSystemTab(null);
