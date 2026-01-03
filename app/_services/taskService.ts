@@ -180,6 +180,46 @@ export const taskService = {
       return filtered as any[];
    },
 
+   async getDoingNowTasks() {
+      logger.info('Fetching doing now tasks...');
+      // Using !inner on folders to filter by folder title
+      const { data, error } = await supabase
+         .from(DB_TABLES.TASKS)
+         .select(
+            `
+                *,
+                folders!inner (
+                    id,
+                    title,
+                    projects (
+                        id,
+                        title,
+                        proj_color,
+                        is_disabled
+                    )
+                )
+            `
+         )
+         .ilike('folders.title', 'Делаю Прямо Сейчас')
+         .eq('is_completed', false)
+         .or('is_deleted.eq.false,is_deleted.is.null')
+         .order('sort_order', { ascending: true });
+
+      if (error) {
+         logger.error('Failed to fetch doing now tasks', error);
+         throw error;
+      }
+
+      // Filter disabled projects
+      const filtered = (data || []).filter((t: any) => {
+          const project = t.folders?.projects;
+          return !project?.is_disabled;
+      });
+
+      logger.info('Doing now tasks loaded', { count: filtered.length });
+      return filtered as any[];
+   },
+
    async getInboxTasks() {
       logger.info('Fetching inbox tasks...');
       const { data, error } = await supabase

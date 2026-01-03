@@ -11,6 +11,7 @@ import {
    FileText,
    EllipsisVertical,
    Star,
+   Target,
 } from 'lucide-react';
 import { AppLoaderProvider, useAppLoader } from '@/app/AppLoader';
 import { ProjectScreen } from '@/app/tabs/ProjectScreen';
@@ -19,6 +20,7 @@ import { CreateItemPopover } from '@/app/components/CreateItem';
 import { LogsScreen } from '@/app/tabs/LogsScreen';
 import { DoneScreen } from '@/app/tabs/DoneScreen';
 import { TodayScreen } from '@/app/tabs/TodayScreen';
+import { DoingNowScreen } from '@/app/tabs/DoingNowScreen';
 import { InboxScreen } from '@/app/tabs/InboxScreen';
 import { StatusBadge } from '@/utils/supabase/StatusBadge';
 import { EditProjectPopover } from '@/app/components/EditProject';
@@ -358,6 +360,15 @@ function AppContent() {
                         setActiveProjectId(null);
                      }}
                   />
+                  <SidebarItem
+                     icon={Target}
+                     label="Делаю Сейчас"
+                     isActive={activeSystemTab === 'doing_now'}
+                     onClick={() => {
+                        setActiveSystemTab('doing_now');
+                        setActiveProjectId(null);
+                     }}
+                  />
                </div>
 
                {/* Personal Projects Section */}
@@ -542,6 +553,23 @@ function AppContent() {
                   globalStatus={sidebarStatus}
                   canLoad={canLoadBackground || activeSystemTab === 'today'}
                   isActive={activeSystemTab === 'today'}
+                  onMoveTask={handleMoveTask}
+                  onNavigate={handleNavigate}
+               />
+            </div>
+
+            <div
+               className={clsx(
+                  'absolute inset-0 w-full h-full bg-background',
+                  activeSystemTab === 'doing_now'
+                     ? 'z-30 block'
+                     : 'z-0 hidden'
+               )}
+            >
+               <DoingNowScreen
+                  globalStatus={sidebarStatus}
+                  canLoad={canLoadBackground || activeSystemTab === 'doing_now'}
+                  isActive={activeSystemTab === 'doing_now'}
                   onMoveTask={handleMoveTask}
                   onNavigate={handleNavigate}
                />
