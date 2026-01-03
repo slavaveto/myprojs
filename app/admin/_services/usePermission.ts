@@ -1,10 +1,8 @@
-import { useIsSuperAdmin } from '@/utils/supabase/useIsSuperAdmin';
 import { checkPermission, Permission, UserAccessContext } from './acl';
 import { useCallback } from 'react';
 import { useIsLocal } from '@/utils/useIsLocal';
 
 export function usePermission() {
-  const { roleData, isLoading } = useIsSuperAdmin();
   const isLocal = useIsLocal();
 
   const userContext: UserAccessContext = {
@@ -12,13 +10,12 @@ export function usePermission() {
   };
 
   const can = useCallback((permission: Permission): boolean => {
-    if (isLoading) return false;
     return checkPermission(permission, userContext);
-  }, [isLoading,   isLocal]); // Depend on primitives
+  }, [isLocal]);
 
   return { 
-    can, 
-    isLoading,
+    can,
+    isLoading: false,
   };
 }
 
