@@ -389,11 +389,11 @@ export const TodayScreen = ({
 
    return (
       <div className="h-full flex flex-col p-6 max-w-5xl mx-auto w-full">
-         <div className="grid grid-cols-[1fr_auto_1fr] items-center mb-4 min-h-[40px] gap-4">
-            <h1 className="tab-title justify-self-start">
-               <Star className="text-warning" fill="currentColor" />
-               Today
-            </h1>
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center mb-4 min-h-[40px] gap-4">
+               <h1 className="tab-title justify-self-start">
+                  <Star className={tasks.length > 0 ? "text-warning" : "text-primary-400"} fill="currentColor" />
+                  Today
+               </h1>
 
             <div className="w-full max-w-[240px] justify-self-center">
                {onNavigate && <GlobalSearch onNavigate={onNavigate} />}

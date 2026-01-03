@@ -11,7 +11,7 @@ const logger = createLogger('TaskService');
 type Listener = () => void;
 const listeners: Listener[] = [];
 
-export const tasksEvents = {
+export const taskUpdateEvents = {
    subscribe: (l: Listener) => {
       listeners.push(l);
       return () => {
@@ -366,7 +366,7 @@ export const taskService = {
          { after: data },
          content || 'New Task'
       );
-      tasksEvents.emit(); // Notify listeners
+      taskUpdateEvents.emit(); // Notify listeners
       logger.success('Task created', { id: data.id });
       return data as Task;
    },
@@ -434,7 +434,7 @@ export const taskService = {
          afterState.content || 'Task',
          updateType
       );
-      tasksEvents.emit(); // Notify listeners
+      taskUpdateEvents.emit(); // Notify listeners
       logger.success('Task updated', { id });
    },
 
@@ -492,7 +492,7 @@ export const taskService = {
          { before: beforeState, after: afterState },
          task.content
       );
-      tasksEvents.emit(); // Notify listeners
+      taskUpdateEvents.emit(); // Notify listeners
       logger.success('Task restored', { id });
    },
 
@@ -536,7 +536,7 @@ export const taskService = {
              beforeState.content
           );
       }
-      tasksEvents.emit(); // Notify listeners
+      taskUpdateEvents.emit(); // Notify listeners
       logger.success('Task deleted', { id });
    },
 
@@ -562,7 +562,7 @@ export const taskService = {
                .eq('id', u.id)
          })
       );
-      tasksEvents.emit(); // Notify listeners
+      taskUpdateEvents.emit(); // Notify listeners
       logger.info('Tasks reordered', { count: updates.length });
    },
 };

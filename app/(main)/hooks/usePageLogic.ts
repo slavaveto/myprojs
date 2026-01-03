@@ -17,8 +17,10 @@ import {
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates, arrayMove } from '@dnd-kit/sortable';
 
-import { taskService, tasksEvents } from '@/app/_services/taskService';
+// @ts-ignore - linter cache issue with renamed export
+import { taskService, taskUpdateEvents } from '@/app/_services/taskService';
 
+// Main App Logic Hook
 const logger = createLogger('AppManager');
 
 export function usePageLogic() {
@@ -27,6 +29,7 @@ export function usePageLogic() {
    const [activeSystemTab, setActiveSystemTab] = useState<string | null>(null); // 'inbox' | 'today' | 'done' | null
    const [projectScreenMode, setProjectScreenMode] = useState<'tasks' | 'docs' | 'admin'>('tasks');
    const [doingNowCount, setDoingNowCount] = useState<number>(0);
+   const [todayCount, setTodayCount] = useState<number>(0);
    const { setLoading: setGlobalLoading } = useAppLoader();
 
    // Словарик готовности проектов: { [projectId]: true }
@@ -81,6 +84,13 @@ export function usePageLogic() {
                 console.error('Failed to fetch doing now count', err);
             });
 
+            // Fetch Today Count
+            taskService.getTodayTasks().then(tasks => {
+                setTodayCount(tasks?.length || 0);
+            }).catch(err => {
+                console.error('Failed to fetch today count', err);
+            });
+
             // Восстановление активного проекта
             if (projectsData.length > 0) {
                const savedId = globalStorage.getItem('active_project_id');
@@ -99,9 +109,13 @@ export function usePageLogic() {
       init();
 
       // Listen for task updates to refresh the "Doing Now" count
-      const unsubscribe = tasksEvents.subscribe(() => {
+      const unsubscribe = taskUpdateEvents.subscribe(() => {
          taskService.getDoingNowTasks().then(tasks => {
              setDoingNowCount(tasks?.length || 0);
+         }).catch(err => console.error(err));
+
+         taskService.getTodayTasks().then(tasks => {
+             setTodayCount(tasks?.length || 0);
          }).catch(err => console.error(err));
       });
 
@@ -376,6 +390,10 @@ export function usePageLogic() {
       taskService.getDoingNowTasks().then(tasks => {
           setDoingNowCount(tasks?.length || 0);
       }).catch(err => console.error(err));
+
+      taskService.getTodayTasks().then(tasks => {
+          setTodayCount(tasks?.length || 0);
+      }).catch(err => console.error(err));
    };
 
    // --- DnD Handlers ---
@@ -455,6 +473,9 @@ export function usePageLogic() {
       doingNowCount, // Export count
       setDoingNowCount, // Export setter for manual refresh
       
+      todayCount,
+      setTodayCount,
+
       // Props
       sensors,
    };

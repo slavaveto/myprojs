@@ -221,15 +221,26 @@ const SidebarItem = ({
    >
       <Icon 
          size={20} 
+         
          className={clsx(
             (count && count > 0 && label === 'Делаю Сейчас') 
-               ? 'text-danger' 
-               : (isActive ? 'text-primary' : 'text-default-500')
+               ? 'text-danger'
+               : (count && count > 0 && label === 'Today') 
+                  ? 'text-warning'
+                  : (isActive ? 'text-primary' : 'text-default-500')
          )} 
       />
       <span className="truncate flex-grow">{label}</span>
       {count !== undefined && count > 0 && (
-         <Chip size="sm" variant="flat" className="h-5 min-w-5 px-1 text-[12px] font-medium bg-danger/10 text-danger font-medium">
+         <Chip 
+            size="sm" 
+            variant="flat" 
+            className={clsx(
+               "h-5 min-w-5 px-1 text-[12px] font-medium",
+               label === 'Делаю Сейчас' && "bg-danger/10 text-danger",
+               label === 'Today' && "bg-warning/10 text-warning"
+            )}
+         >
             {count}
          </Chip>
       )}
@@ -288,6 +299,8 @@ function AppContent() {
       
       doingNowCount, // Count from logic
       setDoingNowCount, // Setter to refresh count from screens
+      
+      todayCount,
 
       // Props
       sensors,
@@ -372,6 +385,7 @@ function AppContent() {
                      icon={Star}
                      label="Today"
                      isActive={activeSystemTab === 'today'}
+                     count={todayCount}
                      onClick={() => {
                         setActiveSystemTab('today');
                         setActiveProjectId(null);
