@@ -221,14 +221,14 @@ const SidebarItem = ({
    >
       <Icon 
          size={20} 
-         
          className={clsx(
             (count && count > 0 && label === 'Делаю Сейчас') 
                ? 'text-danger'
                : (count && count > 0 && label === 'Today') 
                   ? 'text-warning'
                   : (isActive ? 'text-primary' : 'text-default-500')
-         )} 
+         )}
+         fill={label === 'Today' && count && count > 0 ? "currentColor" : "none"}
       />
       <span className="truncate flex-grow">{label}</span>
       {count !== undefined && count > 0 && (
