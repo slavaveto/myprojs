@@ -46,7 +46,7 @@ export function useUIElements() {
                .from(DB_TABLES.UI_ITEMS)
                .select('item_id, updated_at')
                .eq('is_deleted', false)
-               .in('task_type', ['item']); // Allow 'task' as well
+               .in('task_type', ['item']);
 
             if (dbTimestamps) {
                const outdatedItems = dbTimestamps.filter((dbItem) => {
