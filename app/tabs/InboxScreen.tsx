@@ -329,7 +329,10 @@ export const InboxScreen = ({ globalStatus = 'idle', canLoad = true, isActive = 
             <div className="grid grid-cols-[1fr_auto_1fr] items-center mb-4 min-h-[40px] gap-4">
                 
                 <h1 className="tab-title justify-self-start">
-                    <Inbox className="text-primary" />
+                    <Inbox 
+                        className="text-primary" 
+                        // fill={tasks.length > 0 ? "currentColor" : "none"}
+                    />
                     Inbox
                 </h1>
                 

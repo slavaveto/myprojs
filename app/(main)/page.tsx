@@ -226,9 +226,11 @@ const SidebarItem = ({
                ? 'text-danger'
                : (count && count > 0 && label === 'Today') 
                   ? 'text-warning'
-                  : (isActive ? 'text-primary' : 'text-default-500')
+                  : (count && count > 0 && label === 'Inbox')
+                     ? 'text-primary'
+                     : (isActive ? 'text-primary' : 'text-default-500')
          )}
-         fill={label === 'Today' && count && count > 0 ? "currentColor" : "none"}
+         fill={((label === 'Today') && count && count > 0) ? "currentColor" : "none"}
       />
       <span className="truncate flex-grow">{label}</span>
       {count !== undefined && count > 0 && (
@@ -238,7 +240,8 @@ const SidebarItem = ({
             className={clsx(
                "h-5 min-w-5 px-1 text-[12px] font-medium",
                label === 'Делаю Сейчас' && "bg-danger/10 text-danger",
-               label === 'Today' && "bg-warning/10 text-warning"
+               label === 'Today' && "bg-warning/10 text-warning",
+               label === 'Inbox' && "bg-primary/10 text-primary"
             )}
          >
             {count}
@@ -301,6 +304,8 @@ function AppContent() {
       setDoingNowCount, // Setter to refresh count from screens
       
       todayCount,
+      
+      inboxCount,
 
       // Props
       sensors,
@@ -376,6 +381,7 @@ function AppContent() {
                      icon={Inbox}
                      label="Inbox"
                      isActive={activeSystemTab === 'inbox'}
+                     count={inboxCount}
                      onClick={() => {
                         setActiveSystemTab('inbox');
                         setActiveProjectId(null);

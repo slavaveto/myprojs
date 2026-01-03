@@ -30,6 +30,7 @@ export function usePageLogic() {
    const [projectScreenMode, setProjectScreenMode] = useState<'tasks' | 'docs' | 'admin'>('tasks');
    const [doingNowCount, setDoingNowCount] = useState<number>(0);
    const [todayCount, setTodayCount] = useState<number>(0);
+   const [inboxCount, setInboxCount] = useState<number>(0);
    const { setLoading: setGlobalLoading } = useAppLoader();
 
    // Словарик готовности проектов: { [projectId]: true }
@@ -91,6 +92,13 @@ export function usePageLogic() {
                 console.error('Failed to fetch today count', err);
             });
 
+            // Fetch Inbox Count
+            taskService.getInboxTasks().then(tasks => {
+                setInboxCount(tasks?.length || 0);
+            }).catch(err => {
+                console.error('Failed to fetch inbox count', err);
+            });
+
             // Восстановление активного проекта
             if (projectsData.length > 0) {
                const savedId = globalStorage.getItem('active_project_id');
@@ -116,6 +124,10 @@ export function usePageLogic() {
 
          taskService.getTodayTasks().then(tasks => {
              setTodayCount(tasks?.length || 0);
+         }).catch(err => console.error(err));
+
+         taskService.getInboxTasks().then(tasks => {
+             setInboxCount(tasks?.length || 0);
          }).catch(err => console.error(err));
       });
 
@@ -394,6 +406,10 @@ export function usePageLogic() {
       taskService.getTodayTasks().then(tasks => {
           setTodayCount(tasks?.length || 0);
       }).catch(err => console.error(err));
+
+      taskService.getInboxTasks().then(tasks => {
+          setInboxCount(tasks?.length || 0);
+      }).catch(err => console.error(err));
    };
 
    // --- DnD Handlers ---
@@ -475,6 +491,9 @@ export function usePageLogic() {
       
       todayCount,
       setTodayCount,
+
+      inboxCount,
+      setInboxCount,
 
       // Props
       sensors,
