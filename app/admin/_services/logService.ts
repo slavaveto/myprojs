@@ -35,7 +35,7 @@ export const logService = {
 
     try {
       // Fire and forget
-      const { error } = await supabase.from(DB_TABLES.LOGS).insert({
+      const { error } = await supabase.from(DB_TABLES.LOGS_ADMIN).insert({
         user_id: params.userId,
         action: params.action,
         entity: params.entity,

@@ -1,10 +1,12 @@
 
 export const DB_TABLES = {
-    USERS: '_users',
-    UI_ITEMS: '_ui_items',
-    UI_FOLDERS: '_ui_folders',
-    LOGS_ADMIN: '_logs',
+    // таблицы remote проектов
+    USERS: '-users',
+    UI_ITEMS: '-ui_items',
+    UI_FOLDERS: '-ui_folders',
+    LOGS_ADMIN: '-logs',
 
+    // admin панель проекта
     PROFILES: '_profiles',
 
     PROJECTS: 'projects',

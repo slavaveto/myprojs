@@ -24,6 +24,9 @@ import { StatusBadge } from '@/utils/supabase/StatusBadge';
 import { EditProjectPopover } from '@/app/components/EditProject';
 import { globalStorage } from '@/utils/storage';
 
+import { useLocalization } from '@/utils/providers/localization/LocalizationProvider';
+
+
 // DnD Imports
 import {
    DndContext,
@@ -74,6 +77,7 @@ const SortableProjectItem = ({
    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
       id: project.id,
    });
+
 
    const style = {
       transform: CSS.Translate.toString(transform),
@@ -270,6 +274,8 @@ function AppContent() {
       sensors,
    } = usePageLogic();
 
+   const { getUI, getRichUI } = useLocalization();
+
    // Filter out satellite projects (ui/docs) AND personal projects from the main sidebar list
    const sidebarProjects = projects.filter(p => p.proj_type !== 'ui' && p.proj_type !== 'docs' && p.proj_type !== 'personal');
    
@@ -315,7 +321,7 @@ function AppContent() {
             <div className="p-4 border-b border-default-200 flex items-center justify-between">
                <div className="flex items-center gap-2 font-bold text-lg min-w-0">
                   <LayoutGrid size={24} className="text-primary flex-shrink-0" />
-                  <span className="truncate">Projects</span>
+                  <span className="truncate">{getUI('main_title')}</span>
                </div>
 
                <CreateItemPopover
