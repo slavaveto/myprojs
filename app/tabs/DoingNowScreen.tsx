@@ -378,8 +378,8 @@ export const DoingNowScreen = ({
                <div className="text-center py-20 text-default-400">No tasks in "Делаю Прямо Сейчас" folders.</div>
             ) : (
                <div className="flex flex-col gap-6">
-                  {Object.entries(
-                     tasks.reduce((acc, task) => {
+                  {(() => {
+                     const groups = tasks.reduce((acc, task) => {
                         const projectId = task.folders.projects.id;
                         if (!acc[projectId]) {
                            acc[projectId] = {
@@ -390,39 +390,54 @@ export const DoingNowScreen = ({
                         }
                         acc[projectId].tasks.push(task);
                         return acc;
-                     }, {} as Record<string, { title: string; color: string; tasks: any[] }>)
-                  ).map(([projectId, group]: [string, any]) => (
-                     <div key={projectId} className="flex flex-col gap-2">
-                        {/* Project Header */}
-                        <div className="flex items-center gap-2 px-1 sticky top-0 bg-background/95 backdrop-blur-sm z-10 py-2 border-b border-default-100">
-                           <div 
-                              className="w-3 h-3 rounded-full flex-shrink-0"
-                              style={{ backgroundColor: group.color || '#3b82f6' }}
-                           />
-                           <h3 className="font-semibold text-default-700">{group.title}</h3>
-                           <Chip size="sm" variant="flat" className="ml-2 h-5 min-w-5 px-1 text-[10px] bg-default-100 text-default-500">
-                              {group.tasks.length}
-                           </Chip>
-                        </div>
+                     }, {} as Record<string, { title: string; color: string; tasks: any[] }>);
 
-                        {/* Tasks List */}
-                        <div className="flex flex-col gap-[6px]">
-                           <AnimatePresence initial={false} mode="popLayout">
-                              {group.tasks.map((task: any) => (
-                                 <DoingNowTaskRow
-                                    key={task.id}
-                                    task={task}
-                                    onUpdate={handleUpdate}
-                                    onDelete={handleDelete}
-                                    projectsStructure={projectsStructure}
-                                    onMove={handleMove}
-                                    isHighlighted={highlightedTaskId === task.id}
+                     // Sort project IDs based on projectsStructure order
+                     const sortedProjectIds = Object.keys(groups).sort((a, b) => {
+                        const indexA = projectsStructure.findIndex((p: any) => p.id === a);
+                        const indexB = projectsStructure.findIndex((p: any) => p.id === b);
+                        if (indexA === -1 && indexB === -1) return 0;
+                        if (indexA === -1) return 1;
+                        if (indexB === -1) return -1;
+                        return indexA - indexB;
+                     });
+
+                     return sortedProjectIds.map((projectId) => {
+                        const group = groups[projectId];
+                        return (
+                           <div key={projectId} className="flex flex-col gap-2">
+                              {/* Project Header */}
+                              <div className="flex items-center gap-2 px-1 sticky top-0 bg-background/95 backdrop-blur-sm z-10 py-2">
+                                 <div 
+                                    className="w-3 h-3 rounded-full flex-shrink-0"
+                                    style={{ backgroundColor: group.color || '#3b82f6' }}
                                  />
-                              ))}
-                           </AnimatePresence>
-                        </div>
-                     </div>
-                  ))}
+                                 <h3 className="font-semibold text-default-700">{group.title}</h3>
+                                 <Chip size="sm" variant="flat" className="ml-2 h-5 min-w-5 px-1 text-[10px] bg-default-100 text-default-500">
+                                    {group.tasks.length}
+                                 </Chip>
+                              </div>
+      
+                              {/* Tasks List */}
+                              <div className="flex flex-col gap-[6px]">
+                                 <AnimatePresence initial={false} mode="popLayout">
+                                    {group.tasks.map((task: any) => (
+                                       <DoingNowTaskRow
+                                          key={task.id}
+                                          task={task}
+                                          onUpdate={handleUpdate}
+                                          onDelete={handleDelete}
+                                          projectsStructure={projectsStructure}
+                                          onMove={handleMove}
+                                          isHighlighted={highlightedTaskId === task.id}
+                                       />
+                                    ))}
+                                 </AnimatePresence>
+                              </div>
+                           </div>
+                        );
+                     });
+                  })()}
                </div>
             )}
          </div>
