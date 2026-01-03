@@ -8,7 +8,6 @@ export interface UIElement {
     updated_at: string;
     tab_id?: string | null;
     sort_order?: number;
-    item_type?: string | null;
     isNew?: boolean;
     _tempId?: string;
 }
