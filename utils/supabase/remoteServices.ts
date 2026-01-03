@@ -123,7 +123,7 @@ export const createRemoteTaskService = (client: SupabaseClient, isUi: boolean = 
                     sort_order: order,
                     is_completed: false,
                     is_deleted: false,
-                    task_type: 'task'
+                    task_type: isUi ? 'item' : 'task'
                 })
                 .select()
                 .single();
