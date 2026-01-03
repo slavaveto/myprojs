@@ -4,45 +4,31 @@ const logger = createLogger('AdminLoader');
 
 export const adminLoadingService = {
     logInit() {
-        logger.start('Initializing Admin Panel...', {
-            flow: { id: 'admin_init', type: 'start', label: 'Admin Init' }
-        });
+        logger.start('Initializing Admin Panel...');
     },
 
     logActiveTabStart(tabId: string) {
-        logger.info(`Loading Active Admin Tab: ${tabId}`, {
-             flow: { id: 'admin_active_start', parentId: 'admin_init', type: 'process', label: `Load ${tabId}` }
-        });
+        logger.info(`Loading Active Admin Tab: ${tabId}`);
     },
 
     logActiveTabFinish(tabId: string) {
-        logger.success(`Active Tab Ready: ${tabId}`, {
-             flow: { id: 'admin_active_finish', parentId: 'admin_active_start', type: 'success', label: `${tabId} Ready` }
-        });
+        logger.success(`Active Tab Ready: ${tabId}`);
     },
 
     logTransitionToBackground(ms: number) {
-        logger.info(`Active ready. Pause ${ms}ms before background load...`, {
-            flow: { id: 'admin_transition_bg', parentId: 'admin_active_finish', type: 'decision', label: 'Start Background Sync' }
-        });
+        logger.info(`Active ready. Pause ${ms}ms before background load...`);
     },
 
     logBackgroundTabStart(tabId: string) {
-         logger.info(`Starting background tab: ${tabId}`, {
-             flow: { id: 'admin_bg_start', parentId: 'admin_transition_bg', type: 'process', label: `Load BG ${tabId}` }
-        });
+         logger.info(`Starting background tab: ${tabId}`);
     },
 
     logBackgroundTabFinish(tabId: string) {
-         logger.success(`Background tab loaded: ${tabId}`, {
-             flow: { id: 'admin_bg_finish', parentId: 'admin_bg_start', type: 'success', label: `BG ${tabId} Ready` }
-        });
+         logger.success(`Background tab loaded: ${tabId}`);
     },
 
     logAllFinished() {
-        logger.success('🚀 ALL ADMIN TABS READY', {
-             flow: { id: 'admin_all_finished', parentId: 'admin_transition_bg', type: 'end', label: 'Admin Ready' }
-        });
+        logger.success('🚀 ALL ADMIN TABS READY');
     }
 };
 
