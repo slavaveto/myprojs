@@ -251,28 +251,17 @@ export const TodayScreen = ({
          // Artificial delay for better UX (optional, matching DoneScreen)
          await new Promise((resolve) => setTimeout(resolve, 500));
 
-         // Client-side sorting based on Priority (Style) then Alphabetical
+         // Client-side sorting based on Folder Order then Task Order
          if (data) {
             data.sort((a, b) => {
-               // 1. Priority Weight
-               const getWeight = (style: string | null) => {
-                  if (style === 'red-bold') return 3;
-                  if (style === 'red') return 2;
-                  if (style === 'bold') return 1;
-                  return 0;
-               };
-
-               const weightA = getWeight(a.title_text_style);
-               const weightB = getWeight(b.title_text_style);
-
-               if (weightA !== weightB) {
-                  return weightB - weightA; // Higher weight first
+               // 1. Folder Order
+               const folderOrderA = a.folders?.sort_order ?? 0;
+               const folderOrderB = b.folders?.sort_order ?? 0;
+               if (folderOrderA !== folderOrderB) {
+                  return folderOrderA - folderOrderB;
                }
-
-               // 2. Alphabetical (content)
-               const textA = a.content || '';
-               const textB = b.content || '';
-               return textA.localeCompare(textB);
+               // 2. Task Order
+               return (a.sort_order ?? 0) - (b.sort_order ?? 0);
             });
          }
 
@@ -309,27 +298,12 @@ export const TodayScreen = ({
             return newTasks.filter((t) => t.id !== id);
          }
 
-         // Re-sort if style or content changed
-         if ('title_text_style' in updates || 'content' in updates) {
-            return newTasks.sort((a, b) => {
-               const getWeight = (style: string | null) => {
-                  if (style === 'red-bold') return 3;
-                  if (style === 'red') return 2;
-                  if (style === 'bold') return 1;
-                  return 0;
-               };
-
-               const weightA = getWeight(a.title_text_style);
-               const weightB = getWeight(b.title_text_style);
-
-               if (weightA !== weightB) return weightB - weightA;
-
-               const textA = a.content || '';
-               const textB = b.content || '';
-               return textA.localeCompare(textB);
-            });
-         }
-
+         // Re-sort if folder or sort_order changed (though usually updates here are content/style/completion)
+         // But user might drag drop in other screen? 
+         // For now, let's keep the order stable unless refresh. 
+         // Or if we want to support reordering here later.
+         // Actually, removing the resort logic prevents jumping tasks when editing style.
+         
          return newTasks;
       });
 

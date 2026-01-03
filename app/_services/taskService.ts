@@ -85,6 +85,7 @@ export const taskService = {
                 folders (
                     id,
                     title,
+                    sort_order,
                     projects (
                         id,
                         title,
@@ -166,6 +167,7 @@ export const taskService = {
                 folders (
                     id,
                     title,
+                    sort_order,
                     projects (
                         id,
                         title,
@@ -230,6 +232,7 @@ export const taskService = {
                 folders (
                     id,
                     title,
+                    sort_order,
                     projects (
                         id,
                         title,
@@ -292,6 +295,7 @@ export const taskService = {
                 folders (
                     id,
                     title,
+                    sort_order,
                     projects (
                         id,
                         title,
