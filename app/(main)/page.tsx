@@ -288,6 +288,41 @@ const MemoizedAdminScreen = React.memo(AdminScreen, (prev, next) => {
    return false;
 });
 
+const MemoizedLogsScreen = React.memo(LogsScreen, (prev, next) => {
+   if (prev.isActive !== next.isActive) return false;
+   if (prev.canLoad !== next.canLoad) return false;
+   if (!next.isActive) return true;
+   return false;
+});
+
+const MemoizedInboxScreen = React.memo(InboxScreen, (prev, next) => {
+   if (prev.isActive !== next.isActive) return false;
+   if (prev.canLoad !== next.canLoad) return false;
+   if (!next.isActive) return true;
+   return false;
+});
+
+const MemoizedTodayScreen = React.memo(TodayScreen, (prev, next) => {
+   if (prev.isActive !== next.isActive) return false;
+   if (prev.canLoad !== next.canLoad) return false;
+   if (!next.isActive) return true;
+   return false;
+});
+
+const MemoizedDoingNowScreen = React.memo(DoingNowScreen, (prev, next) => {
+   if (prev.isActive !== next.isActive) return false;
+   if (prev.canLoad !== next.canLoad) return false;
+   if (!next.isActive) return true;
+   return false;
+});
+
+const MemoizedDoneScreen = React.memo(DoneScreen, (prev, next) => {
+   if (prev.isActive !== next.isActive) return false;
+   if (prev.canLoad !== next.canLoad) return false;
+   if (!next.isActive) return true;
+   return false;
+});
+
 function AppContent() {
    const {
       // State
@@ -578,7 +613,7 @@ function AppContent() {
                )}
             >
                {/* System Screen: Logs */}
-               <LogsScreen
+               <MemoizedLogsScreen
                   globalStatus={sidebarStatus}
                   canLoad={canLoadBackground || activeSystemTab === 'logs'}
                   isActive={activeSystemTab === 'logs'}
@@ -593,7 +628,7 @@ function AppContent() {
                      : 'z-0 hidden'
                )}
             >
-               <InboxScreen
+               <MemoizedInboxScreen
                   globalStatus={sidebarStatus}
                   canLoad={canLoadBackground || activeSystemTab === 'inbox'}
                   isActive={activeSystemTab === 'inbox'}
@@ -610,7 +645,7 @@ function AppContent() {
                      : 'z-0 hidden'
                )}
             >
-               <TodayScreen
+               <MemoizedTodayScreen
                   globalStatus={sidebarStatus}
                   canLoad={canLoadBackground || activeSystemTab === 'today'}
                   isActive={activeSystemTab === 'today'}
@@ -627,7 +662,7 @@ function AppContent() {
                      : 'z-0 hidden'
                )}
             >
-               <DoingNowScreen
+               <MemoizedDoingNowScreen
                   globalStatus={sidebarStatus}
                   canLoad={canLoadBackground || activeSystemTab === 'doing_now'}
                   isActive={activeSystemTab === 'doing_now'}
@@ -644,7 +679,7 @@ function AppContent() {
                      : 'z-0 hidden'
                )}
             >
-               <DoneScreen
+               <MemoizedDoneScreen
                   globalStatus={sidebarStatus}
                   canLoad={canLoadBackground || activeSystemTab === 'done'}
                   isActive={activeSystemTab === 'done'}
