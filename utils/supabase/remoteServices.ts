@@ -84,31 +84,34 @@ export const createRemoteTaskService = (client: SupabaseClient, isUi: boolean = 
     return {
         getTasks: async (projectId: string) => {
             // We need to fetch tasks for all folders in this project.
-            // First get folders to know IDs? Or just join?
-            // "tasks" table has "folder_id".
-            // So we need to filter tasks where folder_id IN (select id from folders where project_id = X)
+            // Avoid !inner join which relies on implicit FK naming that might fail with custom table names like '-ui_items'.
             
-            // Supabase approach:
+            // 1. Get folder IDs first
+            const { data: folders, error: foldersError } = await client
+                .from(TABLES.folders)
+                .select('id')
+                .eq('project_id', projectId)
+                .neq('is_deleted', true);
+
+            if (foldersError) throw foldersError;
+
+            const folderIds = folders.map(f => f.id);
+
+            if (folderIds.length === 0) {
+                return [] as Task[];
+            }
+
+            // 2. Fetch tasks for these folders
             const { data, error } = await client
                 .from(TABLES.tasks)
-                .select(`
-                    *,
-                    folder: ${TABLES.folders}!inner(project_id)
-                `)
-                .eq(`${TABLES.folders}.project_id`, projectId)
-                // .is('is_deleted', false) 
+                .select('*')
+                .in('folder_id', folderIds)
                 .neq('is_deleted', true) // Allow false OR null
                 .order('sort_order');
 
             if (error) throw error;
             
-            // Flatten or clean up if needed
-            // The join returns data structure like: { ...task, folder: { project_id: ... } }
-            // We just return the tasks.
-            return data.map((t: any) => {
-                const { folder, ...rest } = t;
-                return rest;
-            }) as Task[];
+            return data as Task[];
         },
 
         createTask: async (folderId: string, content: string, order: number) => {
