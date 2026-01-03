@@ -15,7 +15,6 @@
       "eslint.config.mjs": true,
       "tsconfig.tsbuildinfo": true,
       ".certificates": true,
-      "wakelock.d.ts": true,
       ".gitignore": true,
       ".vercelignore": true,
       ".cursor": true,
