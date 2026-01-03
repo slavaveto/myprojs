@@ -348,7 +348,7 @@ export const DoingNowScreen = ({
       <div className="h-full flex flex-col p-6 max-w-5xl mx-auto w-full">
          <div className="grid grid-cols-[1fr_auto_1fr] items-center mb-4 min-h-[40px] gap-4">
             <h1 className="tab-title justify-self-start">
-               <Target className="text-danger" fill="currentColor" />
+               <Target className="text-danger" />
                Делаю Сейчас
             </h1>
 
