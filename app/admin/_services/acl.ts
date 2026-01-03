@@ -29,9 +29,6 @@ export const LIMITS = {
 
 // 3. Интерфейс пользователя для проверки прав
 export interface UserAccessContext {
-   isSuperAdmin: boolean;
-   isOwner?: boolean;
-   plan: PlanTier;
    isLocal: boolean;
 }
 
@@ -47,7 +44,6 @@ export function checkPermission(permission: Permission, user: UserAccessContext)
 
       case PERMISSIONS.CUSTOM_USERNAME: // Редактирование username
       
-         return user.plan === 'pro' || user.isSuperAdmin; // PRO или Супер-Админ
 
      
       case PERMISSIONS.SHOW_DEBUG_PANEL:
@@ -60,13 +56,8 @@ export function checkPermission(permission: Permission, user: UserAccessContext)
          return user.isLocal;
 
       default:
-         return user.isSuperAdmin; // По умолчанию супер-админ может всё, если не указано иное
+         return user.isLocal; // По умолчанию супер-админ может всё, если не указано иное
    }
 }
 
-// 5. Хелпер для лимитов
-export function getRoomLimit(user: UserAccessContext): number {
-   if (user.isSuperAdmin) return LIMITS.SUPER_ROOMS;
-   if (user.plan === 'pro') return LIMITS.PRO_ROOMS;
-   return LIMITS.FREE_ROOMS;
-}
+
