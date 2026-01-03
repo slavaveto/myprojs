@@ -50,7 +50,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 
    return {
-      title: "Daysync",
+      title: "DaySync",
       description: data.description,
       icons: {
          icon: data.favicon,

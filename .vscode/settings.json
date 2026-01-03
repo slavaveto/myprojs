@@ -19,7 +19,8 @@
       ".gitignore": true,
       ".vercelignore": true,
       ".cursor": true,
-      "package.json": true
+      "package.json": true,
+      "public": true
    },
    "css.validate": false,
    "less.validate": false,
