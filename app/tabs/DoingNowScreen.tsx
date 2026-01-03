@@ -413,7 +413,7 @@ export const DoingNowScreen = ({
                                     style={{ backgroundColor: group.color || '#3b82f6' }}
                                  />
                                  <h3 className="font-semibold text-default-700">{group.title}</h3>
-                                 <Chip size="sm" variant="flat" className="ml-2 h-5 min-w-5 px-1 text-[10px] bg-default-100 text-default-500">
+                                 <Chip size="sm" variant="flat" className="ml-2 h-5 min-w-5 px-1 text-[12px]  bg-default-100 text-default-500">
                                     {group.tasks.length}
                                  </Chip>
                               </div>

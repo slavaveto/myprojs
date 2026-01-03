@@ -17,7 +17,7 @@ import {
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates, arrayMove } from '@dnd-kit/sortable';
 
-import { taskService } from '@/app/_services/taskService';
+import { taskService, tasksEvents } from '@/app/_services/taskService';
 
 const logger = createLogger('AppManager');
 
@@ -97,6 +97,17 @@ export function usePageLogic() {
 
       loadingService.logAppInit();
       init();
+
+      // Listen for task updates to refresh the "Doing Now" count
+      const unsubscribe = tasksEvents.subscribe(() => {
+         taskService.getDoingNowTasks().then(tasks => {
+             setDoingNowCount(tasks?.length || 0);
+         }).catch(err => console.error(err));
+      });
+
+      return () => {
+         unsubscribe();
+      };
    }, []); // setGlobalLoading стабилен
 
    // 2. Управление глобальным лоадером

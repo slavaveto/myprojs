@@ -7,6 +7,21 @@ import { DB_TABLES } from '@/utils/supabase/db_tables';
 
 const logger = createLogger('TaskService');
 
+// Simple Event Bus for task updates
+type Listener = () => void;
+const listeners: Listener[] = [];
+
+export const tasksEvents = {
+   subscribe: (l: Listener) => {
+      listeners.push(l);
+      return () => {
+         const i = listeners.indexOf(l);
+         if (i > -1) listeners.splice(i, 1);
+      };
+   },
+   emit: () => listeners.forEach((l) => l()),
+};
+
 export const taskService = {
    // --- Reads ---
    async getTasks(projectId: string) {
@@ -320,6 +335,7 @@ export const taskService = {
          folder_id: folderId,
          sort_order: newSortOrder,
       });
+      // tasksEvents.emit() is called inside updateTask, so no need to duplicate
    },
 
    // --- Writes ---
@@ -350,6 +366,7 @@ export const taskService = {
          { after: data },
          content || 'New Task'
       );
+      tasksEvents.emit(); // Notify listeners
       logger.success('Task created', { id: data.id });
       return data as Task;
    },
@@ -417,6 +434,7 @@ export const taskService = {
          afterState.content || 'Task',
          updateType
       );
+      tasksEvents.emit(); // Notify listeners
       logger.success('Task updated', { id });
    },
 
@@ -474,6 +492,7 @@ export const taskService = {
          { before: beforeState, after: afterState },
          task.content
       );
+      tasksEvents.emit(); // Notify listeners
       logger.success('Task restored', { id });
    },
 
@@ -517,6 +536,7 @@ export const taskService = {
              beforeState.content
           );
       }
+      tasksEvents.emit(); // Notify listeners
       logger.success('Task deleted', { id });
    },
 
@@ -542,6 +562,7 @@ export const taskService = {
                .eq('id', u.id)
          })
       );
+      tasksEvents.emit(); // Notify listeners
       logger.info('Tasks reordered', { count: updates.length });
    },
 };

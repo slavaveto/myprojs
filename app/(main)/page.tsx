@@ -229,7 +229,7 @@ const SidebarItem = ({
       />
       <span className="truncate flex-grow">{label}</span>
       {count !== undefined && count > 0 && (
-         <Chip size="sm" variant="flat" className="h-5 min-w-5 px-1 text-[10px] bg-danger/10 text-danger font-medium">
+         <Chip size="sm" variant="flat" className="h-5 min-w-5 px-1 text-[12px] font-medium bg-danger/10 text-danger font-medium">
             {count}
          </Chip>
       )}
