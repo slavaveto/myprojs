@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import ThemeToggle from '@/utils/providers/ThemeToggle';
-import LangToggle from '@/utils/providers/localization/LangToggle';
+import LangToggle from '@/utils/localization/LangToggle';
 import { useWindowSize } from '@/utils/hooks/useWindowSize';
 import { usePathname } from 'next/navigation';
 

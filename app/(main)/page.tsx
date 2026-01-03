@@ -26,7 +26,7 @@ import { StatusBadge } from '@/utils/supabase/StatusBadge';
 import { EditProjectPopover } from '@/app/components/EditProject';
 import { globalStorage } from '@/utils/storage';
 
-import { useLocalization } from '@/utils/providers/localization/LocalizationProvider';
+import { useLocalization } from '@/utils/localization/LocalizationProvider';
 
 
 // DnD Imports

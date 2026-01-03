@@ -2,7 +2,7 @@
 
 import { Tabs, Tab } from '@heroui/react';
 import React from 'react';
-import { useLocalization } from '@/utils/providers/localization/LocalizationProvider';
+import { useLocalization } from '@/utils/localization/LocalizationProvider';
 
 export default function LangToggle() {
    const { language, setLanguage } = useLocalization();
