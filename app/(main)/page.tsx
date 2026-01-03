@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { clsx } from 'clsx';
-import { Button, Spinner } from '@heroui/react';
+import { Button, Spinner, Chip } from '@heroui/react';
 import {
    Plus,
    LayoutGrid,
@@ -203,11 +203,13 @@ const SidebarItem = ({
    label,
    onClick,
    isActive,
+   count,
 }: {
    icon: any;
    label: string;
    onClick?: () => void;
    isActive?: boolean;
+   count?: number;
 }) => (
    <button
       onClick={onClick}
@@ -217,8 +219,19 @@ const SidebarItem = ({
          isActive ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-default-100'
       )}
    >
-      <Icon size={20} className={isActive ? 'text-primary' : 'text-default-500'} />
+      <Icon 
+         size={20} 
+         className={clsx(
+            isActive ? 'text-primary' : 'text-default-500',
+            (count && count > 0 && label === 'Делаю Сейчас') && 'text-danger'
+         )} 
+      />
       <span className="truncate flex-grow">{label}</span>
+      {count !== undefined && count > 0 && (
+         <Chip size="sm" variant="flat" className="h-5 min-w-5 px-1 text-[10px] bg-default-100 text-default-500">
+            {count}
+         </Chip>
+      )}
    </button>
 );
 
@@ -272,6 +285,9 @@ function AppContent() {
       removeProjectFromState,
       handleToggleSatellite, // Import new handler
       
+      doingNowCount, // Count from logic
+      setDoingNowCount, // Setter to refresh count from screens
+
       // Props
       sensors,
    } = usePageLogic();
@@ -364,6 +380,7 @@ function AppContent() {
                      icon={Target}
                      label="Делаю Сейчас"
                      isActive={activeSystemTab === 'doing_now'}
+                     count={doingNowCount}
                      onClick={() => {
                         setActiveSystemTab('doing_now');
                         setActiveProjectId(null);

@@ -17,6 +17,8 @@ import {
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates, arrayMove } from '@dnd-kit/sortable';
 
+import { taskService } from '@/app/_services/taskService';
+
 const logger = createLogger('AppManager');
 
 export function usePageLogic() {
@@ -24,6 +26,7 @@ export function usePageLogic() {
    const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
    const [activeSystemTab, setActiveSystemTab] = useState<string | null>(null); // 'inbox' | 'today' | 'done' | null
    const [projectScreenMode, setProjectScreenMode] = useState<'tasks' | 'docs' | 'admin'>('tasks');
+   const [doingNowCount, setDoingNowCount] = useState<number>(0);
    const { setLoading: setGlobalLoading } = useAppLoader();
 
    // Словарик готовности проектов: { [projectId]: true }
@@ -70,6 +73,13 @@ export function usePageLogic() {
          try {
             const projectsData = await projectService.getProjects();
             setProjects(projectsData);
+
+            // Fetch Doing Now Count
+            taskService.getDoingNowTasks().then(tasks => {
+                setDoingNowCount(tasks?.length || 0);
+            }).catch(err => {
+                console.error('Failed to fetch doing now count', err);
+            });
 
             // Восстановление активного проекта
             if (projectsData.length > 0) {
@@ -350,6 +360,11 @@ export function usePageLogic() {
             globalStorage.setItem('highlight_task_today', target.taskId);
          }
       }
+      
+      // Refresh count on navigation/action
+      taskService.getDoingNowTasks().then(tasks => {
+          setDoingNowCount(tasks?.length || 0);
+      }).catch(err => console.error(err));
    };
 
    // --- DnD Handlers ---
@@ -425,6 +440,9 @@ export function usePageLogic() {
       handleProjectReady,
       updateProjectInState,
       handleToggleSatellite, // Export new handler
+      
+      doingNowCount, // Export count
+      setDoingNowCount, // Export setter for manual refresh
       
       // Props
       sensors,
