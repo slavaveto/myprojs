@@ -45,8 +45,8 @@ export function useUIElements() {
             const { data: dbTimestamps } = await supabase
                .from(DB_TABLES.UI_ITEMS)
                .select('item_id, updated_at')
-               .eq('is_deleted', false)
-               .in('task_type', ['item']);
+               .neq('is_deleted', true) // Allow false OR null
+               // .in('task_type', ['item']);
 
             if (dbTimestamps) {
                const outdatedItems = dbTimestamps.filter((dbItem) => {
@@ -74,8 +74,8 @@ export function useUIElements() {
                      .from(DB_TABLES.UI_ITEMS)
                      .select('*')
                      .in('item_id', itemIds)
-                     .eq('is_deleted', false)
-                     .in('task_type', ['item']);
+                     .neq('is_deleted', true) // Allow false OR null
+                     // .in('task_type', ['item']);
 
                   if (freshData) {
                      freshData.forEach((item) => {
@@ -111,8 +111,8 @@ export function useUIElements() {
             const { data, error } = await supabase
                .from(DB_TABLES.UI_ITEMS)
                .select('*')
-               .eq('is_deleted', false)
-               .in('task_type', ['item']);
+               .neq('is_deleted', true) // Allow false OR null
+               // .in('task_type', ['item']);
 
             if (data && !error) {
                setUIData(data);
