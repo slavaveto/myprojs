@@ -1,7 +1,4 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-app/v1/
-
 _TODO.md
 _TESTS.md
 
