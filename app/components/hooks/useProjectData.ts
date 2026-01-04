@@ -14,6 +14,8 @@ import { NavigationTarget } from '@/app/components/GlobalSearch';
 import { getProjectClient } from '@/utils/supabase/projectClientFactory';
 import { createRemoteFolderService, createRemoteTaskService } from '@/utils/supabase/remoteServices';
 import { SupabaseClient } from '@supabase/supabase-js';
+import { supabase } from '@/utils/supabase/supabaseClient';
+import { DB_TABLES } from '@/utils/supabase/db_tables';
 
 const logger = createLogger('ProjectScreenHook');
 
@@ -43,10 +45,29 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
    // --- Initialize Services (Local vs Remote) ---
    useEffect(() => {
        const initServices = async () => {
-           // If UI project, we need remote client
-           if (project.proj_type === 'ui' && project.remote_proj_slug) {
+           let slug = null;
+
+           // If UI project, try to get slug from parent
+           if (project.proj_type === 'ui' && project.parent_proj_id) {
                try {
-                   const client = await getProjectClient(project.remote_proj_slug);
+                   const { data } = await supabase
+                       .from(DB_TABLES.PROJECTS)
+                       .select('remote_proj_slug')
+                       .eq('id', project.parent_proj_id)
+                       .single();
+                   
+                   if (data?.remote_proj_slug) {
+                       slug = data.remote_proj_slug;
+                   }
+               } catch (e) {
+                   logger.error('Failed to fetch parent project slug', e);
+               }
+           }
+
+           // If UI project, we need remote client
+           if (project.proj_type === 'ui' && slug) {
+               try {
+                   const client = await getProjectClient(slug);
                    if (client) {
                        setRemoteServices({
                            taskService: createRemoteTaskService(client, true), // isUi = true
@@ -71,7 +92,7 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
        };
 
        initServices();
-   }, [project.id, project.proj_type, project.remote_proj_slug]);
+   }, [project.id, project.proj_type, project.remote_proj_slug, project.parent_proj_id]);
 
    useEffect(() => {
        projectService.getProjectsWithFolders()
@@ -221,7 +242,8 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
             // Hook exposes loadTasks, but that replaces state.
             // Let's use loadTasks and merge logic inside hook if needed, or just let it refresh.
             // But here we had custom merge logic. Ideally move to useTaskData as 'refreshTasks'.
-            // For now, let's just reload.
+            // For now, let's use the loadTasks directly as it seems to handle state replacement.
+            // Note: If user was editing, this might overwrite. But we assume single user per local session mostly.
             loadTasks(); 
         }
     }, [isActive, isDataLoaded, project.id]);
