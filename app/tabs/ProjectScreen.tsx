@@ -380,7 +380,7 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
                                     <label className="text-xs font-semibold text-default-400 uppercase tracking-wider">
                                         Notes
                                     </label>
-                                    <div className="flex-grow min-h-[200px] bg-background rounded-lg border border-default-200 shadow-sm p-4 overflow-y-auto cursor-text"
+                                    <div className="flex-grow min-h-[200px] bg-background rounded-lg border border-default-200 shadow-sm p-2 overflow-y-auto cursor-text"
                                          onClick={(e) => {
                                              // Focus editor container if clicked outside
                                              const editorDiv = e.currentTarget.querySelector('.ProseMirror') as HTMLElement;

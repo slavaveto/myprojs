@@ -11,7 +11,7 @@ export function useSupabase() {
 
   const supabase = useMemo(() => {
     // ВРЕМЕННЫЙ ФЛАГ: если true, используем простое подключение без токенов (как в supabaseClient.ts)
-    const USE_SIMPLE_CLIENT = true;
+    const USE_SIMPLE_CLIENT = false;
 
     if (USE_SIMPLE_CLIENT) {
       return createClient(
@@ -28,7 +28,7 @@ export function useSupabase() {
             fetch: async (url, options = {}) => {
               try {
                 // Запрашиваем токен
-                const clerkToken = await getToken({ template: 'supabase' });
+                const clerkToken = await getToken({ template: 'supabase_daysync_new' });
                 
                 // ЛОГИ ДЛЯ ОТЛАДКИ
                 if (clerkToken) {

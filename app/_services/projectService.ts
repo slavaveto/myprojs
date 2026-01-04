@@ -1,7 +1,7 @@
-import { supabase } from '@/utils/supabase/supabaseClient';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { Project } from '@/app/types';
 import { logService } from './logService';
-import { folderService } from './folderService';
+import { createFolderService } from './folderService';
 import { BaseActions, EntityTypes, ProjectUpdateTypes } from './actions';
 import { createLogger } from '@/utils/logger/Logger';
 import { DB_TABLES } from '@/utils/supabase/db_tables';
@@ -9,9 +9,11 @@ import { DB_TABLES } from '@/utils/supabase/db_tables';
 
 const logger = createLogger('ProjectService');
 
-export const projectService = {
+export const createProjectService = (supabase: SupabaseClient) => {
+    // Получаем folderService тоже с правильным клиентом
+    const folderService = createFolderService(supabase);
 
-
+    return {
     // @ref:8a2b3c
     // загрузка списка проектов
     async getProjects() {
@@ -48,7 +50,7 @@ export const projectService = {
         // Filter folders manually or via complex query. 
         // Simple way: filter in memory after fetch, since we need to sort them anyway.
         if (data) {
-            data.forEach(p => {
+            data.forEach((p: any) => {
                 if (p.folders && Array.isArray(p.folders)) {
                     // Filter deleted folders
                     p.folders = p.folders.filter((f: any) => !f.is_deleted);
@@ -258,7 +260,7 @@ export const projectService = {
             .eq('project_id', id);
             
         if (folders && folders.length > 0) {
-            const folderIds = folders.map(f => f.id);
+            const folderIds = folders.map((f: any) => f.id);
             
             // 2. Soft delete tasks (KEEP FOLDER_ID!)
             const { error: taskError } = await supabase
@@ -348,4 +350,8 @@ export const projectService = {
         );
         logger.info('Projects reordered', { count: updates.length });
     },
-};
+}};
+
+// DEFAULT INSTANCE
+import { supabase as defaultSupabase } from '@/utils/supabase/supabaseClient';
+export const projectService = createProjectService(defaultSupabase);

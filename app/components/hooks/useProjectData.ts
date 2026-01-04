@@ -2,9 +2,9 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { Task, Project } from '@/app/types';
 import { globalStorage } from '@/utils/storage';
 import { toast } from 'react-hot-toast';
-import { projectService } from '@/app/_services/projectService';
-import { taskService as localTaskService } from '@/app/_services/taskService';
-import { folderService as localFolderService } from '@/app/_services/folderService';
+import { createProjectService } from '@/app/_services/projectService';
+import { createTaskService } from '@/app/_services/taskService';
+import { createFolderService } from '@/app/_services/folderService';
 import { useAsyncAction, ActionStatus } from '@/utils/supabase/useAsyncAction';
 import { createLogger } from '@/utils/logger/Logger';
 import { useFolderData } from './useFolderData';
@@ -13,8 +13,7 @@ import { loadingService } from '@/app/_services/loadingLogsService';
 import { NavigationTarget } from '@/app/components/GlobalSearch';
 import { getProjectClient } from '@/utils/supabase/projectClientFactory';
 import { createRemoteFolderService, createRemoteTaskService } from '@/utils/supabase/remoteServices';
-import { SupabaseClient } from '@supabase/supabase-js';
-import { supabase } from '@/utils/supabase/supabaseClient';
+import { useSupabase } from '@/utils/supabase/useSupabase';
 import { DB_TABLES } from '@/utils/supabase/db_tables';
 
 const logger = createLogger('ProjectScreenHook');
@@ -32,6 +31,13 @@ interface UseProjectDataProps {
 
 // Export updated types
 export const useProjectData = ({ project, isActive, onReady, canLoad = true, onUpdateProject, onDeleteProject, globalStatus = 'idle', onNavigate }: UseProjectDataProps) => {
+   const { supabase } = useSupabase(); // ПОЛУЧАЕМ КЛИЕНТ С ТОКЕНОМ
+   
+   // Создаем локальные сервисы с токеном
+   const localProjectService = useMemo(() => createProjectService(supabase), [supabase]);
+   const localTaskService = useMemo(() => createTaskService(supabase), [supabase]);
+   const localFolderService = useMemo(() => createFolderService(supabase), [supabase]);
+
    const [selectedFolderId, setSelectedFolderId] = useState<string>('');
    const [isDataLoaded, setIsDataLoaded] = useState(false);
    const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null);
@@ -50,6 +56,7 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
            // If UI project, try to get slug from parent
            if (project.proj_type === 'ui' && project.parent_proj_id) {
                try {
+                   // Используем клиент с токеном для запроса
                    const { data } = await supabase
                        .from(DB_TABLES.PROJECTS)
                        .select('remote_proj_slug')
@@ -83,7 +90,7 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
                    logger.error('Error initializing remote client', e);
                }
            } else {
-               // Local project - use standard services
+               // Local project - use standard services (WITH TOKEN)
                setRemoteServices({
                    taskService: localTaskService,
                    folderService: localFolderService
@@ -92,13 +99,13 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
        };
 
        initServices();
-   }, [project.id, project.proj_type, project.remote_proj_slug, project.parent_proj_id]);
+   }, [project.id, project.proj_type, project.remote_proj_slug, project.parent_proj_id, supabase, localTaskService, localFolderService]);
 
    useEffect(() => {
-       projectService.getProjectsWithFolders()
+       localProjectService.getProjectsWithFolders()
            .then(data => setProjectsStructure(data || []))
            .catch(err => logger.error('Failed to load projects structure', err));
-   }, []);
+   }, [localProjectService]);
 
    // --- Status Management ---
    const { execute: executeSave, status: saveStatus, error: saveError } = useAsyncAction({
@@ -120,14 +127,6 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
    const displayStatus = globalStatus !== 'idle' ? globalStatus : (saveStatus !== 'idle' ? saveStatus : quickSaveStatus);
 
    // --- Use Sub-Hooks (Only when services are ready) ---
-   // We pass null services initially, hooks need to handle that or we render null until ready?
-   // Better to pass services as props to hooks.
-   // But hooks are currently importing services directly.
-   // We need to refactor useFolderData and useTaskData to accept services as arguments!
-   
-   // WAIT! Modifying existing hooks signature might break other usages if any.
-   // Let's check usages. (checked: only used here).
-   // So I will modify useFolderData and useTaskData to accept `services` object.
    
    const activeServices = remoteServices || { taskService: localTaskService, folderService: localFolderService };
 
@@ -353,7 +352,7 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
    const handleEditProject = async (title: string, color: string, isHighlighted: boolean, hasUi: boolean, hasDocs: boolean) => {
        try {
            await executeSave(async () => {
-               await projectService.updateProject(project.id, { title, proj_color: color, is_highlighted: isHighlighted });
+               await localProjectService.updateProject(project.id, { title, proj_color: color, is_highlighted: isHighlighted });
                onUpdateProject({ title, proj_color: color, is_highlighted: isHighlighted, hasUi, hasDocs });
            });
        } catch (err) {
@@ -363,7 +362,7 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
 
    const handleRemoveProject = async () => {
        try {
-           await projectService.deleteProject(project.id);
+           await localProjectService.deleteProject(project.id);
            onDeleteProject();
        } catch (err) {
            logger.error('Failed to delete project', err);

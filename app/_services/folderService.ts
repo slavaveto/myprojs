@@ -1,14 +1,13 @@
-import { supabase } from '@/utils/supabase/supabaseClient';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { Folder } from '@/app/types';
 import { logService } from './logService';
 import { BaseActions, EntityTypes, FolderUpdateTypes } from './actions';
 import { createLogger } from '@/utils/logger/Logger';
 import { DB_TABLES } from '@/utils/supabase/db_tables';
 
-
 const logger = createLogger('FolderService');
 
-export const folderService = {
+export const createFolderService = (supabase: SupabaseClient) => ({
     async getFolders(projectId: string) {
         logger.info('Fetching folders...', { projectId });
         const { data, error } = await supabase
@@ -180,4 +179,8 @@ export const folderService = {
         );
         logger.info('Folders reordered', { count: updates.length });
     },
-};
+});
+
+// DEFAULT INSTANCE
+import { supabase as defaultSupabase } from '@/utils/supabase/supabaseClient';
+export const folderService = createFolderService(defaultSupabase);
