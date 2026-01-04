@@ -21,6 +21,9 @@ import { ActionStatus } from '@/utils/supabase/useAsyncAction'; // Import Action
 import { OverloadScanner } from '@/app/components/remote/scanners/OverloadScanner'; // Import Scanner
 import { FlowScanner } from '@/app/components/remote/scanners/FlowScanner'; // Import Flow Scanner
 import { UserHeaderMenu } from '@/app/components/UserHeaderMenu'; // Import UserHeaderMenu
+import { RemoteUsers } from '@/app/components/remote/RemoteUsers'; // Import RemoteUsers
+import { getProjectClient } from '@/utils/supabase/projectClientFactory'; // Import client factory
+import { SupabaseClient } from '@supabase/supabase-js';
 
 // Заглушки для экранов
 const PlaceholderScreen = ({ title }: { title: string }) => (
@@ -49,12 +52,7 @@ type AdminTab = 'ui' | 'docs' | 'users' | 'logs';
 const MemoizedProjectScreen = React.memo(ProjectScreen, (prev, next) => {
    if (prev.isActive !== next.isActive) return false;
    if (prev.canLoad !== next.canLoad) return false;
-   // Re-render if hidden status changes (to stop spinner/reset state) - actually handled by internal logic
-   if (!next.isActive) return true; // Don't re-render if staying hidden? Wait, if we hide it, we want it to freeze?
-   // Actually, the previous logic was:
-   // if (!next.isActive) return true;
-   // This means if the component is hidden (isActive=false), we return TRUE (props are equal), so NO RENDER.
-   // This is good for performance.
+   if (!next.isActive) return true;
    return false;
 });
 
@@ -76,6 +74,7 @@ export const AdminScreen = ({
 }: AdminScreenProps) => {
    const [activeTab, setActiveTab] = useState<AdminTab>('ui');
    const [projectStatus, setProjectStatus] = useState<StatusState>({ status: 'idle', error: null });
+   const [remoteClient, setRemoteClient] = useState<SupabaseClient | null>(null);
 
    // Load saved tab on mount or project change
    useEffect(() => {
@@ -91,6 +90,17 @@ export const AdminScreen = ({
    useEffect(() => {
        setProjectStatus({ status: 'idle', error: null });
    }, [activeTab]);
+
+   // Initialize Remote Client (from parent project slug)
+   useEffect(() => {
+        const initClient = async () => {
+            if (project.remote_proj_slug) {
+                const client = await getProjectClient(project.remote_proj_slug);
+                setRemoteClient(client);
+            }
+        };
+        initClient();
+   }, [project.remote_proj_slug]);
 
    const handleTabChange = (tab: AdminTab) => {
        setActiveTab(tab);
@@ -156,7 +166,7 @@ export const AdminScreen = ({
             </div>
 
             <div className={clsx("h-full w-full", activeTab === 'users' ? 'block' : 'hidden')}>
-                <PlaceholderScreen title="Users Management" />
+                <RemoteUsers client={remoteClient} />
             </div>
 
             <div className={clsx("h-full w-full", activeTab === 'logs' ? 'block' : 'hidden')}>
@@ -261,4 +271,3 @@ export const AdminScreen = ({
       </div>
    );
 };
-
