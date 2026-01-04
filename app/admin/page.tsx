@@ -45,8 +45,9 @@ export default function AdminPage() {
    }, [activeTab]);
    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
    const [fadeInContent, setFadeInContent] = useState(false);
-   const [canLoadBackground, setCanLoadBackground] = useState(false);
    const [readyTabs, setReadyTabs] = useState<{ [key in TabId]?: boolean }>({});
+
+   const [canLoadBackground, setCanLoadBackground] = useState(false);
    const loggedTabsRef = useRef<Set<string>>(new Set());
    const activeTabFinishedRef = useRef(false);
    const timerRef = useRef<NodeJS.Timeout | null>(null);

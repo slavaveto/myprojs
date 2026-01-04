@@ -4,7 +4,6 @@
       ".next": true,
       "node_modules": true,
       ".prettierrc": true,
-      "hero.ts": true,
       "next-env.d.ts": true,
       "next.config.ts": true,
       "package-lock.json": true,
@@ -19,7 +18,8 @@
       ".vercelignore": true,
       ".cursor": true,
       "package.json": true,
-      "public": true
+      "public": true,
+      "hero.ts": true
    },
    "css.validate": false,
    "less.validate": false,
