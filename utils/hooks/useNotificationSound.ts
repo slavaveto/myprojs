@@ -6,9 +6,8 @@ import { createLogger } from '@/utils/logger/Logger';
 const logger = createLogger('useNotificationSound');
 
 // Базовый URL для звуков в Google Cloud
-
-const bucketName = 'videorooms_app'; // Hardcoded for simplicity since env might not be available
-const SOUNDS_BASE_URL = `https://storage.googleapis.com/${bucketName}/sounds`;
+const bucketName = process.env.GOOGLE_CLOUD_SOUNDS_BUCKET_NAME || 'app_sounds';
+const SOUNDS_BASE_URL = `https://storage.googleapis.com/${bucketName}`;
 
 
 export const useNotificationSound = () => {

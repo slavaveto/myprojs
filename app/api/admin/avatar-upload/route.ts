@@ -26,7 +26,7 @@ try {
     console.error('Failed to initialize Google Cloud Storage:', error);
 }
 
-const bucketName = process.env.GOOGLE_CLOUD_BUCKET_NAME || 'daysync_app';
+const bucketName = process.env.GOOGLE_CLOUD_PROJ_BUCKET_NAME || 'daysync';
 
 export async function POST(req: Request) {
     try {
