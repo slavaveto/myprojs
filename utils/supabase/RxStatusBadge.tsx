@@ -21,6 +21,7 @@ export const RxStatusBadge = (props: StatusBadgeProps) => {
 
   // Watch for sync start
   useEffect(() => {
+      // console.log('RxStatusBadge: isSyncing:', isSyncing, 'visualState:', visualState);
       if (isSyncing) {
           setVisualState('syncing');
       }

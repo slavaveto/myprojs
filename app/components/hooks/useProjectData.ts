@@ -203,6 +203,7 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
    const executeSave = async (fn: () => Promise<any>) => {
         // Trigger manual sync status if this is a local project
         const isLocalProject = project.proj_type !== 'ui' && !project.remote_proj_slug;
+        console.log('executeSave called. isLocalProject:', isLocalProject, 'notifySyncStart exists:', !!notifySyncStart);
         if (isLocalProject) {
             notifySyncStart?.();
         }

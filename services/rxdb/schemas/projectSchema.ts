@@ -5,7 +5,7 @@ import {
 } from 'rxdb';
 
 export const projectSchemaLiteral = {
-    version: 1,
+    version: 0,
     primaryKey: 'id',
     type: 'object',
     properties: {

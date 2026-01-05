@@ -49,7 +49,7 @@ const createDatabase = async (): Promise<MyDatabase> => {
     }
 
     const db = await createRxDatabase<MyDatabaseCollections>({
-        name: 'myprojs_db_v6', // Reset again for user_id schema update
+        name: 'myprojs_db_v7', // Reset to v7 with version 0 schemas
         storage,
         multiInstance: true,
         eventReduce: true
@@ -57,23 +57,13 @@ const createDatabase = async (): Promise<MyDatabase> => {
 
     await db.addCollections({
         projects: {
-            schema: projectSchema,
-            migrationStrategies: {
-                1: function(oldDoc: any) { return oldDoc; }
-            }
+            schema: projectSchema
         },
         folders: {
-            schema: folderSchema,
-            migrationStrategies: {
-                1: function(oldDoc: any) { return oldDoc; }
-            }
+            schema: folderSchema
         },
         tasks: {
-            schema: taskSchema,
-            migrationStrategies: {
-                1: function(oldDoc: any) { return oldDoc; },
-                2: function(oldDoc: any) { return oldDoc; }
-            }
+            schema: taskSchema
         }
     });
 
@@ -105,7 +95,7 @@ export const startReplication = async (db: MyDatabase, supabase: SupabaseClient)
         
         const replicationState = await replicateRxCollection({
             collection,
-            replicationIdentifier: `replication-${tableName}-v6`, // Increment version to force re-sync logic
+            replicationIdentifier: `replication-${tableName}-v7`, // Increment version to force re-sync logic
             pull: {
                 async handler(checkpointOrNull: any) {
                     const checkpoint = checkpointOrNull ? checkpointOrNull.updated_at : new Date(0).toISOString();

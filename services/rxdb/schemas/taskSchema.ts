@@ -5,7 +5,7 @@ import {
 } from 'rxdb';
 
 export const taskSchemaLiteral = {
-    version: 2, // V2: Added user_id
+    version: 0, // Reset to 0 for fresh DB
     primaryKey: 'id',
     type: 'object',
     properties: {

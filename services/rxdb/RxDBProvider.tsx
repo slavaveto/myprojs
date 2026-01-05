@@ -23,6 +23,7 @@ export const RxDBProvider = ({ children }: { children: React.ReactNode }) => {
     const { supabase, userId } = useSupabase();
 
     const notifySyncStart = () => {
+        console.log('RxDBProvider: notifySyncStart triggered');
         setManualSyncing(true);
         setTimeout(() => setManualSyncing(false), 2000); // Guarantee 2s sync visual
     };
