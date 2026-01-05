@@ -537,9 +537,3 @@ export const createTaskService = (supabase: SupabaseClient) => {
       logger.info('Tasks reordered', { count: updates.length });
    },
 }};
-
-// DEFAULT INSTANCE (для обратной совместимости, если где-то еще импортируется)
-// Но он будет анонимным!
-import { createAnonClient } from '@/utils/supabase/useSupabase';
-const defaultSupabase = createAnonClient();
-export const taskService = createTaskService(defaultSupabase);

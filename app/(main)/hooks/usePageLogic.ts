@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { createLogger } from '@/utils/logger/Logger';
 import { projectService } from '@/app/_services/projectService';
 import { Project } from '@/app/types';
@@ -16,14 +16,16 @@ import {
    KeyboardSensor,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates, arrayMove } from '@dnd-kit/sortable';
-
-// @ts-ignore - linter cache issue with renamed export
-import { taskService, taskUpdateEvents } from '@/app/_services/taskService';
+import { createTaskService, taskUpdateEvents } from '@/app/_services/taskService';
+import { useSupabase } from '@/utils/supabase/useSupabase';
 
 // Main App Logic Hook
 const logger = createLogger('AppManager');
 
 export function usePageLogic() {
+   const { supabase } = useSupabase();
+   const taskService = useMemo(() => createTaskService(supabase), [supabase]);
+
    const [projects, setProjects] = useState<Project[]>([]);
    const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
    const [activeSystemTab, setActiveSystemTab] = useState<string | null>(null); // 'inbox' | 'today' | 'done' | null

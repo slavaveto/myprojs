@@ -3,10 +3,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Input, Chip } from '@heroui/react';
 import { Search, Folder as FolderIcon, Inbox, CheckCircle2 } from 'lucide-react';
-import { taskService } from '@/app/_services/taskService';
+import { createTaskService } from '@/app/_services/taskService';
 import { createLogger } from '@/utils/logger/Logger';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSupabase } from '@/utils/supabase/useSupabase';
 
 const logger = createLogger('GlobalSearch');
 
@@ -41,6 +42,10 @@ interface GlobalSearchProps {
 }
 
 export const GlobalSearch = ({ onNavigate, className, currentProjectId, currentFolderId }: GlobalSearchProps) => {
+    const { supabase } = useSupabase();
+    // useMemo не обязателен, если createTaskService легкий, но для чистоты
+    const taskService = React.useMemo(() => createTaskService(supabase), [supabase]);
+
     const [items, setItems] = useState<SearchItem[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<SearchItem[]>([]);
