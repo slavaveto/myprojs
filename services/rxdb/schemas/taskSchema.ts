@@ -1,11 +1,11 @@
 import { 
     toTypedRxJsonSchema, 
     ExtractDocumentTypeFromTypedRxJsonSchema,
-    RxJsonSchema
+    RxJsonSchema 
 } from 'rxdb';
 
 export const taskSchemaLiteral = {
-    version: 1, // Incremented to fix DB6 schema mismatch
+    version: 1, // V1: Removed folder_id from index
     primaryKey: 'id',
     type: 'object',
     properties: {
@@ -17,37 +17,37 @@ export const taskSchemaLiteral = {
             type: 'string'
         },
         folder_id: {
-            type: 'string',
+            type: ['string', 'null'], // Can be null (Inbox)
             maxLength: 100,
             ref: 'folders'
         },
         sort_order: {
-            type: 'number'
+            type: ['number', 'null']
         },
         is_completed: {
-            type: 'boolean'
+            type: ['boolean', 'null']
         },
         is_deleted: {
-            type: 'boolean'
+            type: ['boolean', 'null']
         },
         task_type: {
-            type: 'string' // 'task' | 'gap' | 'group' | 'note'
+            type: ['string', 'null']
         },
         task_notes: {
-            type: 'string'
+            type: ['string', 'null']
         },
         title_text_style: {
-            type: 'string'
+            type: ['string', 'null']
         },
         is_today: {
-            type: 'boolean'
+            type: ['boolean', 'null']
         },
         group_id: {
-            type: 'string',
+            type: ['string', 'null'],
             maxLength: 100
         },
         is_closed: {
-            type: 'boolean' // For groups
+            type: ['boolean', 'null']
         },
         created_at: {
             type: 'string',
@@ -56,18 +56,13 @@ export const taskSchemaLiteral = {
         updated_at: {
             type: 'string',
             format: 'date-time',
-            maxLength: 100 // Required for index SC34
+            maxLength: 100
         },
-        // UI fields (don't sync usually, but if we want persisted state...)
-        // isNew, isDraft - лучше не хранить в БД, это runtime состояние
     },
     required: ['id', 'created_at', 'updated_at'],
-    indexes: ['updated_at'] // folder_id removed from index as it's not required (DXE1)
+    indexes: ['updated_at'] // Only required fields in index for Dexie
 } as const;
 
 const schemaTyped = toTypedRxJsonSchema(taskSchemaLiteral);
-
 export type TaskDocType = ExtractDocumentTypeFromTypedRxJsonSchema<typeof schemaTyped>;
-
 export const taskSchema: RxJsonSchema<TaskDocType> = taskSchemaLiteral;
-

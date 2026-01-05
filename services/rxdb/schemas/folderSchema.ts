@@ -1,7 +1,7 @@
 import { 
     toTypedRxJsonSchema, 
     ExtractDocumentTypeFromTypedRxJsonSchema,
-    RxJsonSchema
+    RxJsonSchema 
 } from 'rxdb';
 
 export const folderSchemaLiteral = {
@@ -19,13 +19,13 @@ export const folderSchemaLiteral = {
         project_id: {
             type: 'string',
             maxLength: 100,
-            ref: 'projects' // Связь с коллекцией projects
+            ref: 'projects'
         },
         sort_order: {
-            type: 'number'
+            type: ['number', 'null']
         },
         is_deleted: {
-            type: 'boolean'
+            type: ['boolean', 'null']
         },
         created_at: {
             type: 'string',
@@ -37,12 +37,9 @@ export const folderSchemaLiteral = {
         }
     },
     required: ['id', 'title', 'project_id', 'created_at', 'updated_at'],
-    indexes: ['project_id'] // Индекс для быстрого поиска по проекту
+    indexes: ['project_id']
 } as const;
 
 const schemaTyped = toTypedRxJsonSchema(folderSchemaLiteral);
-
 export type FolderDocType = ExtractDocumentTypeFromTypedRxJsonSchema<typeof schemaTyped>;
-
 export const folderSchema: RxJsonSchema<FolderDocType> = folderSchemaLiteral;
-

@@ -49,7 +49,7 @@ const createDatabase = async (): Promise<MyDatabase> => {
     }
 
     const db = await createRxDatabase<MyDatabaseCollections>({
-        name: 'myprojs_db_v1', // Renamed to reset broken schema state (v0 locked)
+        name: 'myprojs_db_v2', // New clean DB with nullable schemas
         storage,
         multiInstance: true,
         eventReduce: true
@@ -98,9 +98,9 @@ export const startReplication = async (db: MyDatabase, supabase: SupabaseClient)
             collection,
             replicationIdentifier: `replication-${tableName}-v1`,
             pull: {
-                async handler(checkpointOrNull) {
+                async handler(checkpointOrNull: any) {
                     const checkpoint = checkpointOrNull ? checkpointOrNull.updated_at : new Date(0).toISOString();
-                    console.log(`RxDB Pull ${tableName}: fetching since ${checkpoint}`);
+                    // console.log(`RxDB Pull ${tableName}: fetching since ${checkpoint}`);
                     
                     const { data, error } = await supabase
                         .from(tableName)
@@ -113,9 +113,16 @@ export const startReplication = async (db: MyDatabase, supabase: SupabaseClient)
                         throw error;
                     }
 
-                    console.log(`RxDB Pull ${tableName}: received ${data.length} docs`);
+                    // console.log(`RxDB Pull ${tableName}: received ${data.length} docs`);
 
-                    if (data.length === 0) {
+                    // Clean docs to match schema (remove extra fields from Supabase)
+                    const cleanDocs = data.map(doc => {
+                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                        const { user_id, local_path, show_docs_btn, ...validDoc } = doc;
+                        return validDoc;
+                    });
+
+                    if (cleanDocs.length === 0) {
                         return {
                             documents: [],
                             checkpoint: checkpointOrNull
@@ -123,16 +130,16 @@ export const startReplication = async (db: MyDatabase, supabase: SupabaseClient)
                     }
 
                     return {
-                        documents: data,
+                        documents: cleanDocs,
                         checkpoint: {
-                            updated_at: data[data.length - 1].updated_at
+                            updated_at: cleanDocs[cleanDocs.length - 1].updated_at
                         }
                     };
                 }
             },
             push: {
-                async handler(changeRows) {
-                    const docs = changeRows.map(r => r.newDocument);
+                async handler(changeRows: any[]) {
+                    const docs = changeRows.map((r: any) => r.newDocumentState);
                     const { error } = await supabase
                         .from(tableName)
                         .upsert(docs);
@@ -159,4 +166,3 @@ export const startReplication = async (db: MyDatabase, supabase: SupabaseClient)
         console.error('RxDB: Failed to start replication', err);
     }
 };
-
