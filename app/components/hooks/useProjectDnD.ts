@@ -372,7 +372,7 @@ export const useProjectDnD = ({
 
             // Use fresh filtered list for check
             const currentFolderTasksForCheck = tasks
-                .filter(t => t.folder_id === selectedFolderId)
+                .filter(t => t.folder_id === selectedFolderId && !t.is_completed)
                 .sort((a, b) => a.sort_order - b.sort_order);
             
             // Find current index in the filtered list to be sure about visual order
@@ -393,14 +393,12 @@ export const useProjectDnD = ({
 
         // Filter tasks in the destination folder (which is now selectedFolderId for the active task)
         const currentFolderTasks = tasks
-            .filter(t => t.folder_id === selectedFolderId)
+            .filter(t => t.folder_id === selectedFolderId && !t.is_completed)
             .sort((a, b) => a.sort_order - b.sort_order);
 
         // Filter tasks in the destination folder
         // Use 'let' or unique name to avoid conflict if redeclared (it was declared above for check)
-        const currentFolderTasksForUpdate = tasks
-            .filter(t => t.folder_id === selectedFolderId)
-            .sort((a, b) => a.sort_order - b.sort_order);
+        const currentFolderTasksForUpdate = currentFolderTasks; // Reuse filtered list
 
         // --- REHYDRATE LIST LOGIC ---
         // We need to reconstruct the FULL list including hidden children of closed groups
@@ -558,7 +556,7 @@ export const useProjectDnD = ({
              const isSortOrderChanged = t.sort_order !== index;
              
              return {
-            id: t.id, 
+                 id: t.id, 
                  sort_order: index,
                  group_id: newGroupId,
                  shouldUpdate: isGroupIdChanged || isSortOrderChanged
