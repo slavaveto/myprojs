@@ -11,15 +11,51 @@ export const useTaskData = (
     selectedFolderId: string, 
     executeSave: (fn: () => Promise<void>) => Promise<void>,
     service: any, // Injected service
-    isUiProject: boolean = false // NEW: Flag for UI logic
+    isUiProject: boolean = false, // NEW: Flag for UI logic
+    externalData?: Task[] // NEW: Data from RxDB
 ) => {
     const [tasks, setTasks] = useState<Task[]>([]);
     
+    // Sync external data (RxDB)
+    useEffect(() => {
+        if (externalData) {
+            setTasks(prevTasks => {
+                // Merge RxDB updates with local optimistic state (if needed)
+                // For now, simple replace, but preserving specific local-only flags if they existed?
+                // Actually RxDB is fast enough. 
+                // But we need to handle "Drafts" that are NOT in RxDB yet.
+                // Drafts are in 'tasks' state but not in 'externalData'.
+                
+                const drafts = prevTasks.filter(t => t.isNew || t.isDraft || t._isSaving);
+                
+                // Map external data
+                const loadedTasks = externalData.map((newTask: any) => {
+                    // Try to preserve local metadata if matched
+                    const prevTask = prevTasks.find(p => p.id === newTask.id);
+                    if (prevTask) {
+                         // If task was just saved but RxDB update came back, ensure we don't overwrite optimistic fields?
+                         // Generally RxDB update is the truth.
+                    }
+                    return newTask;
+                });
+                
+                // Merge drafts + loaded
+                // Filter out drafts that are now in loadedTasks (by ID or TempID)?
+                // If a draft was saved, it should be in loadedTasks.
+                
+                const uniqueDrafts = drafts.filter(d => !loadedTasks.find(l => l.id === d.id));
+                
+                return [...loadedTasks, ...uniqueDrafts];
+            });
+        }
+    }, [externalData]);
+
     // Load tasks manually or rely on parent? 
     // Let's allow self-loading but parent usually coordinates parallel load.
     // We expose loadTasks method.
     
     const loadTasks = async () => {
+        if (externalData) return externalData; // Skip manual load
         try {
             const data = await service.getTasks(projectId);
             

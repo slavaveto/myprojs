@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Folder } from '@/app/types';
 import { createLogger } from '@/utils/logger/Logger';
 import { toast } from 'react-hot-toast';
@@ -9,11 +9,20 @@ const logger = createLogger('UseFolderData');
 export const useFolderData = (
     projectId: string, 
     executeSave: (fn: () => Promise<void>) => Promise<void>,
-    service: any // Injected service (local or remote)
+    service: any, // Injected service (local or remote)
+    externalData?: Folder[] // NEW: Data from RxDB
 ) => {
     const [folders, setFolders] = useState<Folder[]>([]);
 
+    // Sync external data
+    useEffect(() => {
+        if (externalData) {
+            setFolders(externalData);
+        }
+    }, [externalData]);
+
     const loadFolders = useCallback(async () => {
+        if (externalData) return externalData; // Skip manual load if external data exists
         try {
             const data = await service.getFolders(projectId);
             setFolders(data);
@@ -22,7 +31,7 @@ export const useFolderData = (
             logger.error('Failed to load folders', err);
             return [];
         }
-    }, [projectId, service]);
+    }, [projectId, service, externalData]);
 
     const handleAddFolder = async (title: string): Promise<Folder | null> => {
        const newOrder = folders.length > 0 

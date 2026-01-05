@@ -15,6 +15,11 @@ import { getProjectClient } from '@/utils/supabase/projectClientFactory';
 import { createRemoteFolderService, createRemoteTaskService } from '@/services/supabase/remoteServices';
 import { useSupabase } from '@/utils/supabase/useSupabase';
 import { DB_TABLES } from '@/utils/supabase/db_tables';
+import { useRxDB } from '@/services/rxdb/RxDBProvider';
+import { RxFolderAdapter } from '@/services/rxdb/adapters/folderAdapter';
+import { RxTaskAdapter } from '@/services/rxdb/adapters/taskAdapter';
+import { RxProjectAdapter } from '@/services/rxdb/adapters/projectAdapter';
+import { Folder } from '@/app/types';
 
 const logger = createLogger('ProjectScreenHook');
 
@@ -31,12 +36,27 @@ interface UseProjectDataProps {
 
 // Export updated types
 export const useProjectData = ({ project, isActive, onReady, canLoad = true, onUpdateProject, onDeleteProject, globalStatus = 'idle', onNavigate }: UseProjectDataProps) => {
-   const { supabase } = useSupabase(); // ПОЛУЧАЕМ КЛИЕНТ С ТОКЕНОМ
+   const { supabase } = useSupabase();
+   const db = useRxDB();
    
-   // Создаем локальные сервисы с токеном
+   // RxDB Data
+   const [rxFolders, setRxFolders] = useState<Folder[] | undefined>(undefined);
+   const [rxTasks, setRxTasks] = useState<Task[] | undefined>(undefined);
+
+   // Adapters for RxDB (Write operations)
+   const rxFolderService = useMemo(() => new RxFolderAdapter(db), [db]);
+   const rxTaskService = useMemo(() => new RxTaskAdapter(db), [db]);
+   const rxProjectService = useMemo(() => new RxProjectAdapter(db), [db]);
+
+   // Create local services (Deprecated for read, used for fallback?) 
    const localProjectService = useMemo(() => createProjectService(supabase), [supabase]);
    const localTaskService = useMemo(() => createTaskService(supabase), [supabase]);
    const localFolderService = useMemo(() => createFolderService(supabase), [supabase]);
+   
+   // Determine which Project Service to use (RxDB for local, Supabase for remote logic mostly)
+   const projectService = (project.proj_type !== 'ui' && !project.remote_proj_slug) 
+       ? rxProjectService 
+       : localProjectService;
 
    const [selectedFolderId, setSelectedFolderId] = useState<string>('');
    const [isDataLoaded, setIsDataLoaded] = useState(false);
@@ -48,6 +68,56 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
 
    const loadStartedRef = useRef(false);
 
+   // --- RxDB Subscriptions (Local Only) ---
+   useEffect(() => {
+       const isLocalProject = project.proj_type !== 'ui' && !project.remote_proj_slug;
+       if (!isLocalProject) {
+           setRxFolders(undefined);
+           setRxTasks(undefined);
+           return;
+       }
+
+       // 1. Subscribe to Folders
+       const folderSub = db.folders.find({
+           selector: {
+               project_id: project.id,
+               is_deleted: { $ne: true }
+           },
+           sort: [{ sort_order: 'asc' }]
+       }).$.subscribe(folders => {
+           const mapped = folders.map(d => d.toJSON()) as Folder[];
+           console.log(`RxDB ProjectData: Loaded ${mapped.length} folders for project ${project.id}`);
+           setRxFolders(mapped);
+       });
+
+       return () => folderSub.unsubscribe();
+   }, [db, project.id, project.proj_type, project.remote_proj_slug]);
+
+       // 2. Subscribe to Tasks (Dependent on Folders)
+       useEffect(() => {
+           const isLocalProject = project.proj_type !== 'ui' && !project.remote_proj_slug;
+           if (!isLocalProject || !rxFolders) return; // Wait for folders
+
+           const folderIds = new Set(rxFolders.map(f => f.id));
+           
+           // Query ALL active tasks and filter in JS (Workaround for Dexie non-indexed $in issue)
+           // Efficient enough for < 5000 tasks
+           const taskSub = db.tasks.find({
+               selector: {
+                   is_deleted: { $ne: true }
+               }
+           }).$.subscribe(allTasks => {
+               const projectTasks = allTasks
+                   .map(d => d.toJSON() as Task)
+                   .filter(t => t.folder_id && folderIds.has(t.folder_id));
+               
+               console.log(`RxDB ProjectData: Mapped ${projectTasks.length} tasks for project`);
+               setRxTasks(projectTasks);
+           });
+
+           return () => taskSub.unsubscribe();
+       }, [db, rxFolders, project.id, project.proj_type]);
+
    // --- Initialize Services (Local vs Remote) ---
    useEffect(() => {
        const initServices = async () => {
@@ -56,7 +126,7 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
            // If UI project, try to get slug from parent
            if (project.proj_type === 'ui' && project.parent_proj_id) {
                try {
-                   const remoteSlug = await localProjectService.getProjectSlug(project.parent_proj_id);
+                   const remoteSlug = await projectService.getProjectSlug(project.parent_proj_id);
                    if (remoteSlug) {
                        slug = remoteSlug;
                    }
@@ -84,22 +154,22 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
                    logger.error('Error initializing remote client', e);
                }
            } else {
-               // Local project - use standard services (WITH TOKEN)
+               // Local project - use RxDB Adapters
                setRemoteServices({
-                   taskService: localTaskService,
-                   folderService: localFolderService
+                   taskService: rxTaskService,
+                   folderService: rxFolderService
                });
            }
        };
 
        initServices();
-   }, [project.id, project.proj_type, project.remote_proj_slug, project.parent_proj_id, supabase, localTaskService, localFolderService]);
+   }, [project.id, project.proj_type, project.remote_proj_slug, project.parent_proj_id, supabase, rxTaskService, rxFolderService]);
 
    useEffect(() => {
-       localProjectService.getProjectsWithFolders()
+       projectService.getProjectsWithFolders()
            .then(data => setProjectsStructure(data || []))
            .catch(err => logger.error('Failed to load projects structure', err));
-   }, [localProjectService]);
+   }, [projectService]);
 
    // --- Status Management ---
    const { execute: executeSave, status: saveStatus, error: saveError } = useAsyncAction({
@@ -132,7 +202,7 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
        handleUpdateFolder,
        handleDeleteFolder: deleteFolderApi,
        handleMoveFolder
-   } = useFolderData(project.id, executeSave, activeServices.folderService); // Pass service
+   } = useFolderData(project.id, executeSave, activeServices.folderService, rxFolders); // Pass rxFolders
 
    const {
        tasks,
@@ -148,7 +218,8 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
        selectedFolderId, 
        executeSave, 
        activeServices.taskService,
-       project.proj_type === 'ui' // Pass isUiProject flag
+       project.proj_type === 'ui', // Pass isUiProject flag
+       rxTasks // Pass rxTasks
    );
 
    useEffect(() => {
@@ -346,7 +417,7 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
    const handleEditProject = async (title: string, color: string, isHighlighted: boolean, hasUi: boolean, hasDocs: boolean) => {
        try {
            await executeSave(async () => {
-               await localProjectService.updateProject(project.id, { title, proj_color: color, is_highlighted: isHighlighted });
+               await projectService.updateProject(project.id, { title, proj_color: color, is_highlighted: isHighlighted });
                onUpdateProject({ title, proj_color: color, is_highlighted: isHighlighted, hasUi, hasDocs });
            });
        } catch (err) {
@@ -356,7 +427,7 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
 
    const handleRemoveProject = async () => {
        try {
-           await localProjectService.deleteProject(project.id);
+           await projectService.deleteProject(project.id);
            onDeleteProject();
        } catch (err) {
            logger.error('Failed to delete project', err);
