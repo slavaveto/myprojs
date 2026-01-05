@@ -183,8 +183,3 @@ export const createFolderService = (supabase: SupabaseClient) => {
         logger.info('Folders reordered', { count: updates.length });
     },
 }};
-
-// DEFAULT INSTANCE
-import { createAnonClient } from '@/utils/supabase/useSupabase';
-const defaultSupabase = createAnonClient();
-export const folderService = createFolderService(defaultSupabase);
