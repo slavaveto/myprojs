@@ -19,6 +19,7 @@ import { FolderTabs, FolderTab } from '@/app/components/FolderTabs';
 import { TaskList } from '@/app/components/TaskList';
 import { ActionStatus } from '@/utils/supabase/useAsyncAction';
 import { StatusBadge } from '@/utils/supabase/StatusBadge';
+import { RxStatusBadge } from '@/utils/supabase/RxStatusBadge';
 import { EditProjectPopover } from '@/app/components/EditProject';
 import { useProjectData } from '@/app/components/hooks/useProjectData';
 import { useProjectDnD } from '@/app/components/hooks/useProjectDnD';
@@ -173,6 +174,7 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
    
    const isDocsLayout = project.proj_type === 'docs';
    const isUiProject = project.proj_type === 'ui';
+   const isLocalProject = !project.remote_proj_slug && project.proj_type !== 'ui';
 
    return (
     <RichTextProvider>
@@ -228,11 +230,12 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
                     </div>
 
                     <div className="flex items-center gap-2 justify-self-end">
-                        <StatusBadge 
+                        <RxStatusBadge 
                             status={displayStatus}
                             loadingText="Saving..."
                             successText="Saved"
                             errorMessage={saveError?.message}
+                            suppressLoading={isLocalProject}
                         />
                         <UserHeaderMenu />
                     </div>

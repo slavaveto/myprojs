@@ -82,10 +82,10 @@ export function usePageLogic() {
              selector: {
                  is_deleted: { $ne: true }
              }
-         }).sort({ sort_order: 'asc' }).$.subscribe(async (projectsData) => {
+         }).sort({ sort_order: 'asc' }).$.subscribe(async (projectsData: any[]) => {
           // Convert RxDocuments to plain JSON if needed, or use as is (they behave like objects)
           // But our Project type might not match exactly with RxDocument methods
-          const plainProjects = projectsData.map(doc => doc.toJSON()) as Project[];
+          const plainProjects = projectsData.map((doc: any) => doc.toJSON()) as Project[];
           console.log('RxDB Subscription: Projects received', plainProjects.length);
           
           setProjects(plainProjects);

@@ -3,13 +3,14 @@ import { Chip } from "@heroui/react";
 import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { ActionStatus } from "@/utils/supabase/useAsyncAction";
 
-interface StatusBadgeProps {
+export interface StatusBadgeProps {
   status: ActionStatus;
   loadingText?: string;
   successText?: string;
   errorText?: string;
   errorMessage?: string; // Если нужно показать конкретный текст ошибки
   className?: string;
+  suppressLoading?: boolean; // Если true, скрывает статус 'loading' (для гибридных режимов)
 }
 
 export const StatusBadge = ({
@@ -18,23 +19,26 @@ export const StatusBadge = ({
   successText = "Saved",
   errorText = "Error saving",
   errorMessage,
-  className
+  className,
+  suppressLoading
 }: StatusBadgeProps) => {
-  if (status === 'idle') return null;
+  const effectiveStatus = (suppressLoading && status === 'loading') ? 'idle' : status;
+
+  if (effectiveStatus === 'idle') return null;
 
   return (
     <div className={className}>
-      {status === 'loading' && (
+      {effectiveStatus === 'loading' && (
         <Chip startContent={<Loader2 className="animate-spin" size={16} />} color="warning" variant="flat" size="md" className="px-2">
           {loadingText}
         </Chip>
       )}
-      {status === 'success' && (
+      {effectiveStatus === 'success' && (
         <Chip startContent={<CheckCircle2 size={16} />} color="success" variant="flat" size="md" className="px-2">
           {successText}
         </Chip>
       )}
-      {status === 'error' && (
+      {effectiveStatus === 'error' && (
         <Chip 
             startContent={<AlertCircle size={16} />} 
             color="danger" 
@@ -49,4 +53,3 @@ export const StatusBadge = ({
     </div>
   );
 };
-
