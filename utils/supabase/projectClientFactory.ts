@@ -1,16 +1,14 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { getRemoteKeys } from '@/utils/supabase/getRemoteKeys';
-import { createAnonClient } from '@/utils/supabase/useSupabase';
-const localClient = createAnonClient();
 
 // Cache clients to avoid recreating them on every render/request
 // Key: slug, Value: SupabaseClient
 const clientCache: Record<string, SupabaseClient> = {};
 
 export const getProjectClient = async (slug?: string): Promise<SupabaseClient | null> => {
-    // 1. If no slug provided, return the default local client
+    // 1. If no slug provided, we can't create a remote client
     if (!slug) {
-        return localClient;
+        return null;
     }
 
     // 2. Check cache first
