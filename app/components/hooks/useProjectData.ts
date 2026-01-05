@@ -405,6 +405,7 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
        highlightedTaskId, 
        handleAddGap,
        projectsStructure,
-       handleMoveTask
+       handleMoveTask,
+       activeServices
    };
 };

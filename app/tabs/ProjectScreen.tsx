@@ -84,7 +84,8 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
        handleAddGap,
        quickSaveStatus, // Exported from hook
        projectsStructure,
-       handleMoveTask
+       handleMoveTask,
+       activeServices // Exported from hook to access taskService
    } = useProjectData(props);
 
    // Report status to parent if needed (e.g. for AdminScreen)
@@ -111,7 +112,8 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
        folders,
        selectedFolderId,
        setSelectedFolderId,
-       executeSave: executeQuickSave // Use quick save for DnD
+       executeSave: executeQuickSave, // Use quick save for DnD
+       taskService: activeServices.taskService // Pass taskService instance
    });
 
    const [bgMenuPos, setBgMenuPos] = React.useState<{ x: number; y: number } | null>(null);

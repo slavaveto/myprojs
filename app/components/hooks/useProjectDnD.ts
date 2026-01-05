@@ -19,7 +19,7 @@ import { calculateGroupUpdates } from './groupLogic';
 import { Project, Task, Folder } from '@/app/types';
 import { createLogger } from '@/utils/logger/Logger';
 import { globalStorage } from '@/utils/storage';
-import { taskService } from '@/app/_services/taskService';
+// import { taskService } from '@/app/_services/taskService'; <-- REMOVED
 
 const logger = createLogger('ProjectScreenDnD');
 
@@ -31,6 +31,7 @@ interface UseProjectDnDProps {
     selectedFolderId: string;
     setSelectedFolderId: (id: string) => void;
     executeSave: (action: () => Promise<void>) => Promise<void>;
+    taskService: any; // Accept taskService
 }
 
 export const useProjectDnD = ({
@@ -40,7 +41,8 @@ export const useProjectDnD = ({
     folders,
     selectedFolderId,
     setSelectedFolderId,
-    executeSave // This will be executeQuickSave passed from parent
+    executeSave,
+    taskService // from props
 }: UseProjectDnDProps) => {
     // --- Local UI State for DnD (Visuals only) ---
     const [activeId, setActiveId] = useState<string | null>(null);
