@@ -14,6 +14,7 @@ import clsx from 'clsx';
 import { DebugPanel } from '@/utils/logger/DebugPanel';
 import { DeviceFrame } from '@/utils/providers/DeviceFrame';
 import { DB_TABLES } from '@/utils/supabase/db_tables';
+import { RxDBProvider } from '@/services/rxdb/RxDBProvider';
 
 const montserrat = Montserrat({
    display: 'swap',
@@ -95,20 +96,22 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <ThemeProvider>
                      <DeviceProvider>
                         <LocalizationProvider>
-                           <DeviceFrame isLocal={isLocal}>{children}</DeviceFrame>
-                           <GlobalToggles isLocal={isLocal} />
-                           <DebugPanel isLocal={isLocal} />
-                           {isLocal && (
-                              <div
-                                 className={clsx(
-                                    'fixed inset-0 z-[9999] pointer-events-none',
-                                    // 'border-4 border-[rgb(255,224,165)]',
-                                    // 'border-4 border-orange-200',
-                                    'border-0 border-red-400',
-                                    // 'dark:border-orange-400/50'
-                                 )}
-                              />
-                           )}
+                           <RxDBProvider>
+                              <DeviceFrame isLocal={isLocal}>{children}</DeviceFrame>
+                              <GlobalToggles isLocal={isLocal} />
+                              <DebugPanel isLocal={isLocal} />
+                              {isLocal && (
+                                 <div
+                                    className={clsx(
+                                       'fixed inset-0 z-[9999] pointer-events-none',
+                                       // 'border-4 border-[rgb(255,224,165)]',
+                                       // 'border-4 border-orange-200',
+                                       'border-0 border-red-400',
+                                       // 'dark:border-orange-400/50'
+                                    )}
+                                 />
+                              )}
+                           </RxDBProvider>
                         </LocalizationProvider>
                      </DeviceProvider>
                   </ThemeProvider>
