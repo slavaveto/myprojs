@@ -14,6 +14,8 @@ import { replicateRxCollection, RxReplicationState } from 'rxdb/plugins/replicat
 import { wrappedValidateAjvStorage } from 'rxdb/plugins/validate-ajv';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { createLogger } from '@/utils/logger/Logger';
+import { interval } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 import { projectSchema, ProjectDocType } from './schemas/projectSchema';
 import { folderSchema, FolderDocType } from './schemas/folderSchema';
@@ -88,7 +90,7 @@ export const getDatabase = () => {
 };
 
 // Функция запуска репликации (вызывается извне, когда у нас есть supabase клиент)
-export const startReplication = async (db: MyDatabase, supabase: SupabaseClient): Promise<RxReplicationState<any, any>[]> => {
+export const startReplication = async (db: MyDatabase, supabase: SupabaseClient, userId: string): Promise<RxReplicationState<any, any>[]> => {
     logger.info('Starting replication (Native)...');
     const replicationStates: RxReplicationState<any, any>[] = [];
 
@@ -103,12 +105,13 @@ export const startReplication = async (db: MyDatabase, supabase: SupabaseClient)
             pull: {
                 async handler(checkpointOrNull: any) {
                     const checkpoint = checkpointOrNull ? checkpointOrNull.updated_at : new Date(0).toISOString();
-                    logger.info(`Pull ${tableName}: fetching since ${checkpoint}`);
+                    // logger.info(`Pull ${tableName}: fetching since ${checkpoint}`);
                     
                     const { data, error } = await supabase
                         .from(tableName)
                         .select('*')
                         .gt('updated_at', checkpoint)
+                        .eq('user_id', userId) // Ensure we only fetch user's data
                         .order('updated_at', { ascending: true });
 
                     if (error) {
@@ -116,10 +119,10 @@ export const startReplication = async (db: MyDatabase, supabase: SupabaseClient)
                         throw error;
                     }
 
-                    logger.info(`Pull ${tableName}: received raw ${data.length} docs from Supabase`);
+                    // logger.info(`Pull ${tableName}: received raw ${data.length} docs from Supabase`);
                     
                     if (data.length > 0) {
-                        logger.info(`Pull ${tableName}: Checkpoint updated to ${data[data.length - 1].updated_at}`);
+                        logger.info(`Pull ${tableName}: received ${data.length} docs. New Checkpoint: ${data[data.length - 1].updated_at}`);
                     }
 
                     // Clean docs to match schema (remove extra fields dynamically)
@@ -147,7 +150,8 @@ export const startReplication = async (db: MyDatabase, supabase: SupabaseClient)
                             updated_at: cleanDocs[cleanDocs.length - 1].updated_at
                         }
                     };
-                }
+                },
+                stream$: interval(10000).pipe(map(() => 'RESYNC'))
             },
             push: {
                 async handler(changeRows: any[]) {

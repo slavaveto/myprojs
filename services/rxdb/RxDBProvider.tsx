@@ -51,7 +51,7 @@ export const RxDBProvider = ({ children }: { children: React.ReactNode }) => {
 
                 // Start replication only if we have a user (and thus valid token)
                 if (userId) {
-                    const states = await startReplication(database, supabase);
+                    const states = await startReplication(database, supabase, userId);
                     setReplicationStates(states);
                 }
             } catch (err) {

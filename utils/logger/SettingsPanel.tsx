@@ -215,8 +215,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
       const otherItems: ConfigItem[] = [];
 
       for (const item of result) {
-         // Add to pinned if pinned OR new
-         if (item.pinned || isNew(item)) {
+         // Add to pinned if pinned ONLY (new items stay in list but marked yellow)
+         if (item.pinned) {
             pinnedItems.push(item);
          } else {
             otherItems.push(item);
