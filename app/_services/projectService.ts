@@ -354,5 +354,6 @@ export const createProjectService = (supabase: SupabaseClient) => {
 }};
 
 // DEFAULT INSTANCE
-import { supabase as defaultSupabase } from '@/utils/supabase/supabaseClient';
+import { createAnonClient } from '@/utils/supabase/useSupabase';
+const defaultSupabase = createAnonClient();
 export const projectService = createProjectService(defaultSupabase);

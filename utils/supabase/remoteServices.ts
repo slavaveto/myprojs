@@ -1,5 +1,4 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { supabase } from '@/utils/supabase/supabaseClient';
 import { Folder, Task } from '@/app/types';
 import { DB_TABLES } from '@/utils/supabase/db_tables';
 

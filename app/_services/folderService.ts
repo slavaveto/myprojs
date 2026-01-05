@@ -185,5 +185,6 @@ export const createFolderService = (supabase: SupabaseClient) => {
 }};
 
 // DEFAULT INSTANCE
-import { supabase as defaultSupabase } from '@/utils/supabase/supabaseClient';
+import { createAnonClient } from '@/utils/supabase/useSupabase';
+const defaultSupabase = createAnonClient();
 export const folderService = createFolderService(defaultSupabase);

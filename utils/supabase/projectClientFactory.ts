@@ -1,6 +1,7 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { getRemoteKeys } from '@/utils/supabase/getRemoteKeys';
-import { supabase as localClient } from '@/utils/supabase/supabaseClient';
+import { createAnonClient } from '@/utils/supabase/useSupabase';
+const localClient = createAnonClient();
 
 // Cache clients to avoid recreating them on every render/request
 // Key: slug, Value: SupabaseClient

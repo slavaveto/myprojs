@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { supabase } from '@/utils/supabase/supabaseClient';
+import { createAnonClient } from '@/utils/supabase/useSupabase';
+const supabase = createAnonClient();
 import type { UIElement, CachedData, Language } from './types';
 import { createLogger } from '@/utils/logger/Logger';
 import { storage, globalStorage } from '@/utils/storage';

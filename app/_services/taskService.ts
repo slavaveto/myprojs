@@ -540,5 +540,6 @@ export const createTaskService = (supabase: SupabaseClient) => {
 
 // DEFAULT INSTANCE (для обратной совместимости, если где-то еще импортируется)
 // Но он будет анонимным!
-import { supabase as defaultSupabase } from '@/utils/supabase/supabaseClient';
+import { createAnonClient } from '@/utils/supabase/useSupabase';
+const defaultSupabase = createAnonClient();
 export const taskService = createTaskService(defaultSupabase);
