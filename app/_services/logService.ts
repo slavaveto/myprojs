@@ -136,8 +136,3 @@ export const createLogService = (supabase: SupabaseClient) => ({
         return { count: fixedCount };
     }
 });
-
-// DEFAULT INSTANCE
-import { createAnonClient } from '@/utils/supabase/useSupabase';
-const defaultSupabase = createAnonClient();
-export const logService = createLogService(defaultSupabase);

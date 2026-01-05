@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { logService, LogEntry } from '@/app/_services/logService';
+import { createLogService, LogEntry } from '@/app/_services/logService';
+import { useSupabase } from '@/utils/supabase/useSupabase';
 import { Spinner, Chip, Card, CardBody, Button, Select, SelectItem } from '@heroui/react';
 import { createLogger } from '@/utils/logger/Logger';
 import { clsx } from 'clsx';
@@ -35,6 +36,9 @@ interface LogsScreenProps {
 }
 
 export const LogsScreen = ({ globalStatus = 'idle', canLoad = true, isActive = false }: LogsScreenProps) => {
+    const { supabase } = useSupabase();
+    const logService = useMemo(() => createLogService(supabase), [supabase]);
+
     const [logs, setLogs] = useState<LogEntry[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
