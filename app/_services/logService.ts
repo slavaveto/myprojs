@@ -1,4 +1,4 @@
-import { supabase } from '@/utils/supabase/supabaseClient';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { DB_TABLES } from '@/utils/supabase/db_tables';
 
 export interface LogEntry {
@@ -12,7 +12,7 @@ export interface LogEntry {
     details?: any;
 }
 
-export const logService = {
+export const createLogService = (supabase: SupabaseClient) => ({
     async logAction(
         action: string,
         entity: string,
@@ -104,11 +104,6 @@ export const logService = {
         const newLogs = [];
 
         for (const task of tasks) {
-            // Determine expected action
-            // If deleted -> check for delete log
-            // If completed -> check for complete log
-            // Priority to DELETE if both true (usually deleted implies finished context)
-            
             let neededAction = null;
             if (task.is_deleted) neededAction = 'delete';
             else if (task.is_completed) neededAction = 'complete';
@@ -118,11 +113,6 @@ export const logService = {
             const hasLog = existingLogMap.has(task.id + '_' + neededAction);
             
             if (!hasLog) {
-                // Check if maybe we have the OTHER action? 
-                // E.g. task is deleted, do we have 'complete'? If so, maybe that's enough for sorting?
-                // But user wants to fix MISSING logs.
-                // Let's create the missing log.
-                
                 newLogs.push({
                     action: neededAction,
                     entity: 'task',
@@ -145,4 +135,8 @@ export const logService = {
 
         return { count: fixedCount };
     }
-};
+});
+
+// DEFAULT INSTANCE
+import { supabase as defaultSupabase } from '@/utils/supabase/supabaseClient';
+export const logService = createLogService(defaultSupabase);

@@ -163,6 +163,9 @@ export const DoingNowScreen = ({
    onMoveTask,
    onNavigate,
 }: DoingNowScreenProps) => {
+   const { supabase } = useSupabase();
+   const taskService = useMemo(() => createTaskService(supabase), [supabase]);
+
    const [tasks, setTasks] = useState<any[]>([]);
    const [isLoading, setIsLoading] = useState(true); // Initial load (full screen)
    const [isRefreshing, setIsRefreshing] = useState(false); // Refresh (button spin)

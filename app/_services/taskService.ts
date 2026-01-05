@@ -1,6 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Task } from '@/app/types';
-import { logService } from './logService';
+import { createLogService } from './logService';
 import { BaseActions, EntityTypes, TaskUpdateTypes, BaseActionType } from './actions';
 import { createLogger } from '@/utils/logger/Logger';
 import { DB_TABLES } from '@/utils/supabase/db_tables';
@@ -22,7 +22,10 @@ export const taskUpdateEvents = {
    emit: () => listeners.forEach((l) => l()),
 };
 
-export const createTaskService = (supabase: SupabaseClient) => ({
+export const createTaskService = (supabase: SupabaseClient) => {
+   const logService = createLogService(supabase);
+
+   return {
    // --- Reads ---
    async getTasks(projectId: string) {
       logger.info('Fetching tasks...', { projectId });
@@ -533,7 +536,7 @@ export const createTaskService = (supabase: SupabaseClient) => ({
       taskUpdateEvents.emit();
       logger.info('Tasks reordered', { count: updates.length });
    },
-});
+}};
 
 // DEFAULT INSTANCE (для обратной совместимости, если где-то еще импортируется)
 // Но он будет анонимным!

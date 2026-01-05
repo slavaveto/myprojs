@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { createLogger } from '@/utils/logger/Logger';
-import { taskService } from '@/app/_services/taskService';
+import { createTaskService } from '@/app/_services/taskService'; // Use factory
+import { useSupabase } from '@/utils/supabase/useSupabase'; // Import useSupabase
 import { clsx } from 'clsx';
 import { CheckCircle2, Trash2, Folder as FolderIcon, RefreshCw, GripVertical, RotateCcw, Calendar, Inbox, Plus, MoreVertical, MoveRight, ArrowRight } from 'lucide-react';
 import { Spinner, Chip, Button, Switch, Select, SelectItem, Checkbox, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, DropdownSection } from '@heroui/react';
@@ -150,6 +151,9 @@ const InboxTaskRow = ({
 }
 
 export const InboxScreen = ({ globalStatus = 'idle', canLoad = true, isActive = false, onMoveTask, onNavigate }: InboxScreenProps) => {
+    const { supabase } = useSupabase();
+    const taskService = useMemo(() => createTaskService(supabase), [supabase]);
+
     const [tasks, setTasks] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);

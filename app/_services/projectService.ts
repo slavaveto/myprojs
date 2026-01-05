@@ -1,6 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Project } from '@/app/types';
-import { logService } from './logService';
+import { createLogService } from './logService';
 import { createFolderService } from './folderService';
 import { BaseActions, EntityTypes, ProjectUpdateTypes } from './actions';
 import { createLogger } from '@/utils/logger/Logger';
@@ -12,6 +12,7 @@ const logger = createLogger('ProjectService');
 export const createProjectService = (supabase: SupabaseClient) => {
     // Получаем folderService тоже с правильным клиентом
     const folderService = createFolderService(supabase);
+    const logService = createLogService(supabase);
 
     return {
     // @ref:8a2b3c

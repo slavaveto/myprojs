@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { createLogger } from '@/utils/logger/Logger';
-import { taskService } from '@/app/_services/taskService';
+import { createTaskService } from '@/app/_services/taskService'; // Factory
+import { useSupabase } from '@/utils/supabase/useSupabase'; // Auth client
 import { clsx } from 'clsx';
 import {
    CheckCircle2,
@@ -181,6 +182,9 @@ export const TodayScreen = ({
    onMoveTask,
    onNavigate,
 }: TodayScreenProps) => {
+   const { supabase } = useSupabase();
+   const taskService = useMemo(() => createTaskService(supabase), [supabase]);
+
    const [tasks, setTasks] = useState<any[]>([]);
    const [isLoading, setIsLoading] = useState(true); // Initial load (full screen)
    const [isRefreshing, setIsRefreshing] = useState(false); // Refresh (button spin)
