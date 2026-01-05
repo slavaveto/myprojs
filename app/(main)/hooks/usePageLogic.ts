@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { createLogger } from '@/utils/logger/Logger';
-import { projectService } from '@/app/_services/projectService';
+import { createProjectService } from '@/app/_services/projectService';
 import { Project } from '@/app/types';
 import { useAppLoader } from '@/app/AppLoader';
 import { globalStorage } from '@/utils/storage';
@@ -25,6 +25,7 @@ const logger = createLogger('AppManager');
 export function usePageLogic() {
    const { supabase } = useSupabase();
    const taskService = useMemo(() => createTaskService(supabase), [supabase]);
+   const projectService = useMemo(() => createProjectService(supabase), [supabase]);
 
    const [projects, setProjects] = useState<Project[]>([]);
    const [activeProjectId, setActiveProjectId] = useState<string | null>(null);

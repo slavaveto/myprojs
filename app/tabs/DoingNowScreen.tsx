@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { createLogger } from '@/utils/logger/Logger';
 import { createTaskService } from '@/app/_services/taskService';
+import { createProjectService } from '@/app/_services/projectService';
 import { useSupabase } from '@/utils/supabase/useSupabase';
 import { clsx } from 'clsx';
 import {
@@ -21,7 +22,6 @@ import {
 } from '@heroui/react';
 import { globalStorage } from '@/utils/storage';
 import { AnimatePresence, motion } from 'framer-motion';
-import { projectService } from '@/app/_services/projectService';
 import { loadingService } from '@/app/_services/loadingLogsService';
 import { TaskContextMenu, TaskMenuItems } from '../components/TaskContextMenu';
 import { TaskStyleControl } from '../components/TaskStyleControl';
@@ -166,6 +166,7 @@ export const DoingNowScreen = ({
 }: DoingNowScreenProps) => {
    const { supabase } = useSupabase();
    const taskService = useMemo(() => createTaskService(supabase), [supabase]);
+   const projectService = useMemo(() => createProjectService(supabase), [supabase]);
 
    const [tasks, setTasks] = useState<any[]>([]);
    const [isLoading, setIsLoading] = useState(true); // Initial load (full screen)

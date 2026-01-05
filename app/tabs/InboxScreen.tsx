@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { createLogger } from '@/utils/logger/Logger';
 import { createTaskService } from '@/app/_services/taskService'; // Use factory
+import { createProjectService } from '@/app/_services/projectService'; // Use factory
 import { useSupabase } from '@/utils/supabase/useSupabase'; // Import useSupabase
 import { clsx } from 'clsx';
 import { CheckCircle2, Trash2, Folder as FolderIcon, RefreshCw, GripVertical, RotateCcw, Calendar, Inbox, Plus, MoreVertical, MoveRight, ArrowRight } from 'lucide-react';
@@ -10,7 +11,6 @@ import { Spinner, Chip, Button, Switch, Select, SelectItem, Checkbox, Dropdown, 
 import { format, isToday, isYesterday, isThisWeek, isThisMonth } from 'date-fns';
 import { useGlobalPersistentState, globalStorage } from '@/utils/storage';
 import { AnimatePresence, motion } from 'framer-motion';
-import { projectService } from '@/app/_services/projectService';
 import { CreateItemPopover } from '@/app/components/CreateItem';
 import { loadingService } from '@/app/_services/loadingLogsService';
 import { EditableCell } from '../components/EditableCell';
@@ -153,6 +153,7 @@ const InboxTaskRow = ({
 export const InboxScreen = ({ globalStatus = 'idle', canLoad = true, isActive = false, onMoveTask, onNavigate }: InboxScreenProps) => {
     const { supabase } = useSupabase();
     const taskService = useMemo(() => createTaskService(supabase), [supabase]);
+    const projectService = useMemo(() => createProjectService(supabase), [supabase]);
 
     const [tasks, setTasks] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);

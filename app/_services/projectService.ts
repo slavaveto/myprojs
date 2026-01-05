@@ -352,8 +352,3 @@ export const createProjectService = (supabase: SupabaseClient) => {
         logger.info('Projects reordered', { count: updates.length });
     },
 }};
-
-// DEFAULT INSTANCE
-import { createAnonClient } from '@/utils/supabase/useSupabase';
-const defaultSupabase = createAnonClient();
-export const projectService = createProjectService(defaultSupabase);
