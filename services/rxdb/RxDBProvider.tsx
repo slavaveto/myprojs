@@ -27,6 +27,10 @@ export const RxDBProvider = ({ children }: { children: React.ReactNode }) => {
     
     const { supabase, userId } = useSupabase();
     const statsRef = React.useRef({ sent: 0, received: 0 });
+    
+    // Track sent IDs to ignore echoes
+    const pendingEchoesRef = React.useRef<Set<string>>(new Set());
+
     const syncTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
     const [wasSyncing, setWasSyncing] = useState(false);
     const [lastSyncStats, setLastSyncStats] = useState({ sent: 0, received: 0 });
@@ -84,8 +88,25 @@ export const RxDBProvider = ({ children }: { children: React.ReactNode }) => {
     useEffect(() => {
         if (replicationStates.length === 0) return;
         const subs = replicationStates.map(state => [
-            state.received$.subscribe(() => statsRef.current.received++),
-            state.sent$.subscribe(() => statsRef.current.sent++)
+            state.received$.subscribe((doc: any) => {
+                // If this ID is in pendingEchoes, it's our own change coming back
+                if (pendingEchoesRef.current.has(doc.id)) {
+                    pendingEchoesRef.current.delete(doc.id);
+                    logger.info(`Ignored echo for ${doc.id}`);
+                } else {
+                    statsRef.current.received++;
+                }
+            }),
+            state.sent$.subscribe((doc: any) => {
+                statsRef.current.sent++;
+                pendingEchoesRef.current.add(doc.id);
+                // Auto-clear from pending after 5s (in case echo never comes or is lost)
+                setTimeout(() => {
+                    if (pendingEchoesRef.current.has(doc.id)) {
+                        pendingEchoesRef.current.delete(doc.id);
+                    }
+                }, 5000);
+            })
         ]).flat();
         return () => subs.forEach(s => s.unsubscribe());
     }, [replicationStates]);
@@ -100,6 +121,7 @@ export const RxDBProvider = ({ children }: { children: React.ReactNode }) => {
              
              // Reset
              statsRef.current = { sent: 0, received: 0 };
+             pendingEchoesRef.current.clear(); // Clear echoes on sync end
              setWasSyncing(false);
         }
     }, [isSyncing, wasSyncing]);
