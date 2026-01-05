@@ -18,12 +18,14 @@ import {
 import { sortableKeyboardCoordinates, arrayMove } from '@dnd-kit/sortable';
 import { createTaskService, taskUpdateEvents } from '@/services/supabase/taskService';
 import { useSupabase } from '@/utils/supabase/useSupabase';
+import { useRxDB } from '@/services/rxdb/RxDBProvider';
 
 // Main App Logic Hook
 const logger = createLogger('AppManager');
 
 export function usePageLogic() {
    const { supabase } = useSupabase();
+   const db = useRxDB();
    const taskService = useMemo(() => createTaskService(supabase), [supabase]);
    const projectService = useMemo(() => createProjectService(supabase), [supabase]);
 
@@ -71,94 +73,71 @@ export function usePageLogic() {
       })
    );
 
-   // 1. Загрузка списка проектов - триггер
+   // 1. Загрузка списка проектов (RxDB)
    useEffect(() => {
-      // Test New Logger for Highlight Feature
-      const testLogger = createLogger('NewFeatureComponent3');
-      testLogger.info('This is a new component log!');
+      loadingService.logAppInit();
 
-      const init = async () => {
-         try {
-            const projectsData = await projectService.getProjects();
-            setProjects(projectsData);
+      // Subscribe to projects from RxDB
+      const subscription = db.projects.find().sort({ sort_order: 'asc' }).$.subscribe(async (projectsData) => {
+          // Convert RxDocuments to plain JSON if needed, or use as is (they behave like objects)
+          // But our Project type might not match exactly with RxDocument methods
+          const plainProjects = projectsData.map(doc => doc.toJSON()) as Project[];
+          console.log('RxDB Subscription: Projects received', plainProjects.length);
+          
+          setProjects(plainProjects);
 
-            // Fetch Doing Now Count
+          // Initialize counters (Doing Now, Today, Inbox) only once or on change?
+          // Let's keep the original logic of fetching counters here for now, 
+          // although ideally they should also be reactive via RxDB.
+          
+          // Only init active project logic on FIRST load of data
+          if (!isInit && plainProjects.length > 0) {
+               const savedId = globalStorage.getItem('active_project_id');
+               const projectExists = savedId ? plainProjects.find((p) => p.id === savedId) : null;
+               setActiveProjectId(projectExists ? savedId : plainProjects[0].id);
+               setIsInit(true); // Mark as initialized
+          } else if (!isInit && plainProjects.length === 0) {
+              // If empty, maybe we are still syncing? 
+              // For now, let's wait. Or if it's truly empty user, we should handle that.
+              // But 'isInit' controls the global loader. If we never set it true, loader spins forever.
+              // Let's assume if we got a result (even empty), RxDB is ready-ish.
+              // But better to wait for at least one project if we expect them.
+              // For new users, we might need a timeout or check replication status.
+              // Lets set isInit true after a short timeout if still empty?
+              setTimeout(() => setIsInit(true), 2000);
+          }
+      });
+
+      // Keep the old task counters logic for now (it uses Supabase directly via taskService)
+      // TODO: Migrate these to RxDB reactive queries later
+      const fetchCounters = () => {
             taskService.getDoingNowTasks().then(tasks => {
                 setDoingNowCount(tasks?.length || 0);
-                
-                // Group by project
                 const map: Record<string, number> = {};
                 (tasks || []).forEach((t: any) => {
                     const pid = t.folders?.projects?.id;
-                    if (pid) {
-                        map[pid] = (map[pid] || 0) + 1;
-                    }
+                    if (pid) map[pid] = (map[pid] || 0) + 1;
                 });
                 setDoingNowMap(map);
-            }).catch(err => {
-                console.error('Failed to fetch doing now count', err);
-            });
+            }).catch(err => console.error(err));
 
-            // Fetch Today Count
             taskService.getTodayTasks().then(tasks => {
                 setTodayCount(tasks?.length || 0);
-            }).catch(err => {
-                console.error('Failed to fetch today count', err);
-            });
+            }).catch(err => console.error(err));
 
-            // Fetch Inbox Count
             taskService.getInboxTasks().then(tasks => {
                 setInboxCount(tasks?.length || 0);
-            }).catch(err => {
-                console.error('Failed to fetch inbox count', err);
-            });
-
-            // Восстановление активного проекта
-            if (projectsData.length > 0) {
-               const savedId = globalStorage.getItem('active_project_id');
-               const projectExists = savedId ? projectsData.find((p) => p.id === savedId) : null;
-               setActiveProjectId(projectExists ? savedId : projectsData[0].id);
-            }
-
-            setIsInit(true);
-         } catch (err) {
-            console.error('Failed to load projects', err);
-            setGlobalLoading(false);
-         }
+            }).catch(err => console.error(err));
       };
 
-      loadingService.logAppInit();
-      init();
-
-      // Listen for task updates to refresh the "Doing Now" count
-      const unsubscribe = taskUpdateEvents.subscribe(() => {
-         taskService.getDoingNowTasks().then(tasks => {
-             setDoingNowCount(tasks?.length || 0);
-             
-             // Group by project
-             const map: Record<string, number> = {};
-             (tasks || []).forEach((t: any) => {
-                 const pid = t.folders?.projects?.id;
-                 if (pid) {
-                     map[pid] = (map[pid] || 0) + 1;
-                 }
-             });
-             setDoingNowMap(map);
-         }).catch(err => console.error(err));
-
-         taskService.getTodayTasks().then(tasks => {
-             setTodayCount(tasks?.length || 0);
-         }).catch(err => console.error(err));
-
-         taskService.getInboxTasks().then(tasks => {
-             setInboxCount(tasks?.length || 0);
-         }).catch(err => console.error(err));
-      });
+      fetchCounters();
+      const taskUnsub = taskUpdateEvents.subscribe(fetchCounters);
 
       return () => {
-         unsubscribe();
+         subscription.unsubscribe();
+         taskUnsub(); // Call as function
       };
-   }, []); // setGlobalLoading стабилен
+   }, [db]); // Re-subscribe if db instance changes (should be stable)
 
    // 2. Управление глобальным лоадером
    useEffect(() => {
