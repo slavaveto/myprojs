@@ -105,7 +105,6 @@ export const EditProjectPopover = ({
             await onUpdate(title, selectedColor, isHighlighted, hasUi, hasDocs);
             setIsOpen(false);
         } catch (err) {
-            console.error(err);
         } finally {
             setIsLoading(false);
         }

@@ -49,7 +49,7 @@ const createDatabase = async (): Promise<MyDatabase> => {
     }
 
     const db = await createRxDatabase<MyDatabaseCollections>({
-        name: 'myprojs_db_v2', // New clean DB with nullable schemas
+        name: 'myprojs_db_v5', // Reset again for dynamic schema sanitization
         storage,
         multiInstance: true,
         eventReduce: true
@@ -94,13 +94,17 @@ export const startReplication = async (db: MyDatabase, supabase: SupabaseClient)
     console.log('RxDB: Starting replication (Native)...');
 
     const replicateTable = async (collection: any, tableName: string) => {
+        // Получаем список допустимых полей из схемы
+        const schema = collection.schema.jsonSchema;
+        const allowedFields = Object.keys(schema.properties);
+        
         return replicateRxCollection({
             collection,
-            replicationIdentifier: `replication-${tableName}-v1`,
+            replicationIdentifier: `replication-${tableName}-v5`, // Increment version to force re-sync logic
             pull: {
                 async handler(checkpointOrNull: any) {
                     const checkpoint = checkpointOrNull ? checkpointOrNull.updated_at : new Date(0).toISOString();
-                    // console.log(`RxDB Pull ${tableName}: fetching since ${checkpoint}`);
+                    console.log(`RxDB Pull ${tableName}: fetching since ${checkpoint}`);
                     
                     const { data, error } = await supabase
                         .from(tableName)
@@ -113,13 +117,18 @@ export const startReplication = async (db: MyDatabase, supabase: SupabaseClient)
                         throw error;
                     }
 
-                    // console.log(`RxDB Pull ${tableName}: received ${data.length} docs`);
+                    console.log(`RxDB Pull ${tableName}: received raw ${data.length} docs from Supabase`);
 
-                    // Clean docs to match schema (remove extra fields from Supabase)
-                    const cleanDocs = data.map(doc => {
-                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                        const { user_id, local_path, show_docs_btn, ...validDoc } = doc;
-                        return validDoc;
+                    // Clean docs to match schema (remove extra fields dynamically)
+                    const cleanDocs = data.map((doc: any) => {
+                        const cleanDoc: any = {};
+                        allowedFields.forEach(field => {
+                            // Копируем только те поля, которые есть в схеме
+                            if (Object.prototype.hasOwnProperty.call(doc, field)) {
+                                cleanDoc[field] = doc[field];
+                            }
+                        });
+                        return cleanDoc;
                     });
 
                     if (cleanDocs.length === 0) {
@@ -139,13 +148,27 @@ export const startReplication = async (db: MyDatabase, supabase: SupabaseClient)
             },
             push: {
                 async handler(changeRows: any[]) {
-                    const docs = changeRows.map((r: any) => r.newDocumentState);
+                    const docs = changeRows.map((r: any) => {
+                        const doc = r.newDocumentState;
+                        // Strip RxDB internal fields starting with _
+                        const cleanDoc: any = {};
+                        Object.keys(doc).forEach(key => {
+                            if (!key.startsWith('_')) {
+                                cleanDoc[key] = doc[key];
+                            }
+                        });
+                        return cleanDoc;
+                    });
+                    
+                    console.log(`RxDB Push ${tableName}: sending ${docs.length} docs`);
+                    // console.log('Docs payload:', JSON.stringify(docs, null, 2)); 
+
                     const { error } = await supabase
                         .from(tableName)
                         .upsert(docs);
                     
                     if (error) {
-                        console.error(`Push error for ${tableName}:`, error);
+                        console.error(`Push error for ${tableName}:`, JSON.stringify(error, null, 2));
                         throw error;
                     }
                     return [];
@@ -162,7 +185,7 @@ export const startReplication = async (db: MyDatabase, supabase: SupabaseClient)
         await replicateTable(db.folders, 'folders');
         await replicateTable(db.tasks, 'tasks');
         console.log('RxDB: Replication started successfully');
-    } catch (err) {
+    } catch (err: any) {
         console.error('RxDB: Failed to start replication', err);
     }
 };

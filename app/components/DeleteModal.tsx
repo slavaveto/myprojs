@@ -40,7 +40,6 @@ export const DeleteConfirmationModal = ({
             await onConfirm();
             onClose();
         } catch (error) {
-            console.error(error);
         } finally {
             setIsLoading(false);
         }

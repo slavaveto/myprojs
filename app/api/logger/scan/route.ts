@@ -76,7 +76,6 @@ export async function GET() {
         });
 
     } catch (error) {
-        console.error('Scan error:', error);
         return NextResponse.json({ error: 'Failed to scan' }, { status: 500 });
     }
 }

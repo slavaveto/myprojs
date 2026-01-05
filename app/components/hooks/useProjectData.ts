@@ -102,15 +102,33 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
            
            // Query ALL active tasks and filter in JS (Workaround for Dexie non-indexed $in issue)
            // Efficient enough for < 5000 tasks
-           const taskSub = db.tasks.find({
-               selector: {
-                   is_deleted: { $ne: true }
-               }
-           }).$.subscribe(allTasks => {
+           const taskSub = db.tasks.find().$.subscribe(allTasks => {
+               console.log(`RxDB ProjectData: Total tasks in DB: ${allTasks.length}`);
+               
                const projectTasks = allTasks
                    .map(d => d.toJSON() as Task)
-                   .filter(t => t.folder_id && folderIds.has(t.folder_id));
+                   // Manual filter for is_deleted and folder_id
+                   .filter(t => {
+                       const notDeleted = t.is_deleted !== true; // Handle null/undefined as false
+                       const inFolder = t.folder_id && folderIds.has(t.folder_id);
+                       return notDeleted && inFolder;
+                   });
                
+               // DEBUG: Why empty?
+               if (allTasks.length > 0 && projectTasks.length === 0) {
+                   console.log('RxDB DEBUG: Filter mismatch?');
+                   console.log('Total DB Tasks:', allTasks.length);
+                   console.log('Project Folder IDs:', Array.from(folderIds));
+                   
+                   // Check matching without filter
+                   const potentialMatches = allTasks.map(d => d.toJSON() as Task).filter(t => t.folder_id && folderIds.has(t.folder_id));
+                   console.log('Tasks matching Folder IDs (ignoring is_deleted):', potentialMatches.length);
+                   
+                   if (potentialMatches.length > 0) {
+                       console.log('Sample matching task is_deleted:', potentialMatches[0].is_deleted);
+                   }
+               }
+
                console.log(`RxDB ProjectData: Mapped ${projectTasks.length} tasks for project`);
                setRxTasks(projectTasks);
            });
