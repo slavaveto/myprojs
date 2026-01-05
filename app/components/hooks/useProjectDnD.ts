@@ -608,7 +608,7 @@ export const useProjectDnD = ({
                     if (gapUpdate) {
                         promises.push(
                             taskService.createTask(selectedFolderId, '', gapUpdate.sort_order)
-                                .then(created => taskService.updateTask(created.id, { task_type: 'gap' }))
+                                .then((created: Task) => taskService.updateTask(created.id, { task_type: 'gap' }))
                         );
                     }
                 }
