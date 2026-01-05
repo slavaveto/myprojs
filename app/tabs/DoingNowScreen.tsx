@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { createLogger } from '@/utils/logger/Logger';
-import { taskService } from '@/app/_services/taskService';
+import { createTaskService } from '@/app/_services/taskService';
+import { useSupabase } from '@/utils/supabase/useSupabase';
 import { clsx } from 'clsx';
 import {
    RefreshCw,

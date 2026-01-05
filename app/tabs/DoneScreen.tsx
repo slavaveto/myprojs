@@ -140,6 +140,9 @@ const DoneTaskRow = ({ task, onRestore, onDelete }: { task: any, onRestore: (t: 
 }
 
 export const DoneScreen = ({ globalStatus = 'idle', canLoad = true, isActive = false, onRestoreTask }: DoneScreenProps) => {
+    const { supabase } = useSupabase();
+    const taskService = useMemo(() => createTaskService(supabase), [supabase]);
+
     const [tasks, setTasks] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true); // Initial load (full screen)
     const [isRefreshing, setIsRefreshing] = useState(false); // Refresh (button spin)
