@@ -80,14 +80,25 @@ export class RxTaskAdapter {
         await Promise.all(updates.map(async (u) => {
             const doc = await this.db.tasks.findOne(u.id).exec();
             if (doc) {
-                const patchData: any = {
-                    sort_order: u.sort_order,
-                    updated_at: new Date().toISOString()
-                };
-                if (u.group_id !== undefined) {
-                    patchData.group_id = u.group_id;
+                // Check if changes are needed to avoid unnecessary updates
+                const currentSort = doc.sort_order;
+                const currentGroup = doc.group_id; // RxDB returns null for undefined/null fields if consistent with schema
+                
+                const isSortChanged = currentSort !== u.sort_order;
+                // Strict check for group_id: if undefined in update, we ignore it. If null/string, we compare.
+                // Note: doc.group_id might be null or string. u.group_id might be null or string.
+                const isGroupChanged = u.group_id !== undefined && currentGroup !== u.group_id;
+                
+                if (isSortChanged || isGroupChanged) {
+                    const patchData: any = {
+                        updated_at: new Date().toISOString()
+                    };
+                    
+                    if (isSortChanged) patchData.sort_order = u.sort_order;
+                    if (isGroupChanged) patchData.group_id = u.group_id;
+                    
+                    await doc.patch(patchData);
                 }
-                await doc.patch(patchData);
             }
         }));
     }

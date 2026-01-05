@@ -177,7 +177,7 @@ export const RxDBProvider = ({ children }: { children: React.ReactNode }) => {
                             toast.error(`Sync Mismatch: ${mismatches.join(', ')}`, { duration: 5000 });
                         }
                     } else {
-                        toast.success('Sync Verified: All tables match', { duration: 2000 });
+                        console.log('RxDB Sync Verified: All tables match');
                     }
                 };
 
