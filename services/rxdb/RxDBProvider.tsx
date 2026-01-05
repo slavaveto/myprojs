@@ -101,85 +101,88 @@ export const RxDBProvider = ({ children }: { children: React.ReactNode }) => {
         }
     }, [isSyncing, wasSyncing]);
 
-    // Consistency Check
+    // Consistency Check with Retry
     useEffect(() => {
         if (!isSyncing && db && userId && replicationStates.length > 0) {
-            const timer = setTimeout(async () => {
-                console.log('RxDB: Running consistency check...');
-                const tables: ('projects' | 'folders' | 'tasks')[] = ['projects', 'folders', 'tasks'];
-                let allMatch = true;
-                const mismatches: string[] = [];
+            const timer = setTimeout(() => {
                 
-                for (const table of tables) {
-                    try {
-                        // 1. Get Local Data (IDs and Dates)
-                        const localDocs = await db[table].find({
-                            selector: { is_deleted: { $ne: true } }
-                        }).exec();
-                        
-                        const localMap = new Map<string, string>();
-                        localDocs.forEach(d => localMap.set(d.id, d.updated_at));
-
-                        // 2. Get Remote Data (IDs and Dates)
-                        const { data: remoteDocs, error } = await supabase
-                            .from(table)
-                            .select('id, updated_at')
-                            .not('is_deleted', 'is', true)
-                            .eq('user_id', userId);
-
-                        if (error) {
-                            console.error(`RxDB Consistency Check Error (${table}):`, error);
-                            allMatch = false;
-                            mismatches.push(`${table}: API Error`);
-                        } else {
-                            const remoteMap = new Map<string, string>();
-                            if (remoteDocs) {
-                                remoteDocs.forEach((d: any) => remoteMap.set(d.id, d.updated_at));
-                            }
-
-                            let tableMismatch = false;
+                const performCheck = async (retryCount = 0) => {
+                    console.log(`RxDB: Running consistency check (Attempt ${retryCount + 1})...`);
+                    const tables: ('projects' | 'folders' | 'tasks')[] = ['projects', 'folders', 'tasks'];
+                    let allMatch = true;
+                    const mismatches: string[] = [];
+                    
+                    for (const table of tables) {
+                        try {
+                            const localDocs = await db[table].find({
+                                selector: { is_deleted: { $ne: true } }
+                            }).exec();
                             
-                            // Check Local vs Remote
-                            for (const [id, localAt] of localMap) {
-                                if (!remoteMap.has(id)) {
-                                    tableMismatch = true;
-                                    console.error(`RxDB Mismatch ${table}: ID ${id} missing on remote`);
-                                } else {
-                                    const remoteAt = remoteMap.get(id);
-                                    // Compare timestamps (allow slight string format diffs if time is same)
-                                    if (new Date(remoteAt!).getTime() !== new Date(localAt).getTime()) {
+                            const localMap = new Map<string, string>();
+                            localDocs.forEach(d => localMap.set(d.id, d.updated_at));
+
+                            const { data: remoteDocs, error } = await supabase
+                                .from(table)
+                                .select('id, updated_at')
+                                .not('is_deleted', 'is', true)
+                                .eq('user_id', userId);
+
+                            if (error) {
+                                console.error(`RxDB Consistency Check Error (${table}):`, error);
+                                allMatch = false;
+                                mismatches.push(`${table}: API Error`);
+                            } else {
+                                const remoteMap = new Map<string, string>();
+                                if (remoteDocs) {
+                                    remoteDocs.forEach((d: any) => remoteMap.set(d.id, d.updated_at));
+                                }
+
+                                let tableMismatch = false;
+                                
+                                for (const [id, localAt] of localMap) {
+                                    if (!remoteMap.has(id)) {
                                         tableMismatch = true;
-                                        console.error(`RxDB Mismatch ${table}: ID ${id} version diff. L:${localAt} R:${remoteAt}`);
+                                    } else {
+                                        const remoteAt = remoteMap.get(id);
+                                        if (new Date(remoteAt!).getTime() !== new Date(localAt).getTime()) {
+                                            tableMismatch = true;
+                                        }
                                     }
                                 }
-                            }
 
-                            // Check Remote vs Local (Reverse check for orphans)
-                            for (const [id] of remoteMap) {
-                                if (!localMap.has(id)) {
-                                    tableMismatch = true;
-                                    console.error(`RxDB Mismatch ${table}: ID ${id} missing locally`);
+                                for (const [id] of remoteMap) {
+                                    if (!localMap.has(id)) {
+                                        tableMismatch = true;
+                                    }
+                                }
+
+                                if (tableMismatch) {
+                                    allMatch = false;
+                                    mismatches.push(`${table} (Diff)`);
+                                } else {
+                                    console.log(`RxDB Match [${table}]: Identical (${localMap.size} docs)`);
                                 }
                             }
-
-                            if (tableMismatch) {
-                                allMatch = false;
-                                mismatches.push(`${table} (Data Diff)`);
-                            } else {
-                                console.log(`RxDB Match [${table}]: Identical (${localMap.size} docs)`);
-                            }
+                        } catch (e) {
+                             console.error(`RxDB Check exception ${table}`, e);
+                             allMatch = false;
                         }
-                    } catch (e) {
-                         console.error(`RxDB Check exception ${table}`, e);
-                         allMatch = false;
                     }
-                }
 
-                if (!allMatch) {
-                    toast.error(`Sync Mismatch: ${mismatches.join(', ')}`, { duration: 5000 });
-                } else {
-                    toast.success('Sync Verified: All tables match', { duration: 2000 });
-                }
+                    if (!allMatch) {
+                        if (retryCount < 3) {
+                            console.warn(`RxDB Check failed, retrying in 2s... Mismatches: ${mismatches.join(', ')}`);
+                            setTimeout(() => performCheck(retryCount + 1), 2000);
+                        } else {
+                            toast.error(`Sync Mismatch: ${mismatches.join(', ')}`, { duration: 5000 });
+                        }
+                    } else {
+                        toast.success('Sync Verified: All tables match', { duration: 2000 });
+                    }
+                };
+
+                performCheck();
+
             }, 3000);
 
             return () => clearTimeout(timer);
