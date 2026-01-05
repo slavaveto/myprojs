@@ -74,11 +74,15 @@ export function usePageLogic() {
    );
 
    // 1. Загрузка списка проектов (RxDB)
-   useEffect(() => {
-      loadingService.logAppInit();
+      useEffect(() => {
+         loadingService.logAppInit();
 
-      // Subscribe to projects from RxDB
-      const subscription = db.projects.find().sort({ sort_order: 'asc' }).$.subscribe(async (projectsData) => {
+         // Subscribe to projects from RxDB (Filter out deleted)
+         const subscription = db.projects.find({
+             selector: {
+                 is_deleted: { $ne: true }
+             }
+         }).sort({ sort_order: 'asc' }).$.subscribe(async (projectsData) => {
           // Convert RxDocuments to plain JSON if needed, or use as is (they behave like objects)
           // But our Project type might not match exactly with RxDocument methods
           const plainProjects = projectsData.map(doc => doc.toJSON()) as Project[];
