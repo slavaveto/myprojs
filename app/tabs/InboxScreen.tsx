@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { createLogger } from '@/utils/logger/Logger';
-import { createTaskService } from '@/app/_services/taskService'; // Use factory
-import { createProjectService } from '@/app/_services/projectService'; // Use factory
+import { createTaskService } from '@/services/supabase/taskService'; // Use factory
+import { createProjectService } from '@/services/supabase/projectService'; // Use factory
 import { useSupabase } from '@/utils/supabase/useSupabase'; // Import useSupabase
 import { clsx } from 'clsx';
 import { CheckCircle2, Trash2, Folder as FolderIcon, RefreshCw, GripVertical, RotateCcw, Calendar, Inbox, Plus, MoreVertical, MoveRight, ArrowRight } from 'lucide-react';
@@ -12,7 +12,7 @@ import { format, isToday, isYesterday, isThisWeek, isThisMonth } from 'date-fns'
 import { useGlobalPersistentState, globalStorage } from '@/utils/storage';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CreateItemPopover } from '@/app/components/CreateItem';
-import { loadingService } from '@/app/_services/loadingLogsService';
+import { loadingService } from '@/services/supabase/loadingLogsService';
 import { EditableCell } from '../components/EditableCell';
 import { RichEditableCell } from '../components/RichEditableCell';
 import { TaskContextMenu, TaskMenuItems } from '../components/TaskContextMenu';

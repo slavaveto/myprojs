@@ -2,14 +2,14 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { createLogger } from '@/utils/logger/Logger';
-import { createTaskService } from '@/app/_services/taskService';
+import { createTaskService } from '@/services/supabase/taskService';
 import { useSupabase } from '@/utils/supabase/useSupabase';
 import { clsx } from 'clsx';
 import { CheckCircle2, Trash2, Folder as FolderIcon, RefreshCw, GripVertical, RotateCcw } from 'lucide-react';
 import { Spinner, Chip, Button, Switch, Select, SelectItem, Checkbox } from '@heroui/react';
 import { format, isToday, isYesterday, isThisWeek, isThisMonth } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { loadingService } from '@/app/_services/loadingLogsService';
+import { loadingService } from '@/services/supabase/loadingLogsService';
 import { useGlobalPersistentState } from '@/utils/storage';
 import { AnimatePresence, motion } from 'framer-motion';
 

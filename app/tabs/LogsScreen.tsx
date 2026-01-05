@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { createLogService, LogEntry } from '@/app/_services/logService';
+import { createLogService, LogEntry } from '@/services/supabase/logService';
 import { useSupabase } from '@/utils/supabase/useSupabase';
 import { Spinner, Chip, Card, CardBody, Button, Select, SelectItem } from '@heroui/react';
 import { createLogger } from '@/utils/logger/Logger';
@@ -10,9 +10,9 @@ import { RefreshCw, FileText } from 'lucide-react';
 import { StatusBadge } from '@/utils/supabase/StatusBadge';
 import { ActionStatus } from '@/utils/supabase/useAsyncAction';
 import { useGlobalPersistentState } from '@/utils/storage';
-import { BaseActions } from '@/app/_services/actions';
+import { BaseActions } from '@/services/supabase/actions';
 import { isToday, isYesterday, isThisWeek, isThisMonth } from 'date-fns';
-import { loadingService } from '@/app/_services/loadingLogsService';
+import { loadingService } from '@/services/supabase/loadingLogsService';
 
 const logger = createLogger('LogsScreen');
 

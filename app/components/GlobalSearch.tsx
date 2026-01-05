@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Input, Chip } from '@heroui/react';
 import { Search, Folder as FolderIcon, Inbox, CheckCircle2 } from 'lucide-react';
-import { createTaskService } from '@/app/_services/taskService';
+import { createTaskService } from '@/services/supabase/taskService';
 import { createLogger } from '@/utils/logger/Logger';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';

@@ -19,7 +19,7 @@ import { calculateGroupUpdates } from './groupLogic';
 import { Project, Task, Folder } from '@/app/types';
 import { createLogger } from '@/utils/logger/Logger';
 import { globalStorage } from '@/utils/storage';
-// import { taskService } from '@/app/_services/taskService'; <-- REMOVED
+// import { taskService } from '@/services/supabase/taskService'; <-- REMOVED
 
 const logger = createLogger('ProjectScreenDnD');
 

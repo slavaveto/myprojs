@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { createLogger } from '@/utils/logger/Logger';
-import { createTaskService } from '@/app/_services/taskService';
-import { createProjectService } from '@/app/_services/projectService';
+import { createTaskService } from '@/services/supabase/taskService';
+import { createProjectService } from '@/services/supabase/projectService';
 import { useSupabase } from '@/utils/supabase/useSupabase';
 import { clsx } from 'clsx';
 import {
@@ -36,7 +36,7 @@ import {
 import { format, isToday, isYesterday, isThisWeek, isThisMonth } from 'date-fns';
 import { useGlobalPersistentState, globalStorage } from '@/utils/storage';
 import { AnimatePresence, motion } from 'framer-motion';
-import { loadingService } from '@/app/_services/loadingLogsService';
+import { loadingService } from '@/services/supabase/loadingLogsService';
 import { EditableCell } from '../components/EditableCell';
 import { TaskContextMenu, TaskMenuItems } from '../components/TaskContextMenu';
 import { TaskStyleControl } from '../components/TaskStyleControl';
