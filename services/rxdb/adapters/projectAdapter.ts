@@ -2,7 +2,7 @@ import { MyDatabase } from '../db';
 import { Project } from '@/app/types';
 
 export class RxProjectAdapter {
-    constructor(private db: MyDatabase) {}
+    constructor(private db: MyDatabase, private userId: string) {}
 
     // Чтение (обычно через подписку, но для совместимости)
     async getProjects(): Promise<Project[]> {
@@ -51,6 +51,7 @@ export class RxProjectAdapter {
 
         const doc = await this.db.projects.insert({
             id,
+            user_id: this.userId,
             title,
             proj_color: color,
             sort_order: sortOrder,

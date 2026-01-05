@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Chip } from "@heroui/react";
-import { RefreshCw, CheckCircle2 } from "lucide-react";
+import { RefreshCw, CheckCircle2, Loader2 } from "lucide-react";
 import { useRxDB } from '@/services/rxdb/RxDBProvider';
 import { StatusBadge, StatusBadgeProps } from './StatusBadge';
 
@@ -17,45 +17,47 @@ export const RxStatusBadge = (props: StatusBadgeProps) => {
       // Ignore error if outside provider
   }
 
-  const [isVisuallySyncing, setIsVisuallySyncing] = useState(isSyncing);
-  const [showDone, setShowDone] = useState(false);
-  const hasSyncedRef = useRef(false);
+  const [visualState, setVisualState] = useState<'idle' | 'syncing' | 'done'>('idle');
 
+  // Watch for sync start
   useEffect(() => {
-      let timeout: NodeJS.Timeout;
-      
       if (isSyncing) {
-          hasSyncedRef.current = true;
-          setIsVisuallySyncing(true);
-          setShowDone(false);
-      } else {
-          // Only trigger transition logic if we were syncing previously in this session
-          if (hasSyncedRef.current && isVisuallySyncing) {
-              timeout = setTimeout(() => {
-                  setIsVisuallySyncing(false);
-                  setShowDone(true);
-                  
-                  // Hide "Synced" after 2 seconds
-                  setTimeout(() => {
-                      setShowDone(false);
-                      hasSyncedRef.current = false; // Reset? Or keep true? Keep true doesn't hurt.
-                  }, 1000);
-              }, 600); // Minimum 600ms sync visibility
-          }
+          setVisualState('syncing');
       }
-      return () => clearTimeout(timeout);
-  }, [isSyncing, isVisuallySyncing]);
+  }, [isSyncing]);
 
-  // If syncing -> Blue badge (Prioritized)
-  if (isVisuallySyncing) {
+  // Watch for sync end to handle transitions
+  useEffect(() => {
+      let t1: NodeJS.Timeout;
+      let t2: NodeJS.Timeout;
+
+      if (!isSyncing && visualState === 'syncing') {
+          // Keep showing "Syncing..." for at least 600ms
+          t1 = setTimeout(() => {
+              setVisualState('done');
+              
+              // Show "Synced" for 1000ms then go idle
+              t2 = setTimeout(() => {
+                  setVisualState('idle');
+              }, 1000);
+          }, 600);
+      }
+
+      return () => {
+          clearTimeout(t1);
+          clearTimeout(t2);
+      };
+  }, [isSyncing, visualState]);
+
+  // If syncing (real or visual hold) -> Blue badge
+  if (visualState === 'syncing') {
     return (
         <div className={props.className}>
             <Chip 
                 startContent={<RefreshCw className="animate-spin" size={14} />} 
-                color="primary" 
-                variant="flat" 
+                className="px-2 bg-blue-600 text-white border-none"
+                variant="solid" 
                 size="md" 
-                className="px-2"
             >
                 Syncing...
             </Chip>
@@ -63,8 +65,8 @@ export const RxStatusBadge = (props: StatusBadgeProps) => {
     );
   }
 
-  // If just finished syncing -> Green Synced (Prioritized)
-  if (showDone) {
+  // If done -> Green Synced
+  if (visualState === 'done') {
       return (
         <div className={props.className}>
             <Chip 
@@ -80,6 +82,6 @@ export const RxStatusBadge = (props: StatusBadgeProps) => {
       );
   }
 
-  // Otherwise -> Fallback to original StatusBadge logic (which now handles suppressLoading)
+  // Fallback
   return <StatusBadge {...props} />;
 };

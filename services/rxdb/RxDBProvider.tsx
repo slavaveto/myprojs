@@ -9,6 +9,7 @@ import { combineLatest } from 'rxjs';
 interface RxDBContextValue {
     db: MyDatabase;
     isSyncing: boolean;
+    notifySyncStart: () => void;
 }
 
 const RxDBContext = createContext<RxDBContextValue | null>(null);
@@ -16,9 +17,17 @@ const RxDBContext = createContext<RxDBContextValue | null>(null);
 export const RxDBProvider = ({ children }: { children: React.ReactNode }) => {
     const [db, setDb] = useState<MyDatabase | null>(null);
     const [replicationStates, setReplicationStates] = useState<RxReplicationState<any, any>[]>([]);
-    const [isSyncing, setIsSyncing] = useState(false);
+    const [realSyncing, setRealSyncing] = useState(false);
+    const [manualSyncing, setManualSyncing] = useState(false);
     
     const { supabase, userId } = useSupabase();
+
+    const notifySyncStart = () => {
+        setManualSyncing(true);
+        setTimeout(() => setManualSyncing(false), 2000); // Guarantee 2s sync visual
+    };
+
+    const isSyncing = realSyncing || manualSyncing;
 
     useEffect(() => {
         const initDB = async () => {
@@ -41,6 +50,7 @@ export const RxDBProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Track sync status
     useEffect(() => {
+        console.log(`RxDBProvider: Replication states count: ${replicationStates.length}`);
         if (replicationStates.length === 0) return;
 
         // Combine active$ observables from all replication states
@@ -49,8 +59,8 @@ export const RxDBProvider = ({ children }: { children: React.ReactNode }) => {
         const sub = combineLatest(activeObservables).subscribe((activeStates) => {
             // If any replication is active, we are syncing
             const anyActive = activeStates.some(isActive => isActive);
-            // console.log('RxDB Sync Status:', anyActive, activeStates); // Debug log
-            setIsSyncing(anyActive);
+            console.log('RxDB Sync Status:', anyActive); 
+            setRealSyncing(anyActive);
         });
 
         return () => sub.unsubscribe();
@@ -61,7 +71,7 @@ export const RxDBProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     return (
-        <RxDBContext.Provider value={{ db, isSyncing }}>
+        <RxDBContext.Provider value={{ db, isSyncing, notifySyncStart }}>
             {children}
         </RxDBContext.Provider>
     );

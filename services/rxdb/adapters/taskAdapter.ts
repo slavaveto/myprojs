@@ -2,7 +2,7 @@ import { MyDatabase } from '../db';
 import { Task } from '@/app/types';
 
 export class RxTaskAdapter {
-    constructor(private db: MyDatabase) {}
+    constructor(private db: MyDatabase, private userId: string) {}
 
     // Чтение (для совместимости, если вдруг понадобится)
     async getTasks(projectId: string): Promise<Task[]> {
@@ -40,6 +40,7 @@ export class RxTaskAdapter {
         const now = new Date().toISOString();
         const doc = await this.db.tasks.insert({
             id,
+            user_id: this.userId,
             folder_id: folderId,
             content,
             sort_order: sortOrder,

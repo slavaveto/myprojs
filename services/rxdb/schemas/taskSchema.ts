@@ -5,12 +5,16 @@ import {
 } from 'rxdb';
 
 export const taskSchemaLiteral = {
-    version: 1, // V1: Removed folder_id from index
+    version: 2, // V2: Added user_id
     primaryKey: 'id',
     type: 'object',
     properties: {
         id: {
             type: 'string',
+            maxLength: 100
+        },
+        user_id: {
+            type: ['string', 'null'],
             maxLength: 100
         },
         content: {

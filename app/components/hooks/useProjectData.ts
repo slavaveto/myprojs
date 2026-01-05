@@ -37,17 +37,17 @@ interface UseProjectDataProps {
 
 // Export updated types
 export const useProjectData = ({ project, isActive, onReady, canLoad = true, onUpdateProject, onDeleteProject, globalStatus = 'idle', onNavigate }: UseProjectDataProps) => {
-   const { supabase } = useSupabase();
-   const { db } = useRxDB() as unknown as { db: MyDatabase };
+   const { supabase, userId } = useSupabase();
+   const { db, notifySyncStart } = useRxDB() as unknown as { db: MyDatabase, notifySyncStart: () => void };
    
    // RxDB Data
    const [rxFolders, setRxFolders] = useState<Folder[] | undefined>(undefined);
    const [rxTasks, setRxTasks] = useState<Task[] | undefined>(undefined);
 
    // Adapters for RxDB (Write operations)
-   const rxFolderService = useMemo(() => new RxFolderAdapter(db), [db]);
-   const rxTaskService = useMemo(() => new RxTaskAdapter(db), [db]);
-   const rxProjectService = useMemo(() => new RxProjectAdapter(db), [db]);
+   const rxFolderService = useMemo(() => new RxFolderAdapter(db, userId || ''), [db, userId]);
+   const rxTaskService = useMemo(() => new RxTaskAdapter(db, userId || ''), [db, userId]);
+   const rxProjectService = useMemo(() => new RxProjectAdapter(db, userId || ''), [db, userId]);
 
    // Create local services (Deprecated for read, used for fallback?) 
    const localProjectService = useMemo(() => createProjectService(supabase), [supabase]);
@@ -191,7 +191,7 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
    }, [projectService]);
 
    // --- Status Management ---
-   const { execute: executeSave, status: saveStatus, error: saveError } = useAsyncAction({
+   const { execute: executeSaveOriginal, status: saveStatus, error: saveError } = useAsyncAction({
        useToast: false, // StatusBadge handles UI
        minDuration: 800,
        successDuration: 2000,
@@ -199,6 +199,15 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
        successMessage: 'Saved',
        errorMessage: 'Failed to save'
    });
+
+   const executeSave = async (fn: () => Promise<any>) => {
+        // Trigger manual sync status if this is a local project
+        const isLocalProject = project.proj_type !== 'ui' && !project.remote_proj_slug;
+        if (isLocalProject) {
+            notifySyncStart?.();
+        }
+        return executeSaveOriginal(fn);
+   };
 
    // Fast save for DnD (no artificial delay)
    const { execute: executeQuickSave, status: quickSaveStatus } = useAsyncAction({

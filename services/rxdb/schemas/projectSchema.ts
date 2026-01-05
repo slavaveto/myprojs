@@ -5,12 +5,16 @@ import {
 } from 'rxdb';
 
 export const projectSchemaLiteral = {
-    version: 0,
+    version: 1,
     primaryKey: 'id',
     type: 'object',
     properties: {
         id: {
             type: 'string',
+            maxLength: 100
+        },
+        user_id: {
+            type: ['string', 'null'],
             maxLength: 100
         },
         title: {

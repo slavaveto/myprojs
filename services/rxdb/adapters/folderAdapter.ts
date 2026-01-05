@@ -2,7 +2,7 @@ import { MyDatabase } from '../db';
 import { Folder } from '@/app/types';
 
 export class RxFolderAdapter {
-    constructor(private db: MyDatabase) {}
+    constructor(private db: MyDatabase, private userId: string) {}
 
     // Чтение (обычно не используется для реактивности, но нужно для совместимости)
     async getFolders(projectId: string): Promise<Folder[]> {
@@ -21,6 +21,7 @@ export class RxFolderAdapter {
         const now = new Date().toISOString();
         const doc = await this.db.folders.insert({
             id,
+            user_id: this.userId,
             project_id: projectId,
             title,
             sort_order: sortOrder,

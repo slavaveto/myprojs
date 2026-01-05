@@ -49,7 +49,7 @@ const createDatabase = async (): Promise<MyDatabase> => {
     }
 
     const db = await createRxDatabase<MyDatabaseCollections>({
-        name: 'myprojs_db_v5', // Reset again for dynamic schema sanitization
+        name: 'myprojs_db_v6', // Reset again for user_id schema update
         storage,
         multiInstance: true,
         eventReduce: true
@@ -57,18 +57,22 @@ const createDatabase = async (): Promise<MyDatabase> => {
 
     await db.addCollections({
         projects: {
-            schema: projectSchema
+            schema: projectSchema,
+            migrationStrategies: {
+                1: function(oldDoc: any) { return oldDoc; }
+            }
         },
         folders: {
-            schema: folderSchema
+            schema: folderSchema,
+            migrationStrategies: {
+                1: function(oldDoc: any) { return oldDoc; }
+            }
         },
         tasks: {
             schema: taskSchema,
             migrationStrategies: {
-                // 1: from v0 to v1 (Fix indexes)
-                1: function(oldDoc: any) {
-                    return oldDoc;
-                }
+                1: function(oldDoc: any) { return oldDoc; },
+                2: function(oldDoc: any) { return oldDoc; }
             }
         }
     });
@@ -101,7 +105,7 @@ export const startReplication = async (db: MyDatabase, supabase: SupabaseClient)
         
         const replicationState = await replicateRxCollection({
             collection,
-            replicationIdentifier: `replication-${tableName}-v5`, // Increment version to force re-sync logic
+            replicationIdentifier: `replication-${tableName}-v6`, // Increment version to force re-sync logic
             pull: {
                 async handler(checkpointOrNull: any) {
                     const checkpoint = checkpointOrNull ? checkpointOrNull.updated_at : new Date(0).toISOString();
@@ -180,6 +184,7 @@ export const startReplication = async (db: MyDatabase, supabase: SupabaseClient)
             live: true,
         });
 
+        console.log(`RxDB: Replication initialized for ${tableName}`);
         replicationStates.push(replicationState);
         return replicationState;
     };
