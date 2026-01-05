@@ -15,6 +15,7 @@ import { DebugPanel } from '@/utils/logger/DebugPanel';
 import { DeviceFrame } from '@/utils/providers/DeviceFrame';
 import { DB_TABLES } from '@/utils/supabase/db_tables';
 import { RxDBProvider } from '@/services/rxdb/RxDBProvider';
+import { RxDBSyncIndicator } from '@/app/components/RxDBSyncIndicator';
 
 const montserrat = Montserrat({
    display: 'swap',
@@ -98,6 +99,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                         <LocalizationProvider>
                            <RxDBProvider>
                               <DeviceFrame isLocal={isLocal}>{children}</DeviceFrame>
+                              <RxDBSyncIndicator />
                               <GlobalToggles isLocal={isLocal} />
                               <DebugPanel isLocal={isLocal} />
                               {isLocal && (

@@ -25,7 +25,7 @@ const logger = createLogger('AppManager');
 
 export function usePageLogic() {
    const { supabase } = useSupabase();
-   const db = useRxDB();
+   const { db } = useRxDB() as any;
    const taskService = useMemo(() => createTaskService(supabase), [supabase]);
    const projectService = useMemo(() => createProjectService(supabase), [supabase]);
 

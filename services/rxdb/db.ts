@@ -10,7 +10,7 @@ import { RxDBUpdatePlugin } from 'rxdb/plugins/update';
 import { RxDBQueryBuilderPlugin } from 'rxdb/plugins/query-builder';
 import { RxDBLeaderElectionPlugin } from 'rxdb/plugins/leader-election';
 import { RxDBMigrationSchemaPlugin } from 'rxdb/plugins/migration-schema';
-import { replicateRxCollection } from 'rxdb/plugins/replication';
+import { replicateRxCollection, RxReplicationState } from 'rxdb/plugins/replication';
 import { wrappedValidateAjvStorage } from 'rxdb/plugins/validate-ajv';
 import { SupabaseClient } from '@supabase/supabase-js';
 
@@ -90,15 +90,16 @@ export const getDatabase = () => {
 };
 
 // Функция запуска репликации (вызывается извне, когда у нас есть supabase клиент)
-export const startReplication = async (db: MyDatabase, supabase: SupabaseClient) => {
+export const startReplication = async (db: MyDatabase, supabase: SupabaseClient): Promise<RxReplicationState<any, any>[]> => {
     console.log('RxDB: Starting replication (Native)...');
+    const replicationStates: RxReplicationState<any, any>[] = [];
 
     const replicateTable = async (collection: any, tableName: string) => {
         // Получаем список допустимых полей из схемы
         const schema = collection.schema.jsonSchema;
         const allowedFields = Object.keys(schema.properties);
         
-        return replicateRxCollection({
+        const replicationState = await replicateRxCollection({
             collection,
             replicationIdentifier: `replication-${tableName}-v5`, // Increment version to force re-sync logic
             pull: {
@@ -178,6 +179,9 @@ export const startReplication = async (db: MyDatabase, supabase: SupabaseClient)
             retryTime: 5000,
             live: true,
         });
+
+        replicationStates.push(replicationState);
+        return replicationState;
     };
 
     try {
@@ -188,4 +192,6 @@ export const startReplication = async (db: MyDatabase, supabase: SupabaseClient)
     } catch (err: any) {
         console.error('RxDB: Failed to start replication', err);
     }
+
+    return replicationStates;
 };

@@ -16,6 +16,7 @@ import { createRemoteFolderService, createRemoteTaskService } from '@/services/s
 import { useSupabase } from '@/utils/supabase/useSupabase';
 import { DB_TABLES } from '@/utils/supabase/db_tables';
 import { useRxDB } from '@/services/rxdb/RxDBProvider';
+import { MyDatabase } from '@/services/rxdb/db';
 import { RxFolderAdapter } from '@/services/rxdb/adapters/folderAdapter';
 import { RxTaskAdapter } from '@/services/rxdb/adapters/taskAdapter';
 import { RxProjectAdapter } from '@/services/rxdb/adapters/projectAdapter';
@@ -37,7 +38,7 @@ interface UseProjectDataProps {
 // Export updated types
 export const useProjectData = ({ project, isActive, onReady, canLoad = true, onUpdateProject, onDeleteProject, globalStatus = 'idle', onNavigate }: UseProjectDataProps) => {
    const { supabase } = useSupabase();
-   const db = useRxDB();
+   const { db } = useRxDB() as unknown as { db: MyDatabase };
    
    // RxDB Data
    const [rxFolders, setRxFolders] = useState<Folder[] | undefined>(undefined);
@@ -84,8 +85,8 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
                is_deleted: { $ne: true }
            },
            sort: [{ sort_order: 'asc' }]
-       }).$.subscribe(folders => {
-           const mapped = folders.map(d => d.toJSON()) as Folder[];
+           }).$.subscribe((folders: any[]) => {
+               const mapped = folders.map((d: any) => d.toJSON()) as Folder[];
            console.log(`RxDB ProjectData: Loaded ${mapped.length} folders for project ${project.id}`);
            setRxFolders(mapped);
        });
@@ -102,13 +103,13 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
            
            // Query ALL active tasks and filter in JS (Workaround for Dexie non-indexed $in issue)
            // Efficient enough for < 5000 tasks
-           const taskSub = db.tasks.find().$.subscribe(allTasks => {
+           const taskSub = db.tasks.find().$.subscribe((allTasks: any[]) => {
                console.log(`RxDB ProjectData: Total tasks in DB: ${allTasks.length}`);
                
                const projectTasks = allTasks
-                   .map(d => d.toJSON() as Task)
+                   .map((d: any) => d.toJSON() as Task)
                    // Manual filter for is_deleted and folder_id
-                   .filter(t => {
+                   .filter((t: Task) => {
                        const notDeleted = t.is_deleted !== true; // Handle null/undefined as false
                        const inFolder = t.folder_id && folderIds.has(t.folder_id);
                        return notDeleted && inFolder;
@@ -121,7 +122,7 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
                    console.log('Project Folder IDs:', Array.from(folderIds));
                    
                    // Check matching without filter
-                   const potentialMatches = allTasks.map(d => d.toJSON() as Task).filter(t => t.folder_id && folderIds.has(t.folder_id));
+                   const potentialMatches = allTasks.map((d: any) => d.toJSON() as Task).filter((t: Task) => t.folder_id && folderIds.has(t.folder_id));
                    console.log('Tasks matching Folder IDs (ignoring is_deleted):', potentialMatches.length);
                    
                    if (potentialMatches.length > 0) {
@@ -340,7 +341,7 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
 
       if (foldersData.length > 0) {
          const savedFolderId = globalStorage.getItem(`active_folder_${project.id}`);
-         const folderExists = savedFolderId ? foldersData.find((f: any) => f.id === savedFolderId) : null;
+         const folderExists = savedFolderId ? foldersData.find((f: Folder) => f.id === savedFolderId) : null;
          
          setSelectedFolderId(folderExists ? savedFolderId! : foldersData[0].id);
       }
