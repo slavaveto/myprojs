@@ -15,10 +15,11 @@ export const useTaskData = (
     externalData?: Task[] // NEW: Data from RxDB
 ) => {
     const [tasks, setTasks] = useState<Task[]>([]);
+    const isProcessingLocalChange = useRef(false);
     
     // Sync external data (RxDB)
     useEffect(() => {
-        if (externalData) {
+        if (externalData && !isProcessingLocalChange.current) {
             setTasks(prevTasks => {
                 // Merge RxDB updates with local optimistic state (if needed)
                 // For now, simple replace, but preserving specific local-only flags if they existed?
@@ -184,6 +185,7 @@ export const useTaskData = (
                    const updatesWithTimestamp = { ...updates, updated_at: new Date().toISOString() };
                    const realTask = { ...task, ...updatesWithTimestamp, isDraft: false, isNew: false, _isSaving: true };
                    
+                   isProcessingLocalChange.current = true;
                    setTasks(prev => prev.map(t => t.id === id ? realTask : t));
 
                    try {
@@ -210,7 +212,7 @@ export const useTaskData = (
                           const updatesForOrder = currentFolderTasks.map((t, idx) => ({ 
                               id: t.id === id ? data.id : t.id, 
                               sort_order: idx 
-                          }));
+                      }));
                           
                           await service.updateTaskOrder(updatesForOrder);
 
@@ -226,6 +228,8 @@ export const useTaskData = (
                    } catch (err) {
                       logger.error('Failed to create UI item from draft', err);
                       setTasks(prev => prev.map(t => t.id === id ? { ...t, _isSaving: false } : t));
+                   } finally {
+                       setTimeout(() => { isProcessingLocalChange.current = false; }, 50);
                    }
                }
                return;
@@ -252,6 +256,7 @@ export const useTaskData = (
                    group_id: realTask.group_id
                };
                
+               isProcessingLocalChange.current = true;
                setTasks(prev => prev.map(t => t.id === id ? realTask : t));
 
                try {
@@ -299,6 +304,8 @@ export const useTaskData = (
                } catch (err) {
                   logger.error('Failed to create task from draft', err);
                   setTasks(prev => prev.map(t => t.id === id ? { ...t, _isSaving: false } : t));
+               } finally {
+                   setTimeout(() => { isProcessingLocalChange.current = false; }, 50);
                }
            }
            return;
@@ -374,9 +381,18 @@ export const useTaskData = (
        }
 
        // Single SetState for instant UI update
+       isProcessingLocalChange.current = true;
        setTasks(optimisticTasks);
        
-       if (task?.isNew) return; 
+       if (task?.isNew) {
+           // If it's just a local draft update (before first save), we don't need to lock
+           // But actually handleUpdateTask handles "Draft Saving" above separately.
+           // This block is for normal updates.
+           // Wait, "task.isNew" check at line 379 returns early?
+           // If it returns early, we must reset the flag!
+           isProcessingLocalChange.current = false;
+           return; 
+       }
 
        try {
           await executeSave(async () => {
@@ -391,6 +407,8 @@ export const useTaskData = (
        } catch (err) {
           logger.error('Failed to update task', err);
           // Rollback logic needed?
+       } finally {
+           setTimeout(() => { isProcessingLocalChange.current = false; }, 50);
        }
     };
 
@@ -399,9 +417,13 @@ export const useTaskData = (
        const isDraft = taskToDelete?.isDraft;
 
        const oldTasks = [...tasks];
+       isProcessingLocalChange.current = true;
        setTasks(prev => prev.filter(t => t.id !== id));
        
-       if (isDraft) return; 
+       if (isDraft) {
+           isProcessingLocalChange.current = false;
+           return; 
+       }
 
        try {
           await executeSave(async () => {
@@ -440,6 +462,8 @@ export const useTaskData = (
        } catch (err) {
           logger.error('Failed to delete task', err);
           setTasks(oldTasks);
+       } finally {
+           setTimeout(() => { isProcessingLocalChange.current = false; }, 50);
        }
     };
     
@@ -468,6 +492,7 @@ export const useTaskData = (
             isDraft: false 
         };
 
+        isProcessingLocalChange.current = true;
         setTasks(prev => {
             const otherTasks = prev.filter(t => t.folder_id !== selectedFolderId || t.is_completed);
             const newActiveTasks = [...activeTasks];
@@ -532,6 +557,8 @@ export const useTaskData = (
         } catch (err) {
             logger.error('Failed to create gap', err);
             setTasks(prev => prev.filter(t => t.id !== tempId));
+        } finally {
+            setTimeout(() => { isProcessingLocalChange.current = false; }, 50);
         }
     };
     
