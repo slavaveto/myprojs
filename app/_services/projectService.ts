@@ -351,4 +351,20 @@ export const createProjectService = (supabase: SupabaseClient) => {
         );
         logger.info('Projects reordered', { count: updates.length });
     },
+
+    async getProjectSlug(projectId: string): Promise<string | null> {
+        const { data, error } = await supabase
+            .from(DB_TABLES.PROJECTS)
+            .select('remote_proj_slug')
+            .eq('id', projectId)
+            .single();
+
+        if (error) {
+            // Log error but don't throw blocking error for now, return null
+            logger.error('Failed to fetch project slug', error);
+            return null;
+        }
+
+        return data?.remote_proj_slug || null;
+    }
 }};

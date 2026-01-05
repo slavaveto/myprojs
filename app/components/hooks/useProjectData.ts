@@ -56,15 +56,9 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
            // If UI project, try to get slug from parent
            if (project.proj_type === 'ui' && project.parent_proj_id) {
                try {
-                   // Используем клиент с токеном для запроса
-                   const { data } = await supabase
-                       .from(DB_TABLES.PROJECTS)
-                       .select('remote_proj_slug')
-                       .eq('id', project.parent_proj_id)
-                       .single();
-                   
-                   if (data?.remote_proj_slug) {
-                       slug = data.remote_proj_slug;
+                   const remoteSlug = await localProjectService.getProjectSlug(project.parent_proj_id);
+                   if (remoteSlug) {
+                       slug = remoteSlug;
                    }
                } catch (e) {
                    logger.error('Failed to fetch parent project slug', e);
