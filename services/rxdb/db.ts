@@ -14,8 +14,7 @@ import { replicateRxCollection, RxReplicationState } from 'rxdb/plugins/replicat
 import { wrappedValidateAjvStorage } from 'rxdb/plugins/validate-ajv';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { createLogger } from '@/utils/logger/Logger';
-import { interval } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Subject } from 'rxjs';
 
 import { projectSchema, ProjectDocType } from './schemas/projectSchema';
 import { folderSchema, FolderDocType } from './schemas/folderSchema';
@@ -98,6 +97,7 @@ export const startReplication = async (db: MyDatabase, supabase: SupabaseClient,
         // Получаем список допустимых полей из схемы
         const schema = collection.schema.jsonSchema;
         const allowedFields = Object.keys(schema.properties);
+        const pullStream$ = new Subject();
         
         const replicationState = await replicateRxCollection({
             collection,
@@ -151,7 +151,7 @@ export const startReplication = async (db: MyDatabase, supabase: SupabaseClient,
                         }
                     };
                 },
-                stream$: interval(10000).pipe(map(() => 'RESYNC'))
+                stream$: pullStream$.asObservable() as any
             },
             push: {
                 async handler(changeRows: any[]) {
@@ -183,6 +183,7 @@ export const startReplication = async (db: MyDatabase, supabase: SupabaseClient,
                         logger.error(`Push error for ${tableName}:`, JSON.stringify(error, null, 2));
                         throw error;
                     }
+
                     return [];
                 }
             },
