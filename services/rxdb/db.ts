@@ -114,6 +114,10 @@ export const startReplication = async (db: MyDatabase, supabase: SupabaseClient)
                     }
 
                     console.log(`RxDB Pull ${tableName}: received raw ${data.length} docs from Supabase`);
+                    
+                    if (data.length > 0) {
+                        console.log(`RxDB Pull ${tableName}: Checkpoint updated to ${data[data.length - 1].updated_at}`);
+                    }
 
                     // Clean docs to match schema (remove extra fields dynamically)
                     const cleanDocs = data.map((doc: any) => {
