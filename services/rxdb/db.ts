@@ -52,7 +52,8 @@ const createDatabase = async (): Promise<MyDatabase> => {
         name: 'myprojs_db_v7', // Reset to v7 with version 0 schemas
         storage,
         multiInstance: true,
-        eventReduce: true
+        eventReduce: true,
+        allowSlowCount: true // Enable slow counts for consistency check
     });
 
     await db.addCollections({
@@ -158,10 +159,15 @@ export const startReplication = async (db: MyDatabase, supabase: SupabaseClient)
                     console.log(`RxDB Push ${tableName}: sending ${docs.length} docs`);
                     // console.log('Docs payload:', JSON.stringify(docs, null, 2)); 
 
-                    const { error } = await supabase
+                    const { data: upserted, error } = await supabase
                         .from(tableName)
-                        .upsert(docs);
+                        .upsert(docs)
+                        .select();
                     
+                    if (upserted && upserted.length === 0) {
+                        console.warn(`RxDB Push ${tableName}: Upsert returned 0 rows! Check RLS or data mismatch.`);
+                    }
+
                     if (error) {
                         console.error(`Push error for ${tableName}:`, JSON.stringify(error, null, 2));
                         throw error;

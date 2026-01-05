@@ -5,11 +5,13 @@ import { useSupabase } from '@/utils/supabase/useSupabase';
 import { getDatabase, startReplication, MyDatabase } from './db';
 import { RxReplicationState } from 'rxdb/plugins/replication';
 import { combineLatest } from 'rxjs';
+import { toast } from 'react-hot-toast';
 
 interface RxDBContextValue {
     db: MyDatabase;
     isSyncing: boolean;
     notifySyncStart: () => void;
+    lastSyncStats: { sent: number, received: number };
 }
 
 const RxDBContext = createContext<RxDBContextValue | null>(null);
@@ -21,11 +23,19 @@ export const RxDBProvider = ({ children }: { children: React.ReactNode }) => {
     const [manualSyncing, setManualSyncing] = useState(false);
     
     const { supabase, userId } = useSupabase();
+    const statsRef = React.useRef({ sent: 0, received: 0 });
+    const syncTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+    const [wasSyncing, setWasSyncing] = useState(false);
+    const [lastSyncStats, setLastSyncStats] = useState({ sent: 0, received: 0 });
 
     const notifySyncStart = () => {
         console.log('RxDBProvider: notifySyncStart triggered');
+        if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
         setManualSyncing(true);
-        setTimeout(() => setManualSyncing(false), 2000); // Guarantee 2s sync visual
+        syncTimeoutRef.current = setTimeout(() => {
+            setManualSyncing(false);
+            syncTimeoutRef.current = null;
+        }, 2000); 
     };
 
     const isSyncing = realSyncing || manualSyncing;
@@ -67,12 +77,121 @@ export const RxDBProvider = ({ children }: { children: React.ReactNode }) => {
         return () => sub.unsubscribe();
     }, [replicationStates]);
 
+    // Track sync stats
+    useEffect(() => {
+        if (replicationStates.length === 0) return;
+        const subs = replicationStates.map(state => [
+            state.received$.subscribe(() => statsRef.current.received++),
+            state.sent$.subscribe(() => statsRef.current.sent++)
+        ]).flat();
+        return () => subs.forEach(s => s.unsubscribe());
+    }, [replicationStates]);
+
+    // Capture stats on sync finish
+    useEffect(() => {
+        if (isSyncing) {
+            setWasSyncing(true);
+        } else if (wasSyncing) {
+             const { sent, received } = statsRef.current;
+             setLastSyncStats({ sent, received });
+             
+             // Reset
+             statsRef.current = { sent: 0, received: 0 };
+             setWasSyncing(false);
+        }
+    }, [isSyncing, wasSyncing]);
+
+    // Consistency Check
+    useEffect(() => {
+        if (!isSyncing && db && userId && replicationStates.length > 0) {
+            const timer = setTimeout(async () => {
+                console.log('RxDB: Running consistency check...');
+                const tables: ('projects' | 'folders' | 'tasks')[] = ['projects', 'folders', 'tasks'];
+                let allMatch = true;
+                const mismatches: string[] = [];
+                
+                for (const table of tables) {
+                    try {
+                        // 1. Get Local Data (IDs and Dates)
+                        const localDocs = await db[table].find({
+                            selector: { is_deleted: { $ne: true } }
+                        }).exec();
+                        
+                        const localMap = new Map<string, string>();
+                        localDocs.forEach(d => localMap.set(d.id, d.updated_at));
+
+                        // 2. Get Remote Data (IDs and Dates)
+                        const { data: remoteDocs, error } = await supabase
+                            .from(table)
+                            .select('id, updated_at')
+                            .not('is_deleted', 'is', true)
+                            .eq('user_id', userId);
+
+                        if (error) {
+                            console.error(`RxDB Consistency Check Error (${table}):`, error);
+                            allMatch = false;
+                            mismatches.push(`${table}: API Error`);
+                        } else {
+                            const remoteMap = new Map<string, string>();
+                            if (remoteDocs) {
+                                remoteDocs.forEach((d: any) => remoteMap.set(d.id, d.updated_at));
+                            }
+
+                            let tableMismatch = false;
+                            
+                            // Check Local vs Remote
+                            for (const [id, localAt] of localMap) {
+                                if (!remoteMap.has(id)) {
+                                    tableMismatch = true;
+                                    console.error(`RxDB Mismatch ${table}: ID ${id} missing on remote`);
+                                } else {
+                                    const remoteAt = remoteMap.get(id);
+                                    // Compare timestamps (allow slight string format diffs if time is same)
+                                    if (new Date(remoteAt!).getTime() !== new Date(localAt).getTime()) {
+                                        tableMismatch = true;
+                                        console.error(`RxDB Mismatch ${table}: ID ${id} version diff. L:${localAt} R:${remoteAt}`);
+                                    }
+                                }
+                            }
+
+                            // Check Remote vs Local (Reverse check for orphans)
+                            for (const [id] of remoteMap) {
+                                if (!localMap.has(id)) {
+                                    tableMismatch = true;
+                                    console.error(`RxDB Mismatch ${table}: ID ${id} missing locally`);
+                                }
+                            }
+
+                            if (tableMismatch) {
+                                allMatch = false;
+                                mismatches.push(`${table} (Data Diff)`);
+                            } else {
+                                console.log(`RxDB Match [${table}]: Identical (${localMap.size} docs)`);
+                            }
+                        }
+                    } catch (e) {
+                         console.error(`RxDB Check exception ${table}`, e);
+                         allMatch = false;
+                    }
+                }
+
+                if (!allMatch) {
+                    toast.error(`Sync Mismatch: ${mismatches.join(', ')}`, { duration: 5000 });
+                } else {
+                    toast.success('Sync Verified: All tables match', { duration: 2000 });
+                }
+            }, 3000);
+
+            return () => clearTimeout(timer);
+        }
+    }, [isSyncing, db, userId, supabase, replicationStates]);
+
     if (!db) {
         return null; // Or a loading spinner
     }
 
     return (
-        <RxDBContext.Provider value={{ db, isSyncing, notifySyncStart }}>
+        <RxDBContext.Provider value={{ db, isSyncing, notifySyncStart, lastSyncStats }}>
             {children}
         </RxDBContext.Provider>
     );
