@@ -87,7 +87,7 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
            sort: [{ sort_order: 'asc' }]
            }).$.subscribe((folders: any[]) => {
                const mapped = folders.map((d: any) => d.toJSON()) as Folder[];
-           console.log(`RxDB ProjectData: Loaded ${mapped.length} folders for project ${project.id}`);
+           logger.info(`RxDB ProjectData: Loaded ${mapped.length} folders for project ${project.id}`);
            setRxFolders(mapped);
        });
 
@@ -104,7 +104,7 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
            // Query ALL active tasks and filter in JS (Workaround for Dexie non-indexed $in issue)
            // Efficient enough for < 5000 tasks
            const taskSub = db.tasks.find().$.subscribe((allTasks: any[]) => {
-               console.log(`RxDB ProjectData: Total tasks in DB: ${allTasks.length}`);
+               logger.info(`RxDB ProjectData: Total tasks in DB: ${allTasks.length}`);
                
                const projectTasks = allTasks
                    .map((d: any) => d.toJSON() as Task)
@@ -117,20 +117,20 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
                
                // DEBUG: Why empty?
                if (allTasks.length > 0 && projectTasks.length === 0) {
-                   console.log('RxDB DEBUG: Filter mismatch?');
-                   console.log('Total DB Tasks:', allTasks.length);
-                   console.log('Project Folder IDs:', Array.from(folderIds));
+                   logger.warning('RxDB DEBUG: Filter mismatch?');
+                   logger.info('Total DB Tasks:', allTasks.length);
+                   logger.info('Project Folder IDs:', Array.from(folderIds));
                    
                    // Check matching without filter
                    const potentialMatches = allTasks.map((d: any) => d.toJSON() as Task).filter((t: Task) => t.folder_id && folderIds.has(t.folder_id));
-                   console.log('Tasks matching Folder IDs (ignoring is_deleted):', potentialMatches.length);
+                   logger.info('Tasks matching Folder IDs (ignoring is_deleted):', potentialMatches.length);
                    
                    if (potentialMatches.length > 0) {
-                       console.log('Sample matching task is_deleted:', potentialMatches[0].is_deleted);
+                       logger.info('Sample matching task is_deleted:', potentialMatches[0].is_deleted);
                    }
                }
 
-               console.log(`RxDB ProjectData: Mapped ${projectTasks.length} tasks for project`);
+               logger.info(`RxDB ProjectData: Mapped ${projectTasks.length} tasks for project`);
                setRxTasks(projectTasks);
            });
 
@@ -203,7 +203,7 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
    const executeSave = async (fn: () => Promise<any>) => {
         // Trigger manual sync status if this is a local project
         const isLocalProject = project.proj_type !== 'ui' && !project.remote_proj_slug;
-        console.log('executeSave called. isLocalProject:', isLocalProject, 'notifySyncStart exists:', !!notifySyncStart);
+        logger.info('executeSave called', { isLocalProject, hasNotifySyncStart: !!notifySyncStart });
         if (isLocalProject) {
             notifySyncStart?.();
         }

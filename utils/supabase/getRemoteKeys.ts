@@ -22,7 +22,6 @@ export async function getRemoteKeys(slug: string) {
     const key = process.env[serviceRoleKey];
 
     if (!url || !key) {
-        console.warn(`[getRemoteKeys] Keys not found for slug: ${slug} (looked for ${urlKey}, ${serviceRoleKey})`);
         return null;
     }
 

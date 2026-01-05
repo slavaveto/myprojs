@@ -120,7 +120,6 @@ export const EditProjectPopover = ({
         try {
             await onDelete();
         } catch (err) {
-            console.error(err);
             setIsDeleting(false);
         }
     };

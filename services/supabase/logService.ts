@@ -34,7 +34,6 @@ export const createLogService = (supabase: SupabaseClient) => ({
             });
             
         if (error) {
-            console.error('Failed to log action:', error);
         }
     },
 
@@ -83,7 +82,6 @@ export const createLogService = (supabase: SupabaseClient) => ({
             .or('is_completed.eq.true,is_deleted.eq.true');
 
         if (error || !tasks) {
-            console.error('Failed to fetch tasks for repair', error);
             return { count: 0, error };
         }
 

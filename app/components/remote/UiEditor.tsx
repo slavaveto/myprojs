@@ -65,7 +65,6 @@ export const UiEditor = ({ task, onUpdate }: UiEditorProps) => {
             const result = await translateText(textToTranslate, targetLang);
             
             if (result.error) {
-                console.error(`Translation failed: ${result.error}`);
                 // Could show toast here if we had access to it, or just alert/log
                 return;
             }
@@ -85,7 +84,6 @@ export const UiEditor = ({ task, onUpdate }: UiEditorProps) => {
             }
 
         } catch (error) {
-            console.error(error);
         } finally {
             if (targetLang === 'uk') setIsTranslatingUk(false);
             else if (targetLang === 'en') setIsTranslatingEn(false);

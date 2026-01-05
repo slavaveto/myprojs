@@ -54,7 +54,6 @@ export const EditFolderPopover = ({
             await onUpdate(title);
             setIsOpen(false);
         } catch (err) {
-            console.error(err);
         } finally {
             setIsLoading(false);
         }
@@ -70,7 +69,6 @@ export const EditFolderPopover = ({
         try {
             await onDelete();
         } catch (err) {
-            console.error(err);
             setIsDeleting(false);
         }
     };

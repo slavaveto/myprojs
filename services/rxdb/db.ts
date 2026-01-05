@@ -13,6 +13,7 @@ import { RxDBMigrationSchemaPlugin } from 'rxdb/plugins/migration-schema';
 import { replicateRxCollection, RxReplicationState } from 'rxdb/plugins/replication';
 import { wrappedValidateAjvStorage } from 'rxdb/plugins/validate-ajv';
 import { SupabaseClient } from '@supabase/supabase-js';
+import { createLogger } from '@/utils/logger/Logger';
 
 import { projectSchema, ProjectDocType } from './schemas/projectSchema';
 import { folderSchema, FolderDocType } from './schemas/folderSchema';
@@ -34,6 +35,8 @@ addRxPlugin(RxDBLeaderElectionPlugin);
 addRxPlugin(RxDBMigrationSchemaPlugin);
 // addRxPlugin(RxDBReplicationPlugin); // Not needed for basic replication
 
+const logger = createLogger('RxDB');
+
 if (process.env.NODE_ENV === 'development') {
     addRxPlugin(RxDBDevModePlugin);
 }
@@ -41,7 +44,7 @@ if (process.env.NODE_ENV === 'development') {
 let dbPromise: Promise<MyDatabase> | null = null;
 
 const createDatabase = async (): Promise<MyDatabase> => {
-    console.log('RxDB: Creating database...');
+    logger.info('Creating database...');
     
     let storage: any = getRxStorageDexie();
     if (process.env.NODE_ENV === 'development') {
@@ -70,10 +73,10 @@ const createDatabase = async (): Promise<MyDatabase> => {
 
     // Leader Election
     db.waitForLeadership().then(() => {
-        console.log('RxDB: This tab is now the LEADER');
+        logger.info('This tab is now the LEADER');
     });
 
-    console.log('RxDB: Database created');
+    logger.info('Database created');
     return db;
 };
 
@@ -86,7 +89,7 @@ export const getDatabase = () => {
 
 // Функция запуска репликации (вызывается извне, когда у нас есть supabase клиент)
 export const startReplication = async (db: MyDatabase, supabase: SupabaseClient): Promise<RxReplicationState<any, any>[]> => {
-    console.log('RxDB: Starting replication (Native)...');
+    logger.info('Starting replication (Native)...');
     const replicationStates: RxReplicationState<any, any>[] = [];
 
     const replicateTable = async (collection: any, tableName: string) => {
@@ -100,7 +103,7 @@ export const startReplication = async (db: MyDatabase, supabase: SupabaseClient)
             pull: {
                 async handler(checkpointOrNull: any) {
                     const checkpoint = checkpointOrNull ? checkpointOrNull.updated_at : new Date(0).toISOString();
-                    console.log(`RxDB Pull ${tableName}: fetching since ${checkpoint}`);
+                    logger.info(`Pull ${tableName}: fetching since ${checkpoint}`);
                     
                     const { data, error } = await supabase
                         .from(tableName)
@@ -109,14 +112,14 @@ export const startReplication = async (db: MyDatabase, supabase: SupabaseClient)
                         .order('updated_at', { ascending: true });
 
                     if (error) {
-                        console.error(`Pull error for ${tableName}:`, error);
+                        logger.error(`Pull error for ${tableName}:`, error);
                         throw error;
                     }
 
-                    console.log(`RxDB Pull ${tableName}: received raw ${data.length} docs from Supabase`);
+                    logger.info(`Pull ${tableName}: received raw ${data.length} docs from Supabase`);
                     
                     if (data.length > 0) {
-                        console.log(`RxDB Pull ${tableName}: Checkpoint updated to ${data[data.length - 1].updated_at}`);
+                        logger.info(`Pull ${tableName}: Checkpoint updated to ${data[data.length - 1].updated_at}`);
                     }
 
                     // Clean docs to match schema (remove extra fields dynamically)
@@ -160,8 +163,8 @@ export const startReplication = async (db: MyDatabase, supabase: SupabaseClient)
                         return cleanDoc;
                     });
                     
-                    console.log(`RxDB Push ${tableName}: sending ${docs.length} docs`);
-                    // console.log('Docs payload:', JSON.stringify(docs, null, 2)); 
+                    logger.info(`Push ${tableName}: sending ${docs.length} docs`);
+                    // logger.info('Docs payload:', JSON.stringify(docs, null, 2)); 
 
                     const { data: upserted, error } = await supabase
                         .from(tableName)
@@ -169,11 +172,11 @@ export const startReplication = async (db: MyDatabase, supabase: SupabaseClient)
                         .select();
                     
                     if (upserted && upserted.length === 0) {
-                        console.warn(`RxDB Push ${tableName}: Upsert returned 0 rows! Check RLS or data mismatch.`);
+                        logger.warning(`Push ${tableName}: Upsert returned 0 rows! Check RLS or data mismatch.`);
                     }
 
                     if (error) {
-                        console.error(`Push error for ${tableName}:`, JSON.stringify(error, null, 2));
+                        logger.error(`Push error for ${tableName}:`, JSON.stringify(error, null, 2));
                         throw error;
                     }
                     return [];
@@ -184,7 +187,7 @@ export const startReplication = async (db: MyDatabase, supabase: SupabaseClient)
             live: true,
         });
 
-        console.log(`RxDB: Replication initialized for ${tableName}`);
+        logger.info(`Replication initialized for ${tableName}`);
         replicationStates.push(replicationState);
         return replicationState;
     };
@@ -193,9 +196,9 @@ export const startReplication = async (db: MyDatabase, supabase: SupabaseClient)
         await replicateTable(db.projects, 'projects');
         await replicateTable(db.folders, 'folders');
         await replicateTable(db.tasks, 'tasks');
-        console.log('RxDB: Replication started successfully');
+        logger.success('Replication started successfully');
     } catch (err: any) {
-        console.error('RxDB: Failed to start replication', err);
+        logger.error('Failed to start replication', err);
     }
 
     return replicationStates;

@@ -166,7 +166,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
          window.dispatchEvent(new Event('logger-next-config-change'));
          loadConfigs();
       } catch (e) {
-         console.error(e);
       }
    };
 
@@ -272,7 +271,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
          }
 
       } catch (e) {
-         console.error(e);
          alert('Scan failed check console');
       }
    };

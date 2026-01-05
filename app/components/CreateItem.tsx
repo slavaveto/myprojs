@@ -49,7 +49,6 @@ export const CreateItemPopover = ({
             setValue('');
             if (withColorPicker) setSelectedColor(COLORS[0].value);
         } catch (err) {
-            console.error(err);
         } finally {
             setIsLoading(false);
         }

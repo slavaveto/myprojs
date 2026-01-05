@@ -20,7 +20,6 @@ export const getProjectClient = async (slug?: string): Promise<SupabaseClient | 
     const keys = await getRemoteKeys(slug);
 
     if (!keys) {
-        console.error(`Could not retrieve keys for remote project: ${slug}`);
         return null;
     }
 

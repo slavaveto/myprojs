@@ -23,7 +23,6 @@ try {
         },
     });
 } catch (error) {
-    console.error('Failed to initialize Google Cloud Storage:', error);
 }
 
 const bucketName = process.env.GOOGLE_CLOUD_PROJ_BUCKET_NAME || 'daysync';
@@ -90,7 +89,6 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: true, url: publicUrl });
 
     } catch (error: any) {
-        console.error('Upload error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
@@ -138,7 +136,6 @@ export async function DELETE(req: Request) {
                 }
             } catch (e: any) {
                 if (e.code !== 404) {
-                    console.error('GCS delete error:', e);
                 }
             }
         }
@@ -153,7 +150,6 @@ export async function DELETE(req: Request) {
 
         return NextResponse.json({ success: true });
     } catch (error: any) {
-        console.error('Delete error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

@@ -86,7 +86,7 @@ export function usePageLogic() {
           // Convert RxDocuments to plain JSON if needed, or use as is (they behave like objects)
           // But our Project type might not match exactly with RxDocument methods
           const plainProjects = projectsData.map((doc: any) => doc.toJSON()) as Project[];
-          console.log('RxDB Subscription: Projects received', plainProjects.length);
+          logger.info('RxDB Subscription: Projects received', plainProjects.length);
           
           setProjects(plainProjects);
 
@@ -123,15 +123,15 @@ export function usePageLogic() {
                     if (pid) map[pid] = (map[pid] || 0) + 1;
                 });
                 setDoingNowMap(map);
-            }).catch(err => console.error(err));
+            }).catch(err => logger.error(err));
 
             taskService.getTodayTasks().then(tasks => {
                 setTodayCount(tasks?.length || 0);
-            }).catch(err => console.error(err));
+            }).catch(err => logger.error(err));
 
             taskService.getInboxTasks().then(tasks => {
                 setInboxCount(tasks?.length || 0);
-            }).catch(err => console.error(err));
+            }).catch(err => logger.error(err));
       };
 
       fetchCounters();
@@ -418,15 +418,15 @@ export function usePageLogic() {
               }
           });
           setDoingNowMap(map);
-      }).catch(err => console.error(err));
+      }).catch(err => logger.error(err));
 
       taskService.getTodayTasks().then(tasks => {
           setTodayCount(tasks?.length || 0);
-      }).catch(err => console.error(err));
+      }).catch(err => logger.error(err));
 
       taskService.getInboxTasks().then(tasks => {
           setInboxCount(tasks?.length || 0);
-      }).catch(err => console.error(err));
+      }).catch(err => logger.error(err));
    };
 
    // --- DnD Handlers ---

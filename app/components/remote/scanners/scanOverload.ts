@@ -47,7 +47,6 @@ export async function scanOverloadedFiles(projectFolderName?: string, threshold:
               });
           }
       } catch (e) {
-          console.error(`Error reading file ${file}:`, e);
       }
   }
 

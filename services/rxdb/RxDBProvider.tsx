@@ -6,6 +6,9 @@ import { getDatabase, startReplication, MyDatabase } from './db';
 import { RxReplicationState } from 'rxdb/plugins/replication';
 import { combineLatest } from 'rxjs';
 import { toast } from 'react-hot-toast';
+import { createLogger } from '@/utils/logger/Logger';
+
+const logger = createLogger('RxDBProvider');
 
 interface RxDBContextValue {
     db: MyDatabase;
@@ -29,7 +32,7 @@ export const RxDBProvider = ({ children }: { children: React.ReactNode }) => {
     const [lastSyncStats, setLastSyncStats] = useState({ sent: 0, received: 0 });
 
     const notifySyncStart = () => {
-        console.log('RxDBProvider: notifySyncStart triggered');
+        logger.info('notifySyncStart triggered');
         if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
         setManualSyncing(true);
         syncTimeoutRef.current = setTimeout(() => {
@@ -52,7 +55,7 @@ export const RxDBProvider = ({ children }: { children: React.ReactNode }) => {
                     setReplicationStates(states);
                 }
             } catch (err) {
-                console.error('Failed to initialize RxDB:', err);
+                logger.error('Failed to initialize RxDB:', err);
             }
         };
 
@@ -61,7 +64,7 @@ export const RxDBProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Track sync status
     useEffect(() => {
-        console.log(`RxDBProvider: Replication states count: ${replicationStates.length}`);
+        logger.info(`Replication states count: ${replicationStates.length}`);
         if (replicationStates.length === 0) return;
 
         // Combine active$ observables from all replication states
@@ -70,7 +73,7 @@ export const RxDBProvider = ({ children }: { children: React.ReactNode }) => {
         const sub = combineLatest(activeObservables).subscribe((activeStates) => {
             // If any replication is active, we are syncing
             const anyActive = activeStates.some(isActive => isActive);
-            console.log('RxDB Sync Status:', anyActive); 
+            logger.info('Sync Status:', anyActive); 
             setRealSyncing(anyActive);
         });
 
@@ -107,7 +110,7 @@ export const RxDBProvider = ({ children }: { children: React.ReactNode }) => {
             const timer = setTimeout(() => {
                 
                 const performCheck = async (retryCount = 0) => {
-                    console.log(`RxDB: Running consistency check (Attempt ${retryCount + 1})...`);
+                    logger.info(`Running consistency check (Attempt ${retryCount + 1})...`);
                     const tables: ('projects' | 'folders' | 'tasks')[] = ['projects', 'folders', 'tasks'];
                     let allMatch = true;
                     const mismatches: string[] = [];
@@ -128,7 +131,7 @@ export const RxDBProvider = ({ children }: { children: React.ReactNode }) => {
                                 .eq('user_id', userId);
 
                             if (error) {
-                                console.error(`RxDB Consistency Check Error (${table}):`, error);
+                                logger.error(`Consistency Check Error (${table}):`, error);
                                 allMatch = false;
                                 mismatches.push(`${table}: API Error`);
                             } else {
@@ -160,24 +163,24 @@ export const RxDBProvider = ({ children }: { children: React.ReactNode }) => {
                                     allMatch = false;
                                     mismatches.push(`${table} (Diff)`);
                                 } else {
-                                    console.log(`RxDB Match [${table}]: Identical (${localMap.size} docs)`);
+                                    logger.info(`Match [${table}]: Identical (${localMap.size} docs)`);
                                 }
                             }
                         } catch (e) {
-                             console.error(`RxDB Check exception ${table}`, e);
+                             logger.error(`Check exception ${table}`, e);
                              allMatch = false;
                         }
                     }
 
                     if (!allMatch) {
                         if (retryCount < 3) {
-                            console.warn(`RxDB Check failed, retrying in 2s... Mismatches: ${mismatches.join(', ')}`);
+                            logger.warning(`Check failed, retrying in 2s... Mismatches: ${mismatches.join(', ')}`);
                             setTimeout(() => performCheck(retryCount + 1), 2000);
                         } else {
                             toast.error(`Sync Mismatch: ${mismatches.join(', ')}`, { duration: 5000 });
                         }
                     } else {
-                        console.log('RxDB Sync Verified: All tables match');
+                        logger.success('Sync Verified: All tables match');
                     }
                 };
 

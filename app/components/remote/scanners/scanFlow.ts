@@ -34,7 +34,6 @@ export async function scanFlowRefs(projectFolderName?: string): Promise<ScanFlow
       ignorePatterns.push('app/tabs/docs/**');
   }
 
-  // console.log('Scanning in:', rootPath);
 
   // Note: glob patterns are relative to cwd
   const files = await glob('**/*.{ts,tsx}', { 
@@ -73,20 +72,16 @@ export async function scanFlowRefs(projectFolderName?: string): Promise<ScanFlow
               let description: string | undefined;
               let debugInfo = `Found ID: ${id}. `;
               
-              // Debug log
-              // console.log(`Found ref: ${id}, checking next line...`);
 
               // Always check next line for description comment
               if (lines[i + 1]) {
                   const nextLine = lines[i + 1].trim();
-                  // console.log(`Next line trimmed: "${nextLine}"`);
                   debugInfo += `Next line: "${nextLine}". `;
                   
                   // Check for // comment
                   const commentMatch = nextLine.match(/^\/\/\s*(.*)/);
                   if (commentMatch) {
                       description = commentMatch[1].trim();
-                      // console.log(`Description found: "${description}"`);
                       debugInfo += `Desc matched: "${description}".`;
                   } else {
                       debugInfo += `No comment match.`;
