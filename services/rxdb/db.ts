@@ -15,6 +15,7 @@ import { wrappedValidateAjvStorage } from 'rxdb/plugins/validate-ajv';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { createLogger } from '@/utils/logger/Logger';
 import { Subject } from 'rxjs';
+import { RxReplicationPullStreamItem } from 'rxdb';
 
 import { projectSchema, ProjectDocType } from './schemas/projectSchema';
 import { folderSchema, FolderDocType } from './schemas/folderSchema';
@@ -97,7 +98,52 @@ export const startReplication = async (db: MyDatabase, supabase: SupabaseClient,
         // Получаем список допустимых полей из схемы
         const schema = collection.schema.jsonSchema;
         const allowedFields = Object.keys(schema.properties);
-        const pullStream$ = new Subject();
+        const pullStream$ = new Subject<RxReplicationPullStreamItem<any, any>>();
+        
+        // Подписываемся на Realtime изменения
+        supabase.channel(`public:${tableName}`)
+            .on(
+                'postgres_changes',
+                { 
+                    event: '*', 
+                    schema: 'public', 
+                    table: tableName,
+                    filter: `user_id=eq.${userId}` // Слушаем только свои изменения
+                }, 
+                (payload) => {
+                    // logger.info(`Realtime Event [${tableName}]:`, payload.eventType);
+                    
+                    let doc: any = null;
+                    if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+                        doc = payload.new;
+                    } 
+                    // Для DELETE нам по сути все равно, у нас soft-delete (UPDATE is_deleted=true)
+                    // Но если вдруг физическое удаление, payload.old может пригодиться
+                    
+                    if (doc) {
+                        // Чистим документ под схему
+                        const cleanDoc: any = {};
+                        allowedFields.forEach(field => {
+                            if (Object.prototype.hasOwnProperty.call(doc, field)) {
+                                cleanDoc[field] = doc[field];
+                            }
+                        });
+
+                        // Кидаем в поток репликации
+                        pullStream$.next({
+                            documents: [cleanDoc],
+                            checkpoint: {
+                                updated_at: cleanDoc.updated_at
+                            }
+                        });
+                    }
+                }
+            )
+            .subscribe((status) => {
+                if (status === 'SUBSCRIBED') {
+                    logger.info(`Realtime subscribed to ${tableName}`);
+                }
+            });
         
         const replicationState = await replicateRxCollection({
             collection,
@@ -151,7 +197,7 @@ export const startReplication = async (db: MyDatabase, supabase: SupabaseClient,
                         }
                     };
                 },
-                stream$: pullStream$.asObservable() as any
+                stream$: pullStream$.asObservable()
             },
             push: {
                 async handler(changeRows: any[]) {
