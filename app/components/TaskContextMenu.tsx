@@ -119,9 +119,11 @@ export const TaskMenuItems = ({
          'insertNoteAbove',
          'insertNoteBelow',
          'separator', 
-         'move', 
-         'separator', 
-         'delete'
+         'delete',
+         // 'separator', 
+         // 'move', 
+         
+         
       ];
 
       if (isInsideGroup) return [
@@ -130,6 +132,7 @@ export const TaskMenuItems = ({
          'separator', 
          'insertAbove', 
          'insertBelow', 
+         'separator', 
          'insertGap', 
          'separator', 
          'delete'
@@ -145,11 +148,14 @@ export const TaskMenuItems = ({
          'separator', 
          'insertAbove', 
          'insertBelow', 
+         'separator', 
          'insertGap', 
          'separator', 
-         'move', 
-         'separator', 
-         'delete'
+         'delete',
+         // 'separator', 
+         // 'move', 
+         
+         
       ];
    };
 
