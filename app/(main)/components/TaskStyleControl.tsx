@@ -13,7 +13,7 @@ import {
    X 
 } from 'lucide-react';
 import { clsx } from 'clsx';
-import { Task } from '../types';
+import { Task } from '../../types';
 
 interface TaskStyleControlProps {
    task: Task | any;

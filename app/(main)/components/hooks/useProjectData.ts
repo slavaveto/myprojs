@@ -10,7 +10,7 @@ import { createLogger } from '@/utils/logger/Logger';
 import { useFolderData } from './useFolderData';
 import { useTaskData } from './useTaskData';
 import { loadingService } from '@/services/supabase/loadingLogsService';
-import { NavigationTarget } from '@/app/components/GlobalSearch';
+import { NavigationTarget } from '@/app/(main)/components/GlobalSearch';
 import { getProjectClient } from '@/utils/supabase/projectClientFactory';
 import { createRemoteFolderService, createRemoteTaskService } from '@/services/supabase/remoteServices';
 import { useSupabase } from '@/utils/supabase/useSupabase';

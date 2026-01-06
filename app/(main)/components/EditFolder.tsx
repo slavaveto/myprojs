@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Popover, PopoverTrigger, PopoverContent, Button, Input, PopoverProps } from '@heroui/react';
 import { Trash2, ArrowLeft, ArrowRight } from 'lucide-react';
-import { DeleteConfirmationModal } from '@/app/components/DeleteModal';
+import { DeleteConfirmationModal } from '@/app/(main)/components/DeleteModal';
 
 interface EditFolderPopoverProps {
     children: React.ReactNode;

@@ -7,42 +7,58 @@ import { createProjectService } from '@/services/supabase/projectService';
 import { useSupabase } from '@/utils/supabase/useSupabase';
 import { clsx } from 'clsx';
 import {
+   CheckCircle2,
+   Trash2,
+   Folder as FolderIcon,
    RefreshCw,
+   GripVertical,
+   RotateCcw,
+   Calendar,
    MoreVertical,
-   Target,
+   MoveRight,
+   ArrowRight,
+   Star,
 } from 'lucide-react';
 import {
    Spinner,
+   Chip,
    Button,
+   Switch,
+   Select,
+   SelectItem,
    Checkbox,
    Dropdown,
    DropdownTrigger,
    DropdownMenu,
-   Chip,
+   DropdownItem,
+   DropdownSection,
 } from '@heroui/react';
-import { globalStorage } from '@/utils/storage';
+import { format, isToday, isYesterday, isThisWeek, isThisMonth } from 'date-fns';
+import { useGlobalPersistentState, globalStorage } from '@/utils/storage';
 import { AnimatePresence, motion } from 'framer-motion';
 import { loadingService } from '@/services/supabase/loadingLogsService';
+import { EditableCell } from '../components/EditableCell';
 import { TaskContextMenu, TaskMenuItems } from '../components/TaskContextMenu';
 import { TaskStyleControl } from '../components/TaskStyleControl';
 import { TaskTodayControl } from '../components/TaskTodayControl';
 import { useAsyncAction } from '@/utils/supabase/useAsyncAction';
 import { StatusBadge } from '@/utils/supabase/StatusBadge';
-import { GlobalSearch, NavigationTarget } from '@/app/components/GlobalSearch';
+import { GlobalSearch, NavigationTarget } from '@/app/(main)/components/GlobalSearch';
 import { RichEditableCell } from '../components/RichEditableCell';
 
-const logger = createLogger('DoingNowScreen');
+const logger = createLogger('TodayScreen');
 
-interface DoingNowScreenProps {
+interface TodayScreenProps {
    globalStatus?: string;
    canLoad?: boolean;
    isActive?: boolean;
+   onRestoreTask?: (task: any) => void;
    onMoveTask?: (taskId: string, projectId: string, folderId: string) => void;
    onNavigate?: (target: NavigationTarget) => void;
 }
 
-// Visual clone of TaskRow for DoingNow items
-const DoingNowTaskRow = ({
+// Visual clone of TaskRow for Today items
+const TodayTaskRow = ({
    task,
    onUpdate,
    onDelete,
@@ -116,6 +132,8 @@ const DoingNowTaskRow = ({
                      )}
                   />
                </div>
+
+               
             </div>
 
             {/* Actions */}
@@ -123,7 +141,7 @@ const DoingNowTaskRow = ({
                {/* Style Button */}
                <TaskStyleControl task={task} onUpdate={onUpdate} />
 
-               {/* Today Toggle */}
+               {/* Remove from Today button */}
                <TaskTodayControl task={task} onUpdate={onUpdate} />
 
                <Dropdown placement="bottom-end">
@@ -157,13 +175,13 @@ const DoingNowTaskRow = ({
    );
 };
 
-export const DoingNowScreen = ({
+export const TodayScreen = ({
    globalStatus = 'idle',
    canLoad = true,
    isActive = false,
    onMoveTask,
    onNavigate,
-}: DoingNowScreenProps) => {
+}: TodayScreenProps) => {
    const { supabase } = useSupabase();
    const taskService = useMemo(() => createTaskService(supabase), [supabase]);
    const projectService = useMemo(() => createProjectService(supabase), [supabase]);
@@ -175,6 +193,25 @@ export const DoingNowScreen = ({
    const [projectsStructure, setProjectsStructure] = useState<any[]>([]);
 
    const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null);
+
+   // --- Check for highlighted task ---
+   useEffect(() => {
+      if (isActive && isLoaded) {
+         const highlightKey = 'highlight_task_today';
+         const taskIdToHighlight = globalStorage.getItem(highlightKey);
+
+         if (taskIdToHighlight) {
+            logger.info('Highlighting restored task', { taskId: taskIdToHighlight });
+            setHighlightedTaskId(taskIdToHighlight);
+
+            globalStorage.removeItem(highlightKey);
+
+            setTimeout(() => {
+               setHighlightedTaskId(null);
+            }, 2000);
+         }
+      }
+   }, [isActive, isLoaded]);
 
    const {
       execute: executeSave,
@@ -197,23 +234,26 @@ export const DoingNowScreen = ({
          .catch((err) => logger.error('Failed to load projects structure', err));
    }, []);
 
+   // Persistent filters (if needed in future, currently none specific to Today like timeFilter)
+   // const [showCompleted, setShowCompleted] = useGlobalPersistentState<boolean>('today_show_completed', true);
+
    const fetchTasks = async (showSpinner = true) => {
       // If we shouldn't load, just return.
       if (!canLoad && showSpinner) return;
 
       if (showSpinner) {
          setIsLoading(true);
-         loadingService.logSystemTabStart('DoingNow');
+         loadingService.logSystemTabStart('Today');
       } else {
          setIsRefreshing(true);
-         logger.info('Refreshing doing now tasks...');
+         logger.info('Refreshing today tasks...');
       }
 
       try {
-         // Fetch tasks from "Doing Now" folders
-         let data = await taskService.getDoingNowTasks();
+         // Fetch tasks where is_today = true
+         let data = await taskService.getTodayTasks();
 
-         // Artificial delay for better UX
+         // Artificial delay for better UX (optional, matching DoneScreen)
          await new Promise((resolve) => setTimeout(resolve, 500));
 
          // Client-side sorting based on Folder Order then Task Order
@@ -231,10 +271,10 @@ export const DoingNowScreen = ({
          }
 
          setTasks(data || []);
-         loadingService.logSystemTabFinish('DoingNow', data?.length || 0);
+         loadingService.logSystemTabFinish('Today', data?.length || 0);
          setIsLoaded(true);
       } catch (err) {
-         logger.error('Failed to load doing now tasks', err);
+         logger.error('Failed to load today tasks', err);
       } finally {
          setIsLoading(false);
          setIsRefreshing(false);
@@ -244,7 +284,7 @@ export const DoingNowScreen = ({
    useEffect(() => {
       // Fetch if allowed to load AND (it's active OR first load)
       if (canLoad && isActive) {
-         logger.info('DoingNowScreen became active, fetching...');
+         logger.info('TodayScreen became active, fetching...');
          // Don't show full spinner if already loaded, just refresh icon spin
          fetchTasks(!isLoaded);
       } else if (canLoad && !isLoaded) {
@@ -258,12 +298,17 @@ export const DoingNowScreen = ({
       setTasks((prev) => {
          const newTasks = prev.map((t) => (t.id === id ? { ...t, ...updates } : t));
 
-         // If completing, remove from list
-         if (updates.is_completed === true) {
-             return newTasks.filter((t) => t.id !== id);
+         // If removing from today, filter out
+         if (updates.is_today === false) {
+            return newTasks.filter((t) => t.id !== id);
          }
 
-         // No re-sort on update to prevent jumping
+         // Re-sort if folder or sort_order changed (though usually updates here are content/style/completion)
+         // But user might drag drop in other screen? 
+         // For now, let's keep the order stable unless refresh. 
+         // Or if we want to support reordering here later.
+         // Actually, removing the resort logic prevents jumping tasks when editing style.
+         
          return newTasks;
       });
 
@@ -284,7 +329,9 @@ export const DoingNowScreen = ({
             await taskService.moveTaskToFolder(taskId, folderId);
          });
 
-         // 2. Remove from local list (optimistic)
+         // 2. Remove from local list (optimistic) - or keep it if we want to show it?
+         // User said "switch to where we moved". So we are leaving this screen.
+         // But let's remove it from local state anyway to be clean.
          setTasks((prev) => prev.filter((t) => t.id !== taskId));
 
          // 3. Trigger parent navigation
@@ -314,18 +361,18 @@ export const DoingNowScreen = ({
    if (isLoading) {
       return (
          <div className="flex justify-center items-center h-full">
-            <Spinner label="Loading doing now tasks..." />
+            <Spinner label="Loading today's tasks..." />
          </div>
       );
    }
 
    return (
       <div className="h-full flex flex-col p-6 max-w-5xl mx-auto w-full">
-         <div className="grid grid-cols-[1fr_auto_1fr] items-center mb-4 min-h-[40px] gap-4">
-            <h1 className="tab-title justify-self-start">
-               <Target className={tasks.length > 0 ? "text-danger-400" : "text-primary-400"} />
-               Делаю Сейчас
-            </h1>
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center mb-4 min-h-[40px] gap-4">
+               <h1 className="tab-title justify-self-start">
+                  <Star className={tasks.length > 0 ? "text-warning" : "text-default-400"} fill="currentColor" />
+                  Today
+               </h1>
 
             <div className="w-full max-w-[240px] justify-self-center">
                {onNavigate && <GlobalSearch onNavigate={onNavigate} />}
@@ -349,16 +396,20 @@ export const DoingNowScreen = ({
 
          <div className="flex-grow overflow-y-auto pr-0 pb-10">
             {tasks.length === 0 ? (
-               <div className="text-center py-20 text-default-400">No tasks in "Делаю Прямо Сейчас" folders.</div>
+               <div className="text-center py-20 text-default-400">No tasks for today.</div>
             ) : (
                <div className="flex flex-col gap-6">
                   {(() => {
+                     // 1. Group tasks by Project (handling Inbox items)
                      const groups = tasks.reduce((acc, task) => {
-                        const projectId = task.folders.projects.id;
+                        const projectId = task.folders?.projects?.id || 'inbox';
+                        const projectTitle = task.folders?.projects?.title || 'Inbox';
+                        const projectColor = task.folders?.projects?.proj_color || '#a1a1aa'; // Zinc-400 for Inbox
+
                         if (!acc[projectId]) {
                            acc[projectId] = {
-                              title: task.folders.projects.title,
-                              color: task.folders.projects.proj_color,
+                              title: projectTitle,
+                              color: projectColor,
                               tasks: []
                            };
                         }
@@ -366,16 +417,22 @@ export const DoingNowScreen = ({
                         return acc;
                      }, {} as Record<string, { title: string; color: string; tasks: any[] }>);
 
-                     // Sort project IDs based on projectsStructure order
+                     // 2. Sort groups based on projectsStructure
                      const sortedProjectIds = Object.keys(groups).sort((a, b) => {
+                        // Always put Inbox at the top
+                        if (a === 'inbox') return -1;
+                        if (b === 'inbox') return 1;
+
                         const indexA = projectsStructure.findIndex((p: any) => p.id === a);
                         const indexB = projectsStructure.findIndex((p: any) => p.id === b);
+                        
                         if (indexA === -1 && indexB === -1) return 0;
                         if (indexA === -1) return 1;
                         if (indexB === -1) return -1;
                         return indexA - indexB;
                      });
 
+                     // 3. Render Groups
                      return sortedProjectIds.map((projectId) => {
                         const group = groups[projectId];
                         return (
@@ -384,10 +441,10 @@ export const DoingNowScreen = ({
                               <div className="flex items-center gap-2 px-1 sticky top-0 bg-background/95 backdrop-blur-sm z-10 py-2">
                                  <div 
                                     className="w-3 h-3 rounded-full flex-shrink-0"
-                                    style={{ backgroundColor: group.color || '#3b82f6' }}
+                                    style={{ backgroundColor: group.color }}
                                  />
                                  <h3 className="font-semibold text-default-700">{group.title}</h3>
-                                 <Chip size="sm" variant="flat" className="ml-2 h-5 min-w-5 px-1 text-[12px]  bg-default-100 text-default-500">
+                                 <Chip size="sm" variant="flat" className="ml-2 h-5 min-w-5 px-1 text-[12px] bg-default-100 text-default-500">
                                     {group.tasks.length}
                                  </Chip>
                               </div>
@@ -396,7 +453,7 @@ export const DoingNowScreen = ({
                               <div className="flex flex-col gap-[6px]">
                                  <AnimatePresence initial={false} mode="popLayout">
                                     {group.tasks.map((task: any) => (
-                                       <DoingNowTaskRow
+                                       <TodayTaskRow
                                           key={task.id}
                                           task={task}
                                           onUpdate={handleUpdate}
@@ -418,4 +475,3 @@ export const DoingNowScreen = ({
       </div>
    );
 };
-

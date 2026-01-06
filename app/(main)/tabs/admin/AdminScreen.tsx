@@ -9,19 +9,19 @@ import {
    FileText 
 } from 'lucide-react';
 import { Project } from '@/app/types';
-import { ProjectScreen } from '@/app/tabs/ProjectScreen';
-import { NavigationTarget, GlobalSearch } from '@/app/components/GlobalSearch'; // Import GlobalSearch
+import { ProjectScreen } from '@/app/(main)/tabs/ProjectScreen';
+import { NavigationTarget, GlobalSearch } from '@/app/(main)/components/GlobalSearch'; // Import GlobalSearch
 import { StatusBadge } from '@/utils/supabase/StatusBadge'; // Import StatusBadge
-import { EditProjectPopover } from '@/app/components/EditProject'; // Import EditProject
+import { EditProjectPopover } from '@/app/(main)/components/EditProject'; // Import EditProject
 import { Button } from '@heroui/react'; // Import Button
 import { EllipsisVertical } from 'lucide-react'; // Import Icon
 import { globalStorage } from '@/utils/storage'; // Import globalStorage
 
 import { ActionStatus } from '@/utils/supabase/useAsyncAction'; // Import ActionStatus
-import { OverloadScanner } from '@/app/components/remote/scanners/OverloadScanner'; // Import Scanner
-import { FlowScanner } from '@/app/components/remote/scanners/FlowScanner'; // Import Flow Scanner
-import { UserHeaderMenu } from '@/app/components/UserHeaderMenu'; // Import UserHeaderMenu
-import { RemoteUsers } from '@/app/components/remote/RemoteUsers'; // Import RemoteUsers
+import { OverloadScanner } from '@/app/(main)/components/remote/scanners/OverloadScanner'; // Import Scanner
+import { FlowScanner } from '@/app/(main)/components/remote/scanners/FlowScanner'; // Import Flow Scanner
+import { UserHeaderMenu } from '@/app/(main)/components/UserHeaderMenu'; // Import UserHeaderMenu
+import { RemoteUsers } from '@/app/(main)/components/remote/RemoteUsers'; // Import RemoteUsers
 import { getProjectClient } from '@/utils/supabase/projectClientFactory'; // Import client factory
 import { SupabaseClient } from '@supabase/supabase-js';
 

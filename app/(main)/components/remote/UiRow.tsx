@@ -7,7 +7,7 @@ import { GripVertical, Trash2, MoreVertical } from 'lucide-react';
 import { Task } from '@/app/types';
 import { clsx } from 'clsx';
 import { motion } from 'framer-motion';
-import { UiEditableCell } from '@/app/components/remote/UiEditableCell'; // Use new component
+import { UiEditableCell } from '@/app/(main)/components/remote/UiEditableCell'; // Use new component
 
 interface UiRowProps {
    task: Task;

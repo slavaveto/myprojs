@@ -3,7 +3,7 @@
 import React from 'react';
 import { Pin } from 'lucide-react';
 import { clsx } from 'clsx';
-import { Task } from '../types';
+import { Task } from '../../types';
 
 interface TaskPinControlProps {
    task: Task | any;

@@ -11,7 +11,7 @@ import { Spinner, Chip, Button, Switch, Select, SelectItem, Checkbox, Dropdown, 
 import { format, isToday, isYesterday, isThisWeek, isThisMonth } from 'date-fns';
 import { useGlobalPersistentState, globalStorage } from '@/utils/storage';
 import { AnimatePresence, motion } from 'framer-motion';
-import { CreateItemPopover } from '@/app/components/CreateItem';
+import { CreateItemPopover } from '@/app/(main)/components/CreateItem';
 import { loadingService } from '@/services/supabase/loadingLogsService';
 import { EditableCell } from '../components/EditableCell';
 import { RichEditableCell } from '../components/RichEditableCell';
@@ -20,7 +20,7 @@ import { TaskStyleControl } from '../components/TaskStyleControl';
 import { TaskTodayControl } from '../components/TaskTodayControl';
 import { useAsyncAction } from '@/utils/supabase/useAsyncAction';
 import { StatusBadge } from '@/utils/supabase/StatusBadge';
-import { GlobalSearch, NavigationTarget } from '@/app/components/GlobalSearch';
+import { GlobalSearch, NavigationTarget } from '@/app/(main)/components/GlobalSearch';
 
 const logger = createLogger('InboxScreen');
 

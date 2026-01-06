@@ -6,7 +6,7 @@ import { useAppLoader } from '@/app/AppLoader';
 import { globalStorage } from '@/utils/storage';
 import { useAsyncAction } from '@/utils/supabase/useAsyncAction';
 import { loadingService } from '@/services/supabase/loadingLogsService';
-import { NavigationTarget } from '@/app/components/GlobalSearch';
+import { NavigationTarget } from '@/app/(main)/components/GlobalSearch';
 import { toast } from 'react-hot-toast';
 import {
    useSensor,

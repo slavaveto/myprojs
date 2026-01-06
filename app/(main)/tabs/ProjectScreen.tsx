@@ -15,21 +15,21 @@ import {
 } from '@dnd-kit/core';
 
 import { TaskRow } from '@/app/TaskRow';
-import { FolderTabs, FolderTab } from '@/app/components/FolderTabs';
-import { TaskList } from '@/app/components/TaskList';
+import { FolderTabs, FolderTab } from '@/app/(main)/components/FolderTabs';
+import { TaskList } from '@/app/(main)/components/TaskList';
 import { ActionStatus } from '@/utils/supabase/useAsyncAction';
 import { StatusBadge } from '@/utils/supabase/StatusBadge';
 import { RxStatusBadge } from '@/utils/supabase/RxStatusBadge';
-import { EditProjectPopover } from '@/app/components/EditProject';
-import { useProjectData } from '@/app/components/hooks/useProjectData';
-import { useProjectDnD } from '@/app/components/hooks/useProjectDnD';
-import { GlobalSearch, NavigationTarget } from '@/app/components/GlobalSearch';
+import { EditProjectPopover } from '@/app/(main)/components/EditProject';
+import { useProjectData } from '@/app/(main)/components/hooks/useProjectData';
+import { useProjectDnD } from '@/app/(main)/components/hooks/useProjectDnD';
+import { GlobalSearch, NavigationTarget } from '@/app/(main)/components/GlobalSearch';
 
-import { RichTextProvider } from '@/app/components/RichTextProvider';
-import { NoteEditor } from '@/app/components/NoteEditor';
-import { UiEditor } from '@/app/components/remote/UiEditor'; // Import UI Editor
-import { UiRow } from '@/app/components/remote/UiRow';
-import { UserHeaderMenu } from '@/app/components/UserHeaderMenu';
+import { RichTextProvider } from '@/app/(main)/components/RichTextProvider';
+import { NoteEditor } from '@/app/(main)/components/NoteEditor';
+import { UiEditor } from '@/app/(main)/components/remote/UiEditor'; // Import UI Editor
+import { UiRow } from '@/app/(main)/components/remote/UiRow';
+import { UserHeaderMenu } from '@/app/(main)/components/UserHeaderMenu';
 
 const logger = createLogger('ProjectScreen');
 

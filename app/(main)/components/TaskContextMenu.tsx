@@ -14,7 +14,7 @@ import {
    Star, ArrowDown, ArrowUp
 } from 'lucide-react';
 import { clsx } from 'clsx';
-import { Task } from '../types';
+import { Task } from '../../types';
 
 export interface TaskContextMenuProps {
    children: React.ReactNode;

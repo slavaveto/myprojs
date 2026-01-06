@@ -3,12 +3,12 @@
 import React, { useState } from 'react';
 import { Task } from '@/app/types';
 import { TaskRow } from '@/app/TaskRow';
-import { UiRow } from '@/app/components/remote/UiRow'; // Import UiRow
+import { UiRow } from '@/app/(main)/components/remote/UiRow'; // Import UiRow
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { AnimatePresence } from 'framer-motion';
 import { Dropdown, DropdownTrigger, DropdownMenu } from '@heroui/react';
-import { TaskMenuItems } from '@/app/components/TaskContextMenu';
-import { UiContextMenu } from '@/app/components/remote/UiContextMenu'; // Import UiContextMenu
+import { TaskMenuItems } from '@/app/(main)/components/TaskContextMenu';
+import { UiContextMenu } from '@/app/(main)/components/remote/UiContextMenu'; // Import UiContextMenu
 
 interface TaskListProps {
     tasks: Task[];

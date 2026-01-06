@@ -7,8 +7,8 @@ import { Plus, EllipsisVertical, Info } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion } from 'framer-motion';
 import { useDroppable } from '@dnd-kit/core';
-import { CreateItemPopover } from '@/app/components/CreateItem';
-import { EditFolderPopover } from '@/app/components/EditFolder';
+import { CreateItemPopover } from '@/app/(main)/components/CreateItem';
+import { EditFolderPopover } from '@/app/(main)/components/EditFolder';
 
 // --- Single Tab Component ---
 interface FolderTabProps {

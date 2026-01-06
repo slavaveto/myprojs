@@ -3,7 +3,7 @@
 import React from 'react';
 import { Star } from 'lucide-react';
 import { clsx } from 'clsx';
-import { Task } from '../types';
+import { Task } from '../../types';
 
 interface TaskTodayControlProps {
    task: Task | any;

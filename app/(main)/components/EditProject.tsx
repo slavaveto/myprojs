@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Popover, PopoverTrigger, PopoverContent, Button, Input, PopoverProps, Checkbox, Switch } from '@heroui/react';
 import { clsx } from 'clsx';
 import { Check, Trash2 } from 'lucide-react';
-import { DeleteConfirmationModal } from '@/app/components/DeleteModal';
+import { DeleteConfirmationModal } from '@/app/(main)/components/DeleteModal';
 
 const COLORS = [
     { name: 'Blue', value: '#3b82f6' },      // blue-500

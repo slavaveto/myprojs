@@ -4,18 +4,18 @@ import * as React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useDndContext } from '@dnd-kit/core';
-import { FastCheckbox } from './components/FastCheckbox';
+import { FastCheckbox } from './(main)/components/FastCheckbox';
 import { Checkbox, Chip } from '@heroui/react'; // Restore Checkbox import
 import { GripVertical, Trash2, MoreVertical, Check, Pin, ChevronRight, ChevronDown, FileText } from 'lucide-react';
 import { Task } from './types';
-import { EditableCell } from './components/EditableCell';
-import { RichEditableCell } from './components/RichEditableCell';
+import { EditableCell } from './(main)/components/EditableCell';
+import { RichEditableCell } from './(main)/components/RichEditableCell';
 import { clsx } from 'clsx';
 import { motion } from 'framer-motion';
-import { TaskContextMenu, TaskMenuItems } from './components/TaskContextMenu';
-import { TaskStyleControl } from './components/TaskStyleControl';
-import { TaskPinControl } from './components/TaskPinControl';
-import { TaskTodayControl } from './components/TaskTodayControl';
+import { TaskContextMenu, TaskMenuItems } from './(main)/components/TaskContextMenu';
+import { TaskStyleControl } from './(main)/components/TaskStyleControl';
+import { TaskPinControl } from './(main)/components/TaskPinControl';
+import { TaskTodayControl } from './(main)/components/TaskTodayControl';
 import { GROUP_COLORS } from './constants';
 
 interface TaskRowProps {

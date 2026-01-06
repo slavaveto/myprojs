@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Task } from '@/app/types';
 import { Input, Textarea, Button } from '@heroui/react';
 import { Save, Sparkles, Loader2 } from 'lucide-react';
-import { translateText } from '@/app/components/remote/actions';
+import { translateText } from '@/app/(main)/components/remote/actions';
 import { clsx } from 'clsx';
 
 interface UiEditorProps {

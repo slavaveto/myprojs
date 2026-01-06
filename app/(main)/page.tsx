@@ -14,16 +14,16 @@ import {
    Target,
 } from 'lucide-react';
 import { AppLoaderProvider, useAppLoader } from '@/app/AppLoader';
-import { ProjectScreen } from '@/app/tabs/ProjectScreen';
-import { AdminScreen } from '@/app/tabs/admin/AdminScreen';
-import { CreateItemPopover } from '@/app/components/CreateItem';
-import { LogsScreen } from '@/app/tabs/LogsScreen';
-import { DoneScreen } from '@/app/tabs/DoneScreen';
-import { TodayScreen } from '@/app/tabs/TodayScreen';
-import { DoingNowScreen } from '@/app/tabs/DoingNowScreen';
-import { InboxScreen } from '@/app/tabs/InboxScreen';
+import { ProjectScreen } from '@/app/(main)/tabs/ProjectScreen';
+import { AdminScreen } from '@/app/(main)/tabs/admin/AdminScreen';
+import { CreateItemPopover } from '@/app/(main)/components/CreateItem';
+import { LogsScreen } from '@/app/(main)/tabs/LogsScreen';
+import { DoneScreen } from '@/app/(main)/tabs/DoneScreen';
+import { TodayScreen } from '@/app/(main)/tabs/TodayScreen';
+import { DoingNowScreen } from '@/app/(main)/tabs/DoingNowScreen';
+import { InboxScreen } from '@/app/(main)/tabs/InboxScreen';
 import { StatusBadge } from '@/utils/supabase/StatusBadge';
-import { EditProjectPopover } from '@/app/components/EditProject';
+import { EditProjectPopover } from '@/app/(main)/components/EditProject';
 import { globalStorage } from '@/utils/storage';
 
 import { useLocalization } from '@/utils/localization/LocalizationProvider';
