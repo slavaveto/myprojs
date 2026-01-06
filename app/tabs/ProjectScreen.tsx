@@ -195,13 +195,13 @@ export const ProjectScreen = (props: ProjectScreenProps) => {
          {!hideHeader && (
              <div className="flex-none px-6 py-4 border-b border-default-200 bg-background z-10 flex flex-col gap-4">
                  {/* Title Row */}
-                 <div className="grid grid-cols-[1fr_auto_1fr] items-center min-h-[40px] gap-4">
+                 <div className="grid grid-cols-[1fr_auto_1fr] items-center min-h-[20px] gap-4">
                     <div className="flex items-center gap-2 justify-self-start pl-1">
                         <div 
                             className="w-4 h-4 rounded-full flex-shrink-0 shadow-sm border border-white/10" 
                             style={{ backgroundColor: project.proj_color || '#3b82f6' }}
                         />
-                        <h1 className="text-2xl font-bold truncate">{project.title}</h1>
+                        <h1 className="tab-title">{project.title}</h1>
                         <EditProjectPopover  
                             initialTitle={project.title}
                             initialColor={project.proj_color}
