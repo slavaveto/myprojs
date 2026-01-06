@@ -28,7 +28,7 @@ export const RxDBProvider = ({ children }: { children: React.ReactNode }) => {
     const { supabase, userId } = useSupabase();
     const statsRef = React.useRef({ sent: 0, received: 0 });
     
-    // Track sent IDs to ignore echoes
+    // Track sent IDs to ignore echoes (Оставляем для дебага, но не для вычитания)
     const pendingEchoesRef = React.useRef<Set<string>>(new Set());
 
     const syncTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
@@ -89,12 +89,14 @@ export const RxDBProvider = ({ children }: { children: React.ReactNode }) => {
         if (replicationStates.length === 0) return;
         const subs = replicationStates.map(state => [
             state.received$.subscribe((doc: any) => {
-                // If this ID is in pendingEchoes, it's our own change coming back
+                // ОТКЛЮЧЕНО ВЫЧИТАНИЕ ЭХА
+                // Просто считаем всё, что пришло
+                statsRef.current.received++;
+                
+                // Старая логика (для истории):
                 if (pendingEchoesRef.current.has(doc.id)) {
                     pendingEchoesRef.current.delete(doc.id);
-                    logger.info(`Ignored echo for ${doc.id}`);
-                } else {
-                    statsRef.current.received++;
+                    logger.info(`Echo detected for ${doc.id} (but counted anyway)`);
                 }
             }),
             state.sent$.subscribe((doc: any) => {
@@ -121,7 +123,7 @@ export const RxDBProvider = ({ children }: { children: React.ReactNode }) => {
              
              // Reset
              statsRef.current = { sent: 0, received: 0 };
-             pendingEchoesRef.current.clear(); // Clear echoes on sync end
+             // pendingEchoesRef.current.clear(); 
              setWasSyncing(false);
         }
     }, [isSyncing, wasSyncing]);
