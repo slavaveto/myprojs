@@ -78,10 +78,12 @@ export function DebugPanel({ isLocal = false }: { isLocal?: boolean }) {
    const [isPopoverOpen, setIsPopoverOpen] = useState(false);
    const [isRefCopied, setIsRefCopied] = useState(false);
 
+   // @ref:f46237 
+   // генерация уникального ID для ссылки на комментарий
    const handleCopyRef = () => {
       // Генерируем случайный ID (6 символов hex)
       const randomId = Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0');
-      const textToCopy = `// @ref:${randomId}\n// `;
+      const textToCopy = `// @ref:${randomId} //`;
       
       navigator.clipboard.writeText(textToCopy);
       setIsRefCopied(true);
