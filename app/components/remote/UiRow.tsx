@@ -65,7 +65,7 @@ export const UiRow = React.memo(
                     {...attributes}
                     {...listeners}
                     className={clsx(
-                    'cursor-grab touch-none p-[2px] active:cursor-grabbing text-default-400 hover:text-default-600 outline-none hover:bg-default-100 rounded text-center'
+                    'cursor-grab  p-[2px] active:cursor-grabbing text-default-400 hover:text-default-600 outline-none hover:bg-default-100 rounded text-center'
                     )}
                 >
                     <GripVertical size={16} />

@@ -109,7 +109,7 @@ const GapRow = ({
          {/* Icon visible ONLY on ICON AREA hover, dragging SELF */}
          <div
             className={clsx(
-               'absolute left-[2px] ml-[6px] cursor-grab touch-none active:cursor-grabbing hover:bg-default-100 rounded text-center outline-none transition-opacity duration-200 z-20 flex items-center justify-center h-[12px]', // Force 16px height
+               'absolute left-[2px] ml-[6px] cursor-grab active:cursor-grabbing hover:bg-default-100 rounded text-center outline-none transition-opacity duration-200 z-20 flex items-center justify-center h-[12px]', // Force 16px height
                isIconHovered || isDragging ? 'opacity-100' : 'opacity-0 pointer-events-none'
             )}
             {...attributes}
@@ -251,7 +251,7 @@ export const TaskRow = React.memo(
                      {...attributes}
                      {...listeners}
                      className={clsx(
-                        'cursor-grab touch-none p-[2px] active:cursor-grabbing text-default-400 hover:text-default-600 outline-none hover:bg-default-100 rounded text-center'
+                        'cursor-grab  p-[2px] active:cursor-grabbing text-default-400 hover:text-default-600 outline-none hover:bg-default-100 rounded text-center'
                      )}
                      style={{
                         color:
