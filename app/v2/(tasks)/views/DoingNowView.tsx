@@ -23,10 +23,7 @@ const DoingNowViewComponent = ({ isActive }: DoingNowViewProps) => {
 
     return (
         <div className="flex flex-col h-full w-full bg-background overflow-hidden">
-            <div className="flex-none p-4 border-b border-default-200 bg-red-50/50">
-                <h2 className="text-xl font-bold text-red-600">Doing Now</h2>
-                <p className="text-xs text-default-500">Current focus</p>
-            </div>
+      
             
             <div className="flex-1 overflow-y-auto p-4">
                 <div className="text-center text-default-400 py-10">Doing Now list logic pending.</div>

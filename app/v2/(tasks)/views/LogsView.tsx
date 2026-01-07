@@ -17,10 +17,7 @@ const LogsViewComponent = ({ isActive }: LogsViewProps) => {
 
     return (
         <div className="flex flex-col h-full w-full bg-background overflow-hidden">
-            <div className="flex-none p-4 border-b border-default-200">
-                <h2 className="text-xl font-bold">System Logs</h2>
-                <p className="text-xs text-default-500">Recent activity across all devices</p>
-            </div>
+      
             
             <div className="flex-1 overflow-y-auto p-4">
                 {logs.length === 0 ? (

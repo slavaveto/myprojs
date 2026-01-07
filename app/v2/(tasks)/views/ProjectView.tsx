@@ -19,7 +19,7 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
         <div className={clsx("flex flex-col h-full w-full", !isActive && "hidden")}>
             
             {/* Folder Tabs Area */}
-            {folders.length > 0 && (
+            {folders.length > 0 && !['Inbox', 'Today', 'Doing Now', 'Logs', 'Done', 'Logbook'].includes(project.title) && (
                 <FolderTabs 
                     folders={folders}
                     activeFolderId={activeFolderId}

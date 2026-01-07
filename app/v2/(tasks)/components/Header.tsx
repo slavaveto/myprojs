@@ -45,9 +45,22 @@ export const Header = ({ activeProject, activeSystemTab }: HeaderProps) => {
 
     if (activeProject) {
         title = activeProject.title;
-        // @ts-ignore
-        const color = activeProject.proj_color || activeProject.color || '#333';
-        colorStyle = { backgroundColor: color };
+        
+        // System Projects Handling
+        if (['Inbox', 'Today', 'Doing Now', 'Done', 'Logs', 'Logbook'].includes(activeProject.title)) {
+             switch (activeProject.title) {
+                case 'Inbox': Icon = Inbox; iconClass = "text-primary"; break;
+                case 'Today': Icon = Star; iconClass = "text-warning"; iconFill = "currentColor"; break;
+                case 'Doing Now': Icon = Target; iconClass = "text-danger"; break;
+                case 'Done': Icon = CheckCircle2; iconClass = "text-success"; break;
+                case 'Logs': case 'Logbook': Icon = FileText; iconClass = "text-default-500"; break;
+             }
+        } else {
+            // Regular Projects
+            // @ts-ignore
+            const color = activeProject.proj_color || activeProject.color || '#333';
+            colorStyle = { backgroundColor: color };
+        }
     } else if (activeSystemTab) {
         switch (activeSystemTab) {
             case 'inbox': 
