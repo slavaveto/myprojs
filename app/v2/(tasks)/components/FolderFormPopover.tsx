@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Popover, PopoverTrigger, PopoverContent, Button, Input } from '@heroui/react';
+import { Trash } from 'lucide-react';
 
 interface FolderFormPopoverProps {
     mode: 'create' | 'edit';
     initialTitle?: string;
     onSubmit: (title: string) => void;
+    onDelete?: () => void;
     trigger: React.ReactNode;
 }
 
-export const FolderFormPopover = ({ mode, initialTitle = '', onSubmit, trigger }: FolderFormPopoverProps) => {
+export const FolderFormPopover = ({ mode, initialTitle = '', onSubmit, onDelete, trigger }: FolderFormPopoverProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const [title, setTitle] = useState(initialTitle);
 
@@ -51,6 +53,25 @@ export const FolderFormPopover = ({ mode, initialTitle = '', onSubmit, trigger }
                             input: "text-small",
                         }}
                     />
+                    
+                    {mode === 'edit' && onDelete && (
+                        <Button 
+                            isIconOnly
+                            size="sm" 
+                            color="danger" 
+                            variant="flat"
+                            onPress={() => {
+                                if (confirm('Are you sure you want to delete this folder?')) {
+                                    onDelete();
+                                    setIsOpen(false);
+                                }
+                            }}
+                            className="min-w-8"
+                        >
+                            <Trash size={16} /> 
+                        </Button>
+                    )}
+
                     <Button 
                         size="sm" 
                         color="primary" 

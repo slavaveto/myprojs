@@ -109,6 +109,7 @@ export const FolderTab = ({
                           mode="edit"
                           initialTitle={folder.title}
                           onSubmit={onUpdate}
+                          onDelete={onDelete}
                           trigger={
                               <button 
                                   type="button"
