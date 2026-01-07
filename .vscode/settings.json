@@ -18,7 +18,6 @@
       ".vercelignore": true,
       ".cursor": true,
       "package.json": true,
-      "public": true,
       "hero.ts": true
    },
    "css.validate": false,
