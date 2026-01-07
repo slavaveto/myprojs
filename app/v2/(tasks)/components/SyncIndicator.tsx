@@ -125,6 +125,14 @@ export const SyncIndicator = () => {
                                 )}
                             </div>
                         )}
+
+                        {/* DEBUG STATUS */}
+                        <div className="mt-2 pt-2 border-t border-default-200">
+                             <div className="text-[10px] font-bold text-default-400 mb-1">DEBUG STATUS:</div>
+                             <pre className="text-[8px] bg-default-100 p-1 rounded overflow-auto max-h-[200px] text-default-600">
+                                 {JSON.stringify(status, null, 2)}
+                             </pre>
+                        </div>
                     </div>
                 </div>
             </PopoverContent>

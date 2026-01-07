@@ -22,6 +22,7 @@ export const AppSchema = new Schema({
     updated_at: column.text,
     is_deleted: column.integer,
     is_hidden: column.integer,
+    user_id: column.text,
   }),
   tasks: new Table({
     folder_id: column.text,
@@ -39,6 +40,7 @@ export const AppSchema = new Schema({
     group_id: column.text,
     is_closed: column.integer,
     task_notes: column.text,
+    user_id: column.text,
     // item_id, ru, en, uk - можно добавить потом если нужно для UI
   }),
   logs: new Table({
@@ -48,6 +50,7 @@ export const AppSchema = new Schema({
     entity_id: column.text,
     details: column.text,
     project_id: column.text,
+    user_id: column.text,
   }),
   _ui_folders: new Table({
     project_id: column.text,
@@ -56,7 +59,8 @@ export const AppSchema = new Schema({
     created_at: column.text,
     updated_at: column.text,
     is_deleted: column.integer,
-    is_hidden: column.integer
+    is_hidden: column.integer,
+    user_id: column.text,
   }),
   _ui_items: new Table({
     folder_id: column.text,
@@ -78,6 +82,7 @@ export const AppSchema = new Schema({
     ru: column.text,
     en: column.text,
     uk: column.text,
+    user_id: column.text,
   }),
   _users: new Table({
      // define columns... placeholder

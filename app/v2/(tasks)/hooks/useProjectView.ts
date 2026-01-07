@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useQuery, usePowerSync } from '@powersync/react';
 import { Project, Folder, Task } from '@/app/types';
 import { globalStorage } from '@/utils/storage';
+import { useAuth } from '@clerk/nextjs';
 
 const STORAGE_KEY_PREFIX = 'v2_active_folder_';
 const REMOTE_TAB_KEY_PREFIX = 'v2_active_remote_tab_';
@@ -11,7 +12,8 @@ export const useProjectView = (project: Project, isActive: boolean) => {
     const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
     const [activeRemoteTab, setActiveRemoteTab] = useState<'ui' | 'users' | 'logs' | 'tables' | null>(null);
     const powerSync = usePowerSync();
-
+    const { userId } = useAuth();
+    
     // ... (query folders) ...
     const { data: foldersData } = useQuery(
         `SELECT * FROM folders 
@@ -128,15 +130,19 @@ export const useProjectView = (project: Project, isActive: boolean) => {
 
     const createFolder = async (title: string) => {
         try {
-            console.log('Creating local folder:', { title, projectId: project.id });
+            if (!userId) {
+                console.error('No userId found');
+                return;
+            }
+            console.log('Creating local folder:', { title, projectId: project.id, userId });
             const maxSort = folders.reduce((max, f) => Math.max(max, f.sort_order), 0);
             const newSort = maxSort + 100;
             const id = crypto.randomUUID();
 
             await powerSync.execute(
-                `INSERT INTO folders (id, project_id, title, sort_order, created_at, updated_at) 
-                 VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))`,
-                [id, project.id, title, newSort]
+                `INSERT INTO folders (id, project_id, title, sort_order, created_at, updated_at, user_id) 
+                 VALUES (?, ?, ?, ?, datetime('now'), datetime('now'), ?)`,
+                [id, project.id, title, newSort, userId]
             );
             console.log('Local folder created successfully');
         } catch (error) {
