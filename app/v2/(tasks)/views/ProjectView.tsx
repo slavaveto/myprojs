@@ -12,7 +12,7 @@ interface ProjectViewProps {
 }
 
 const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
-    const { folders, activeFolderId, handleSelectFolder } = useProjectView(project, isActive);
+    const { folders, folderCounts, activeFolderId, handleSelectFolder } = useProjectView(project, isActive);
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
     return (
@@ -22,6 +22,7 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
             {folders.length > 0 && !['Inbox', 'Today', 'Doing Now', 'Logs', 'Done', 'Logbook'].includes(project.title) && (
                 <FolderTabs 
                     folders={folders}
+                    folderCounts={folderCounts}
                     activeFolderId={activeFolderId}
                     onSelectFolder={handleSelectFolder}
                     onCreateFolder={() => console.log('Create Folder in', project.title)}

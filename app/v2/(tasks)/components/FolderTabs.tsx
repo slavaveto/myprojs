@@ -138,6 +138,7 @@ export const FolderTab = ({
 // --- List Component ---
 interface FolderTabsProps {
     folders: Folder[];
+    folderCounts?: Record<string, number>;
     activeFolderId: string | null;
     onSelectFolder: (folderId: string) => void;
     onCreateFolder?: () => void;
@@ -147,6 +148,7 @@ interface FolderTabsProps {
 
 export const FolderTabs = ({ 
     folders, 
+    folderCounts = {},
     activeFolderId, 
     onSelectFolder, 
     onCreateFolder,
@@ -162,7 +164,7 @@ export const FolderTabs = ({
                      <FolderTab 
                         key={folder.id}
                         folder={folder}
-                        count={0} 
+                        count={folderCounts[folder.id] || 0} 
                         isActive={activeFolderId === folder.id}
                         layoutIdPrefix={layoutIdPrefix} // Pass unique prefix down
                         onClick={() => onSelectFolder(folder.id)}

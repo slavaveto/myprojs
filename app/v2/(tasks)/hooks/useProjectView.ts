@@ -20,6 +20,22 @@ export const useProjectView = (project: Project, isActive: boolean) => {
     );
     const folders: Folder[] = foldersData || [];
 
+    // 2.5 Load task counts
+    const { data: countsData } = useQuery(
+        `SELECT folder_id, COUNT(*) as count 
+         FROM tasks 
+         WHERE (is_completed IS NULL OR is_completed = 0) 
+           AND (is_deleted IS NULL OR is_deleted = 0)
+           AND folder_id IN (SELECT id FROM folders WHERE project_id = ?)
+         GROUP BY folder_id`,
+        [project.id]
+    );
+
+    const folderCounts = (countsData || []).reduce((acc: Record<string, number>, row: any) => {
+        acc[row.folder_id] = row.count;
+        return acc;
+    }, {});
+
     // 3. Restore active folder state (Initial Mount Only)
     useEffect(() => {
         const key = `${STORAGE_KEY_PREFIX}${project.id}`;
@@ -60,6 +76,7 @@ export const useProjectView = (project: Project, isActive: boolean) => {
 
     return {
         folders,
+        folderCounts,
         activeFolderId,
         handleSelectFolder
     };
