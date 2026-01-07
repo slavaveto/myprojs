@@ -22,7 +22,7 @@ const TodayViewComponent = ({ isActive }: TodayViewProps) => {
 
     return (
         <div className="flex flex-col h-full w-full bg-background overflow-hidden">
-      
+ 
             
             <div className="flex-1 overflow-y-auto p-4">
                 {tasks.length === 0 ? (
