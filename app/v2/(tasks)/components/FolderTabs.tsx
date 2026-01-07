@@ -79,16 +79,18 @@ export const FolderTab = ({
                   )}
               >
                   {(count > 0 || showZeroCount) && (
-                    <Chip 
-                        size="sm" 
-                        variant="flat" 
+                    <div 
                         className={clsx(
-                            "h-5 min-w-5 px-1 text-[10px] relative z-10",
-                            isActive ? "bg-primary/20 text-primary" : "bg-default-100 text-default-500"
+                            "h-5.5 min-w-5.5 px-1 mt-[1px] rounded-full flex items-center justify-center text-[12px] relative z-10",
+                            isActive 
+                                ? "bg-primary/20 text-primary font-medium" 
+                                : count > 0 
+                                    ? "bg-default-100 text-primary font-medium" 
+                                    : "bg-default-100 text-default-500"
                         )}
                     >
                         {count}
-                    </Chip>
+                    </div>
                   )}
               </div>
 
