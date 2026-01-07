@@ -23,6 +23,7 @@ export interface Folder {
    created_at: string;
    updated_at: string;
    is_deleted?: boolean; // Added for Soft Delete
+   is_hidden?: boolean; // Added
 }
 
 export interface Task {

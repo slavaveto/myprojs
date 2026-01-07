@@ -16,6 +16,15 @@ export const AppSchema = new Schema({
     is_hidden: column.integer, // boolean as 0 or 1
     remote_proj_slug: column.text,
   }),
+  folders: new Table({
+    project_id: column.text,
+    title: column.text,
+    sort_order: column.integer,
+    created_at: column.text,
+    updated_at: column.text,
+    is_deleted: column.integer,
+    is_hidden: column.integer,
+  }),
 });
 
 export type Database = (typeof AppSchema)['types'];
