@@ -25,6 +25,24 @@ export const AppSchema = new Schema({
     is_deleted: column.integer,
     is_hidden: column.integer,
   }),
+  tasks: new Table({
+    folder_id: column.text,
+    content: column.text,
+    sort_order: column.integer,
+    is_completed: column.integer, // boolean
+    is_today: column.integer,
+    is_pinned: column.integer,
+    is_deleted: column.integer,
+    title_text_style: column.text,
+    created_at: column.text,
+    updated_at: column.text,
+    task_type: column.text,
+    group_color: column.text,
+    group_id: column.text,
+    is_closed: column.integer,
+    task_notes: column.text,
+    // item_id, ru, en, uk - можно добавить потом если нужно для UI
+  }),
   logs: new Table({
     created_at: column.text,
     action: column.text,

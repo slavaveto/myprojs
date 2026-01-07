@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Project } from '@/app/types';
 import { FolderTabs } from './FolderTabs';
+import { TaskList } from './TaskList';
+import { DetailsPanel } from './DetailsPanel';
 import { clsx } from 'clsx';
 import { useProjectView } from '../hooks/useProjectView';
 
@@ -11,6 +13,7 @@ interface ProjectViewProps {
 
 const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
     const { folders, activeFolderId, handleSelectFolder } = useProjectView(project, isActive);
+    const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
     return (
         <div className={clsx("flex flex-col h-full w-full", !isActive && "hidden")}>
@@ -27,16 +30,32 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
                 />
             )}
 
-            {/* Task List Area */}
-            {/* Force scrollbar to prevent layout jump on switch */}
-            <div className="flex-1 overflow-y-scroll p-6 bg-background">
-                 <div className="border-2 border-dashed border-default-200 rounded-xl h-full flex items-center justify-center text-default-400">
-                    <div className="text-center">
-                        <h2 className="text-xl font-bold text-foreground mb-2">{project.title}</h2>
-                        <p>Active Folder: {folders.find(f => f.id === activeFolderId)?.title || 'None'}</p>
-                        <p className="text-sm mt-2">Status: {isActive ? 'Active' : 'Background'}</p>
-                    </div>
+            {/* Split Content Area */}
+            <div className="flex-1 flex min-h-0 overflow-hidden relative">
+                
+                {/* Left: Task List */}
+                <div className="flex-1 overflow-y-scroll p-6 bg-background">
+                    {activeFolderId ? (
+                        <TaskList 
+                            folderId={activeFolderId} 
+                            projectId={project.id} 
+                            onSelectTask={setSelectedTaskId}
+                            selectedTaskId={selectedTaskId}
+                        />
+                    ) : (
+                        <div className="border-2 border-dashed border-default-200 rounded-xl h-full flex items-center justify-center text-default-400">
+                            <div className="text-center">
+                                <h2 className="text-xl font-bold text-foreground mb-2">{project.title}</h2>
+                                <p>Select a folder to view tasks</p>
+                            </div>
+                        </div>
+                    )}
                 </div>
+
+                {/* Right: Details Panel */}
+                <DetailsPanel 
+                    taskId={selectedTaskId} 
+                />
             </div>
         </div>
     );

@@ -80,7 +80,7 @@ export const ProjectBar = ({
     onCreateProject
 }: ProjectBarProps) => {
     return (
-        <aside className="w-[260px] flex-shrink-0 border-r border-default-200 bg-default-50 flex flex-col z-20 h-full">
+        <aside className="w-[250px] flex-shrink-0 border-r border-default-200 bg-default-50 flex flex-col z-20 h-full">
             {/* Header */}
             <div className="p-4 border-b border-default-200/50 flex items-center justify-between bg-yellow-100/10">
                 <div className="flex items-center gap-2 font-bold text-lg min-w-0 text-default-700">
