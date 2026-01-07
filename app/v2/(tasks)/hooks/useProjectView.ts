@@ -95,16 +95,16 @@ export const useProjectView = (project: Project, isActive: boolean) => {
     const docsSatelliteId = satellitesData?.find(p => p.proj_type === 'docs')?.id;
 
     const handleToggleRemote = (tab: 'ui' | 'docs' | 'users' | 'logs' | 'tables') => {
+        // If clicking the already active tab, do nothing (it's a tab, not a toggle)
         if (activeRemoteTab === tab) {
-             setActiveRemoteTab(null);
-        } else {
-             setActiveRemoteTab(tab);
+             return;
         }
+        setActiveRemoteTab(tab);
     };
 
     const handleSelectFolder = (id: string) => {
         setActiveFolderId(id);
-        setActiveRemoteTab(null);
+        setActiveRemoteTab(null); // Switch back to folders mode
         globalStorage.setItem(`${STORAGE_KEY_PREFIX}${project.id}`, id);
     };
 

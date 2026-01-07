@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery, usePowerSync } from '@powersync/react';
 import { Folder, Task } from '@/app/types';
 import { globalStorage } from '@/utils/storage';
@@ -9,7 +9,7 @@ export const useRemoteUiData = (projectId: string) => {
     // 1. Local State for active folder in remote view
     const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
     
-    // Access CURRENT PowerSync instance (provided by RemotePowerSyncProvider or Main)
+    // Access CURRENT PowerSync instance
     const powerSync = usePowerSync();
 
     // 2. Load folders from "_ui_folders"
@@ -21,20 +21,14 @@ export const useRemoteUiData = (projectId: string) => {
          ORDER BY sort_order ASC`,
         [projectId]
     );
-    // Map remote folders to standard Folder interface
-    // Since schema is identical, just casting
-    const folders: Folder[] = (foldersData || []).map((f: any) => ({
-        ...f,
-        id: f.id, // Ensure ID exists
-    }));
 
-    // 3. Load items from "_ui_items" (tasks)
-    // We load ALL active items for the project to calculate counts
-    // (Assuming items have folder_id which links to folders of this project)
-    
-    // Wait, items don't have project_id directly usually, they link to folder.
-    // So we need: WHERE folder_id IN (SELECT id FROM "_ui_folders" WHERE project_id = ?)
-    
+    // MEMOIZE folders to prevent effect loops
+    const folders: Folder[] = useMemo(() => (foldersData || []).map((f: any) => ({
+        ...f,
+        id: f.id,
+    })), [foldersData]);
+
+    // 3. Load items from "_ui_items"
     const { data: itemsData } = useQuery(
         `SELECT * FROM _ui_items
          WHERE (is_completed IS NULL OR is_completed = 0) 
@@ -43,23 +37,24 @@ export const useRemoteUiData = (projectId: string) => {
         [projectId]
     );
     
-    const allTasks: Task[] = (itemsData || []).map((t: any) => ({
+    // MEMOIZE tasks
+    const allTasks: Task[] = useMemo(() => (itemsData || []).map((t: any) => ({
         ...t,
         id: t.id
-    }));
+    })), [itemsData]);
 
-    // 4. Calculate counts
-    const folderCounts = allTasks.reduce((acc: Record<string, number>, task) => {
+    // 4. Calculate counts (Memoized)
+    const folderCounts = useMemo(() => allTasks.reduce((acc: Record<string, number>, task) => {
         if (task.folder_id) {
             acc[task.folder_id] = (acc[task.folder_id] || 0) + 1;
         }
         return acc;
-    }, {});
+    }, {}), [allTasks]);
 
-    // 5. Filter tasks for active folder
-    const activeTasks = activeFolderId 
+    // 5. Filter tasks for active folder (Memoized)
+    const activeTasks = useMemo(() => activeFolderId 
         ? allTasks.filter(t => t.folder_id === activeFolderId).sort((a, b) => a.sort_order - b.sort_order)
-        : [];
+        : [], [activeFolderId, allTasks]);
 
     // 6. Restore active folder state
     useEffect(() => {
@@ -80,6 +75,7 @@ export const useRemoteUiData = (projectId: string) => {
                  const key = `${REMOTE_STORAGE_KEY_PREFIX}${projectId}`;
                  const savedId = globalStorage.getItem(key);
                  
+                 // Check against folders array, which is now stable thanks to useMemo
                  if (savedId && folders.find(f => f.id === savedId)) {
                      setActiveFolderId(savedId);
                  } else {
@@ -90,6 +86,7 @@ export const useRemoteUiData = (projectId: string) => {
             }
         }
     }, [folders, activeFolderId, projectId]);
+
 
     const handleSelectFolder = (id: string) => {
         setActiveFolderId(id);
