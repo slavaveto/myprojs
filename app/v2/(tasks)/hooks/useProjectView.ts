@@ -79,6 +79,7 @@ export const useProjectView = (project: Project, isActive: boolean) => {
     const hasUiSatellite = satellitesData?.some(p => p.proj_type === 'ui');
     const hasDocsSatellite = satellitesData?.some(p => p.proj_type === 'docs');
     const uiSatelliteId = satellitesData?.find(p => p.proj_type === 'ui')?.id;
+    const docsSatelliteId = satellitesData?.find(p => p.proj_type === 'docs')?.id;
 
     const handleToggleRemote = (tab: 'ui' | 'docs') => {
         if (activeRemoteTab === tab) {
@@ -102,6 +103,7 @@ export const useProjectView = (project: Project, isActive: boolean) => {
         hasUiSatellite,
         hasDocsSatellite,
         uiSatelliteId,
+        docsSatelliteId,
         activeRemoteTab,
         handleToggleRemote
     };

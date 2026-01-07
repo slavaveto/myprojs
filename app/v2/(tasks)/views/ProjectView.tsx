@@ -4,6 +4,7 @@ import { FolderTabs } from '../components/FolderTabs';
 import { TaskList } from '../components/TaskList';
 import { DetailsPanel } from '../components/DetailsPanel';
 import { RemoteUiView } from '../remoteviews/RemoteUiView';
+import { RemoteDocsView } from '../remoteviews/RemoteDocsView';
 import { clsx } from 'clsx';
 import { useProjectView } from '../hooks/useProjectView';
 
@@ -15,7 +16,7 @@ interface ProjectViewProps {
 const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
     const { 
         folders, folderCounts, activeFolderId, handleSelectFolder,
-        hasUiSatellite, hasDocsSatellite, activeRemoteTab, handleToggleRemote, uiSatelliteId
+        hasUiSatellite, hasDocsSatellite, activeRemoteTab, handleToggleRemote, uiSatelliteId, docsSatelliteId
     } = useProjectView(project, isActive);
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
@@ -44,6 +45,8 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
                 
                 {activeRemoteTab === 'ui' ? (
                     <RemoteUiView projectId={project.id} satelliteId={uiSatelliteId} />
+                ) : activeRemoteTab === 'docs' ? (
+                    <RemoteDocsView projectId={project.id} satelliteId={docsSatelliteId} />
                 ) : (
                     <>
                         {/* Left: Task List */}
