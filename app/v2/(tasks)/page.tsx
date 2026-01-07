@@ -6,6 +6,7 @@ import { EllipsisVertical, Search, Bell, Settings, User } from 'lucide-react';
 import { Button, Avatar } from '@heroui/react';
 import { usePowerSync } from '@/app/_services/powerSync/PowerSyncProvider';
 import { useQuery, useStatus } from '@powersync/react';
+import { SyncIndicator } from './components/SyncIndicator';
 
 // --- LOCAL MOCK COMPONENTS (to avoid dependency hell) ---
 
@@ -131,10 +132,7 @@ export default function TasksPage() {
 
                     {/* Right Actions */}
                     <div className="flex items-center gap-2 justify-self-end">
-                        <span className="text-xs text-green-500 font-mono flex items-center gap-1">
-                             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"/>
-                             POWER
-                        </span>
+                        <SyncIndicator />
                         <MockUserMenu />
                     </div>
                  </div>
