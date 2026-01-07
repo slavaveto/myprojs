@@ -5,14 +5,14 @@ import { usePowerSync } from '@/app/_services/powerSync/PowerSyncProvider';
 import { useQuery } from '@powersync/react';
 import { ProjectBar } from './components/ProjectBar';
 import { Header } from './components/Header';
-import { FolderTabs } from './components/FolderTabs';
+import { ProjectView } from './components/ProjectView';
 import { Project, Folder } from '@/app/types';
 import { globalStorage } from '@/utils/storage';
+import { motion } from 'framer-motion';
 
 const STORAGE_KEYS = {
     ACTIVE_PROJECT: 'v2_active_project_id',
     ACTIVE_SYSTEM_TAB: 'v2_active_system_tab',
-    folderForProject: (projId: string) => `v2_active_folder_${projId}`
 };
 
 export default function TasksPage() {
@@ -31,7 +31,6 @@ export default function TasksPage() {
   // --- STATE ---
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [activeSystemTab, setActiveSystemTab] = useState<string | null>(null);
-  const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
   const [isRestored, setIsRestored] = useState(false);
 
   // --- RESTORE STATE ON MOUNT ---
@@ -53,22 +52,7 @@ export default function TasksPage() {
     setIsRestored(true);
   }, []);
 
-  // --- RESTORE FOLDER WHEN PROJECT CHANGES ---
-  useEffect(() => {
-    if (!activeProjectId) {
-        setActiveFolderId(null);
-        return;
-    }
-
-    const savedFolderId = globalStorage.getItem(STORAGE_KEYS.folderForProject(activeProjectId));
-    if (savedFolderId && savedFolderId !== 'null') {
-        setActiveFolderId(savedFolderId);
-    } else {
-        setActiveFolderId(null); // Reset if no saved folder, effect below will select first
-    }
-  }, [activeProjectId]);
-
-  // --- PERSIST STATE ---
+  // --- HANDLERS ---
   const handleSelectProject = (id: string) => {
       setActiveProjectId(id);
       setActiveSystemTab(null);
@@ -79,56 +63,9 @@ export default function TasksPage() {
   const handleSelectSystemTab = (tab: string) => {
       setActiveSystemTab(tab);
       setActiveProjectId(null);
-      setActiveFolderId(null);
       globalStorage.setItem(STORAGE_KEYS.ACTIVE_PROJECT, 'null');
       globalStorage.setItem(STORAGE_KEYS.ACTIVE_SYSTEM_TAB, tab);
   };
-
-  const handleSelectFolder = (id: string) => {
-      setActiveFolderId(id);
-      if (activeProjectId) {
-          globalStorage.setItem(STORAGE_KEYS.folderForProject(activeProjectId), id);
-      }
-  };
-
-  // --- FOLDERS QUERY ---
-  // ... rest of the code ...
-  const { data: foldersData } = useQuery(
-    activeProjectId 
-        ? `SELECT * FROM folders 
-           WHERE project_id = ? 
-             AND (is_deleted IS NULL OR is_deleted = 0) 
-             AND (is_hidden IS NULL OR is_hidden = 0) 
-           ORDER BY sort_order ASC`
-        : '',
-    activeProjectId ? [activeProjectId] : []
-  );
-  
-  // DEBUG: Check folders
-  console.log('[TasksPage] Active Project:', activeProjectId);
-  console.log('[TasksPage] Folders Found:', foldersData?.length, foldersData);
-
-  const folders: Folder[] = foldersData || [];
-
-  // Auto-select first folder if folders loaded and none selected (and no saved folder found or saved folder not in list)
-  useEffect(() => {
-    if (activeProjectId && folders.length > 0) {
-        // If no active folder, or active folder is not in current list (e.g. deleted), select first
-        const isValid = activeFolderId && folders.find(f => f.id === activeFolderId);
-        
-        if (!activeFolderId || !isValid) {
-            // Check if we just restored a folder that hasn't loaded yet? 
-            // Actually, we should wait. But if data is loaded and our ID is not there -> reset.
-            // For now, simple logic:
-            setActiveFolderId(folders[0].id);
-            // Update storage immediately
-            globalStorage.setItem(STORAGE_KEYS.folderForProject(activeProjectId), folders[0].id);
-        }
-    }
-  }, [activeProjectId, folders, activeFolderId]);
-
-  // --- HANDLERS ---
-  // (Handlers are defined above now)
 
   const activeProject = activeProjectId ? projects.find(p => p.id === activeProjectId) : undefined;
   
@@ -157,36 +94,49 @@ export default function TasksPage() {
                 activeSystemTab={activeSystemTab}
             />
 
-            {/* FOLDER TABS (Only for Projects) */}
-            {activeProject && (
-                <FolderTabs 
-                    folders={folders}
-                    activeFolderId={activeFolderId}
-                    onSelectFolder={handleSelectFolder}
-                    onCreateFolder={() => console.log('Create Folder')}
-                />
-            )}
-
-
-            {/* CONTENT PLACEHOLDER */}
-            <div className="flex-1 overflow-y-auto p-6">
-                <div className="border-2 border-dashed border-default-200 rounded-xl h-full flex items-center justify-center text-default-400">
-                    {activeProject ? (
-                        <div className="text-center">
-                            <h2 className="text-xl font-bold text-foreground mb-2">{activeProject.title}</h2>
-                            <p>Active Folder: {folders.find(f => f.id === activeFolderId)?.title || 'None'}</p>
-                            <p className="text-sm mt-2">Task List will be here...</p>
+            {/* CONTENT AREA: RENDER ALL PROJECTS (Hidden/Block) */}
+            <div className="flex-1 relative overflow-hidden">
+                
+                {/* 1. Projects Views */}
+                {projects.map(project => {
+                    const isActive = activeProjectId === project.id;
+                    return (
+                        <div 
+                            key={project.id} 
+                            className="absolute inset-0 w-full h-full bg-background"
+                            style={{ 
+                                display: isActive ? 'block' : 'none',
+                                zIndex: isActive ? 10 : 0
+                            }}
+                        >
+                            {/* Direct render without animation to prevent flickering/jumping */}
+                            <ProjectView 
+                                project={project}
+                                isActive={isActive}
+                            />
                         </div>
-                    ) : (
-                        <div className="text-center">
-                            <h2 className="text-xl font-bold text-foreground mb-2 capitalize">{activeSystemTab}</h2>
-                            <p>System view content...</p>
+                    );
+                })}
+
+                {/* 2. System Views (Inbox, Today, etc.) - Placeholder for now */}
+                {activeSystemTab && (
+                    <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-background z-10">
+                         <div className="text-center text-default-400">
+                            <h2 className="text-2xl font-bold mb-2 capitalize">{activeSystemTab}</h2>
+                            <p>System view not implemented in v2 yet.</p>
                         </div>
-                    )}
-                </div>
+                    </div>
+                )}
+
+                {/* 3. Empty State */}
+                {!activeProjectId && !activeSystemTab && (
+                     <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-background z-10">
+                        <div className="text-default-400">Select a project</div>
+                    </div>
+                )}
+
             </div>
         </div>
     </div>
   );
 }
-

@@ -28,7 +28,8 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
             )}
 
             {/* Task List Area */}
-            <div className="flex-1 overflow-y-auto p-6 bg-background">
+            {/* Force scrollbar to prevent layout jump on switch */}
+            <div className="flex-1 overflow-y-scroll p-6 bg-background">
                  <div className="border-2 border-dashed border-default-200 rounded-xl h-full flex items-center justify-center text-default-400">
                     <div className="text-center">
                         <h2 className="text-xl font-bold text-foreground mb-2">{project.title}</h2>
