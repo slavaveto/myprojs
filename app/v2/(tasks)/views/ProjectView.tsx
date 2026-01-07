@@ -10,6 +10,7 @@ import { RemoteTablesView } from '../remoteviews/RemoteTablesView';
 import { clsx } from 'clsx';
 import { useProjectView } from '../hooks/useProjectView';
 import { useRemoteUiData } from '../hooks/useRemoteUiData';
+import { usePanelResize } from '../hooks/usePanelResize';
 
 interface ProjectViewProps {
     project: Project;
@@ -26,6 +27,7 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
     const remoteUi = useRemoteUiData(project.id);
     
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+    const { width: panelWidth, containerRef, startResizing } = usePanelResize(400);
 
     const SYSTEM_PROJECT_TITLES = ['Inbox', 'Today', 'Doing Now', 'Logs', 'Done', 'Logbook'];
 
@@ -54,7 +56,10 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
             )}
 
             {/* Split Content Area */}
-            <div className="flex-1 flex min-h-0 overflow-hidden relative">
+            <div 
+                ref={containerRef}
+                className="flex-1 flex min-h-0 overflow-hidden relative"
+            >
                 
                 {activeRemoteTab === 'ui' ? (
                     <RemoteUiView 
@@ -88,10 +93,24 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
                             )}
                         </div>
 
+                        {/* Resize Handle */}
+                        <div
+                            className="w-[1px] bg-default-200 hover:bg-primary cursor-col-resize relative z-20 transition-colors group"
+                            onMouseDown={startResizing}
+                        >
+                            {/* Invisible hit area for easier grabbing */}
+                            <div className="absolute inset-y-0 -left-1 -right-1 z-10 bg-transparent group-hover:bg-primary/10" />
+                        </div>
+
                         {/* Right: Details Panel */}
-                        <DetailsPanel 
-                            taskId={selectedTaskId} 
-                        />
+                        <div 
+                            style={{ width: panelWidth }}
+                            className="flex-shrink-0 border-l border-default-200 bg-content2/50 overflow-y-auto z-10"
+                        >
+                            <DetailsPanel 
+                                taskId={selectedTaskId} 
+                            />
+                        </div>
                     </>
                 )}
             </div>

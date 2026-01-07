@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { TaskList } from '../components/TaskList';
 import { Task } from '@/app/types';
+import { usePanelResize } from '../hooks/usePanelResize';
 
 interface RemoteUiViewProps {
     tasks: Task[];
@@ -10,10 +11,14 @@ interface RemoteUiViewProps {
 
 export const RemoteUiView = ({ tasks, activeFolderId, updateTask }: RemoteUiViewProps) => {
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+    const { width: panelWidth, containerRef, startResizing } = usePanelResize(400);
 
     return (
         <div className="flex flex-col h-full w-full bg-background overflow-hidden">
-            <div className="flex-1 flex min-h-0 overflow-hidden relative">
+            <div 
+                ref={containerRef}
+                className="flex-1 flex min-h-0 overflow-hidden relative"
+            >
                 {/* Left: Remote Task List */}
                 <div className="flex-1 overflow-y-scroll p-6 bg-background">
                     {activeFolderId ? (
@@ -33,8 +38,19 @@ export const RemoteUiView = ({ tasks, activeFolderId, updateTask }: RemoteUiView
                     )}
                 </div>
 
+                {/* Resize Handle */}
+                <div
+                    className="w-[1px] bg-default-200 hover:bg-primary cursor-col-resize relative z-20 transition-colors group"
+                    onMouseDown={startResizing}
+                >
+                    <div className="absolute inset-y-0 -left-1 -right-1 z-10 bg-transparent group-hover:bg-primary/10" />
+                </div>
+
                 {/* Right: Details Panel Placeholder */}
-                <div className="w-[400px] flex-shrink-0 border-l border-default-200 bg-content2/50 p-6 overflow-y-auto z-20">
+                <div 
+                    style={{ width: panelWidth }}
+                    className="flex-shrink-0 border-l border-default-200 bg-content2/50 p-6 overflow-y-auto z-20"
+                >
                      {selectedTaskId ? (
                         <div className="text-default-500">
                             Details for remote task {selectedTaskId} <br/>
