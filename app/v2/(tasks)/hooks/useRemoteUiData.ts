@@ -117,6 +117,21 @@ export const useRemoteUiData = (projectId: string) => {
         console.log("Update remote task", taskId, updates);
     };
 
+    const updateFolder = async (folderId: string, title: string) => {
+        await powerSync.execute(
+            `UPDATE _ui_folders SET title = ?, updated_at = datetime('now') WHERE id = ?`,
+            [title, folderId]
+        );
+    };
+
+    const deleteFolder = async (folderId: string) => {
+        // Soft delete
+        await powerSync.execute(
+            `UPDATE _ui_folders SET is_deleted = 1, updated_at = datetime('now') WHERE id = ?`,
+            [folderId]
+        );
+    };
+
     const deleteTask = async (taskId: string) => {
         // TODO: Implement
         console.log("Delete remote task", taskId);
@@ -129,6 +144,8 @@ export const useRemoteUiData = (projectId: string) => {
         handleSelectFolder,
         tasks: activeTasks, // Tasks for the active folder
         createFolder,
+        updateFolder,
+        deleteFolder,
         createTask,
         updateTask,
         deleteTask

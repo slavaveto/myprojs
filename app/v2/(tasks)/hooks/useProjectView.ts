@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useQuery } from '@powersync/react';
+import { useQuery, usePowerSync } from '@powersync/react';
 import { Project, Folder, Task } from '@/app/types';
 import { globalStorage } from '@/utils/storage';
 
@@ -10,6 +10,7 @@ export const useProjectView = (project: Project, isActive: boolean) => {
     // 1. Local State
     const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
     const [activeRemoteTab, setActiveRemoteTab] = useState<'ui' | 'users' | 'logs' | 'tables' | null>(null);
+    const powerSync = usePowerSync();
 
     // ... (query folders) ...
     const { data: foldersData } = useQuery(
@@ -125,6 +126,18 @@ export const useProjectView = (project: Project, isActive: boolean) => {
         globalStorage.setItem(`${REMOTE_TAB_KEY_PREFIX}${project.id}`, 'null'); // Clear remote tab
     };
 
+    const createFolder = async (title: string) => {
+        const maxSort = folders.reduce((max, f) => Math.max(max, f.sort_order), 0);
+        const newSort = maxSort + 100;
+        const id = crypto.randomUUID();
+
+        await powerSync.execute(
+            `INSERT INTO folders (id, project_id, title, sort_order, created_at, updated_at) 
+             VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))`,
+            [id, project.id, title, newSort]
+        );
+    };
+
     return {
         folders,
         folderCounts,
@@ -133,7 +146,8 @@ export const useProjectView = (project: Project, isActive: boolean) => {
         handleSelectFolder,
         hasRemoteUi,
         activeRemoteTab,
-        handleToggleRemote
+        handleToggleRemote,
+        createFolder
     };
 };
 

@@ -4,6 +4,7 @@ import { Button, Chip } from '@heroui/react';
 import { Plus, EllipsisVertical, Info } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion } from 'framer-motion';
+import { FolderFormPopover } from './FolderFormPopover';
 // import { useDroppable } from '@dnd-kit/core'; // DnD later
 // import { CreateItemPopover } from '@/app/(main)/components/CreateItem'; // TODO: Move to v2
 // import { EditFolderPopover } from '@/app/(main)/components/EditFolder'; // TODO: Move to v2
@@ -104,14 +105,19 @@ export const FolderTab = ({
                       onPointerDown={(e) => e.stopPropagation()}
                       onClick={(e) => e.stopPropagation()}
                   >
-                      {/* Placeholder for EditFolderPopover */}
-                      <button 
-                          type="button"
-                          className="flex items-center justify-center text-default-400 hover:text-primary transition-colors outline-none cursor-pointer"
-                          onClick={() => console.log('Edit Folder', folder.id)}
-                      >
-                          <EllipsisVertical size={16} />
-                      </button>
+                      <FolderFormPopover
+                          mode="edit"
+                          initialTitle={folder.title}
+                          onSubmit={onUpdate}
+                          trigger={
+                              <button 
+                                  type="button"
+                                  className="flex items-center justify-center text-default-400 hover:text-primary transition-colors outline-none cursor-pointer"
+                              >
+                                  <EllipsisVertical size={16} />
+                              </button>
+                          }
+                      />
                   </div>
               )}
           </div>
@@ -148,7 +154,7 @@ interface FolderTabsProps {
     onSelectFolder: (folderId: string) => void;
     onToggleRemote?: (type: 'ui' | 'users' | 'logs' | 'tables') => void;
     activeRemoteTab?: 'ui' | 'users' | 'logs' | 'tables' | null;
-    onCreateFolder?: () => void;
+    onCreateFolder?: (title: string) => void;
     orientation?: 'horizontal' | 'vertical';
     layoutIdPrefix: string; 
     // Remote Props
@@ -156,7 +162,9 @@ interface FolderTabsProps {
     remoteFolderCounts?: Record<string, number>;
     activeRemoteFolderId?: string | null;
     onSelectRemoteFolder?: (folderId: string) => void;
-    onCreateRemoteFolder?: () => void;
+    onCreateRemoteFolder?: (title: string) => void;
+    onUpdateRemoteFolder?: (folderId: string, title: string) => void;
+    onDeleteRemoteFolder?: (folderId: string) => void;
 }
 
 export const FolderTabs = ({ 
@@ -175,7 +183,9 @@ export const FolderTabs = ({
     remoteFolderCounts = {},
     activeRemoteFolderId,
     onSelectRemoteFolder,
-    onCreateRemoteFolder
+    onCreateRemoteFolder,
+    onUpdateRemoteFolder,
+    onDeleteRemoteFolder
 }: FolderTabsProps) => {
 
     const RemoteProjsZone = () => {
@@ -257,18 +267,25 @@ export const FolderTabs = ({
                    ))}
 
                    {/* Create Folder Button (Moved inside scrollable area) */}
-                   <div className="flex-shrink-0 ml-1">
-                       <Button 
-                           isIconOnly 
-                           variant="flat" 
-                           size="sm" 
-                           color="success"
-                           onClick={onCreateFolder}
-                           className="bg-transparent hover:bg-success/20 text-success"
-                       >
-                           <Plus size={20} />
-                       </Button>
-                   </div>
+                   {onCreateFolder && (
+                       <div className="flex-shrink-0 ml-1">
+                           <FolderFormPopover
+                               mode="create"
+                               onSubmit={onCreateFolder}
+                               trigger={
+                                   <Button 
+                                       isIconOnly 
+                                       variant="flat" 
+                                       size="sm" 
+                                       color="success"
+                                       className="bg-transparent hover:bg-success/20 text-success"
+                                   >
+                                       <Plus size={20} />
+                                   </Button>
+                               }
+                           />
+                       </div>
+                   )}
                </div>
            </div>
            
@@ -285,24 +302,29 @@ export const FolderTabs = ({
                         onClick={() => onSelectRemoteFolder?.(folder.id)}
                         orientation={orientation}
                         showZeroCount={true} // Always show count for remote UI folders
-                        onUpdate={() => {}} 
-                        onDelete={() => {}}
+                        onUpdate={onUpdateRemoteFolder ? (title) => onUpdateRemoteFolder(folder.id, title) : undefined} 
+                        onDelete={onDeleteRemoteFolder ? () => onDeleteRemoteFolder(folder.id) : undefined}
                     />
                 ))}
                 
                 {/* Create Remote Folder Button (Visible only if UI tab is active) */}
-                {activeRemoteTab === 'ui' && (
+                {activeRemoteTab === 'ui' && onCreateRemoteFolder && (
                    <div className="flex-shrink-0 ml-1">
-                       <Button 
-                           isIconOnly 
-                           variant="flat" 
-                           size="sm" 
-                           color="secondary" // Purple for UI
-                           onClick={onCreateRemoteFolder}
-                           className="bg-transparent hover:bg-secondary/20 text-secondary"
-                       >
-                           <Plus size={20} />
-                       </Button>
+                       <FolderFormPopover
+                           mode="create"
+                           onSubmit={onCreateRemoteFolder}
+                           trigger={
+                               <Button 
+                                   isIconOnly 
+                                   variant="flat" 
+                                   size="sm" 
+                                   color="secondary" // Purple for UI
+                                   className="bg-transparent hover:bg-secondary/20 text-secondary"
+                               >
+                                   <Plus size={20} />
+                               </Button>
+                           }
+                       />
                    </div>
                 )}
 
