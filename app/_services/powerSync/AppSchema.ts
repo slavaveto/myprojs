@@ -25,6 +25,14 @@ export const AppSchema = new Schema({
     is_deleted: column.integer,
     is_hidden: column.integer,
   }),
+  logs: new Table({
+    created_at: column.text,
+    action: column.text,
+    entity_type: column.text,
+    entity_id: column.text,
+    details: column.text,
+    project_id: column.text,
+  }),
 });
 
 export type Database = (typeof AppSchema)['types'];

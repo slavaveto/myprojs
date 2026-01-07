@@ -156,8 +156,8 @@ export const FolderTabs = ({
 
     // Simple horizontal layout for now matching v1 horizontal
     return (
-        <div className="flex items-center gap-4 w-full px-6 py-2 bg-background/50 flex-none z-10 border-b border-transparent backdrop-blur-sm sticky top-0">
-           <div className="flex-grow overflow-x-auto scrollbar-hide flex items-center gap-2 no-scrollbar">
+        <div className="flex items-center gap-4 w-full px-6 pl-2 py-2 bg-background/50 flex-none z-10 border-b border-transparent backdrop-blur-sm sticky top-0">
+           <div className="flex-grow overflow-x-auto scrollbar-hide flex items-center gap-2 no-scrollbar pl-4">
                {folders.map((folder, index) => (
                      <FolderTab 
                         key={folder.id}
