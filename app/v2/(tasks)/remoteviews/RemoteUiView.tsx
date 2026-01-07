@@ -43,7 +43,6 @@ export const RemoteUiView = ({ projectId, satelliteId }: RemoteUiViewProps) => {
                 layoutIdPrefix={`remote-ui-${targetId}`}
                 // Remote view doesn't need satellites or remote toggles for now
                 hasUiSatellite={false}
-                hasDocsSatellite={false}
                 activeRemoteTab={null}
                 onToggleRemote={() => {}}
             />

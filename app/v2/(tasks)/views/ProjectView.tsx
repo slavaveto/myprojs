@@ -4,7 +4,6 @@ import { FolderTabs } from '../components/FolderTabs';
 import { TaskList } from '../components/TaskList';
 import { DetailsPanel } from '../components/DetailsPanel';
 import { RemoteUiView } from '../remoteviews/RemoteUiView';
-import { RemoteDocsView } from '../remoteviews/RemoteDocsView';
 import { RemoteUsersView } from '../remoteviews/RemoteUsersView';
 import { RemoteLogsView } from '../remoteviews/RemoteLogsView';
 import { RemoteTablesView } from '../remoteviews/RemoteTablesView';
@@ -19,25 +18,25 @@ interface ProjectViewProps {
 const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
     const { 
         folders, folderCounts, tasks, activeFolderId, handleSelectFolder,
-        hasUiSatellite, hasDocsSatellite, activeRemoteTab, handleToggleRemote, uiSatelliteId, docsSatelliteId
+        hasUiSatellite, activeRemoteTab, handleToggleRemote, uiSatelliteId
     } = useProjectView(project, isActive);
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+
+    const SYSTEM_PROJECT_TITLES = ['Inbox', 'Today', 'Doing Now', 'Logs', 'Done', 'Logbook'];
 
     return (
         <div className={clsx("flex flex-col h-full w-full", !isActive && "hidden")}>
             
             {/* Folder Tabs Area */}
-            {folders.length > 0 && !['Inbox', 'Today', 'Doing Now', 'Logs', 'Done', 'Logbook'].includes(project.title) && (
+            {folders.length > 0 && !SYSTEM_PROJECT_TITLES.includes(project.title) && (
                 <FolderTabs 
                     folders={folders}
                     folderCounts={folderCounts}
                     activeFolderId={activeFolderId}
                     onSelectFolder={handleSelectFolder}
                     onCreateFolder={() => console.log('Create Folder in', project.title)}
-                    // Fix framer-motion jump: unique layoutId per project
                     layoutIdPrefix={`project-${project.id}`}
                     hasUiSatellite={hasUiSatellite}
-                    hasDocsSatellite={hasDocsSatellite}
                     activeRemoteTab={activeRemoteTab}
                     onToggleRemote={handleToggleRemote}
                 />
@@ -48,8 +47,6 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
                 
                 {activeRemoteTab === 'ui' ? (
                     <RemoteUiView projectId={project.id} satelliteId={uiSatelliteId} />
-                ) : activeRemoteTab === 'docs' ? (
-                    <RemoteDocsView projectId={project.id} satelliteId={docsSatelliteId} />
                 ) : activeRemoteTab === 'users' ? (
                     <RemoteUsersView projectId={project.id} satelliteId={uiSatelliteId} />
                 ) : activeRemoteTab === 'logs' ? (

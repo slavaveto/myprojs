@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@powersync/react';
-import { Project, Folder } from '@/app/types';
+import { Project, Folder, Task } from '@/app/types';
 import { globalStorage } from '@/utils/storage';
 
 const STORAGE_KEY_PREFIX = 'v2_active_folder_';
+const REMOTE_TAB_KEY_PREFIX = 'v2_active_remote_tab_';
 
 export const useProjectView = (project: Project, isActive: boolean) => {
-    // 1. Local State for this project's active folder
+    // 1. Local State
     const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
+    const [activeRemoteTab, setActiveRemoteTab] = useState<'ui' | 'users' | 'logs' | 'tables' | null>(null);
 
-    // 2. Load folders for THIS project
+    // ... (query folders) ...
     const { data: foldersData } = useQuery(
         `SELECT * FROM folders 
          WHERE project_id = ? 
@@ -20,7 +22,7 @@ export const useProjectView = (project: Project, isActive: boolean) => {
     );
     const folders: Folder[] = foldersData || [];
 
-    // 2.5 Load task counts
+    // ... (query counts) ...
     const { data: countsData } = useQuery(
         `SELECT folder_id, COUNT(*) as count 
          FROM tasks 
@@ -36,7 +38,7 @@ export const useProjectView = (project: Project, isActive: boolean) => {
         return acc;
     }, {});
 
-    // 2.7 Load tasks for active folder
+    // ... (query tasks) ...
     const { data: tasksData } = useQuery(
         activeFolderId 
             ? `SELECT * FROM tasks 
@@ -49,27 +51,42 @@ export const useProjectView = (project: Project, isActive: boolean) => {
     );
     const tasks: Task[] = tasksData || [];
 
-    // 3. Restore active folder state (Initial Mount Only)
+    // 3. Restore State (Initial Mount Only)
     useEffect(() => {
-        const key = `${STORAGE_KEY_PREFIX}${project.id}`;
-        const savedId = globalStorage.getItem(key);
+        // Restore Remote Tab
+        const remoteTabKey = `${REMOTE_TAB_KEY_PREFIX}${project.id}`;
+        const savedRemoteTab = globalStorage.getItem(remoteTabKey);
         
-        if (savedId && savedId !== 'null') {
-            setActiveFolderId(savedId);
+        if (savedRemoteTab && savedRemoteTab !== 'null') {
+            setActiveRemoteTab(savedRemoteTab as any);
+        }
+
+        // Restore Active Folder
+        const folderKey = `${STORAGE_KEY_PREFIX}${project.id}`;
+        const savedFolderId = globalStorage.getItem(folderKey);
+        
+        if (savedFolderId && savedFolderId !== 'null') {
+            setActiveFolderId(savedFolderId);
         }
     }, [project.id]);
 
     // 4. Auto-select folder logic
+    // Only run if NO remote tab is active and NO folder is selected
     useEffect(() => {
-        // Only run if we have folders and NO active selection (or invalid selection)
         if (folders.length > 0) {
+            // Check if we have a saved remote tab, if so - don't auto-select folder yet (wait for restore)
+            // But restore happens in previous effect.
+            
+            // If remote tab is active, we don't care about auto-selecting folder
+            if (activeRemoteTab) return;
+
             const isValid = activeFolderId && folders.find(f => f.id === activeFolderId);
             
             if (!activeFolderId || !isValid) {
                  const key = `${STORAGE_KEY_PREFIX}${project.id}`;
                  const savedId = globalStorage.getItem(key);
                  
-                 // Try saved ID again (if folders loaded later), else first
+                 // Try saved ID again, else first
                  if (savedId && folders.find(f => f.id === savedId)) {
                      setActiveFolderId(savedId);
                  } else {
@@ -80,32 +97,29 @@ export const useProjectView = (project: Project, isActive: boolean) => {
                  }
             }
         }
-    }, [folders, activeFolderId, project.id]);
+    }, [folders, activeFolderId, project.id, activeRemoteTab]);
 
-    const [activeRemoteTab, setActiveRemoteTab] = useState<'ui' | 'docs' | 'users' | 'logs' | 'tables' | null>(null);
-
-    // 2.6 Check satellites
+    // ... (satellites) ...
     const { data: satellitesData } = useQuery(
-        `SELECT * FROM projects WHERE parent_proj_id = ? AND proj_type IN ('ui', 'docs')`,
+        `SELECT * FROM projects WHERE parent_proj_id = ? AND proj_type IN ('ui')`,
         [project.id]
     );
     const hasUiSatellite = satellitesData?.some(p => p.proj_type === 'ui');
-    const hasDocsSatellite = satellitesData?.some(p => p.proj_type === 'docs');
     const uiSatelliteId = satellitesData?.find(p => p.proj_type === 'ui')?.id;
-    const docsSatelliteId = satellitesData?.find(p => p.proj_type === 'docs')?.id;
 
-    const handleToggleRemote = (tab: 'ui' | 'docs' | 'users' | 'logs' | 'tables') => {
-        // If clicking the already active tab, do nothing (it's a tab, not a toggle)
-        if (activeRemoteTab === tab) {
-             return;
-        }
+    const handleToggleRemote = (tab: 'ui' | 'users' | 'logs' | 'tables') => {
+        if (activeRemoteTab === tab) return;
+        
         setActiveRemoteTab(tab);
+        globalStorage.setItem(`${REMOTE_TAB_KEY_PREFIX}${project.id}`, tab);
     };
 
     const handleSelectFolder = (id: string) => {
         setActiveFolderId(id);
-        setActiveRemoteTab(null); // Switch back to folders mode
+        setActiveRemoteTab(null);
+        
         globalStorage.setItem(`${STORAGE_KEY_PREFIX}${project.id}`, id);
+        globalStorage.setItem(`${REMOTE_TAB_KEY_PREFIX}${project.id}`, 'null'); // Clear remote tab
     };
 
     return {
@@ -115,9 +129,7 @@ export const useProjectView = (project: Project, isActive: boolean) => {
         activeFolderId,
         handleSelectFolder,
         hasUiSatellite,
-        hasDocsSatellite,
         uiSatelliteId,
-        docsSatelliteId,
         activeRemoteTab,
         handleToggleRemote
     };

@@ -1,5 +1,4 @@
 import React from 'react';
-import { useQuery } from '@powersync/react';
 import { Task } from '@/app/types';
 import { Checkbox } from '@heroui/react';
 import { clsx } from 'clsx';

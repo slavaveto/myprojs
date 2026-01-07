@@ -33,6 +33,5 @@ export const RemoteAppSchema = new Schema({
   }),
   _users: new Table({}),
   _logs: new Table({}),
-  _docs: new Table({}),
 });
 

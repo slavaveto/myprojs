@@ -87,9 +87,6 @@ export const AppSchema = new Schema({
   _logs: new Table({
      // define columns... placeholder
   }),
-  _docs: new Table({
-     // define columns... placeholder
-  }),
 });
 
 export type Database = (typeof AppSchema)['types'];

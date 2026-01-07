@@ -140,11 +140,10 @@ interface FolderTabsProps {
     folders: Folder[];
     folderCounts?: Record<string, number>;
     hasUiSatellite?: boolean;
-    hasDocsSatellite?: boolean;
     activeFolderId: string | null;
     onSelectFolder: (folderId: string) => void;
-    onToggleRemote?: (type: 'ui' | 'docs' | 'users' | 'logs' | 'tables') => void;
-    activeRemoteTab?: 'ui' | 'docs' | 'users' | 'logs' | 'tables' | null;
+    onToggleRemote?: (type: 'ui' | 'users' | 'logs' | 'tables') => void;
+    activeRemoteTab?: 'ui' | 'users' | 'logs' | 'tables' | null;
     onCreateFolder?: () => void;
     orientation?: 'horizontal' | 'vertical';
     layoutIdPrefix: string; // Mandatory now
@@ -159,13 +158,12 @@ export const FolderTabs = ({
     orientation = 'horizontal',
     layoutIdPrefix,
     hasUiSatellite,
-    hasDocsSatellite,
     onToggleRemote,
     activeRemoteTab
 }: FolderTabsProps) => {
 
     const RemoteProjsZone = () => {
-        if (!hasUiSatellite && !hasDocsSatellite) return null;
+        if (!hasUiSatellite) return null;
 
         return (
             <div className="flex items-center gap-2 ml-4 pl-4 border-l border-default-200">
@@ -174,7 +172,7 @@ export const FolderTabs = ({
                         <button
                             onClick={() => onToggleRemote?.('ui')}
                             className={clsx(
-                                'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border border-transparent',
+                                'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border border-transparent cursor-pointer',
                                 activeRemoteTab === 'ui'
                                     ? 'bg-purple-100 text-purple-700 border-purple-200'
                                     : 'text-default-500 hover:text-default-700 hover:bg-default-100'
@@ -185,7 +183,7 @@ export const FolderTabs = ({
                         <button
                             onClick={() => onToggleRemote?.('users')}
                             className={clsx(
-                                'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border border-transparent',
+                                'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border border-transparent cursor-pointer',
                                 activeRemoteTab === 'users'
                                     ? 'bg-orange-100 text-orange-700 border-orange-200'
                                     : 'text-default-500 hover:text-default-700 hover:bg-default-100'
@@ -196,7 +194,7 @@ export const FolderTabs = ({
                         <button
                             onClick={() => onToggleRemote?.('logs')}
                             className={clsx(
-                                'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border border-transparent',
+                                'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border border-transparent cursor-pointer',
                                 activeRemoteTab === 'logs'
                                     ? 'bg-gray-100 text-gray-700 border-gray-200'
                                     : 'text-default-500 hover:text-default-700 hover:bg-default-100'
@@ -207,7 +205,7 @@ export const FolderTabs = ({
                         <button
                             onClick={() => onToggleRemote?.('tables')}
                             className={clsx(
-                                'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border border-transparent',
+                                'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border border-transparent cursor-pointer',
                                 activeRemoteTab === 'tables'
                                     ? 'bg-green-100 text-green-700 border-green-200'
                                     : 'text-default-500 hover:text-default-700 hover:bg-default-100'
@@ -216,20 +214,6 @@ export const FolderTabs = ({
                             <span>Tables</span>
                         </button>
                     </>
-                )}
-                {/* Docs placeholder for future */}
-                {hasDocsSatellite && (
-                    <button
-                        onClick={() => onToggleRemote?.('docs')}
-                        className={clsx(
-                            'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border border-transparent',
-                            activeRemoteTab === 'docs'
-                                ? 'bg-blue-100 text-blue-700 border-blue-200'
-                                : 'text-default-500 hover:text-default-700 hover:bg-default-100'
-                        )}
-                    >
-                        <span>Docs</span>
-                    </button>
                 )}
             </div>
         );
