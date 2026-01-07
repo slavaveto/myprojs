@@ -3,7 +3,7 @@ import { Project } from '@/app/types';
 import { FolderTabs } from '../components/FolderTabs';
 import { TaskList } from '../components/TaskList';
 import { DetailsPanel } from '../components/DetailsPanel';
-import { RemoteUiView } from './RemoteUiView';
+import { RemoteUiView } from '../remoteviews/RemoteUiView';
 import { clsx } from 'clsx';
 import { useProjectView } from '../hooks/useProjectView';
 
