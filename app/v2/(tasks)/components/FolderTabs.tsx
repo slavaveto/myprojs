@@ -139,8 +139,12 @@ export const FolderTab = ({
 interface FolderTabsProps {
     folders: Folder[];
     folderCounts?: Record<string, number>;
+    hasUiSatellite?: boolean;
+    hasDocsSatellite?: boolean;
     activeFolderId: string | null;
     onSelectFolder: (folderId: string) => void;
+    onToggleRemote?: (type: 'ui' | 'docs') => void;
+    activeRemoteTab?: 'ui' | 'docs' | null;
     onCreateFolder?: () => void;
     orientation?: 'horizontal' | 'vertical';
     layoutIdPrefix: string; // Mandatory now
@@ -153,19 +157,59 @@ export const FolderTabs = ({
     onSelectFolder, 
     onCreateFolder,
     orientation = 'horizontal',
-    layoutIdPrefix
+    layoutIdPrefix,
+    hasUiSatellite,
+    hasDocsSatellite,
+    onToggleRemote,
+    activeRemoteTab
 }: FolderTabsProps) => {
+
+    const RemoteProjsZone = () => {
+        if (!hasUiSatellite && !hasDocsSatellite) return null;
+
+        return (
+            <div className="flex items-center gap-2 ml-4 pl-4 border-l border-default-200">
+                {hasUiSatellite && (
+                    <button
+                        onClick={() => onToggleRemote?.('ui')}
+                        className={clsx(
+                            'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border border-transparent',
+                            activeRemoteTab === 'ui'
+                                ? 'bg-purple-100 text-purple-700 border-purple-200'
+                                : 'text-default-500 hover:text-default-700 hover:bg-default-100'
+                        )}
+                    >
+                        <span>UI</span>
+                    </button>
+                )}
+                {/* Docs placeholder for future */}
+                {hasDocsSatellite && (
+                    <button
+                        onClick={() => onToggleRemote?.('docs')}
+                        className={clsx(
+                            'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border border-transparent',
+                            activeRemoteTab === 'docs'
+                                ? 'bg-blue-100 text-blue-700 border-blue-200'
+                                : 'text-default-500 hover:text-default-700 hover:bg-default-100'
+                        )}
+                    >
+                        <span>Docs</span>
+                    </button>
+                )}
+            </div>
+        );
+    };
 
     // Simple horizontal layout for now matching v1 horizontal
     return (
-        <div className="flex items-center gap-4 w-full px-6 pl-2 py-2 bg-background/50 flex-none z-10 border-b border-default-200 backdrop-blur-sm sticky top-0">
+        <div className="flex items-center w-full px-6 pl-2 py-2 bg-background/50 flex-none z-10 border-b border-default-200 backdrop-blur-sm sticky top-0">
            <div className="flex-grow overflow-x-auto scrollbar-hide flex items-center gap-2 no-scrollbar pl-4">
                {folders.map((folder, index) => (
                      <FolderTab 
                         key={folder.id}
                         folder={folder}
                         count={folderCounts[folder.id] || 0} 
-                        isActive={activeFolderId === folder.id}
+                        isActive={activeFolderId === folder.id && !activeRemoteTab}
                         layoutIdPrefix={layoutIdPrefix} // Pass unique prefix down
                         onClick={() => onSelectFolder(folder.id)}
                         orientation={orientation}
@@ -175,7 +219,9 @@ export const FolderTabs = ({
                ))}
            </div>
            
-           <div className="flex-shrink-0 ml-2 flex ">
+           <RemoteProjsZone />
+
+           <div className="flex-shrink-0 ml-4 flex ">
                {/* Simplified Create Button */}
                <Button 
                    isIconOnly 
