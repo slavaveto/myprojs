@@ -5,7 +5,7 @@ export interface Project {
    sort_order: number;
    created_at: string;
    updated_at: string;
-    local_path?: string; // Name of the folder in ~/Projs/
+   local_path?: string; // Name of the folder in ~/Projs/
    proj_type?: string; // 'ui', 'docs', 'personal'
    is_deleted?: boolean; // Added for Soft Delete
    is_highlighted?: boolean; // Special styling for important projects
