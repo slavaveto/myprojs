@@ -143,10 +143,12 @@ export const ProjectBar = ({
                                         : "text-default-600 hover:bg-default-200/50"
                                 )}
                             >
+                                <div className="w-[20px] flex items-center justify-center">
                                 <div 
-                                    className="w-[20px] h-2.5 rounded-full shadow-sm flex-shrink-0" 
+                                    className="w-2.5 h-2.5 rounded-full shadow-sm flex-shrink-0" 
                                     style={{ backgroundColor: project.proj_color || '#999' }} 
                                 />
+                                </div>
                                 <span className="flex-1 truncate">{project.title}</span>
                             </div>
                         ))}
