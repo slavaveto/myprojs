@@ -69,8 +69,28 @@ export const useProjectView = (project: Project, isActive: boolean) => {
         }
     }, [folders, activeFolderId, project.id]);
 
+    const [activeRemoteTab, setActiveRemoteTab] = useState<'ui' | 'docs' | null>(null);
+
+    // 2.6 Check satellites
+    const { data: satellitesData } = useQuery(
+        `SELECT * FROM projects WHERE parent_proj_id = ? AND proj_type IN ('ui', 'docs')`,
+        [project.id]
+    );
+    const hasUiSatellite = satellitesData?.some(p => p.proj_type === 'ui');
+    const hasDocsSatellite = satellitesData?.some(p => p.proj_type === 'docs');
+    const uiSatelliteId = satellitesData?.find(p => p.proj_type === 'ui')?.id;
+
+    const handleToggleRemote = (tab: 'ui' | 'docs') => {
+        if (activeRemoteTab === tab) {
+             setActiveRemoteTab(null);
+        } else {
+             setActiveRemoteTab(tab);
+        }
+    };
+
     const handleSelectFolder = (id: string) => {
         setActiveFolderId(id);
+        setActiveRemoteTab(null);
         globalStorage.setItem(`${STORAGE_KEY_PREFIX}${project.id}`, id);
     };
 
@@ -78,7 +98,12 @@ export const useProjectView = (project: Project, isActive: boolean) => {
         folders,
         folderCounts,
         activeFolderId,
-        handleSelectFolder
+        handleSelectFolder,
+        hasUiSatellite,
+        hasDocsSatellite,
+        uiSatelliteId,
+        activeRemoteTab,
+        handleToggleRemote
     };
 };
 
