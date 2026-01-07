@@ -217,23 +217,23 @@ export const FolderTabs = ({
                         onDelete={() => {}}
                      />
                ))}
+
+               {/* Create Folder Button (Moved inside scrollable area) */}
+               <div className="flex-shrink-0 ml-1">
+                   <Button 
+                       isIconOnly 
+                       variant="flat" 
+                       size="sm" 
+                       color="success"
+                       onClick={onCreateFolder}
+                       className="bg-transparent hover:bg-success/20 text-success"
+                   >
+                       <Plus size={20} />
+                   </Button>
+               </div>
            </div>
            
            <RemoteProjsZone />
-
-           <div className="flex-shrink-0 ml-4 flex ">
-               {/* Simplified Create Button */}
-               <Button 
-                   isIconOnly 
-                   variant="flat" 
-                   size="sm" 
-                   color="success"
-                   onClick={onCreateFolder}
-                   className="bg-transparent hover:bg-success/20 text-success"
-               >
-                   <Plus size={20} />
-               </Button>
-           </div>
         </div>
     );
 };
