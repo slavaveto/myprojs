@@ -127,15 +127,21 @@ export const useProjectView = (project: Project, isActive: boolean) => {
     };
 
     const createFolder = async (title: string) => {
-        const maxSort = folders.reduce((max, f) => Math.max(max, f.sort_order), 0);
-        const newSort = maxSort + 100;
-        const id = crypto.randomUUID();
+        try {
+            console.log('Creating local folder:', { title, projectId: project.id });
+            const maxSort = folders.reduce((max, f) => Math.max(max, f.sort_order), 0);
+            const newSort = maxSort + 100;
+            const id = crypto.randomUUID();
 
-        await powerSync.execute(
-            `INSERT INTO folders (id, project_id, title, sort_order, created_at, updated_at) 
-             VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))`,
-            [id, project.id, title, newSort]
-        );
+            await powerSync.execute(
+                `INSERT INTO folders (id, project_id, title, sort_order, created_at, updated_at) 
+                 VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))`,
+                [id, project.id, title, newSort]
+            );
+            console.log('Local folder created successfully');
+        } catch (error) {
+            console.error('FAILED to create local folder:', error);
+        }
     };
 
     return {
