@@ -5,6 +5,9 @@ import { TaskList } from '../components/TaskList';
 import { DetailsPanel } from '../components/DetailsPanel';
 import { RemoteUiView } from '../remoteviews/RemoteUiView';
 import { RemoteDocsView } from '../remoteviews/RemoteDocsView';
+import { RemoteUsersView } from '../remoteviews/RemoteUsersView';
+import { RemoteLogsView } from '../remoteviews/RemoteLogsView';
+import { RemoteTablesView } from '../remoteviews/RemoteTablesView';
 import { clsx } from 'clsx';
 import { useProjectView } from '../hooks/useProjectView';
 
@@ -47,6 +50,12 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
                     <RemoteUiView projectId={project.id} satelliteId={uiSatelliteId} />
                 ) : activeRemoteTab === 'docs' ? (
                     <RemoteDocsView projectId={project.id} satelliteId={docsSatelliteId} />
+                ) : activeRemoteTab === 'users' ? (
+                    <RemoteUsersView projectId={project.id} satelliteId={uiSatelliteId} />
+                ) : activeRemoteTab === 'logs' ? (
+                    <RemoteLogsView projectId={project.id} satelliteId={uiSatelliteId} />
+                ) : activeRemoteTab === 'tables' ? (
+                    <RemoteTablesView projectId={project.id} satelliteId={uiSatelliteId} />
                 ) : (
                     <>
                         {/* Left: Task List */}

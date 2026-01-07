@@ -143,8 +143,8 @@ interface FolderTabsProps {
     hasDocsSatellite?: boolean;
     activeFolderId: string | null;
     onSelectFolder: (folderId: string) => void;
-    onToggleRemote?: (type: 'ui' | 'docs') => void;
-    activeRemoteTab?: 'ui' | 'docs' | null;
+    onToggleRemote?: (type: 'ui' | 'docs' | 'users' | 'logs' | 'tables') => void;
+    activeRemoteTab?: 'ui' | 'docs' | 'users' | 'logs' | 'tables' | null;
     onCreateFolder?: () => void;
     orientation?: 'horizontal' | 'vertical';
     layoutIdPrefix: string; // Mandatory now
@@ -170,17 +170,52 @@ export const FolderTabs = ({
         return (
             <div className="flex items-center gap-2 ml-4 pl-4 border-l border-default-200">
                 {hasUiSatellite && (
-                    <button
-                        onClick={() => onToggleRemote?.('ui')}
-                        className={clsx(
-                            'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border border-transparent',
-                            activeRemoteTab === 'ui'
-                                ? 'bg-purple-100 text-purple-700 border-purple-200'
-                                : 'text-default-500 hover:text-default-700 hover:bg-default-100'
-                        )}
-                    >
-                        <span>UI</span>
-                    </button>
+                    <>
+                        <button
+                            onClick={() => onToggleRemote?.('ui')}
+                            className={clsx(
+                                'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border border-transparent',
+                                activeRemoteTab === 'ui'
+                                    ? 'bg-purple-100 text-purple-700 border-purple-200'
+                                    : 'text-default-500 hover:text-default-700 hover:bg-default-100'
+                            )}
+                        >
+                            <span>UI</span>
+                        </button>
+                        <button
+                            onClick={() => onToggleRemote?.('users')}
+                            className={clsx(
+                                'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border border-transparent',
+                                activeRemoteTab === 'users'
+                                    ? 'bg-orange-100 text-orange-700 border-orange-200'
+                                    : 'text-default-500 hover:text-default-700 hover:bg-default-100'
+                            )}
+                        >
+                            <span>Users</span>
+                        </button>
+                        <button
+                            onClick={() => onToggleRemote?.('logs')}
+                            className={clsx(
+                                'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border border-transparent',
+                                activeRemoteTab === 'logs'
+                                    ? 'bg-gray-100 text-gray-700 border-gray-200'
+                                    : 'text-default-500 hover:text-default-700 hover:bg-default-100'
+                            )}
+                        >
+                            <span>Logs</span>
+                        </button>
+                        <button
+                            onClick={() => onToggleRemote?.('tables')}
+                            className={clsx(
+                                'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border border-transparent',
+                                activeRemoteTab === 'tables'
+                                    ? 'bg-green-100 text-green-700 border-green-200'
+                                    : 'text-default-500 hover:text-default-700 hover:bg-default-100'
+                            )}
+                        >
+                            <span>Tables</span>
+                        </button>
+                    </>
                 )}
                 {/* Docs placeholder for future */}
                 {hasDocsSatellite && (

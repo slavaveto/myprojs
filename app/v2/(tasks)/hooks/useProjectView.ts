@@ -69,7 +69,7 @@ export const useProjectView = (project: Project, isActive: boolean) => {
         }
     }, [folders, activeFolderId, project.id]);
 
-    const [activeRemoteTab, setActiveRemoteTab] = useState<'ui' | 'docs' | null>(null);
+    const [activeRemoteTab, setActiveRemoteTab] = useState<'ui' | 'docs' | 'users' | 'logs' | 'tables' | null>(null);
 
     // 2.6 Check satellites
     const { data: satellitesData } = useQuery(
@@ -81,7 +81,7 @@ export const useProjectView = (project: Project, isActive: boolean) => {
     const uiSatelliteId = satellitesData?.find(p => p.proj_type === 'ui')?.id;
     const docsSatelliteId = satellitesData?.find(p => p.proj_type === 'docs')?.id;
 
-    const handleToggleRemote = (tab: 'ui' | 'docs') => {
+    const handleToggleRemote = (tab: 'ui' | 'docs' | 'users' | 'logs' | 'tables') => {
         if (activeRemoteTab === tab) {
              setActiveRemoteTab(null);
         } else {
