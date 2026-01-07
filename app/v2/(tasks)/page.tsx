@@ -5,9 +5,12 @@ import { usePowerSync } from '@/app/_services/powerSync/PowerSyncProvider';
 import { useQuery } from '@powersync/react';
 import { ProjectBar } from './components/ProjectBar';
 import { Header } from './components/Header';
-import { ProjectView } from './components/ProjectView';
-import { LogsView } from './components/LogsView';
-import { DoneView } from './components/DoneView';
+import { ProjectView } from './views/ProjectView';
+import { LogsView } from './views/LogsView';
+import { DoneView } from './views/DoneView';
+import { TodayView } from './views/TodayView';
+import { InboxView } from './views/InboxView';
+import { DoingNowView } from './views/DoingNowView';
 import { Project, Folder } from '@/app/types';
 import { globalStorage } from '@/utils/storage';
 import { motion } from 'framer-motion';
@@ -135,7 +138,33 @@ export default function TasksPage() {
                     <DoneView isActive={activeSystemTab === 'done'} />
                 </div>
 
-                {activeSystemTab && activeSystemTab !== 'logs' && activeSystemTab !== 'done' && (
+                <div 
+                    className="absolute inset-0 w-full h-full bg-background"
+                    style={{ display: activeSystemTab === 'today' ? 'block' : 'none', zIndex: 10 }}
+                >
+                    <TodayView isActive={activeSystemTab === 'today'} />
+                </div>
+
+                <div 
+                    className="absolute inset-0 w-full h-full bg-background"
+                    style={{ display: activeSystemTab === 'inbox' ? 'block' : 'none', zIndex: 10 }}
+                >
+                    <InboxView isActive={activeSystemTab === 'inbox'} />
+                </div>
+
+                <div 
+                    className="absolute inset-0 w-full h-full bg-background"
+                    style={{ display: activeSystemTab === 'doing_now' ? 'block' : 'none', zIndex: 10 }}
+                >
+                    <DoingNowView isActive={activeSystemTab === 'doing_now'} />
+                </div>
+
+                {activeSystemTab && 
+                 activeSystemTab !== 'logs' && 
+                 activeSystemTab !== 'done' && 
+                 activeSystemTab !== 'today' && 
+                 activeSystemTab !== 'inbox' && 
+                 activeSystemTab !== 'doing_now' && (
                     <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-background z-10">
                          <div className="text-center text-default-400">
                             <h2 className="text-2xl font-bold mb-2 capitalize">{activeSystemTab}</h2>

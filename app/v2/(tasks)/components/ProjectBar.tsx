@@ -144,7 +144,7 @@ export const ProjectBar = ({
                                 )}
                             >
                                 <div 
-                                    className="w-2.5 h-2.5 rounded-full shadow-sm flex-shrink-0" 
+                                    className="w-[20px] h-2.5 rounded-full shadow-sm flex-shrink-0" 
                                     style={{ backgroundColor: project.proj_color || '#999' }} 
                                 />
                                 <span className="flex-1 truncate">{project.title}</span>

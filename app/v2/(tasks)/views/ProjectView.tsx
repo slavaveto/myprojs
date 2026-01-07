@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Project } from '@/app/types';
-import { FolderTabs } from './FolderTabs';
-import { TaskList } from './TaskList';
-import { DetailsPanel } from './DetailsPanel';
+import { FolderTabs } from '../components/FolderTabs';
+import { TaskList } from '../components/TaskList';
+import { DetailsPanel } from '../components/DetailsPanel';
 import { clsx } from 'clsx';
 import { useProjectView } from '../hooks/useProjectView';
 
