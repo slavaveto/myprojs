@@ -94,6 +94,18 @@ export const useRemoteUiData = (projectId: string) => {
     };
 
     // CRUD Operations (Wrappers around PowerSync)
+    const createFolder = async (title: string = 'New Folder') => {
+        const maxSort = folders.reduce((max, f) => Math.max(max, f.sort_order || 0), 0);
+        const newSort = maxSort + 100;
+        const id = crypto.randomUUID();
+
+        await powerSync.execute(
+            `INSERT INTO _ui_folders (id, project_id, title, sort_order, created_at, updated_at) 
+             VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))`,
+            [id, projectId, title, newSort]
+        );
+    };
+
     const createTask = async (content: string, folderId: string) => {
         // TODO: Implement using powerSync.execute
         // INSERT INTO "-ui_items" ...
@@ -116,6 +128,7 @@ export const useRemoteUiData = (projectId: string) => {
         activeFolderId,
         handleSelectFolder,
         tasks: activeTasks, // Tasks for the active folder
+        createFolder,
         createTask,
         updateTask,
         deleteTask

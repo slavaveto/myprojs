@@ -52,6 +52,7 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
                     remoteFolderCounts={remoteUi.folderCounts}
                     activeRemoteFolderId={remoteUi.activeFolderId}
                     onSelectRemoteFolder={remoteUi.handleSelectFolder}
+                    onCreateRemoteFolder={() => remoteUi.createFolder('New UI Folder')}
                 />
             )}
 

@@ -156,6 +156,7 @@ interface FolderTabsProps {
     remoteFolderCounts?: Record<string, number>;
     activeRemoteFolderId?: string | null;
     onSelectRemoteFolder?: (folderId: string) => void;
+    onCreateRemoteFolder?: () => void;
 }
 
 export const FolderTabs = ({ 
@@ -173,7 +174,8 @@ export const FolderTabs = ({
     remoteFolders = [],
     remoteFolderCounts = {},
     activeRemoteFolderId,
-    onSelectRemoteFolder
+    onSelectRemoteFolder,
+    onCreateRemoteFolder
 }: FolderTabsProps) => {
 
     const RemoteProjsZone = () => {
@@ -287,6 +289,23 @@ export const FolderTabs = ({
                         onDelete={() => {}}
                     />
                 ))}
+                
+                {/* Create Remote Folder Button (Visible only if UI tab is active) */}
+                {activeRemoteTab === 'ui' && (
+                   <div className="flex-shrink-0 ml-1">
+                       <Button 
+                           isIconOnly 
+                           variant="flat" 
+                           size="sm" 
+                           color="secondary" // Purple for UI
+                           onClick={onCreateRemoteFolder}
+                           className="bg-transparent hover:bg-secondary/20 text-secondary"
+                       >
+                           <Plus size={20} />
+                       </Button>
+                   </div>
+                )}
+
                <RemoteProjsZone />
            </div>
         </div>
