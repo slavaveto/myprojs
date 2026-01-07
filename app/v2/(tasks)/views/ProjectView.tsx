@@ -18,7 +18,7 @@ interface ProjectViewProps {
 
 const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
     const { 
-        folders, folderCounts, activeFolderId, handleSelectFolder,
+        folders, folderCounts, tasks, activeFolderId, handleSelectFolder,
         hasUiSatellite, hasDocsSatellite, activeRemoteTab, handleToggleRemote, uiSatelliteId, docsSatelliteId
     } = useProjectView(project, isActive);
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -62,8 +62,7 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
                         <div className="flex-1 overflow-y-scroll p-6 bg-background">
                             {activeFolderId ? (
                                 <TaskList 
-                                    folderId={activeFolderId} 
-                                    projectId={project.id} 
+                                    tasks={tasks}
                                     onSelectTask={setSelectedTaskId}
                                     selectedTaskId={selectedTaskId}
                                 />

@@ -36,6 +36,19 @@ export const useProjectView = (project: Project, isActive: boolean) => {
         return acc;
     }, {});
 
+    // 2.7 Load tasks for active folder
+    const { data: tasksData } = useQuery(
+        activeFolderId 
+            ? `SELECT * FROM tasks 
+               WHERE folder_id = ? 
+                 AND (is_deleted IS NULL OR is_deleted = 0)
+                 AND (is_completed IS NULL OR is_completed = 0)
+               ORDER BY sort_order ASC`
+            : '',
+        activeFolderId ? [activeFolderId] : []
+    );
+    const tasks: Task[] = tasksData || [];
+
     // 3. Restore active folder state (Initial Mount Only)
     useEffect(() => {
         const key = `${STORAGE_KEY_PREFIX}${project.id}`;
@@ -98,6 +111,7 @@ export const useProjectView = (project: Project, isActive: boolean) => {
     return {
         folders,
         folderCounts,
+        tasks,
         activeFolderId,
         handleSelectFolder,
         hasUiSatellite,

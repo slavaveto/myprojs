@@ -1,7 +1,7 @@
 import { Schema, Table, column } from '@powersync/web';
 
 export const RemoteAppSchema = new Schema({
-  '-ui_folders': new Table({
+  _ui_folders: new Table({
     project_id: column.text,
     title: column.text,
     sort_order: column.integer,
@@ -10,7 +10,7 @@ export const RemoteAppSchema = new Schema({
     is_deleted: column.integer,
     is_hidden: column.integer
   }),
-  '-ui_items': new Table({
+  _ui_items: new Table({
     folder_id: column.text,
     content: column.text,
     sort_order: column.integer,
@@ -31,5 +31,8 @@ export const RemoteAppSchema = new Schema({
     en: column.text,
     uk: column.text,
   }),
+  _users: new Table({}),
+  _logs: new Table({}),
+  _docs: new Table({}),
 });
 

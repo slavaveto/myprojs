@@ -5,24 +5,13 @@ import { Checkbox } from '@heroui/react';
 import { clsx } from 'clsx';
 
 interface TaskListProps {
-    folderId: string;
-    projectId: string;
+    tasks: Task[];
     onSelectTask: (id: string) => void;
     selectedTaskId: string | null;
+    onUpdateTask?: (id: string, updates: Partial<Task>) => void;
 }
 
-export const TaskList = ({ folderId, projectId, onSelectTask, selectedTaskId }: TaskListProps) => {
-    // Query tasks for this folder
-    const { data: tasksData } = useQuery(
-        `SELECT * FROM tasks 
-         WHERE folder_id = ? 
-           AND (is_deleted IS NULL OR is_deleted = 0)
-           AND (is_completed IS NULL OR is_completed = 0)
-         ORDER BY sort_order ASC`,
-        [folderId]
-    );
-    
-    const tasks: Task[] = tasksData || [];
+export const TaskList = ({ tasks, onSelectTask, selectedTaskId, onUpdateTask }: TaskListProps) => {
 
     if (tasks.length === 0) {
         return (

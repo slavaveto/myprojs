@@ -12,9 +12,9 @@ export const useRemoteUiData = (projectId: string) => {
     // Access CURRENT PowerSync instance (provided by RemotePowerSyncProvider or Main)
     const powerSync = usePowerSync();
 
-    // 2. Load folders from "-ui_folders"
+    // 2. Load folders from "_ui_folders"
     const { data: foldersData } = useQuery(
-        `SELECT * FROM "-ui_folders"
+        `SELECT * FROM _ui_folders
          WHERE project_id = ? 
            AND (is_deleted IS NULL OR is_deleted = 0) 
            AND (is_hidden IS NULL OR is_hidden = 0) 
@@ -28,18 +28,18 @@ export const useRemoteUiData = (projectId: string) => {
         id: f.id, // Ensure ID exists
     }));
 
-    // 3. Load items from "-ui_items" (tasks)
+    // 3. Load items from "_ui_items" (tasks)
     // We load ALL active items for the project to calculate counts
     // (Assuming items have folder_id which links to folders of this project)
     
     // Wait, items don't have project_id directly usually, they link to folder.
-    // So we need: WHERE folder_id IN (SELECT id FROM "-ui_folders" WHERE project_id = ?)
+    // So we need: WHERE folder_id IN (SELECT id FROM "_ui_folders" WHERE project_id = ?)
     
     const { data: itemsData } = useQuery(
-        `SELECT * FROM "-ui_items"
+        `SELECT * FROM _ui_items
          WHERE (is_completed IS NULL OR is_completed = 0) 
            AND (is_deleted IS NULL OR is_deleted = 0)
-           AND folder_id IN (SELECT id FROM "-ui_folders" WHERE project_id = ?)`,
+           AND folder_id IN (SELECT id FROM _ui_folders WHERE project_id = ?)`,
         [projectId]
     );
     

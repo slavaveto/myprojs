@@ -51,7 +51,7 @@ export const AppSchema = new Schema({
     details: column.text,
     project_id: column.text,
   }),
-  '-ui_folders': new Table({
+  _ui_folders: new Table({
     project_id: column.text,
     title: column.text,
     sort_order: column.integer,
@@ -60,7 +60,7 @@ export const AppSchema = new Schema({
     is_deleted: column.integer,
     is_hidden: column.integer
   }),
-  '-ui_items': new Table({
+  _ui_items: new Table({
     folder_id: column.text,
     content: column.text,
     sort_order: column.integer,
@@ -80,6 +80,15 @@ export const AppSchema = new Schema({
     ru: column.text,
     en: column.text,
     uk: column.text,
+  }),
+  _users: new Table({
+     // define columns... placeholder
+  }),
+  _logs: new Table({
+     // define columns... placeholder
+  }),
+  _docs: new Table({
+     // define columns... placeholder
   }),
 });
 
