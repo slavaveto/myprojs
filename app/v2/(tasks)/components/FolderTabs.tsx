@@ -11,15 +11,12 @@ import { motion } from 'framer-motion';
 // --- Single Tab Component ---
 interface FolderTabProps {
     folder: Folder;
-    count?: number; // Made optional for v2 initial
+    count?: number; 
     isActive: boolean;
     onClick: () => void;
-    layoutIdPrefix?: string;
+    layoutIdPrefix: string; // Mandatory
     onUpdate?: (title: string) => void;
     onDelete?: () => void;
-    // onMove?: (direction: 'left' | 'right') => void;
-    // canMoveLeft?: boolean;
-    // canMoveRight?: boolean;
     isDragging?: boolean;
     isOver?: boolean;
     orientation?: 'horizontal' | 'vertical';
@@ -30,12 +27,9 @@ export const FolderTab = ({
     count = 0, 
     isActive, 
     onClick, 
-    layoutIdPrefix = 'v2-tabs',
+    layoutIdPrefix,
     onUpdate,
     onDelete,
-    // onMove,
-    // canMoveLeft,
-    // canMoveRight,
     isDragging,
     isOver,
     orientation = 'horizontal'
@@ -147,11 +141,8 @@ interface FolderTabsProps {
     activeFolderId: string | null;
     onSelectFolder: (folderId: string) => void;
     onCreateFolder?: () => void;
-    // onUpdateFolder?: (id: string, name: string) => Promise<void> | void;
-    // onDeleteFolder?: (id: string) => Promise<void> | void;
-    // getTaskCount: (folderId: string) => number;
-    // hoveredFolderId?: string | null;
     orientation?: 'horizontal' | 'vertical';
+    layoutIdPrefix: string; // Mandatory now
 }
 
 export const FolderTabs = ({ 
@@ -159,11 +150,8 @@ export const FolderTabs = ({
     activeFolderId, 
     onSelectFolder, 
     onCreateFolder,
-    // onUpdateFolder, 
-    // onDeleteFolder, 
-    // getTaskCount,
-    // hoveredFolderId,
-    orientation = 'horizontal'
+    orientation = 'horizontal',
+    layoutIdPrefix
 }: FolderTabsProps) => {
 
     // Simple horizontal layout for now matching v1 horizontal
@@ -174,12 +162,11 @@ export const FolderTabs = ({
                      <FolderTab 
                         key={folder.id}
                         folder={folder}
-                        count={0} // Mock count for now
+                        count={0} 
                         isActive={activeFolderId === folder.id}
-                        layoutIdPrefix="v2-folders"
+                        layoutIdPrefix={layoutIdPrefix} // Pass unique prefix down
                         onClick={() => onSelectFolder(folder.id)}
                         orientation={orientation}
-                        // Mock actions to show hover effect
                         onUpdate={() => {}} 
                         onDelete={() => {}}
                      />
