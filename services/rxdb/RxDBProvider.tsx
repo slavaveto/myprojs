@@ -128,93 +128,93 @@ export const RxDBProvider = ({ children }: { children: React.ReactNode }) => {
         }
     }, [isSyncing, wasSyncing]);
 
-    // Consistency Check with Retry
-    useEffect(() => {
-        if (!isSyncing && db && userId && replicationStates.length > 0) {
-            const timer = setTimeout(() => {
+    // // Consistency Check with Retry
+    // useEffect(() => {
+    //     if (!isSyncing && db && userId && replicationStates.length > 0) {
+    //         const timer = setTimeout(() => {
                 
-                const performCheck = async (retryCount = 0) => {
-                    logger.info(`Running consistency check (Attempt ${retryCount + 1})...`);
-                    const tables: ('projects' | 'folders' | 'tasks')[] = ['projects', 'folders', 'tasks'];
-                    let allMatch = true;
-                    const mismatches: string[] = [];
+    //             const performCheck = async (retryCount = 0) => {
+    //                 logger.info(`Running consistency check (Attempt ${retryCount + 1})...`);
+    //                 const tables: ('projects' | 'folders' | 'tasks')[] = ['projects', 'folders', 'tasks'];
+    //                 let allMatch = true;
+    //                 const mismatches: string[] = [];
                     
-                    for (const table of tables) {
-                        try {
-                            const localDocs = await db[table].find({
-                                selector: { is_deleted: { $ne: true } }
-                            }).exec();
+    //                 for (const table of tables) {
+    //                     try {
+    //                         const localDocs = await db[table].find({
+    //                             selector: { is_deleted: { $ne: true } }
+    //                         }).exec();
                             
-                            const localMap = new Map<string, string>();
-                            localDocs.forEach(d => localMap.set(d.id, d.updated_at));
+    //                         const localMap = new Map<string, string>();
+    //                         localDocs.forEach(d => localMap.set(d.id, d.updated_at));
 
-                            const { data: remoteDocs, error } = await supabase
-                                .from(table)
-                                .select('id, updated_at')
-                                .not('is_deleted', 'is', true)
-                                .eq('user_id', userId);
+    //                         const { data: remoteDocs, error } = await supabase
+    //                             .from(table)
+    //                             .select('id, updated_at')
+    //                             .not('is_deleted', 'is', true)
+    //                             .eq('user_id', userId);
 
-                            if (error) {
-                                logger.error(`Consistency Check Error (${table}):`, error);
-                                allMatch = false;
-                                mismatches.push(`${table}: API Error`);
-                            } else {
-                                const remoteMap = new Map<string, string>();
-                                if (remoteDocs) {
-                                    remoteDocs.forEach((d: any) => remoteMap.set(d.id, d.updated_at));
-                                }
+    //                         if (error) {
+    //                             logger.error(`Consistency Check Error (${table}):`, error);
+    //                             allMatch = false;
+    //                             mismatches.push(`${table}: API Error`);
+    //                         } else {
+    //                             const remoteMap = new Map<string, string>();
+    //                             if (remoteDocs) {
+    //                                 remoteDocs.forEach((d: any) => remoteMap.set(d.id, d.updated_at));
+    //                             }
 
-                                let tableMismatch = false;
+    //                             let tableMismatch = false;
                                 
-                                for (const [id, localAt] of localMap) {
-                                    if (!remoteMap.has(id)) {
-                                        tableMismatch = true;
-                                    } else {
-                                        const remoteAt = remoteMap.get(id);
-                                        if (new Date(remoteAt!).getTime() !== new Date(localAt).getTime()) {
-                                            tableMismatch = true;
-                                        }
-                                    }
-                                }
+    //                             for (const [id, localAt] of localMap) {
+    //                                 if (!remoteMap.has(id)) {
+    //                                     tableMismatch = true;
+    //                                 } else {
+    //                                     const remoteAt = remoteMap.get(id);
+    //                                     if (new Date(remoteAt!).getTime() !== new Date(localAt).getTime()) {
+    //                                         tableMismatch = true;
+    //                                     }
+    //                                 }
+    //                             }
 
-                                for (const [id] of remoteMap) {
-                                    if (!localMap.has(id)) {
-                                        tableMismatch = true;
-                                    }
-                                }
+    //                             for (const [id] of remoteMap) {
+    //                                 if (!localMap.has(id)) {
+    //                                     tableMismatch = true;
+    //                                 }
+    //                             }
 
-                                if (tableMismatch) {
-                                    allMatch = false;
-                                    mismatches.push(`${table} (Diff)`);
-                                } else {
-                                    logger.info(`Match [${table}]: Identical (${localMap.size} docs)`);
-                                }
-                            }
-                        } catch (e) {
-                             logger.error(`Check exception ${table}`, e);
-                             allMatch = false;
-                        }
-                    }
+    //                             if (tableMismatch) {
+    //                                 allMatch = false;
+    //                                 mismatches.push(`${table} (Diff)`);
+    //                             } else {
+    //                                 logger.info(`Match [${table}]: Identical (${localMap.size} docs)`);
+    //                             }
+    //                         }
+    //                     } catch (e) {
+    //                          logger.error(`Check exception ${table}`, e);
+    //                          allMatch = false;
+    //                     }
+    //                 }
 
-                    if (!allMatch) {
-                        if (retryCount < 3) {
-                            logger.warning(`Check failed, retrying in 2s... Mismatches: ${mismatches.join(', ')}`);
-                            setTimeout(() => performCheck(retryCount + 1), 2000);
-                        } else {
-                            toast.error(`Sync Mismatch: ${mismatches.join(', ')}`, { duration: 5000 });
-                        }
-                    } else {
-                        logger.success('Sync Verified: All tables match');
-                    }
-                };
+    //                 if (!allMatch) {
+    //                     if (retryCount < 3) {
+    //                         logger.warning(`Check failed, retrying in 2s... Mismatches: ${mismatches.join(', ')}`);
+    //                         setTimeout(() => performCheck(retryCount + 1), 2000);
+    //                     } else {
+    //                         toast.error(`Sync Mismatch: ${mismatches.join(', ')}`, { duration: 5000 });
+    //                     }
+    //                 } else {
+    //                     logger.success('Sync Verified: All tables match');
+    //                 }
+    //             };
 
-                performCheck();
+    //             performCheck();
 
-            }, 3000);
+    //         }, 3000);
 
-            return () => clearTimeout(timer);
-        }
-    }, [isSyncing, db, userId, supabase, replicationStates]);
+    //         return () => clearTimeout(timer);
+    //     }
+    // }, [isSyncing, db, userId, supabase, replicationStates]);
 
     if (!db) {
         return null; // Or a loading spinner

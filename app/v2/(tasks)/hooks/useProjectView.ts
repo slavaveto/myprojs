@@ -100,12 +100,7 @@ export const useProjectView = (project: Project, isActive: boolean) => {
     }, [folders, activeFolderId, project.id, activeRemoteTab]);
 
     // ... (satellites) ...
-    const { data: satellitesData } = useQuery(
-        `SELECT * FROM projects WHERE parent_proj_id = ? AND proj_type IN ('ui')`,
-        [project.id]
-    );
-    const hasUiSatellite = satellitesData?.some(p => p.proj_type === 'ui');
-    const uiSatelliteId = satellitesData?.find(p => p.proj_type === 'ui')?.id;
+    const hasRemoteUi = !!project.has_remote_ui;
 
     const handleToggleRemote = (tab: 'ui' | 'users' | 'logs' | 'tables') => {
         if (activeRemoteTab === tab) return;
@@ -128,8 +123,7 @@ export const useProjectView = (project: Project, isActive: boolean) => {
         tasks,
         activeFolderId,
         handleSelectFolder,
-        hasUiSatellite,
-        uiSatelliteId,
+        hasRemoteUi,
         activeRemoteTab,
         handleToggleRemote
     };

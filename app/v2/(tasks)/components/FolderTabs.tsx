@@ -139,7 +139,7 @@ export const FolderTab = ({
 interface FolderTabsProps {
     folders: Folder[];
     folderCounts?: Record<string, number>;
-    hasUiSatellite?: boolean;
+    hasRemoteUi?: boolean;
     activeFolderId: string | null;
     onSelectFolder: (folderId: string) => void;
     onToggleRemote?: (type: 'ui' | 'users' | 'logs' | 'tables') => void;
@@ -157,17 +157,17 @@ export const FolderTabs = ({
     onCreateFolder,
     orientation = 'horizontal',
     layoutIdPrefix,
-    hasUiSatellite,
+    hasRemoteUi,
     onToggleRemote,
     activeRemoteTab
 }: FolderTabsProps) => {
 
     const RemoteProjsZone = () => {
-        if (!hasUiSatellite) return null;
+        if (!hasRemoteUi) return null;
 
         return (
             <div className="flex items-center gap-2 ml-4 pl-4 border-l border-default-200">
-                {hasUiSatellite && (
+                {hasRemoteUi && (
                     <>
                         <button
                             onClick={() => onToggleRemote?.('ui')}

@@ -18,7 +18,7 @@ interface ProjectViewProps {
 const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
     const { 
         folders, folderCounts, tasks, activeFolderId, handleSelectFolder,
-        hasUiSatellite, activeRemoteTab, handleToggleRemote, uiSatelliteId
+        hasRemoteUi, activeRemoteTab, handleToggleRemote
     } = useProjectView(project, isActive);
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
@@ -36,7 +36,7 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
                     onSelectFolder={handleSelectFolder}
                     onCreateFolder={() => console.log('Create Folder in', project.title)}
                     layoutIdPrefix={`project-${project.id}`}
-                    hasUiSatellite={hasUiSatellite}
+                    hasRemoteUi={hasRemoteUi}
                     activeRemoteTab={activeRemoteTab}
                     onToggleRemote={handleToggleRemote}
                 />
@@ -46,13 +46,13 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
             <div className="flex-1 flex min-h-0 overflow-hidden relative">
                 
                 {activeRemoteTab === 'ui' ? (
-                    <RemoteUiView projectId={project.id} satelliteId={uiSatelliteId} />
+                    <RemoteUiView projectId={project.id} satelliteId={project.id} />
                 ) : activeRemoteTab === 'users' ? (
-                    <RemoteUsersView projectId={project.id} satelliteId={uiSatelliteId} />
+                    <RemoteUsersView projectId={project.id} satelliteId={project.id} />
                 ) : activeRemoteTab === 'logs' ? (
-                    <RemoteLogsView projectId={project.id} satelliteId={uiSatelliteId} />
+                    <RemoteLogsView projectId={project.id} satelliteId={project.id} />
                 ) : activeRemoteTab === 'tables' ? (
-                    <RemoteTablesView projectId={project.id} satelliteId={uiSatelliteId} />
+                    <RemoteTablesView projectId={project.id} satelliteId={project.id} />
                 ) : (
                     <>
                         {/* Left: Task List */}

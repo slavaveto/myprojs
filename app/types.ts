@@ -7,12 +7,10 @@ export interface Project {
    updated_at: string;
     local_path?: string; // Name of the folder in ~/Projs/
    proj_type?: string; // 'ui', 'docs', 'personal'
-   parent_proj_id?: string; // ID of the parent project for satellites
    is_deleted?: boolean; // Added for Soft Delete
-   is_disabled?: boolean; // Toggled state for satellites
    is_highlighted?: boolean; // Special styling for important projects
    is_hidden?: boolean; // New: Hide from sidebar but keep active
-   remote_proj_slug?: string; // Slug for remote projects (e.g. 'psyhelp') to find keys in .env
+   has_remote_ui?: boolean; // Toggle for showing Remote UI tabs
 }
 
 export interface Folder {
