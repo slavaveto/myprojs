@@ -11,8 +11,7 @@ export const getPowerSync = (): PowerSyncDatabase => {
     if (!instance) {
         // PowerSync requires a worker file to be served as a static asset.
         // We use a full URL to avoid relative path issues.
-        // Adding timestamp to bust cache
-        const workerUrl = new URL(`/worker/powersync-worker.js?v=${Date.now()}`, window.location.origin).href;
+        const workerUrl = new URL('/worker/powersync-worker.js', window.location.origin).href;
         console.log('[PowerSync] Worker URL:', workerUrl);
 
         const factory = new WASQLitePowerSyncDatabaseOpenFactory({
