@@ -20,7 +20,8 @@ interface ProjectViewProps {
 const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
     const { 
         folders, folderCounts, tasks, activeFolderId, handleSelectFolder,
-        hasRemoteUi, activeRemoteTab, handleToggleRemote, createFolder
+        hasRemoteUi, activeRemoteTab, handleToggleRemote, createFolder,
+        updateFolder, deleteFolder
     } = useProjectView(project, isActive);
     
     // Remote UI Data (Always fetched if project active, but lightweight)
@@ -44,6 +45,10 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
                     onCreateFolder={createFolder}
                     layoutIdPrefix={`project-${project.id}`}
                     hasRemoteUi={hasRemoteUi}
+                    
+                    // Local Edit/Delete
+                    onUpdateFolder={updateFolder}
+                    onDeleteFolder={deleteFolder}
                     activeRemoteTab={activeRemoteTab}
                     onToggleRemote={handleToggleRemote}
                     

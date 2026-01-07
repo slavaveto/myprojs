@@ -154,7 +154,11 @@ interface FolderTabsProps {
     onSelectFolder: (folderId: string) => void;
     onToggleRemote?: (type: 'ui' | 'users' | 'logs' | 'tables') => void;
     activeRemoteTab?: 'ui' | 'users' | 'logs' | 'tables' | null;
+    // Local Props
     onCreateFolder?: (title: string) => void;
+    onUpdateFolder?: (folderId: string, title: string) => void;
+    onDeleteFolder?: (folderId: string) => void;
+    
     orientation?: 'horizontal' | 'vertical';
     layoutIdPrefix: string; 
     // Remote Props
@@ -185,7 +189,9 @@ export const FolderTabs = ({
     onSelectRemoteFolder,
     onCreateRemoteFolder,
     onUpdateRemoteFolder,
-    onDeleteRemoteFolder
+    onDeleteRemoteFolder,
+    onUpdateFolder,
+    onDeleteFolder
 }: FolderTabsProps) => {
 
     const RemoteProjsZone = () => {
@@ -261,8 +267,8 @@ export const FolderTabs = ({
                             onClick={() => onSelectFolder(folder.id)}
                             orientation={orientation}
                             showZeroCount={true} // Show count for project folders too
-                            onUpdate={() => {}} 
-                            onDelete={() => {}}
+                            onUpdate={onUpdateFolder ? (title) => onUpdateFolder(folder.id, title) : undefined} 
+                            onDelete={onDeleteFolder ? () => onDeleteFolder(folder.id) : undefined}
                          />
                    ))}
 

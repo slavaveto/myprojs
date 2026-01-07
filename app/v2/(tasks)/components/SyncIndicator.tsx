@@ -1,6 +1,6 @@
 import React from 'react';
 import { useStatus } from '@powersync/react';
-import { RefreshCw, CloudOff, Cloud, CheckCircle2, UploadCloud, DownloadCloud } from 'lucide-react';
+import { RefreshCw, CloudOff, Cloud, UploadCloud, DownloadCloud, AlertTriangle } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent, Button, Chip } from '@heroui/react';
 import { clsx } from 'clsx';
 
@@ -11,9 +11,16 @@ export const SyncIndicator = () => {
     // @ts-ignore
     const isWorking = status.connecting || status.downloading || status.uploading;
     const isOffline = !status.connected && !status.connecting;
+    // @ts-ignore
+    const uploadError = status.uploadError;
+    // @ts-ignore
+    const downloadError = status.downloadError;
+    // @ts-ignore
+    const anyError = status.anyError || uploadError || downloadError;
     
     // Status Text logic
     const getStatusText = () => {
+        if (anyError) return 'Sync Error';
         if (status.connecting) return 'Connecting...';
         // @ts-ignore
         if (status.downloading) return 'Downloading changes...';
@@ -24,6 +31,7 @@ export const SyncIndicator = () => {
     };
 
     const getStatusColor = () => {
+        if (anyError) return 'danger';
         if (isOffline) return 'danger';
         if (isWorking) return 'warning';
         return 'success';
@@ -38,11 +46,13 @@ export const SyncIndicator = () => {
                     size="sm" 
                     className={clsx(
                         "transition-all",
-                        isOffline ? "text-red-500" : "text-default-500"
+                        (isOffline || anyError) ? "text-red-500" : "text-default-500"
                     )}
                 >
                     {/* ICON LOGIC */}
-                    {isWorking ? (
+                    {anyError ? (
+                        <AlertTriangle size={18} className="text-red-600 animate-pulse" />
+                    ) : isWorking ? (
                         <RefreshCw size={18} className="animate-spin text-orange-500" />
                     ) : isOffline ? (
                         <CloudOff size={18} className="text-red-500" />
@@ -105,11 +115,14 @@ export const SyncIndicator = () => {
                         )}
                         
                         {/* Error */}
-                        {/* @ts-ignore */}
-                        {status.anyError && (
-                            <div className="bg-red-50 text-red-600 p-2 rounded text-[10px] break-words">
-                                {/* @ts-ignore */}
-                                Error: {status.anyError.message || JSON.stringify(status.anyError)}
+                        {anyError && (
+                            <div className="bg-red-50 text-red-600 p-2 rounded text-[10px] break-words border border-red-200">
+                                <div className="font-bold mb-1">Sync Error:</div>
+                                {uploadError && <div>Upload: {uploadError.message || JSON.stringify(uploadError)}</div>}
+                                {downloadError && <div>Download: {downloadError.message || JSON.stringify(downloadError)}</div>}
+                                {!uploadError && !downloadError && (
+                                    <div>{anyError.message || JSON.stringify(anyError)}</div>
+                                )}
                             </div>
                         )}
                     </div>

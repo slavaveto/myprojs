@@ -144,6 +144,32 @@ export const useProjectView = (project: Project, isActive: boolean) => {
         }
     };
 
+    const updateFolder = async (folderId: string, title: string) => {
+        try {
+            console.log('Updating local folder:', { folderId, title });
+            await powerSync.execute(
+                `UPDATE folders SET title = ?, updated_at = datetime('now') WHERE id = ?`,
+                [title, folderId]
+            );
+            console.log('Local folder updated successfully');
+        } catch (error) {
+            console.error('FAILED to update local folder:', error);
+        }
+    };
+
+    const deleteFolder = async (folderId: string) => {
+        try {
+            console.log('Deleting local folder:', folderId);
+            await powerSync.execute(
+                `UPDATE folders SET is_deleted = 1, updated_at = datetime('now') WHERE id = ?`,
+                [folderId]
+            );
+            console.log('Local folder deleted successfully');
+        } catch (error) {
+            console.error('FAILED to delete local folder:', error);
+        }
+    };
+
     return {
         folders,
         folderCounts,
@@ -153,7 +179,9 @@ export const useProjectView = (project: Project, isActive: boolean) => {
         hasRemoteUi,
         activeRemoteTab,
         handleToggleRemote,
-        createFolder
+        createFolder,
+        updateFolder,
+        deleteFolder
     };
 };
 
