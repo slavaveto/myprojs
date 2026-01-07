@@ -1,5 +1,5 @@
 import React from 'react';
-import { EllipsisVertical, Search, Bell } from 'lucide-react';
+import { EllipsisVertical, Search, Bell, Inbox, Star, Target, CheckCircle2, FileText } from 'lucide-react';
 import { Button, Avatar } from '@heroui/react';
 import { SyncIndicator } from './SyncIndicator';
 import { Project } from '@/app/types';
@@ -38,19 +38,44 @@ export const Header = ({ activeProject, activeSystemTab }: HeaderProps) => {
     
     // Determine title based on context
     let title = "DaySync";
-    let color = "#333";
+    let colorStyle = {};
+    let iconClass = "text-default-500";
+    let Icon = null;
+    let iconFill = "none";
 
     if (activeProject) {
         title = activeProject.title;
         // @ts-ignore
-        color = activeProject.proj_color || activeProject.color || '#333';
+        const color = activeProject.proj_color || activeProject.color || '#333';
+        colorStyle = { backgroundColor: color };
     } else if (activeSystemTab) {
         switch (activeSystemTab) {
-            case 'inbox': title = "Inbox"; color = "#3b82f6"; break;
-            case 'today': title = "Today"; color = "#eab308"; break;
-            case 'doing_now': title = "Doing Now"; color = "#ef4444"; break;
-            case 'done': title = "Completed Tasks"; color = "#22c55e"; break;
-            case 'logs': title = "Activity Logs"; color = "#6b7280"; break;
+            case 'inbox': 
+                title = "Inbox"; 
+                iconClass = "text-primary"; 
+                Icon = Inbox; 
+                break;
+            case 'today': 
+                title = "Today"; 
+                iconClass = "text-warning"; 
+                Icon = Star; 
+                iconFill = "currentColor"; 
+                break;
+            case 'doing_now': 
+                title = "Doing Now"; 
+                iconClass = "text-danger"; 
+                Icon = Target; 
+                break;
+            case 'done': 
+                title = "Completed Tasks"; 
+                iconClass = "text-success"; 
+                Icon = CheckCircle2; 
+                break;
+            case 'logs': 
+                title = "Activity Logs"; 
+                iconClass = "text-default-500"; 
+                Icon = FileText; 
+                break;
         }
     }
 
@@ -61,10 +86,14 @@ export const Header = ({ activeProject, activeSystemTab }: HeaderProps) => {
                 {/* Left: Title & Context */}
                 <div className="flex items-center gap-3 justify-self-start pl-1">
                     {/* Color Dot / Icon */}
-                    <div 
-                        className="w-4 h-4 rounded-full flex-shrink-0 shadow-sm border border-white/10 transition-colors duration-300" 
-                        style={{ backgroundColor: color }}
-                    />
+                    {activeProject ? (
+                        <div 
+                            className="w-4 h-4 rounded-full flex-shrink-0 shadow-sm border border-white/10 transition-colors duration-300" 
+                            style={colorStyle}
+                        />
+                    ) : Icon ? (
+                        <Icon size={24} className={iconClass} fill={iconFill} />
+                    ) : null}
                     
                     {/* Title */}
                     <h1 className="text-xl font-bold text-foreground  truncate max-w-[300px]">
