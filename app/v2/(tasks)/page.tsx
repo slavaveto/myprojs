@@ -7,6 +7,7 @@ import { ProjectBar } from './components/ProjectBar';
 import { Header } from './components/Header';
 import { ProjectView } from './components/ProjectView';
 import { LogsView } from './components/LogsView';
+import { DoneView } from './components/DoneView';
 import { Project, Folder } from '@/app/types';
 import { globalStorage } from '@/utils/storage';
 import { motion } from 'framer-motion';
@@ -127,7 +128,14 @@ export default function TasksPage() {
                     <LogsView isActive={activeSystemTab === 'logs'} />
                 </div>
 
-                {activeSystemTab && activeSystemTab !== 'logs' && (
+                <div 
+                    className="absolute inset-0 w-full h-full bg-background"
+                    style={{ display: activeSystemTab === 'done' ? 'block' : 'none', zIndex: 10 }}
+                >
+                    <DoneView isActive={activeSystemTab === 'done'} />
+                </div>
+
+                {activeSystemTab && activeSystemTab !== 'logs' && activeSystemTab !== 'done' && (
                     <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-background z-10">
                          <div className="text-center text-default-400">
                             <h2 className="text-2xl font-bold mb-2 capitalize">{activeSystemTab}</h2>
