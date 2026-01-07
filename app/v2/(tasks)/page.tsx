@@ -11,7 +11,14 @@ export default function TasksPage() {
   const powerSync = usePowerSync();
   
   // PowerSync Query: Real-time sync from SQLite
-  const { data: projectsData } = useQuery('SELECT * FROM projects ORDER BY sort_order ASC');
+  // Filter out deleted, hidden, and satellite (ui/docs) projects
+  const { data: projectsData } = useQuery(`
+    SELECT * FROM projects 
+    WHERE (is_deleted IS NULL OR is_deleted = 0) 
+      AND (is_hidden IS NULL OR is_hidden = 0)
+      AND (proj_type IS NULL OR proj_type NOT IN ('ui', 'docs'))
+    ORDER BY sort_order ASC
+  `);
   const projects: Project[] = projectsData || [];
 
   // --- STATE ---

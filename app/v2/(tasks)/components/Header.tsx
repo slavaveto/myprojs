@@ -55,7 +55,7 @@ export const Header = ({ activeProject, activeSystemTab }: HeaderProps) => {
     }
 
     return (
-        <header className="flex-none px-6 py-4 border-b border-default-200 bg-background z-10 flex flex-col gap-4">
+        <header className="flex-none px-6 py-2 border-b border-default-200 bg-background z-10 flex flex-col gap-4">
              <div className="grid grid-cols-[1fr_auto_1fr] items-center min-h-[32px] gap-4">
                 
                 {/* Left: Title & Context */}
@@ -67,7 +67,7 @@ export const Header = ({ activeProject, activeSystemTab }: HeaderProps) => {
                     />
                     
                     {/* Title */}
-                    <h1 className="text-xl font-bold text-foreground leading-none pt-0.5 truncate max-w-[300px]">
+                    <h1 className="text-xl font-bold text-foreground  truncate max-w-[300px]">
                         {title}
                     </h1>
 

@@ -13,6 +13,7 @@ export const AppSchema = new Schema({
     is_deleted: column.integer, // boolean as 0 or 1
     is_disabled: column.integer,
     is_highlighted: column.integer,
+    is_hidden: column.integer, // boolean as 0 or 1
     remote_proj_slug: column.text,
   }),
 });
