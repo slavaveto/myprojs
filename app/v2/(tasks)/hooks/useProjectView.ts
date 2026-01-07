@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@powersync/react';
 import { Project, Folder, Task } from '@/app/types';
 import { globalStorage } from '@/utils/storage';
@@ -49,7 +49,15 @@ export const useProjectView = (project: Project, isActive: boolean) => {
             : '',
         activeFolderId ? [activeFolderId] : []
     );
-    const tasks: Task[] = tasksData || [];
+    
+    // Prevent flickering of old tasks when switching folders
+    const tasks: Task[] = useMemo(() => {
+        const data = tasksData || [];
+        if (activeFolderId && data.length > 0 && data[0].folder_id !== activeFolderId) {
+            return []; // Return empty if data doesn't match active folder yet
+        }
+        return data;
+    }, [tasksData, activeFolderId]);
 
     // 3. Restore State (Initial Mount Only)
     useEffect(() => {

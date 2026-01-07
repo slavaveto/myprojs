@@ -83,9 +83,9 @@ export const FolderTab = ({
                         className={clsx(
                             "h-5.5 min-w-5.5 px-1 mt-[1px] rounded-full flex items-center justify-center text-[12px] relative z-10",
                             isActive 
-                                ? "bg-primary/20 text-primary font-medium" 
+                                ? (count > 0 ? "bg-primary/20 text-primary font-bold" : "bg-primary/20 text-default-500 font-normal")
                                 : count > 0 
-                                    ? "bg-default-100 text-primary font-medium" 
+                                    ? "bg-default-100 text-primary font-bold" 
                                     : "bg-default-100 text-default-500"
                         )}
                     >
@@ -248,6 +248,7 @@ export const FolderTabs = ({
                             layoutIdPrefix={layoutIdPrefix} // Pass unique prefix down
                             onClick={() => onSelectFolder(folder.id)}
                             orientation={orientation}
+                            showZeroCount={true} // Show count for project folders too
                             onUpdate={() => {}} 
                             onDelete={() => {}}
                          />
