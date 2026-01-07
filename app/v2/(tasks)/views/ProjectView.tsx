@@ -9,6 +9,7 @@ import { RemoteLogsView } from '../remoteviews/RemoteLogsView';
 import { RemoteTablesView } from '../remoteviews/RemoteTablesView';
 import { clsx } from 'clsx';
 import { useProjectView } from '../hooks/useProjectView';
+import { useRemoteUiData } from '../hooks/useRemoteUiData';
 
 interface ProjectViewProps {
     project: Project;
@@ -20,6 +21,10 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
         folders, folderCounts, tasks, activeFolderId, handleSelectFolder,
         hasRemoteUi, activeRemoteTab, handleToggleRemote
     } = useProjectView(project, isActive);
+    
+    // Remote UI Data (Always fetched if project active, but lightweight)
+    const remoteUi = useRemoteUiData(project.id);
+    
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
     const SYSTEM_PROJECT_TITLES = ['Inbox', 'Today', 'Doing Now', 'Logs', 'Done', 'Logbook'];
@@ -39,6 +44,12 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
                     hasRemoteUi={hasRemoteUi}
                     activeRemoteTab={activeRemoteTab}
                     onToggleRemote={handleToggleRemote}
+                    
+                    // Remote Props
+                    remoteFolders={remoteUi.folders}
+                    remoteFolderCounts={remoteUi.folderCounts}
+                    activeRemoteFolderId={remoteUi.activeFolderId}
+                    onSelectRemoteFolder={remoteUi.handleSelectFolder}
                 />
             )}
 
@@ -46,7 +57,11 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
             <div className="flex-1 flex min-h-0 overflow-hidden relative">
                 
                 {activeRemoteTab === 'ui' ? (
-                    <RemoteUiView projectId={project.id} satelliteId={project.id} />
+                    <RemoteUiView 
+                        tasks={remoteUi.tasks}
+                        activeFolderId={remoteUi.activeFolderId}
+                        updateTask={remoteUi.updateTask}
+                    />
                 ) : activeRemoteTab === 'users' ? (
                     <RemoteUsersView projectId={project.id} satelliteId={project.id} />
                 ) : activeRemoteTab === 'logs' ? (

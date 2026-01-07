@@ -20,6 +20,7 @@ interface FolderTabProps {
     isDragging?: boolean;
     isOver?: boolean;
     orientation?: 'horizontal' | 'vertical';
+    showZeroCount?: boolean;
 }
 
 export const FolderTab = ({ 
@@ -32,7 +33,8 @@ export const FolderTab = ({
     onDelete,
     isDragging,
     isOver,
-    orientation = 'horizontal'
+    orientation = 'horizontal',
+    showZeroCount = false
 }: FolderTabProps) => {
     // DnD disabled for now
     // const { setNodeRef } = useDroppable({
@@ -76,7 +78,7 @@ export const FolderTab = ({
                       (onUpdate && onDelete && !isDragging) && "group-hover/tab:opacity-0"
                   )}
               >
-                  {count > 0 && (
+                  {(count > 0 || showZeroCount) && (
                     <Chip 
                         size="sm" 
                         variant="flat" 
@@ -146,7 +148,12 @@ interface FolderTabsProps {
     activeRemoteTab?: 'ui' | 'users' | 'logs' | 'tables' | null;
     onCreateFolder?: () => void;
     orientation?: 'horizontal' | 'vertical';
-    layoutIdPrefix: string; // Mandatory now
+    layoutIdPrefix: string; 
+    // Remote Props
+    remoteFolders?: Folder[];
+    remoteFolderCounts?: Record<string, number>;
+    activeRemoteFolderId?: string | null;
+    onSelectRemoteFolder?: (folderId: string) => void;
 }
 
 export const FolderTabs = ({ 
@@ -159,7 +166,12 @@ export const FolderTabs = ({
     layoutIdPrefix,
     hasRemoteUi,
     onToggleRemote,
-    activeRemoteTab
+    activeRemoteTab,
+    // Destructure new props
+    remoteFolders = [],
+    remoteFolderCounts = {},
+    activeRemoteFolderId,
+    onSelectRemoteFolder
 }: FolderTabsProps) => {
 
     const RemoteProjsZone = () => {
@@ -221,38 +233,59 @@ export const FolderTabs = ({
 
     // Simple horizontal layout for now matching v1 horizontal
     return (
-        <div className="flex items-center w-full px-6 pl-2 py-2 bg-background/50 flex-none z-10 border-b border-default-200 backdrop-blur-sm sticky top-0">
-           <div className="flex-grow overflow-x-auto scrollbar-hide flex items-center gap-2 no-scrollbar pl-4">
-               {folders.map((folder, index) => (
-                     <FolderTab 
-                        key={folder.id}
-                        folder={folder}
-                        count={folderCounts[folder.id] || 0} 
-                        isActive={activeFolderId === folder.id && !activeRemoteTab}
-                        layoutIdPrefix={layoutIdPrefix} // Pass unique prefix down
-                        onClick={() => onSelectFolder(folder.id)}
-                        orientation={orientation}
-                        onUpdate={() => {}} 
-                        onDelete={() => {}}
-                     />
-               ))}
+        <div className="flex items-center w-full px-6 pl-2 py-2 bg-background/50 flex-none z-10 border-b border-default-200 backdrop-blur-sm sticky top-0 justify-between">
+           {/* LEFT SIDE: Project Folders (Scrollable) */}
+           <div className="flex-1 overflow-hidden flex items-center min-w-0 mr-4">
+               <div className="flex-grow overflow-x-auto scrollbar-hide flex items-center gap-2 no-scrollbar pl-4">
+                   {folders.map((folder, index) => (
+                         <FolderTab 
+                            key={folder.id}
+                            folder={folder}
+                            count={folderCounts[folder.id] || 0} 
+                            isActive={activeFolderId === folder.id && !activeRemoteTab}
+                            layoutIdPrefix={layoutIdPrefix} // Pass unique prefix down
+                            onClick={() => onSelectFolder(folder.id)}
+                            orientation={orientation}
+                            onUpdate={() => {}} 
+                            onDelete={() => {}}
+                         />
+                   ))}
 
-               {/* Create Folder Button (Moved inside scrollable area) */}
-               <div className="flex-shrink-0 ml-1">
-                   <Button 
-                       isIconOnly 
-                       variant="flat" 
-                       size="sm" 
-                       color="success"
-                       onClick={onCreateFolder}
-                       className="bg-transparent hover:bg-success/20 text-success"
-                   >
-                       <Plus size={20} />
-                   </Button>
+                   {/* Create Folder Button (Moved inside scrollable area) */}
+                   <div className="flex-shrink-0 ml-1">
+                       <Button 
+                           isIconOnly 
+                           variant="flat" 
+                           size="sm" 
+                           color="success"
+                           onClick={onCreateFolder}
+                           className="bg-transparent hover:bg-success/20 text-success"
+                       >
+                           <Plus size={20} />
+                       </Button>
+                   </div>
                </div>
            </div>
            
-           <RemoteProjsZone />
+           {/* RIGHT SIDE: Remote Folders (Pinned) + Toggles */}
+           <div className="flex-none flex items-center gap-2 pl-4">
+                {/* Show Remote Folders ONLY if UI tab is active */}
+                {activeRemoteTab === 'ui' && remoteFolders.map(folder => (
+                    <FolderTab
+                        key={folder.id}
+                        folder={folder}
+                        count={remoteFolderCounts[folder.id] || 0} 
+                        isActive={activeRemoteFolderId === folder.id}
+                        layoutIdPrefix={`${layoutIdPrefix}-remote-${folder.id}`} // Unique per folder to disable sliding animation
+                        onClick={() => onSelectRemoteFolder?.(folder.id)}
+                        orientation={orientation}
+                        showZeroCount={true} // Always show count for remote UI folders
+                        onUpdate={() => {}} 
+                        onDelete={() => {}}
+                    />
+                ))}
+               <RemoteProjsZone />
+           </div>
         </div>
     );
 };
