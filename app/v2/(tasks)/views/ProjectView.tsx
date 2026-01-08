@@ -114,20 +114,20 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
                     <TablesView projectId={project.id} satelliteId={project.id} />
                 ) : (
                     <>
-                        {/* Left: Task List */}
-                        <div className="flex-1 overflow-y-scroll p-6 bg-background">
-                            {activeFolderId ? (
-                                <TaskList 
+                {/* Left: Task List */}
+                <div className="flex-1 overflow-y-scroll p-6 bg-background">
+                    {activeFolderId ? (
+                        <TaskList 
                                     tasks={tasks}
-                                    onSelectTask={setSelectedTaskId}
-                                    selectedTaskId={selectedTaskId}
-                                />
-                            ) : (
-                                <div className="border-2 border-dashed border-default-200 rounded-xl h-full flex items-center justify-center text-default-400">
+                            onSelectTask={setSelectedTaskId}
+                            selectedTaskId={selectedTaskId}
+                        />
+                    ) : (
+                        <div className="border-2 border-dashed border-default-200 rounded-xl h-full flex items-center justify-center text-default-400">
                             
-                                </div>
-                            )}
                         </div>
+                    )}
+                </div>
 
                         {/* Resize Handle */}
                         <div
@@ -141,14 +141,14 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
                             <div className="absolute inset-y-0 -left-1 -right-1 z-10 bg-transparent" />
                         </div>
 
-                        {/* Right: Details Panel */}
+                {/* Right: Details Panel */}
                         <div 
                             style={{ width: safePanelWidth }}
                             className="flex-shrink-0 bg-content2/50 overflow-y-auto z-10"
                         >
-                            <DetailsPanel 
-                                taskId={selectedTaskId} 
-                            />
+                <DetailsPanel 
+                    taskId={selectedTaskId} 
+                />
                         </div>
                     </>
                 )}
