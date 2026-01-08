@@ -103,17 +103,20 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
 
                         {/* Resize Handle */}
                         <div
-                            className="w-[1px] bg-default-200 hover:bg-primary cursor-col-resize relative z-20 transition-colors group"
+                            className="w-[1px] relative z-30 cursor-col-resize group select-none"
                             onMouseDown={startResizing}
                         >
-                            {/* Invisible hit area for easier grabbing */}
-                            <div className="absolute inset-y-0 -left-1 -right-1 z-10 bg-transparent group-hover:bg-primary/10" />
+                            {/* Visual Line: expands symmetrically from center */}
+                            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[1px] bg-default-200 group-hover:w-[3px] group-hover:bg-primary transition-all duration-150" />
+                            
+                            {/* Invisible hit area */}
+                            <div className="absolute inset-y-0 -left-1 -right-1 z-10 bg-transparent" />
                         </div>
 
                         {/* Right: Details Panel */}
                         <div 
                             style={{ width: panelWidth }}
-                            className="flex-shrink-0 border-l border-default-200 bg-content2/50 overflow-y-auto z-10"
+                            className="flex-shrink-0 bg-content2/50 overflow-y-auto z-10"
                         >
                             <DetailsPanel 
                                 taskId={selectedTaskId} 
