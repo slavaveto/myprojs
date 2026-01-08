@@ -3,10 +3,10 @@ import { Project } from '@/app/types';
 import { FolderTabs } from '../components/FolderTabs';
 import { TaskList } from '../components/TaskList';
 import { DetailsPanel } from '../components/DetailsPanel';
-import { RemoteInfoUiView } from '../remoteviews/RemoteInfoUiView';
-import { RemoteUsersView } from '../remoteviews/RemoteUsersView';
-import { RemoteLogsView } from '../remoteviews/RemoteLogsView';
-import { RemoteTablesView } from '../remoteviews/RemoteTablesView';
+import { InfoUiView } from '../remoteviews/InfoUiView';
+import { UsersView } from '../remoteviews/UsersView';
+import { LogsView } from '../remoteviews/LogsView';
+import { TablesView } from '../remoteviews/TablesView';
 // import { RemoteInfoView } from '../remoteviews/RemoteInfoView';
 import { clsx } from 'clsx';
 import { useProjectView } from '../hooks/useProjectView';
@@ -93,7 +93,7 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
             >
                 
                 {activeRemoteTab === 'ui' ? (
-                    <RemoteInfoUiView 
+                    <InfoUiView 
                         title="Remote UI"
                         tasks={remoteUi.tasks}
                         activeFolderId={remoteUi.activeFolderId}
@@ -101,7 +101,7 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
                         onCreateFolder={remoteUi.createFolder}
                     />
                 ) : activeRemoteTab === 'info' ? (
-                    <RemoteInfoUiView 
+                    <InfoUiView 
                         title="Info"
                         tasks={infoData.tasks}
                         activeFolderId={infoData.activeFolderId}
@@ -109,11 +109,11 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
                         onCreateFolder={infoData.createFolder}
                     />
                 ) : activeRemoteTab === 'users' ? (
-                    <RemoteUsersView projectId={project.id} satelliteId={project.id} />
+                    <UsersView projectId={project.id} satelliteId={project.id} />
                 ) : activeRemoteTab === 'logs' ? (
-                    <RemoteLogsView projectId={project.id} satelliteId={project.id} />
+                    <LogsView projectId={project.id} satelliteId={project.id} />
                 ) : activeRemoteTab === 'tables' ? (
-                    <RemoteTablesView projectId={project.id} satelliteId={project.id} />
+                    <TablesView projectId={project.id} satelliteId={project.id} />
                 ) : (
                     <>
                         {/* Left: Task List */}

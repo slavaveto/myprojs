@@ -1,11 +1,11 @@
 import React from 'react';
 
-interface RemoteLogsViewProps {
+interface LogsViewProps {
     projectId: string;
     satelliteId?: string;
 }
 
-export const RemoteLogsView = ({ projectId, satelliteId }: RemoteLogsViewProps) => {
+export const LogsView = ({ projectId, satelliteId }: LogsViewProps) => {
     return (
         <div className="flex-1 flex items-center justify-center bg-background p-6">
             <div className="text-center max-w-md">

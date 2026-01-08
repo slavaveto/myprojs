@@ -1,11 +1,11 @@
 import React from 'react';
 
-interface RemoteUsersViewProps {
+interface UsersViewProps {
     projectId: string;
     satelliteId?: string;
 }
 
-export const RemoteUsersView = ({ projectId, satelliteId }: RemoteUsersViewProps) => {
+export const UsersView = ({ projectId, satelliteId }: UsersViewProps) => {
     return (
         <div className="flex-1 flex items-center justify-center bg-background p-6">
             <div className="text-center max-w-md">

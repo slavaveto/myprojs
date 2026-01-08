@@ -1,11 +1,11 @@
 import React from 'react';
 
-interface RemoteTablesViewProps {
+interface TablesViewProps {
     projectId: string;
     satelliteId?: string;
 }
 
-export const RemoteTablesView = ({ projectId, satelliteId }: RemoteTablesViewProps) => {
+export const TablesView = ({ projectId, satelliteId }: TablesViewProps) => {
     return (
         <div className="flex-1 flex items-center justify-center bg-background p-6">
             <div className="text-center max-w-md">

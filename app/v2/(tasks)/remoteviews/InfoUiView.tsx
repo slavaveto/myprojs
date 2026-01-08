@@ -7,7 +7,7 @@ import { Button } from '@heroui/react';
 import { Plus } from 'lucide-react';
 import { FolderFormPopover } from '../components/misc/FolderFormPopover';
 
-interface RemoteInfoUiViewProps {
+interface InfoUiViewProps {
     title?: string; // 'Remote UI' or 'Info'
     tasks: Task[];
     activeFolderId: string | null;
@@ -15,13 +15,13 @@ interface RemoteInfoUiViewProps {
     onCreateFolder?: (title: string) => void;
 }
 
-export const RemoteInfoUiView = ({ 
+export const InfoUiView = ({ 
     title = 'Remote View',
     tasks, 
     activeFolderId, 
     updateTask,
     onCreateFolder
-}: RemoteInfoUiViewProps) => {
+}: InfoUiViewProps) => {
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
     const { width: panelWidth, containerRef, startResizing } = usePanelResize(400);
     const safePanelWidth = isNaN(panelWidth) ? 400 : panelWidth;
