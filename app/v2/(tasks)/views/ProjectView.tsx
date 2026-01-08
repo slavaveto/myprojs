@@ -98,7 +98,6 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
                         tasks={remoteUi.tasks}
                         activeFolderId={remoteUi.activeFolderId}
                         updateTask={remoteUi.updateTask}
-                        onCreateFolder={remoteUi.createFolder}
                     />
                 ) : activeRemoteTab === 'info' ? (
                     <InfoUiView 
@@ -106,7 +105,6 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
                         tasks={infoData.tasks}
                         activeFolderId={infoData.activeFolderId}
                         updateTask={(id, updates) => infoData.updateTask(id, updates)}
-                        onCreateFolder={infoData.createFolder}
                     />
                 ) : activeRemoteTab === 'users' ? (
                     <UsersView projectId={project.id} satelliteId={project.id} />
@@ -126,10 +124,7 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
                                 />
                             ) : (
                                 <div className="border-2 border-dashed border-default-200 rounded-xl h-full flex items-center justify-center text-default-400">
-                                    <div className="text-center">
-                                        <h2 className="text-xl font-bold text-foreground mb-2">{project.title}</h2>
-                                        <p>Select a folder to view tasks</p>
-                                    </div>
+                            
                                 </div>
                             )}
                         </div>

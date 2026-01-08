@@ -40,11 +40,15 @@ export default function TasksPage() {
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [activeSystemTab, setActiveSystemTab] = useState<string | null>(null);
   const [isRestored, setIsRestored] = useState(false);
+  const [isMinTimeElapsed, setIsMinTimeElapsed] = useState(false);
   // Stages: 'loading' -> 'fading-out' -> 'gap' -> 'fading-in' -> 'ready'
   const [loadStage, setLoadStage] = useState<'loading' | 'fading-out' | 'gap' | 'fading-in' | 'ready'>('loading');
 
   // --- RESTORE STATE ON MOUNT ---
   useEffect(() => {
+    // Start minimum timer immediately
+    const timer = setTimeout(() => setIsMinTimeElapsed(true), 2000);
+
     const savedProjId = globalStorage.getItem(STORAGE_KEYS.ACTIVE_PROJECT);
     const savedSysTab = globalStorage.getItem(STORAGE_KEYS.ACTIVE_SYSTEM_TAB);
 
@@ -60,7 +64,25 @@ export default function TasksPage() {
         setActiveProjectId(null);
     }
     setIsRestored(true);
+    
+    return () => clearTimeout(timer);
   }, []);
+
+  const activeProjectForCheck = activeProjectId; // Use raw ID
+  
+  // --- PRELOAD ACTIVE FOLDERS ---
+  const { data: foldersData } = useQuery(
+      activeProjectForCheck 
+        ? `SELECT id FROM folders WHERE project_id = ?` 
+        : '',
+      [activeProjectForCheck || '']
+  );
+  
+  // Ready if:
+  // 1. Projects loaded (projectsData !== undefined)
+  // 2. Active Project selected AND its folders loaded (foldersData !== undefined)
+  // 3. OR No active project selected (system tab or empty)
+  const isDataReady = projectsData !== undefined && (!activeProjectForCheck || foldersData !== undefined);
 
   // --- LOADING SEQUENCE ---
   useEffect(() => {
@@ -75,24 +97,21 @@ export default function TasksPage() {
               // 3. After fade out duration (300ms) -> Gap
               setTimeout(() => {
                   setLoadStage('gap');
-
                   // 4. After gap (100ms) -> Start Fading In Content
                   setTimeout(() => {
                       setLoadStage('fading-in');
-                      
+                    
                       // 5. Trigger opacity transition (next tick)
                       requestAnimationFrame(() => {
                           setLoadStage('ready');
                       });
-
                   }, 100); 
               }, 300);
-
           }, 2000); 
 
           return () => clearTimeout(minLoadTimer);
       }
-  }, [isRestored, projectsData]);
+  }, [isRestored, isDataReady]);
 
   // --- HANDLERS ---
   const handleSelectProject = (id: string) => {
@@ -131,14 +150,15 @@ export default function TasksPage() {
         )}
 
         {/* MAIN APP CONTENT */}
-        {showApp && (
-            <div 
-                className={clsx(
-                    "flex h-screen w-full overflow-hidden bg-background text-foreground font-sans",
-                    "transition-opacity duration-300 ease-in-out",
-                    loadStage === 'ready' ? "opacity-100" : "opacity-0"
-                )}
-            >
+        <div 
+            className={clsx(
+                "flex h-screen w-full overflow-hidden bg-background text-foreground font-sans",
+                "transition-opacity duration-300 ease-in-out",
+                showApp ? "opacity-100" : "opacity-0",
+                // Prevent interaction while loading
+                !showApp && "pointer-events-none"
+            )}
+        >
             
             {/* LEFT SIDEBAR (ProjectBar) */}
                 <ProjectBar 
@@ -243,7 +263,6 @@ export default function TasksPage() {
             </div>
         </div>
     </div>
-    )}
     </>
   );
 }
