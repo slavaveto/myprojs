@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { RemoteSyncProvider } from '@/app/_services/powerSync/RemoteSyncProvider';
 import { usePowerSync, useQuery, useStatus } from '@powersync/react';
 import { getRemoteConfig } from '@/utils/remoteConfig';
 import { clsx } from 'clsx';
-import { Folder, HardDrive, Server, Wifi, WifiOff, Plus } from 'lucide-react';
+import { Folder, HardDrive, Server, Wifi, WifiOff, Plus, Database, AlertCircle } from 'lucide-react';
+import { createClient } from '@supabase/supabase-js';
 
 // --- DEBUG INFO COMPONENT ---
 const ConnectionStatus = ({ title }: { title: string }) => {
@@ -14,26 +15,111 @@ const ConnectionStatus = ({ title }: { title: string }) => {
     const isRemote = config.type === 'remote';
 
     return (
-        <div className="flex items-center gap-4 text-xs font-medium border-b border-default-200 pb-3 mb-3">
-            <div className="flex items-center gap-2">
-                <div className={clsx("w-2 h-2 rounded-full", isRemote ? "bg-purple-500" : "bg-orange-500")} />
-                <span className="text-default-600 uppercase">{config.type} MODE</span>
+        <div className="flex flex-col gap-2 border-b border-default-200 pb-3 mb-3">
+            <div className="flex items-center gap-4 text-xs font-medium">
+                <div className="flex items-center gap-2">
+                    <div className={clsx("w-2 h-2 rounded-full", isRemote ? "bg-purple-500" : "bg-orange-500")} />
+                    <span className="text-default-600 uppercase">{config.type} MODE</span>
+                </div>
+                
+                <div className="h-4 w-[1px] bg-default-200" />
+
+                <div className="flex items-center gap-2">
+                    {status.connected ? <Wifi size={14} className="text-green-600" /> : <WifiOff size={14} className="text-red-500" />}
+                    <span className={status.connected ? "text-green-700" : "text-red-600"}>
+                        {status.connected ? 'PowerSync Connected' : 'PowerSync Disconnected'}
+                    </span>
+                </div>
+
+                <div className="h-4 w-[1px] bg-default-200" />
+                
+                <div className="text-default-400">
+                    Last Synced: {status.lastSyncedAt ? status.lastSyncedAt.toLocaleTimeString() : 'Never'}
+                </div>
+            </div>
+
+            {/* CONNECTION ERROR DISPLAY */}
+            {!status.connected && (status as any).lastConnectError && (
+                <div className="flex items-start gap-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700 mt-1">
+                    <AlertCircle size={14} className="mt-0.5 flex-shrink-0" />
+                    <div>
+                        <strong>Connection Error:</strong> {(status as any).lastConnectError.message || JSON.stringify((status as any).lastConnectError)}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+// --- SUPABASE DIRECT TEST COMPONENT ---
+const SupabaseDirectTest = ({ title }: { title: string }) => {
+    const config = getRemoteConfig(title);
+    const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+    const [errorMsg, setErrorMsg] = useState('');
+    const [rows, setRows] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (config.type !== 'remote' || !config.supabaseUrl || !config.token) {
+            return;
+        }
+
+        const testSupabase = async () => {
+            setStatus('loading');
+            try {
+                // Create direct client using Service Key
+                const supabase = createClient(config.supabaseUrl!, config.token!);
+                
+                // Try to SELECT data
+                const { data, error } = await supabase
+                    .from('_ui_folders')
+                    .select('*')
+                    .limit(5);
+
+                if (error) throw error;
+
+                setRows(data || []);
+                setStatus('success');
+            } catch (e: any) {
+                console.error('Supabase Direct Error:', e);
+                setErrorMsg(e.message);
+                setStatus('error');
+            }
+        };
+
+        testSupabase();
+    }, [config.type, config.supabaseUrl, config.token]);
+
+    if (config.type !== 'remote') return null;
+
+    return (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+            <div className="flex items-center gap-2 mb-2 font-semibold text-blue-800">
+                <Database size={16} />
+                <span>Supabase Direct Check</span>
             </div>
             
-            <div className="h-4 w-[1px] bg-default-200" />
-
-            <div className="flex items-center gap-2">
-                {status.connected ? <Wifi size={14} className="text-green-600" /> : <WifiOff size={14} className="text-red-500" />}
-                <span className={status.connected ? "text-green-700" : "text-red-600"}>
-                    {status.connected ? 'Connected' : 'Disconnected'}
-                </span>
-            </div>
-
-            <div className="h-4 w-[1px] bg-default-200" />
+            {status === 'loading' && <div className="text-blue-500">Connecting to Supabase...</div>}
             
-            <div className="text-default-400">
-                Last Synced: {status.lastSyncedAt ? status.lastSyncedAt.toLocaleTimeString() : 'Never'}
-            </div>
+            {status === 'success' && (
+                <div className="text-green-700">
+                    <div>✅ Connection Successful! Found <strong>{rows.length}</strong> rows (showing max 5).</div>
+                    {rows.length > 0 && (
+                        <div className="mt-2 text-xs bg-white p-2 rounded border border-blue-100 max-h-32 overflow-y-auto font-mono text-gray-600">
+                            {rows.map(r => (
+                                <div key={r.id} className="border-b last:border-0 py-1">
+                                    {JSON.stringify(r)}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+            
+            {status === 'error' && (
+                <div className="text-red-600">
+                    ❌ Connection Failed: {errorMsg}
+                </div>
+            )}
         </div>
     );
 };
@@ -78,13 +164,14 @@ const RemoteDataDisplay = ({ title }: { title: string }) => {
 
             <div className="p-4 flex-1 flex flex-col min-h-0">
                 <ConnectionStatus title={title} />
+                <SupabaseDirectTest title={title} />
 
                 {/* List */}
                 <div className="flex-1 overflow-y-auto min-h-0 space-y-1 pr-1">
                     {folders?.length === 0 && (
                         <div className="flex flex-col items-center justify-center h-full text-default-300">
                             <Folder size={32} strokeWidth={1} className="mb-2" />
-                            <span className="text-sm">No folders found in _ui_folders</span>
+                            <span className="text-sm">No folders found in PowerSync local DB</span>
                         </div>
                     )}
                     
