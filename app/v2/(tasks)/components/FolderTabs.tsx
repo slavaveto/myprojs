@@ -326,82 +326,89 @@ export const FolderTabs = ({
                </div>
            </div>
            
-           {/* RIGHT SIDE: Remote Folders (Pinned) + Toggles */}
-           <div className="flex-none flex items-center gap-2 pl-4">
-                {/* Show Remote Folders ONLY if UI tab is active */}
-                {activeRemoteTab === 'ui' && remoteFolders.map(folder => (
-                    <FolderTab
-                        key={folder.id}
-                        folder={folder}
-                        count={remoteFolderCounts[folder.id] || 0} 
-                        isActive={activeRemoteFolderId === folder.id}
-                        layoutIdPrefix={`${layoutIdPrefix}-remote-${folder.id}`} // Unique per folder to disable sliding animation
-                        onClick={() => onSelectRemoteFolder?.(folder.id)}
-                        orientation={orientation}
-                        showZeroCount={true} // Always show count for remote UI folders
-                        onUpdate={onUpdateRemoteFolder ? (title) => onUpdateRemoteFolder(folder.id, title) : undefined} 
-                        onDelete={onDeleteRemoteFolder ? () => onDeleteRemoteFolder(folder.id) : undefined}
-                    />
-                ))}
+           {/* RIGHT SIDE: Remote Folders & Toggles */}
+           <div className="flex-none flex items-center gap-2 pl-2 ml-2">
                 
-                {/* Create Remote Folder Button (Visible only if UI tab is active) */}
-                {activeRemoteTab === 'ui' && onCreateRemoteFolder && (
-                   <div className="flex-shrink-0 ml-1">
-                       <FolderFormPopover
-                           mode="create"
-                           onSubmit={onCreateRemoteFolder}
-                           trigger={
-                               <Button 
-                                   isIconOnly 
-                                   variant="flat" 
-                                   size="sm" 
-                                   color="secondary" // Purple for UI
-                                   className="bg-transparent hover:bg-secondary/20 text-secondary"
-                               >
-                                   <Plus size={20} />
-                               </Button>
-                           }
-                       />
-                   </div>
+                {/* 1. Remote Folders Container (With Background) */}
+                {(activeRemoteTab === 'ui' || activeRemoteTab === 'info') && (
+                    <div className="flex items-center gap-2 bg-default-100 rounded-lg px-2 pl-3">
+                        {/* Show Remote Folders ONLY if UI tab is active */}
+                        {activeRemoteTab === 'ui' && remoteFolders.map(folder => (
+                            <FolderTab
+                                key={folder.id}
+                                folder={folder}
+                                count={remoteFolderCounts[folder.id] || 0} 
+                                isActive={activeRemoteFolderId === folder.id}
+                                layoutIdPrefix={`${layoutIdPrefix}-remote-${folder.id}`} 
+                                onClick={() => onSelectRemoteFolder?.(folder.id)}
+                                orientation={orientation}
+                                showZeroCount={true} 
+                                onUpdate={onUpdateRemoteFolder ? (title) => onUpdateRemoteFolder(folder.id, title) : undefined} 
+                                onDelete={onDeleteRemoteFolder ? () => onDeleteRemoteFolder(folder.id) : undefined}
+                            />
+                        ))}
+                        
+                        {/* Create Remote Folder Button */}
+                        {activeRemoteTab === 'ui' && onCreateRemoteFolder && (
+                        <div className="flex-shrink-0 ml-1">
+                            <FolderFormPopover
+                                mode="create"
+                                onSubmit={onCreateRemoteFolder}
+                                trigger={
+                                    <Button 
+                                        isIconOnly 
+                                        variant="flat" 
+                                        size="sm" 
+                                        color="secondary" 
+                                        className="bg-transparent hover:bg-secondary/20 text-secondary"
+                                    >
+                                        <Plus size={20} />
+                                    </Button>
+                                }
+                            />
+                        </div>
+                        )}
+
+                        {/* Show Info Folders ONLY if Info tab is active */}
+                        {activeRemoteTab === 'info' && infoFolders.map(folder => (
+                            <FolderTab
+                                key={folder.id}
+                                folder={folder}
+                                count={infoFolderCounts[folder.id] || 0} 
+                                isActive={activeInfoFolderId === folder.id}
+                                layoutIdPrefix={`${layoutIdPrefix}-info-${folder.id}`}
+                                onClick={() => onSelectInfoFolder?.(folder.id)}
+                                orientation={orientation}
+                                showZeroCount={true}
+                                onUpdate={onUpdateInfoFolder ? (title) => onUpdateInfoFolder(folder.id, title) : undefined} 
+                                onDelete={onDeleteInfoFolder ? () => onDeleteInfoFolder(folder.id) : undefined}
+                            />
+                        ))}
+
+                        {/* Create Info Folder Button */}
+                        {activeRemoteTab === 'info' && onCreateInfoFolder && (
+                        <div className="flex-shrink-0 ml-1">
+                            <FolderFormPopover
+                                mode="create"
+                                onSubmit={onCreateInfoFolder}
+                                trigger={
+                                    <Button 
+                                        isIconOnly 
+                                        variant="flat" 
+                                        size="sm" 
+                                        color="primary" 
+                                        className="bg-transparent hover:bg-primary/20 text-primary"
+                                    >
+                                        <Plus size={20} />
+                                    </Button>
+                                }
+                            />
+                        </div>
+                        )}
+                    </div>
                 )}
 
-                {/* Show Info Folders ONLY if Info tab is active */}
-                {activeRemoteTab === 'info' && infoFolders.map(folder => (
-                    <FolderTab
-                        key={folder.id}
-                        folder={folder}
-                        count={infoFolderCounts[folder.id] || 0} 
-                        isActive={activeInfoFolderId === folder.id}
-                        layoutIdPrefix={`${layoutIdPrefix}-info-${folder.id}`}
-                        onClick={() => onSelectInfoFolder?.(folder.id)}
-                        orientation={orientation}
-                        showZeroCount={true}
-                        onUpdate={onUpdateInfoFolder ? (title) => onUpdateInfoFolder(folder.id, title) : undefined} 
-                        onDelete={onDeleteInfoFolder ? () => onDeleteInfoFolder(folder.id) : undefined}
-                    />
-                ))}
-
-                {/* Create Info Folder Button */}
-                {activeRemoteTab === 'info' && onCreateInfoFolder && (
-                   <div className="flex-shrink-0 ml-1">
-                       <FolderFormPopover
-                           mode="create"
-                           onSubmit={onCreateInfoFolder}
-                           trigger={
-                               <Button 
-                                   isIconOnly 
-                                   variant="flat" 
-                                   size="sm" 
-                                   color="primary" // Blue for Info
-                                   className="bg-transparent hover:bg-primary/20 text-primary"
-                               >
-                                   <Plus size={20} />
-                               </Button>
-                           }
-                       />
-                   </div>
-                )}
-
+               {/* 2. Toggles (No Background) */}
                <RemoteProjsZone />
            </div>
         </div>
