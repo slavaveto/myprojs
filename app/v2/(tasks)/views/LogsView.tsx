@@ -10,7 +10,7 @@ const LogsViewComponent = ({ isActive }: LogsViewProps) => {
     // Only query if active (or keep querying for live logs?)
     // Let's keep it simple: query always, but limit
     const { data: logsData } = useQuery(
-        `SELECT * FROM logs ORDER BY created_at DESC LIMIT 50`
+        `SELECT * FROM logs ORDER BY created_at DESC LIMIT 100`
     );
     
     const logs = logsData || [];
