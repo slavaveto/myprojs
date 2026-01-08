@@ -22,41 +22,16 @@ const montserrat = Montserrat({
    preload: false,
 });
 
-export async function generateMetadata(): Promise<Metadata> {
-   const headersList = await headers();
-   const host = headersList.get('host') || '';
-   const pathname = headersList.get('x-pathname') || '';
-   const normalizedHost = host.replace(/^www\./, '');
-
-   const domainData: Record<string, { title: string; description: string; favicon: string }> = {
-      'groups.slavaveto.com': {
-         title: 'Group',
-         description: '',
-         favicon: '/favicons/remote.png',
-      },
-      'meet.slavaveto.com': {
-         title: 'Meet',
-         description: '',
-         favicon: '/favicons/remote.png',
-      },
-   };
-
-   // Простая логика как раньше
-   const data = domainData[normalizedHost] || {
-      title: 'MyProjs',
-      description: '',
-      favicon: '/favicons/local.png?v=1',
-   };
-
-
-   return {
-      title: "DaySync",
-      description: data.description,
-      icons: {
-         icon: data.favicon,
-      },
-   };
-}
+export const metadata: Metadata = {
+   title: 'DaySync',
+   description: '',
+   icons: {
+      icon:
+         process.env.NODE_ENV === 'development'
+            ? '/favicons/remote.png'
+            : '/favicons/remote.png',
+   },
+};
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
    const headersList = await headers();

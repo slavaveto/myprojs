@@ -3,7 +3,7 @@ import { Folder } from '@/app/types';
 import { Button, Chip } from '@heroui/react';
 import { Plus, EllipsisVertical, Info } from 'lucide-react';
 import { clsx } from 'clsx';
-import { motion } from 'framer-motion';
+import { motion, LayoutGroup } from 'framer-motion';
 import { FolderFormPopover } from './misc/FolderFormPopover';
 // import { useDroppable } from '@dnd-kit/core'; // DnD later
 // import { CreateItemPopover } from '@/app/(main)/components/CreateItem'; // TODO: Move to v2
@@ -15,7 +15,7 @@ interface FolderTabProps {
     count?: number; 
     isActive: boolean;
     onClick: () => void;
-    layoutIdPrefix: string; // Mandatory
+    underlineLayoutId: string; // Renamed for clarity
     onUpdate?: (title: string) => void;
     onDelete?: () => void;
     isDragging?: boolean;
@@ -29,7 +29,7 @@ export const FolderTab = ({
     count = 0, 
     isActive, 
     onClick, 
-    layoutIdPrefix,
+    underlineLayoutId,
     onUpdate,
     onDelete,
     isDragging,
@@ -126,9 +126,11 @@ export const FolderTab = ({
           {/* Active Indicator (Underline) with Framer Motion - Only Horizontal */}
           {isActive && !isDragging && orientation === 'horizontal' && (
               <motion.div 
-                  layoutId={`${layoutIdPrefix}-underline`}
+                  layoutId={underlineLayoutId}
                   className="absolute bottom-0 left-0 w-full h-[2px] bg-primary z-0"
-                  initial={false}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
                   transition={{ type: "spring", stiffness: 500, damping: 30 }}
               />
           )}
@@ -136,9 +138,11 @@ export const FolderTab = ({
           {/* Active Indicator (Left Border) - Only Vertical */}
            {isActive && !isDragging && orientation === 'vertical' && (
               <motion.div 
-                  layoutId={`${layoutIdPrefix}-left-border`}
+                  layoutId={`${underlineLayoutId}-vertical`}
                   className="absolute left-0 top-0 bottom-0 w-[3px] bg-primary z-0 rounded-l-lg"
-                  initial={false}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
                   transition={{ type: "spring", stiffness: 500, damping: 30 }}
               />
           )}
@@ -214,11 +218,153 @@ export const FolderTabs = ({
     onDeleteFolder
 }: FolderTabsProps) => {
 
-    const RemoteProjsZone = () => {
-        if (!hasRemote) return null;
+    // Simple horizontal layout for now matching v1 horizontal
+    return (
+        <div className="flex items-center w-full px-6 pl-2 py-1 bg-background/50 flex-none z-10 border-b border-default-200 backdrop-blur-sm sticky top-0 justify-between">
+           {/* LEFT SIDE: Project Folders (Scrollable) */}
+           <div className="flex-1 overflow-hidden flex items-center min-w-0 mr-2">
+               <div 
+                   className="flex-grow overflow-x-auto scrollbar-hide flex items-center gap-2 no-scrollbar pl-4"
+                   style={{ maskImage: 'linear-gradient(to right, black calc(100% - 50px), transparent 100%)', WebkitMaskImage: 'linear-gradient(to right, black calc(100% - 50px), transparent 100%)' }}
+               >
+                   {folders.map((folder, index) => (
+                         <FolderTab 
+                            key={folder.id}
+                            folder={folder}
+                            count={folderCounts[folder.id] || 0} 
+                            isActive={activeFolderId === folder.id && !activeRemoteTab}
+                            underlineLayoutId={`${layoutIdPrefix}-main-underline`} // Explicit unique ID
+                            onClick={() => onSelectFolder(folder.id)}
+                            orientation={orientation}
+                            showZeroCount={true} // Show count for project folders too
+                            onUpdate={onUpdateFolder ? (title) => onUpdateFolder(folder.id, title) : undefined} 
+                            onDelete={onDeleteFolder ? () => onDeleteFolder(folder.id) : undefined}
+                         />
+                   ))}
 
-        return (
-            <div className="flex items-center gap-2 ml-4 pl-4 border-l border-default-200">
+                   {/* Create Folder Button (Moved inside scrollable area) */}
+                   {onCreateFolder && (
+                       <div className="flex-shrink-0 ml-1">
+                           <FolderFormPopover
+                               mode="create"
+                               onSubmit={onCreateFolder}
+                               trigger={
+                                   <Button 
+                                       isIconOnly 
+                                       variant="flat" 
+                                       size="sm" 
+                                       color="success"
+                                       className="bg-transparent hover:bg-success/20 text-success"
+                                   >
+                                       <Plus size={20} />
+                                   </Button>
+                               }
+                           />
+                       </div>
+                   )}
+               </div>
+           </div>
+           
+           {/* RIGHT SIDE: Remote Folders & Toggles */}
+           <div className="flex-none flex items-center gap-2 ml-2">
+                
+                {/* 1. Remote Folders Container (With Background) */}
+                {(activeRemoteTab === 'ui' || activeRemoteTab === 'info') && (
+                    <div className={clsx(
+                        "flex items-center gap-2 rounded-lg px-2 pl-4 transition-colors",
+                        activeRemoteTab === 'ui' ? "bg-purple-100/50" : 
+                        activeRemoteTab === 'info' ? "bg-orange-100/50" : "bg-default-100/50"
+                    )}>
+                        {/* Show UI Folders ONLY if UI tab is active */}
+                        {activeRemoteTab === 'ui' && (
+                            <LayoutGroup id={`${layoutIdPrefix}-ui-scope`}>
+                                <motion.div layout className="flex items-center gap-2" style={{ isolation: 'isolate', position: 'relative' }}>
+                                    {uiFolders.map(folder => (
+                                        <FolderTab
+                                            key={folder.id}
+                                            folder={folder}
+                                            count={uiFolderCounts[folder.id] || 0} 
+                                            isActive={activeUiFolderId === folder.id}
+                                            underlineLayoutId={`${layoutIdPrefix}-ui-underline`} // Explicit unique ID
+                                            onClick={() => onSelectUiFolder?.(folder.id)}
+                                            orientation={orientation}
+                                            showZeroCount={true} 
+                                            onUpdate={onUpdateUiFolder ? (title) => onUpdateUiFolder(folder.id, title) : undefined} 
+                                            onDelete={onDeleteUiFolder ? () => onDeleteUiFolder(folder.id) : undefined}
+                                        />
+                                    ))}
+                                    
+                                    {/* Create UI Folder Button */}
+                                    {onCreateUiFolder && (
+                                        <div className="flex-shrink-0 ml-1">
+                                            <FolderFormPopover
+                                                mode="create"
+                                                onSubmit={onCreateUiFolder}
+                                                trigger={
+                                                    <Button 
+                                                        isIconOnly 
+                                                        variant="flat" 
+                                                        size="sm" 
+                                                        color="secondary" 
+                                                        className="bg-transparent hover:bg-secondary/20 text-secondary"
+                                                    >
+                                                        <Plus size={20} />
+                                                    </Button>
+                                                }
+                                            />
+                                        </div>
+                                    )}
+                                </motion.div>
+                            </LayoutGroup>
+                        )}
+
+                        {/* Show Info Folders ONLY if Info tab is active */}
+                        {activeRemoteTab === 'info' && (
+                            <LayoutGroup id={`${layoutIdPrefix}-info-scope`}>
+                                <motion.div layout className="flex items-center gap-2" style={{ isolation: 'isolate', position: 'relative' }}>
+                                    {infoFolders.map(folder => (
+                                        <FolderTab
+                                            key={folder.id}
+                                            folder={folder}
+                                            count={infoFolderCounts[folder.id] || 0} 
+                                            isActive={activeInfoFolderId === folder.id}
+                                            underlineLayoutId={`${layoutIdPrefix}-info-underline`} // Explicit unique ID
+                                            onClick={() => onSelectInfoFolder?.(folder.id)}
+                                            orientation={orientation}
+                                            showZeroCount={true}
+                                            onUpdate={onUpdateInfoFolder ? (title) => onUpdateInfoFolder(folder.id, title) : undefined} 
+                                            onDelete={onDeleteInfoFolder ? () => onDeleteInfoFolder(folder.id) : undefined}
+                                        />
+                                    ))}
+
+                                    {/* Create Info Folder Button */}
+                                    {onCreateInfoFolder && (
+                                        <div className="flex-shrink-0 ml-1">
+                                            <FolderFormPopover
+                                                mode="create"
+                                                onSubmit={onCreateInfoFolder}
+                                                trigger={
+                                                    <Button 
+                                                        isIconOnly 
+                                                        variant="flat" 
+                                                        size="sm" 
+                                                        color="warning" 
+                                                        className="bg-transparent hover:bg-warning/20 text-orange-700"
+                                                    >
+                                                        <Plus size={20} />
+                                                    </Button>
+                                                }
+                                            />
+                                        </div>
+                                    )}
+                                </motion.div>
+                            </LayoutGroup>
+                        )}
+                    </div>
+                )}
+
+               {/* 2. Toggles (No Background) */}
+               <div className="flex items-center gap-2 ml-4 pl-4 border-l border-default-200">
                 {hasRemote && (
                     <>
                         <button
@@ -279,144 +425,6 @@ export const FolderTabs = ({
                     </>
                 )}
             </div>
-        );
-    };
-
-    // Simple horizontal layout for now matching v1 horizontal
-    return (
-        <div className="flex items-center w-full px-6 pl-2 py-1 bg-background/50 flex-none z-10 border-b border-default-200 backdrop-blur-sm sticky top-0 justify-between">
-           {/* LEFT SIDE: Project Folders (Scrollable) */}
-           <div className="flex-1 overflow-hidden flex items-center min-w-0 mr-2">
-               <div 
-                   className="flex-grow overflow-x-auto scrollbar-hide flex items-center gap-2 no-scrollbar pl-4"
-                   style={{ maskImage: 'linear-gradient(to right, black calc(100% - 50px), transparent 100%)', WebkitMaskImage: 'linear-gradient(to right, black calc(100% - 50px), transparent 100%)' }}
-               >
-                   {folders.map((folder, index) => (
-                         <FolderTab 
-                            key={folder.id}
-                            folder={folder}
-                            count={folderCounts[folder.id] || 0} 
-                            isActive={activeFolderId === folder.id && !activeRemoteTab}
-                            layoutIdPrefix={layoutIdPrefix} // Pass unique prefix down
-                            onClick={() => onSelectFolder(folder.id)}
-                            orientation={orientation}
-                            showZeroCount={true} // Show count for project folders too
-                            onUpdate={onUpdateFolder ? (title) => onUpdateFolder(folder.id, title) : undefined} 
-                            onDelete={onDeleteFolder ? () => onDeleteFolder(folder.id) : undefined}
-                         />
-                   ))}
-
-                   {/* Create Folder Button (Moved inside scrollable area) */}
-                   {onCreateFolder && (
-                       <div className="flex-shrink-0 ml-1">
-                           <FolderFormPopover
-                               mode="create"
-                               onSubmit={onCreateFolder}
-                               trigger={
-                                   <Button 
-                                       isIconOnly 
-                                       variant="flat" 
-                                       size="sm" 
-                                       color="success"
-                                       className="bg-transparent hover:bg-success/20 text-success"
-                                   >
-                                       <Plus size={20} />
-                                   </Button>
-                               }
-                           />
-                       </div>
-                   )}
-               </div>
-           </div>
-           
-           {/* RIGHT SIDE: Remote Folders & Toggles */}
-           <div className="flex-none flex items-center gap-2 ml-2">
-                
-                {/* 1. Remote Folders Container (With Background) */}
-                {(activeRemoteTab === 'ui' || activeRemoteTab === 'info') && (
-                    <div className={clsx(
-                        "flex items-center gap-2 rounded-lg px-2 pl-4 transition-colors",
-                        activeRemoteTab === 'ui' ? "bg-purple-100/50" : 
-                        activeRemoteTab === 'info' ? "bg-orange-100/50" : "bg-default-100/50"
-                    )}>
-                        {/* Show UI Folders ONLY if UI tab is active */}
-                        {activeRemoteTab === 'ui' && uiFolders.map(folder => (
-                            <FolderTab
-                                key={folder.id}
-                                folder={folder}
-                                count={uiFolderCounts[folder.id] || 0} 
-                                isActive={activeUiFolderId === folder.id}
-                                layoutIdPrefix={`${layoutIdPrefix}-ui-${folder.id}`} 
-                                onClick={() => onSelectUiFolder?.(folder.id)}
-                                orientation={orientation}
-                                showZeroCount={true} 
-                                onUpdate={onUpdateUiFolder ? (title) => onUpdateUiFolder(folder.id, title) : undefined} 
-                                onDelete={onDeleteUiFolder ? () => onDeleteUiFolder(folder.id) : undefined}
-                            />
-                        ))}
-                        
-                        {/* Create UI Folder Button */}
-                        {activeRemoteTab === 'ui' && onCreateUiFolder && (
-                        <div className="flex-shrink-0 ml-1">
-                            <FolderFormPopover
-                                mode="create"
-                                onSubmit={onCreateUiFolder}
-                                trigger={
-                                    <Button 
-                                        isIconOnly 
-                                        variant="flat" 
-                                        size="sm" 
-                                        color="secondary" 
-                                        className="bg-transparent hover:bg-secondary/20 text-secondary"
-                                    >
-                                        <Plus size={20} />
-                                    </Button>
-                                }
-                            />
-                        </div>
-                        )}
-
-                        {/* Show Info Folders ONLY if Info tab is active */}
-                        {activeRemoteTab === 'info' && infoFolders.map(folder => (
-                            <FolderTab
-                                key={folder.id}
-                                folder={folder}
-                                count={infoFolderCounts[folder.id] || 0} 
-                                isActive={activeInfoFolderId === folder.id}
-                                layoutIdPrefix={`${layoutIdPrefix}-info-${folder.id}`}
-                                onClick={() => onSelectInfoFolder?.(folder.id)}
-                                orientation={orientation}
-                                showZeroCount={true}
-                                onUpdate={onUpdateInfoFolder ? (title) => onUpdateInfoFolder(folder.id, title) : undefined} 
-                                onDelete={onDeleteInfoFolder ? () => onDeleteInfoFolder(folder.id) : undefined}
-                            />
-                        ))}
-
-                        {/* Create Info Folder Button */}
-                        {activeRemoteTab === 'info' && onCreateInfoFolder && (
-                        <div className="flex-shrink-0 ml-1">
-                            <FolderFormPopover
-                                mode="create"
-                                onSubmit={onCreateInfoFolder}
-                                trigger={
-                                    <Button 
-                                        isIconOnly 
-                                        variant="flat" 
-                                        size="sm" 
-                                        color="warning" 
-                                        className="bg-transparent hover:bg-warning/20 text-orange-700"
-                                    >
-                                        <Plus size={20} />
-                                    </Button>
-                                }
-                            />
-                        </div>
-                        )}
-                    </div>
-                )}
-
-               {/* 2. Toggles (No Background) */}
-               <RemoteProjsZone />
            </div>
         </div>
     );
