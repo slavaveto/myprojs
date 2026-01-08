@@ -14,7 +14,7 @@ import { DoingNowView } from './views/DoingNowView';
 import { Project, Folder } from '@/app/types';
 import { globalStorage } from '@/utils/storage';
 import { Spinner } from '@heroui/react';
-import { motion, AnimatePresence } from 'framer-motion';
+// import { motion, AnimatePresence } from 'framer-motion';
 
 import { clsx } from 'clsx';
 
@@ -40,8 +40,8 @@ export default function TasksPage() {
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [activeSystemTab, setActiveSystemTab] = useState<string | null>(null);
   const [isRestored, setIsRestored] = useState(false);
-  const [isAppReady, setIsAppReady] = useState(false);
-  const [showContent, setShowContent] = useState(false);
+  // Stages: 'loading' -> 'fading-out' -> 'gap' -> 'fading-in' -> 'ready'
+  const [loadStage, setLoadStage] = useState<'loading' | 'fading-out' | 'gap' | 'fading-in' | 'ready'>('loading');
 
   // --- RESTORE STATE ON MOUNT ---
   useEffect(() => {
@@ -62,20 +62,35 @@ export default function TasksPage() {
     setIsRestored(true);
   }, []);
 
-  // --- LOADING SCREEN LOGIC ---
+  // --- LOADING SEQUENCE ---
   useEffect(() => {
-      // Wait for restoration and initial data load
+      // 1. Wait for data & restore (remain in 'loading')
       if (isRestored && projectsData !== undefined) {
-          const timer = setTimeout(() => {
-              setIsAppReady(true); // Spinner fades out
-              
-              // Content fades in after a short pause
-              setTimeout(() => {
-                  setShowContent(true);
-              }, 100); 
-          }, 2000); // Minimum 2s loading
+          
+          // Minimum loading time
+          const minLoadTimer = setTimeout(() => {
+              // 2. Start Fading Out Spinner
+              setLoadStage('fading-out');
 
-          return () => clearTimeout(timer);
+              // 3. After fade out duration (300ms) -> Gap
+              setTimeout(() => {
+                  setLoadStage('gap');
+
+                  // 4. After gap (100ms) -> Start Fading In Content
+                  setTimeout(() => {
+                      setLoadStage('fading-in');
+                      
+                      // 5. Trigger opacity transition (next tick)
+                      requestAnimationFrame(() => {
+                          setLoadStage('ready');
+                      });
+
+                  }, 100); 
+              }, 300);
+
+          }, 2000); 
+
+          return () => clearTimeout(minLoadTimer);
       }
   }, [isRestored, projectsData]);
 
@@ -96,28 +111,34 @@ export default function TasksPage() {
 
   const activeProject = activeProjectId ? projects.find(p => p.id === activeProjectId) : undefined;
   
+  // Render Logic based on Stage
+  const showSpinner = loadStage === 'loading' || loadStage === 'fading-out';
+  const showApp = loadStage === 'fading-in' || loadStage === 'ready';
+  
   return (
     <>
-        <AnimatePresence>
-            {!isAppReady && (
-                <motion.div 
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-background"
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                >
-                    <Spinner size="lg" color="primary" />
-                </motion.div>
-            )}
-        </AnimatePresence>
+        {/* SPINNER LAYER */}
+        {showSpinner && (
+            <div 
+                className={clsx(
+                    "fixed inset-0 z-50 flex items-center justify-center bg-background",
+                    "transition-opacity duration-300 ease-in-out",
+                    loadStage === 'fading-out' ? "opacity-0" : "opacity-100"
+                )}
+            >
+                <Spinner size="lg" color="primary" />
+            </div>
+        )}
 
-        {/* MAIN APP CONTENT (Standard DIV with CSS transition for safety) */}
-        <div 
-            className={clsx(
-                "flex h-screen w-full overflow-hidden bg-background text-foreground font-sans",
-                "transition-opacity duration-300 ease-in-out", // CSS Transition
-                showContent ? "opacity-100" : "opacity-0"
-            )}
-        >
+        {/* MAIN APP CONTENT */}
+        {showApp && (
+            <div 
+                className={clsx(
+                    "flex h-screen w-full overflow-hidden bg-background text-foreground font-sans",
+                    "transition-opacity duration-300 ease-in-out",
+                    loadStage === 'ready' ? "opacity-100" : "opacity-0"
+                )}
+            >
             
             {/* LEFT SIDEBAR (ProjectBar) */}
                 <ProjectBar 
@@ -222,6 +243,7 @@ export default function TasksPage() {
             </div>
         </div>
     </div>
+    )}
     </>
   );
 }

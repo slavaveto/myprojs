@@ -64,6 +64,7 @@ export const InfoUiView = ({
                                         }
                                     />
                                 )}
+                                
                             </div>
                         </div>
                     )}
