@@ -40,6 +40,11 @@ class ClerkConnector implements PowerSyncBackendConnector {
         const transaction = await database.getNextCrudTransaction();
 
         if (!transaction) return;
+        
+        // Notify UI about upload start
+        if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('powersync-upload-start'));
+        }
 
         try {
             if (!this.supabase) {
@@ -102,6 +107,11 @@ class ClerkConnector implements PowerSyncBackendConnector {
             console.error('[PowerSync] UploadData Failed:', e);
             // Re-throw to notify PowerSync about the failure
             throw e;
+        } finally {
+            // Notify UI about upload end
+            if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('powersync-upload-end'));
+            }
         }
     }
 }
@@ -176,23 +186,23 @@ export const PowerSyncProvider = ({ children }: { children: React.ReactNode }) =
         // Log status changes
         const l = db.registerListener({
             statusChanged: (status) => {
-                console.log('[PowerSync] Status Changed:', {
-                     connected: status.connected,
-                     lastSyncedAt: status.lastSyncedAt,
-                     // @ts-ignore
-                     error: status.anyError,
-                     statusObj: status // Log full object
-                });
+                // console.log('[PowerSync] Status Changed:', {
+                //      connected: status.connected,
+                //      lastSyncedAt: status.lastSyncedAt,
+                //      // @ts-ignore
+                //      error: status.anyError,
+                //      statusObj: status // Log full object
+                // });
             }
         });
 
         // Periodic check
         const interval = setInterval(() => {
-            console.log('[PowerSync] Heartbeat Status:', {
-                connected: db.connected,
-                // @ts-ignore
-                hasError: !!db.currentStatus?.anyError
-            });
+            // console.log('[PowerSync] Heartbeat Status:', {
+            //     connected: db.connected,
+            //     // @ts-ignore
+            //     hasError: !!db.currentStatus?.anyError
+            // });
         }, 5000);
 
         return () => {

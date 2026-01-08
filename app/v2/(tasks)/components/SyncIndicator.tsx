@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStatus } from '@powersync/react';
 import { RefreshCw, CloudOff, Cloud, UploadCloud, DownloadCloud, AlertTriangle } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent, Button, Chip } from '@heroui/react';
@@ -9,31 +9,87 @@ export const SyncIndicator = () => {
 
     // Determine state
     // @ts-ignore
-    const isWorking = status.connecting || status.downloading || status.uploading;
+    const rawIsSyncing = status.dataFlow?.downloading || status.dataFlow?.uploading;
+    // @ts-ignore
+    const rawIsConnecting = status.connecting;
+
+    // Debug status changes
+    useEffect(() => {
+        // @ts-ignore
+        const up = status.dataFlow?.uploading;
+        // @ts-ignore
+        const down = status.dataFlow?.downloading;
+        if (up || down) {
+            console.log('SyncIndicator: Activity detected!', { uploading: up, downloading: down });
+        }
+    }, [status]);
+    
+    // UI States with min duration (500ms debounce on trailing edge)
+    const [isSyncing, setIsSyncing] = useState(false);
+    const [isConnecting, setIsConnecting] = useState(false);
+
+    // Custom Event Listener for Upload (Manual Override)
+    useEffect(() => {
+        const handleUploadStart = () => setIsSyncing(true);
+        const handleUploadEnd = () => {
+            // Keep it blue for at least 500ms
+            setTimeout(() => {
+                 // Only turn off if not otherwise syncing
+                 if (!rawIsSyncing) setIsSyncing(false);
+            }, 500);
+        };
+
+        window.addEventListener('powersync-upload-start', handleUploadStart);
+        window.addEventListener('powersync-upload-end', handleUploadEnd);
+
+        return () => {
+            window.removeEventListener('powersync-upload-start', handleUploadStart);
+            window.removeEventListener('powersync-upload-end', handleUploadEnd);
+        };
+    }, [rawIsSyncing]);
+
+    useEffect(() => {
+        let timer: NodeJS.Timeout;
+        if (rawIsSyncing) {
+            setIsSyncing(true);
+        } else {
+            // Only debounce off if not manually syncing
+            timer = setTimeout(() => setIsSyncing(false), 500);
+        }
+        return () => clearTimeout(timer);
+    }, [rawIsSyncing]);
+
+    useEffect(() => {
+        let timer: NodeJS.Timeout;
+        if (rawIsConnecting) {
+            setIsConnecting(true);
+        } else {
+            timer = setTimeout(() => setIsConnecting(false), 500);
+        }
+        return () => clearTimeout(timer);
+    }, [rawIsConnecting]);
+
     const isOffline = !status.connected && !status.connecting;
     // @ts-ignore
-    const uploadError = status.uploadError;
+    const uploadError = status.dataFlow?.uploadError;
     // @ts-ignore
-    const downloadError = status.downloadError;
+    const downloadError = status.dataFlow?.downloadError;
     // @ts-ignore
     const anyError = status.anyError || uploadError || downloadError;
     
     // Status Text logic
     const getStatusText = () => {
         if (anyError) return 'Sync Error';
-        if (status.connecting) return 'Connecting...';
-        // @ts-ignore
-        if (status.downloading) return 'Downloading changes...';
-        // @ts-ignore
-        if (status.uploading) return 'Uploading changes...';
-        if (!status.connected) return 'Offline';
-        return 'Synced';
+        if (isConnecting) return 'Connecting...';
+        if (isSyncing) return 'Syncing...';
+        return 'Online';
     };
 
     const getStatusColor = () => {
         if (anyError) return 'danger';
         if (isOffline) return 'danger';
-        if (isWorking) return 'warning';
+        if (isConnecting) return 'warning';
+        if (isSyncing) return 'primary';
         return 'success';
     };
 
@@ -46,14 +102,19 @@ export const SyncIndicator = () => {
                     size="sm" 
                     className={clsx(
                         "transition-all",
-                        (isOffline || anyError) ? "text-red-500" : "text-default-500"
+                        (isOffline || anyError) ? "text-red-500" : 
+                        isConnecting ? "text-orange-500" :
+                        isSyncing ? "text-blue-500" :
+                        "text-default-500"
                     )}
                 >
                     {/* ICON LOGIC */}
                     {anyError ? (
                         <AlertTriangle size={18} className="text-red-600 animate-pulse" />
-                    ) : isWorking ? (
+                    ) : isConnecting ? (
                         <RefreshCw size={18} className="animate-spin text-orange-500" />
+                    ) : isSyncing ? (
+                        <RefreshCw size={18} className="animate-spin text-blue-500" />
                     ) : isOffline ? (
                         <CloudOff size={18} className="text-red-500" />
                     ) : (
@@ -98,7 +159,7 @@ export const SyncIndicator = () => {
 
                         {/* Uploading */}
                         {/* @ts-ignore */}
-                        {status.uploading && (
+                        {status.dataFlow?.uploading && (
                             <div className="flex justify-between text-orange-600 bg-orange-50 p-1 rounded">
                                 <span className="flex items-center gap-1"><UploadCloud size={12}/> Uploading</span>
                                 <span>Processing...</span>
@@ -107,7 +168,7 @@ export const SyncIndicator = () => {
 
                         {/* Downloading */}
                         {/* @ts-ignore */}
-                        {status.downloading && (
+                        {status.dataFlow?.downloading && (
                             <div className="flex justify-between text-blue-600 bg-blue-50 p-1 rounded">
                                 <span className="flex items-center gap-1"><DownloadCloud size={12}/> Downloading</span>
                                 <span>Processing...</span>
