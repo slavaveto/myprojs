@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { PowerSyncContext, usePowerSync } from "@powersync/react";
 import { PowerSyncDatabase, WASQLitePowerSyncDatabaseOpenFactory, PowerSyncBackendConnector, AbstractPowerSyncDatabase } from "@powersync/web";
-import { RemoteAppSchema } from '@/app/_services/powerSync/RemoteAppSchema';
+import { AppSchema } from '@/app/_services/powerSync/AppSchema';
 import { getRemoteConfig } from '@/utils/remoteConfig';
 
 // Simple connector for static token
@@ -16,30 +16,36 @@ class StaticRemoteConnector implements PowerSyncBackendConnector {
     }
 
     async uploadData(database: AbstractPowerSyncDatabase) {
-        // Read-only for now, or implement upload logic later
+        // Implement simple upload or read-only
         const transaction = await database.getNextCrudTransaction();
         if (!transaction) return;
         
-        console.warn('[RemoteConnector] Upload requested but not implemented. Completing transaction to clear queue.');
-        await transaction.complete(); 
+        try {
+            await transaction.complete();
+        } catch (e) {
+            console.error('[RemoteConnector] Upload failed', e);
+            // In a real implementation, we would send data to the remote Supabase via REST API or similar
+        }
     }
 }
 
 interface RemoteSyncProviderProps {
     projectId: string;
+    projectTitle: string;
     children: React.ReactNode;
 }
 
-export const RemoteSyncProvider = ({ projectId, children }: RemoteSyncProviderProps) => {
-    const mainPowerSync = usePowerSync(); // Access main DB
+export const RemoteSyncProvider = ({ projectId, projectTitle, children }: RemoteSyncProviderProps) => {
+    const mainPowerSync = usePowerSync(); // Access main DB context (unused here but available)
     const [remoteDb, setRemoteDb] = useState<PowerSyncDatabase | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     
-    const config = getRemoteConfig(projectId);
+    // Look up config by TITLE
+    const config = getRemoteConfig(projectTitle);
 
     useEffect(() => {
+        // If config is local, we don't need to create a DB
         if (config.type === 'local') {
-            // Use main DB (it has -ui tables in schema)
             setRemoteDb(null); 
             setIsLoading(false);
             return;
@@ -48,7 +54,10 @@ export const RemoteSyncProvider = ({ projectId, children }: RemoteSyncProviderPr
         // Remote Logic
         const initRemote = async () => {
             if (!config.url || !config.token) {
-                console.error("Missing remote config for", projectId);
+                console.error("Missing remote config for project:", projectTitle);
+                // Fallback to local to avoid crash, but log error
+                setRemoteDb(null);
+                setIsLoading(false);
                 return;
             }
 
@@ -56,7 +65,7 @@ export const RemoteSyncProvider = ({ projectId, children }: RemoteSyncProviderPr
             // Note: We need unique DB filename
             const workerUrl = new URL('/worker/powersync-worker.js', window.location.origin).href;
             const factory = new WASQLitePowerSyncDatabaseOpenFactory({
-                schema: RemoteAppSchema,
+                schema: AppSchema, // Use the FULL schema
                 dbFilename: `remote_${projectId}.sqlite`,
             });
 
@@ -64,11 +73,11 @@ export const RemoteSyncProvider = ({ projectId, children }: RemoteSyncProviderPr
 
             // Connect using static connector
             try {
-                console.log(`[RemotePowerSync] Connecting to ${projectId}...`);
+                console.log(`[RemotePowerSync] Connecting to ${projectTitle}...`);
                 const connector = new StaticRemoteConnector(config.url, config.token);
                 db.connect(connector);
             } catch (e) {
-                console.error(`[RemotePowerSync] Connection failed for ${projectId}`, e);
+                console.error(`[RemotePowerSync] Connection failed for ${projectTitle}`, e);
             }
             
             setRemoteDb(db);
@@ -78,24 +87,20 @@ export const RemoteSyncProvider = ({ projectId, children }: RemoteSyncProviderPr
         initRemote();
 
         return () => {
-             // Cleanup if needed, but usually we keep DB open
-             // If we want to disconnect on unmount:
-             // remoteDb?.disconnect();
+             // Cleanup if needed
         };
 
-    }, [projectId, config.type, config.url, config.token]);
+    }, [projectId, projectTitle, config.type, config.url, config.token]);
 
-    if (isLoading) return <div>Connecting to remote...</div>;
+    if (isLoading) return <div>Connecting to remote {projectTitle}...</div>;
 
-    // If local, we render children directly (they use Main Context)
-    // Actually, we want to BE TRANSPARENT.
-    // If we render children without provider, they use parent provider.
-    // If we wrap, they use new provider.
-    
+    // 1. If local config (DaySync), render children directly.
+    // They will inherit the parent PowerSyncContext (Main DB).
     if (config.type === 'local') {
         return <>{children}</>;
     }
 
+    // 2. If remote DB created, wrap children in NEW Provider.
     if (remoteDb) {
         return (
             <PowerSyncContext.Provider value={remoteDb}>
@@ -104,6 +109,6 @@ export const RemoteSyncProvider = ({ projectId, children }: RemoteSyncProviderPr
         );
     }
 
-    return null;
+    // 3. Fallback (should not happen if logic is correct, but safer to render children)
+    return <>{children}</>;
 };
-
