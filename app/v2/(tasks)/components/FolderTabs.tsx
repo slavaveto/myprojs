@@ -286,8 +286,11 @@ export const FolderTabs = ({
     return (
         <div className="flex items-center w-full px-6 pl-2 py-1 bg-background/50 flex-none z-10 border-b border-default-200 backdrop-blur-sm sticky top-0 justify-between">
            {/* LEFT SIDE: Project Folders (Scrollable) */}
-           <div className="flex-1 overflow-hidden flex items-center min-w-0 mr-4">
-               <div className="flex-grow overflow-x-auto scrollbar-hide flex items-center gap-2 no-scrollbar pl-4">
+           <div className="flex-1 overflow-hidden flex items-center min-w-0 mr-2">
+               <div 
+                   className="flex-grow overflow-x-auto scrollbar-hide flex items-center gap-2 no-scrollbar pl-4"
+                   style={{ maskImage: 'linear-gradient(to right, black 95%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to right, black 95%, transparent 100%)' }}
+               >
                    {folders.map((folder, index) => (
                          <FolderTab 
                             key={folder.id}
