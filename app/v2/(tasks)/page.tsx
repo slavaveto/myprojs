@@ -13,7 +13,10 @@ import { InboxView } from './views/InboxView';
 import { DoingNowView } from './views/DoingNowView';
 import { Project, Folder } from '@/app/types';
 import { globalStorage } from '@/utils/storage';
-import { motion } from 'framer-motion';
+import { Spinner } from '@heroui/react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+import { clsx } from 'clsx';
 
 const STORAGE_KEYS = {
     ACTIVE_PROJECT: 'v2_active_project_id',
@@ -37,6 +40,8 @@ export default function TasksPage() {
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [activeSystemTab, setActiveSystemTab] = useState<string | null>(null);
   const [isRestored, setIsRestored] = useState(false);
+  const [isAppReady, setIsAppReady] = useState(false);
+  const [showContent, setShowContent] = useState(false);
 
   // --- RESTORE STATE ON MOUNT ---
   useEffect(() => {
@@ -57,6 +62,23 @@ export default function TasksPage() {
     setIsRestored(true);
   }, []);
 
+  // --- LOADING SCREEN LOGIC ---
+  useEffect(() => {
+      // Wait for restoration and initial data load
+      if (isRestored && projectsData !== undefined) {
+          const timer = setTimeout(() => {
+              setIsAppReady(true); // Spinner fades out
+              
+              // Content fades in after a short pause
+              setTimeout(() => {
+                  setShowContent(true);
+              }, 100); 
+          }, 2000); // Minimum 2s loading
+
+          return () => clearTimeout(timer);
+      }
+  }, [isRestored, projectsData]);
+
   // --- HANDLERS ---
   const handleSelectProject = (id: string) => {
       setActiveProjectId(id);
@@ -74,114 +96,132 @@ export default function TasksPage() {
 
   const activeProject = activeProjectId ? projects.find(p => p.id === activeProjectId) : undefined;
   
-  // Prevent rendering content jump before restore (optional, but good for UX)
-  if (!isRestored) return null; // Or a loading spinner
-
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-background text-foreground font-sans">
-        
-        {/* LEFT SIDEBAR (ProjectBar) */}
-        <ProjectBar 
-            projects={projects}
-            activeProjectId={activeProjectId}
-            activeSystemTab={activeSystemTab}
-            onSelectProject={handleSelectProject}
-            onSelectSystemTab={handleSelectSystemTab}
-            onCreateProject={() => console.log('Create Project Clicked')}
-        />
+    <>
+        <AnimatePresence>
+            {!isAppReady && (
+                <motion.div 
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-background"
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                >
+                    <Spinner size="lg" color="primary" />
+                </motion.div>
+            )}
+        </AnimatePresence>
 
-        {/* MAIN CONTENT AREA */}
-        <div className="flex-1 flex flex-col min-w-0 bg-background">
+        {/* MAIN APP CONTENT (Standard DIV with CSS transition for safety) */}
+        <div 
+            className={clsx(
+                "flex h-screen w-full overflow-hidden bg-background text-foreground font-sans",
+                "transition-opacity duration-300 ease-in-out", // CSS Transition
+                showContent ? "opacity-100" : "opacity-0"
+            )}
+        >
             
-            {/* UNIFIED HEADER */}
-            <Header 
-                activeProject={activeProject}
-                activeSystemTab={activeSystemTab}
-            />
+            {/* LEFT SIDEBAR (ProjectBar) */}
+                <ProjectBar 
+                    projects={projects}
+                    activeProjectId={activeProjectId}
+                    activeSystemTab={activeSystemTab}
+                    onSelectProject={handleSelectProject}
+                    onSelectSystemTab={handleSelectSystemTab}
+                    onCreateProject={() => console.log('Create Project Clicked')}
+                />
 
-            {/* CONTENT AREA: RENDER ALL PROJECTS (Hidden/Block) */}
-            <div className="flex-1 relative overflow-hidden">
-                
-                {/* 1. Projects Views */}
-                {projects.map(project => {
-                    const isActive = activeProjectId === project.id;
-                    return (
+                {/* MAIN CONTENT AREA */}
+                <div className="flex-1 flex flex-col min-w-0 bg-background">
+                    
+                    {/* UNIFIED HEADER */}
+                    <Header 
+                        activeProject={activeProject}
+                        activeSystemTab={activeSystemTab}
+                    />
+
+                    {/* CONTENT AREA: RENDER ALL PROJECTS (Hidden/Block) */}
+                    <div className="flex-1 relative overflow-hidden">
+                        
+                        {/* 1. Projects Views */}
+                        {projects.map(project => {
+                            const isActive = activeProjectId === project.id;
+                            return (
+                                <div 
+                                    key={project.id} 
+                                    className="absolute inset-0 w-full h-full bg-background"
+                                    style={{ 
+                                        display: isActive ? 'block' : 'none',
+                                        zIndex: isActive ? 10 : 0
+                                    }}
+                                >
+                                    {/* Direct render without animation to prevent flickering/jumping */}
+                                    <ProjectView 
+                                        project={project}
+                                        isActive={isActive}
+                                    />
+                                </div>
+                            );
+                        })}
+
+                        {/* 2. System Views (Inbox, Today, etc.) */}
                         <div 
-                            key={project.id} 
                             className="absolute inset-0 w-full h-full bg-background"
-                            style={{ 
-                                display: isActive ? 'block' : 'none',
-                                zIndex: isActive ? 10 : 0
-                            }}
+                            style={{ display: activeSystemTab === 'logs' ? 'block' : 'none', zIndex: 10 }}
                         >
-                            {/* Direct render without animation to prevent flickering/jumping */}
-                            <ProjectView 
-                                project={project}
-                                isActive={isActive}
-                            />
+                            <LogsView isActive={activeSystemTab === 'logs'} />
                         </div>
-                    );
-                })}
 
-                {/* 2. System Views (Inbox, Today, etc.) */}
-                <div 
-                    className="absolute inset-0 w-full h-full bg-background"
-                    style={{ display: activeSystemTab === 'logs' ? 'block' : 'none', zIndex: 10 }}
-                >
-                    <LogsView isActive={activeSystemTab === 'logs'} />
-                </div>
-
-                <div 
-                    className="absolute inset-0 w-full h-full bg-background"
-                    style={{ display: activeSystemTab === 'done' ? 'block' : 'none', zIndex: 10 }}
-                >
-                    <DoneView isActive={activeSystemTab === 'done'} />
-                </div>
-
-                <div 
-                    className="absolute inset-0 w-full h-full bg-background"
-                    style={{ display: activeSystemTab === 'today' ? 'block' : 'none', zIndex: 10 }}
-                >
-                    <TodayView isActive={activeSystemTab === 'today'} />
-                </div>
-
-                <div 
-                    className="absolute inset-0 w-full h-full bg-background"
-                    style={{ display: activeSystemTab === 'inbox' ? 'block' : 'none', zIndex: 10 }}
-                >
-                    <InboxView isActive={activeSystemTab === 'inbox'} />
-                </div>
-
-                <div 
-                    className="absolute inset-0 w-full h-full bg-background"
-                    style={{ display: activeSystemTab === 'doing_now' ? 'block' : 'none', zIndex: 10 }}
-                >
-                    <DoingNowView isActive={activeSystemTab === 'doing_now'} />
-                </div>
-
-                {activeSystemTab && 
-                 activeSystemTab !== 'logs' && 
-                 activeSystemTab !== 'done' && 
-                 activeSystemTab !== 'today' && 
-                 activeSystemTab !== 'inbox' && 
-                 activeSystemTab !== 'doing_now' && (
-                    <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-background z-10">
-                         <div className="text-center text-default-400">
-                            <h2 className="text-2xl font-bold mb-2 capitalize">{activeSystemTab}</h2>
-                            <p>System view not implemented in v2 yet.</p>
+                        <div 
+                            className="absolute inset-0 w-full h-full bg-background"
+                            style={{ display: activeSystemTab === 'done' ? 'block' : 'none', zIndex: 10 }}
+                        >
+                            <DoneView isActive={activeSystemTab === 'done'} />
                         </div>
-                    </div>
-                )}
 
-                {/* 3. Empty State */}
-                {!activeProjectId && !activeSystemTab && (
-                     <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-background z-10">
-                        <div className="text-default-400">Select a project</div>
-                    </div>
-                )}
+                        <div 
+                            className="absolute inset-0 w-full h-full bg-background"
+                            style={{ display: activeSystemTab === 'today' ? 'block' : 'none', zIndex: 10 }}
+                        >
+                            <TodayView isActive={activeSystemTab === 'today'} />
+                        </div>
+
+                        <div 
+                            className="absolute inset-0 w-full h-full bg-background"
+                            style={{ display: activeSystemTab === 'inbox' ? 'block' : 'none', zIndex: 10 }}
+                        >
+                            <InboxView isActive={activeSystemTab === 'inbox'} />
+                        </div>
+
+                        <div 
+                            className="absolute inset-0 w-full h-full bg-background"
+                            style={{ display: activeSystemTab === 'doing_now' ? 'block' : 'none', zIndex: 10 }}
+                        >
+                            <DoingNowView isActive={activeSystemTab === 'doing_now'} />
+                        </div>
+
+                        {activeSystemTab && 
+                        activeSystemTab !== 'logs' && 
+                        activeSystemTab !== 'done' && 
+                        activeSystemTab !== 'today' && 
+                        activeSystemTab !== 'inbox' && 
+                        activeSystemTab !== 'doing_now' && (
+                            <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-background z-10">
+                                <div className="text-center text-default-400">
+                                    <h2 className="text-2xl font-bold mb-2 capitalize">{activeSystemTab}</h2>
+                                    <p>System view not implemented in v2 yet.</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 3. Empty State */}
+                        {!activeProjectId && !activeSystemTab && (
+                            <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-background z-10">
+                                <div className="text-default-400">Select a project</div>
+                            </div>
+                        )}
 
             </div>
         </div>
     </div>
+    </>
   );
 }

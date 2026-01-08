@@ -53,6 +53,11 @@
    "folder-path-color.folders": [
    
       {
+         "path": "app/v2",
+         "color": "red"
+      },
+
+      {
          "path": "app/admin",
          "color": "red"
       },
