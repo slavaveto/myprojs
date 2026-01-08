@@ -102,9 +102,9 @@ export const useRemoteUiData = (projectId: string) => {
         const id = crypto.randomUUID();
 
         await powerSync.execute(
-            `INSERT INTO _ui_folders (id, project_id, title, sort_order, created_at, updated_at, user_id) 
-             VALUES (?, ?, ?, ?, datetime('now'), datetime('now'), ?)`,
-            [id, projectId, title, newSort, userId]
+            `INSERT INTO _ui_folders (id, project_id, title, sort_order, created_at, updated_at) 
+             VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))`,
+            [id, projectId, title, newSort]
         );
     };
 
@@ -117,9 +117,9 @@ export const useRemoteUiData = (projectId: string) => {
         const newSort = maxSort + 1000;
 
         await powerSync.execute(
-            `INSERT INTO _ui_items (id, folder_id, content, sort_order, created_at, updated_at, is_completed, is_deleted, user_id) 
-             VALUES (?, ?, ?, ?, datetime('now'), datetime('now'), 0, 0, ?)`,
-            [id, folderId, content, newSort, userId]
+            `INSERT INTO _ui_items (id, folder_id, content, sort_order, created_at, updated_at, is_completed, is_deleted) 
+             VALUES (?, ?, ?, ?, datetime('now'), datetime('now'), 0, 0)`,
+            [id, folderId, content, newSort]
         );
     };
 

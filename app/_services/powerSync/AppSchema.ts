@@ -53,6 +53,12 @@ export const AppSchema = new Schema({
     project_id: column.text,
     user_id: column.text,
   }),
+
+
+
+
+
+  
   _ui_folders: new Table({
     project_id: column.text,
     title: column.text,
