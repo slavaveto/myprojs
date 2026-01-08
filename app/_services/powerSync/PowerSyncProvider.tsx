@@ -208,13 +208,19 @@ export const PowerSyncProvider = ({ children }: { children: React.ReactNode }) =
         // Log status changes
         const l = db.registerListener({
             statusChanged: (status) => {
-                // console.log('[PowerSync] Status Changed:', {
-                //      connected: status.connected,
-                //      lastSyncedAt: status.lastSyncedAt,
-                //      // @ts-ignore
-                //      error: status.anyError,
-                //      statusObj: status // Log full object
-                // });
+                const connected = status.connected;
+                const connecting = status.connecting;
+                
+                if (!connected && !connecting) {
+                    console.warn('[PowerSync] DISCONNECTED! Status:', status);
+                    // @ts-ignore
+                    if (status.anyError) {
+                        // @ts-ignore
+                        console.error('[PowerSync] Connection Error Detail:', status.anyError);
+                    }
+                } else if (connected) {
+                    // console.log('[PowerSync] Connected');
+                }
             }
         });
 
