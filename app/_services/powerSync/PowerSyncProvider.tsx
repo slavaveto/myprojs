@@ -142,6 +142,23 @@ export const PowerSyncProvider = ({ children }: { children: React.ReactNode }) =
                 if (_db.enableLogging) _db.enableLogging(); 
                 console.log('[PowerSync] DB created:', _db);
                 setDb(_db);
+
+                // DEBUG: Check row counts
+                setTimeout(async () => {
+                    const tables = ['projects', 'folders', 'tasks', 'logs', '_ui_folders', '_ui_items'];
+                    console.group('--- Local DB Counts ---');
+                    for (const t of tables) {
+                        try {
+                            const res = await _db.getAll(`SELECT count(*) as c FROM ${t}`);
+                            // @ts-ignore
+                            console.log(`${t}:`, res[0]?.c);
+                        } catch (e) {
+                            console.log(`${t}: error`, e);
+                        }
+                    }
+                    console.groupEnd();
+                }, 2000);
+
             } catch (e) {
                 console.error("[PowerSync] Error init:", e);
             }

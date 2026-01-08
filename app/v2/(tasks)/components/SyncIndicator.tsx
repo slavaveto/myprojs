@@ -9,18 +9,19 @@ export const SyncIndicator = () => {
 
     // Determine state
     // @ts-ignore
-    const rawIsSyncing = status.dataFlow?.downloading || status.dataFlow?.uploading;
+    const rawIsSyncing = status.dataFlow?.downloading || status.dataFlow?.uploading || status.downloading || status.uploading;
     // @ts-ignore
     const rawIsConnecting = status.connecting;
 
     // Debug status changes
     useEffect(() => {
         // @ts-ignore
-        const up = status.dataFlow?.uploading;
+        const up = status.dataFlow?.uploading || status.uploading;
         // @ts-ignore
-        const down = status.dataFlow?.downloading;
+        const down = status.dataFlow?.downloading || status.downloading;
+        
         if (up || down) {
-            console.log('SyncIndicator: Activity detected!', { uploading: up, downloading: down });
+             console.log('SyncIndicator: Activity detected!', { uploading: up, downloading: down });
         }
     }, [status]);
     
