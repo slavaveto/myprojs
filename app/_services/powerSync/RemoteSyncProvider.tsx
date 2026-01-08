@@ -25,12 +25,12 @@ class StaticRemoteConnector implements PowerSyncBackendConnector {
     }
 }
 
-interface RemotePowerSyncProviderProps {
+interface RemoteSyncProviderProps {
     projectId: string;
     children: React.ReactNode;
 }
 
-export const RemotePowerSyncProvider = ({ projectId, children }: RemotePowerSyncProviderProps) => {
+export const RemoteSyncProvider = ({ projectId, children }: RemoteSyncProviderProps) => {
     const mainPowerSync = usePowerSync(); // Access main DB
     const [remoteDb, setRemoteDb] = useState<PowerSyncDatabase | null>(null);
     const [isLoading, setIsLoading] = useState(true);

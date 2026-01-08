@@ -3,7 +3,7 @@ import { useStatus } from '@powersync/react';
 import { RefreshCw, CloudOff, Cloud, UploadCloud, DownloadCloud, AlertTriangle, Database } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent, Button, Chip } from '@heroui/react';
 import { clsx } from 'clsx';
-import { usePowerSync } from '@/app/_services/powerSync/PowerSyncProvider';
+import { usePowerSync } from '@/app/_services/powerSync/SyncProvider';
 import { useSupabase } from '@/utils/supabase/useSupabase';
 
 export const SyncIndicator = () => {
@@ -29,7 +29,7 @@ export const SyncIndicator = () => {
 
             for (const table of tables) {
                 // Local
-                const localRes = await db.getAll(`SELECT id FROM ${table}`);
+                const localRes = await db.getAll<{ id: string }>(`SELECT id FROM ${table}`);
                 const localIds = new Set(localRes.map(r => r.id));
 
                 // Remote

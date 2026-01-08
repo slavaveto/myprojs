@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { usePowerSync } from '@/app/_services/powerSync/PowerSyncProvider';
+import { usePowerSync } from '@/app/_services/powerSync/SyncProvider';
 import { useQuery } from '@powersync/react';
 import { ProjectBar } from './components/ProjectBar';
 import { Header } from './components/Header';

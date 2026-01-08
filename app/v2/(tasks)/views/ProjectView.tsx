@@ -11,7 +11,7 @@ import { RemoteTablesView } from '../remoteviews/RemoteTablesView';
 import { clsx } from 'clsx';
 import { useProjectView } from '../hooks/useProjectView';
 import { useRemoteUiData } from '../hooks/useRemoteUiData';
-import { useInfoSatellite } from '../hooks/useInfoSatellite';
+import { useRemoteInfoData } from '../hooks/useRemoteInfoData';
 import { usePanelResize } from '../hooks/usePanelResize';
 
 interface ProjectViewProps {
@@ -36,7 +36,7 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
 
     // Remote UI Data (Always fetched if project active, but lightweight)
     const remoteUi = useRemoteUiData(project.id);
-    const infoData = useInfoSatellite(project.id);
+    const infoData = useRemoteInfoData(project.id);
     
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
     const { width: panelWidth, containerRef, startResizing } = usePanelResize(400);

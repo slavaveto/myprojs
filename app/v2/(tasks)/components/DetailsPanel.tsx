@@ -3,7 +3,7 @@ import { useQuery } from '@powersync/react';
 import { Task } from '@/app/types';
 import { Button, Textarea } from '@heroui/react';
 import { X } from 'lucide-react';
-import { usePowerSync } from '@/app/_services/powerSync/PowerSyncProvider';
+import { usePowerSync } from '@/app/_services/powerSync/SyncProvider';
 
 interface DetailsPanelProps {
     taskId: string | null;

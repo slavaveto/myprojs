@@ -3,7 +3,7 @@ import { useQuery } from '@powersync/react';
 import { Task } from '@/app/types';
 import { Checkbox } from '@heroui/react';
 import { clsx } from 'clsx';
-import { usePowerSync } from '@/app/_services/powerSync/PowerSyncProvider';
+import { usePowerSync } from '@/app/_services/powerSync/SyncProvider';
 
 interface DoneViewProps {
     isActive: boolean;

@@ -125,7 +125,7 @@ export const usePowerSync = () => {
     return context;
 };
 
-export const PowerSyncProvider = ({ children }: { children: React.ReactNode }) => {
+export const SyncProvider = ({ children }: { children: React.ReactNode }) => {
     const [db, setDb] = useState<PowerSyncDatabase | null>(null);
     const { getToken, isLoaded } = useAuth();
     const { supabase } = useSupabase();
