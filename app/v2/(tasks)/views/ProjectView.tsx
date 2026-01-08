@@ -30,6 +30,9 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
     const { width: panelWidth, containerRef, startResizing } = usePanelResize(400);
 
+    // Fallback if width is invalid (prevents NaN error)
+    const safePanelWidth = isNaN(panelWidth) ? 400 : panelWidth;
+
     const SYSTEM_PROJECT_TITLES = ['Inbox', 'Today', 'Doing Now', 'Logs', 'Done', 'Logbook'];
 
     return (
@@ -115,7 +118,7 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
 
                         {/* Right: Details Panel */}
                         <div 
-                            style={{ width: panelWidth }}
+                            style={{ width: safePanelWidth }}
                             className="flex-shrink-0 bg-content2/50 overflow-y-auto z-10"
                         >
                             <DetailsPanel 
