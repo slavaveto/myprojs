@@ -143,9 +143,6 @@ export const SyncProvider = ({ children }: { children: React.ReactNode }) => {
             try {
                 console.log('[PowerSync] Init started...');
                 const _db = getPowerSync();
-                // Enable debug logging
-                // @ts-ignore
-                if (_db.enableLogging) _db.enableLogging(); 
                 console.log('[PowerSync] DB created:', _db);
                 setDb(_db);
 
@@ -155,8 +152,7 @@ export const SyncProvider = ({ children }: { children: React.ReactNode }) => {
                     console.group('--- Local DB Counts ---');
                     for (const t of tables) {
                         try {
-                            const res = await _db.getAll(`SELECT count(*) as c FROM ${t}`);
-                            // @ts-ignore
+                            const res = await _db.getAll<{ c: number }>(`SELECT count(*) as c FROM ${t}`);
                             console.log(`${t}:`, res[0]?.c);
                         } catch (e) {
                             console.log(`${t}: error`, e);
@@ -213,10 +209,9 @@ export const SyncProvider = ({ children }: { children: React.ReactNode }) => {
                 
                 if (!connected && !connecting) {
                     console.warn('[PowerSync] DISCONNECTED! Status:', status);
-                    // @ts-ignore
-                    if (status.anyError) {
-                        // @ts-ignore
-                        console.error('[PowerSync] Connection Error Detail:', status.anyError);
+                    const anyError = (status as any).anyError;
+                    if (anyError) {
+                        console.error('[PowerSync] Connection Error Detail:', anyError);
                     }
                 } else if (connected) {
                     // console.log('[PowerSync] Connected');
@@ -228,7 +223,6 @@ export const SyncProvider = ({ children }: { children: React.ReactNode }) => {
         const interval = setInterval(() => {
             // console.log('[PowerSync] Heartbeat Status:', {
             //     connected: db.connected,
-            //     // @ts-ignore
             //     hasError: !!db.currentStatus?.anyError
             // });
         }, 5000);

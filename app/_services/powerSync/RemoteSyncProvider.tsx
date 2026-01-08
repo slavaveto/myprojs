@@ -58,9 +58,7 @@ export const RemoteSyncProvider = ({ projectId, children }: RemoteSyncProviderPr
             const factory = new WASQLitePowerSyncDatabaseOpenFactory({
                 schema: RemoteAppSchema,
                 dbFilename: `remote_${projectId}.sqlite`,
-                // @ts-ignore
-                worker: workerUrl
-            } as any);
+            });
 
             const db = factory.getInstance() as unknown as PowerSyncDatabase;
 
