@@ -130,6 +130,12 @@ export const PowerSyncProvider = ({ children }: { children: React.ReactNode }) =
     const { getToken, isLoaded } = useAuth();
     const { supabase } = useSupabase();
     const connectingRef = useRef(false);
+    const getTokenRef = useRef(getToken);
+    
+    // Update ref when getToken changes
+    useEffect(() => {
+        getTokenRef.current = getToken;
+    }, [getToken]);
 
     // Инициализация базы (только на клиенте)
     useEffect(() => {
@@ -168,33 +174,32 @@ export const PowerSyncProvider = ({ children }: { children: React.ReactNode }) =
     // Подключение к бекенду
     useEffect(() => {
         if (!db || !isLoaded) return;
+        
+        // Prevent multiple connection attempts or re-connection on rerenders
+        if (db.connected || connectingRef.current) return;
 
         const connect = async () => {
-            if (db.connected) return;
-
             try {
+                connectingRef.current = true;
                 console.log('[PowerSync] Connecting to:', POWERSYNC_URL);
                 const connector = new ClerkConnector(async () => {
-                     // Get fresh token
-                     const token = await getToken({ template: 'supabase_daysync_new' });
+                     // Get fresh token using ref
+                     const token = await getTokenRef.current({ template: 'supabase_daysync_new' });
                      return token || '';
                 }, supabase);
                 await db.connect(connector);
             } catch (e) {
                 console.error('[PowerSync] Connection failed:', e);
+            } finally {
+                connectingRef.current = false;
             }
         };
 
         connect();
 
-        // Cleanup on unmount or re-run to avoid ghosts (especially in Fast Refresh)
-        return () => {
-            if (db && db.connected) {
-                console.log('[PowerSync] Disconnecting due to effect cleanup...');
-                db.disconnect();
-            }
-        };
-    }, [db, isLoaded, getToken]);
+        // NO DISCONNECT ON UNMOUNT in this specific setup to prevent flicker in StrictMode
+        // PowerSync handles singleton connections well.
+    }, [db, isLoaded]); // Removed getToken from deps
 
     // Monitor connection status
     useEffect(() => {

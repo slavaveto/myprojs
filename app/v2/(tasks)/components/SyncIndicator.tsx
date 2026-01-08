@@ -26,17 +26,18 @@ export const SyncIndicator = () => {
     }, [status]);
     
     // UI States with min duration (500ms debounce on trailing edge)
-    const [isSyncing, setIsSyncing] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
     const [isConnecting, setIsConnecting] = useState(false);
 
     // Custom Event Listener for Upload (Manual Override)
     useEffect(() => {
-        const handleUploadStart = () => setIsSyncing(true);
+        const handleUploadStart = () => setIsUploading(true);
         const handleUploadEnd = () => {
-            // Keep it blue for at least 500ms
             setTimeout(() => {
-                 // Only turn off if not otherwise syncing
-                 if (!rawIsSyncing) setIsSyncing(false);
+                 // @ts-ignore
+                 const stillUploading = status.dataFlow?.uploading || status.uploading;
+                 if (!stillUploading) setIsUploading(false);
             }, 500);
         };
 
@@ -47,18 +48,28 @@ export const SyncIndicator = () => {
             window.removeEventListener('powersync-upload-start', handleUploadStart);
             window.removeEventListener('powersync-upload-end', handleUploadEnd);
         };
-    }, [rawIsSyncing]);
+    }, [status]);
 
     useEffect(() => {
-        let timer: NodeJS.Timeout;
-        if (rawIsSyncing) {
-            setIsSyncing(true);
-        } else {
-            // Only debounce off if not manually syncing
-            timer = setTimeout(() => setIsSyncing(false), 500);
-        }
-        return () => clearTimeout(timer);
-    }, [rawIsSyncing]);
+        // @ts-ignore
+        const rawUp = status.dataFlow?.uploading || status.uploading;
+        // @ts-ignore
+        const rawDown = status.dataFlow?.downloading || status.downloading;
+
+        let upTimer: NodeJS.Timeout;
+        let downTimer: NodeJS.Timeout;
+
+        if (rawUp) setIsUploading(true);
+        else upTimer = setTimeout(() => setIsUploading(false), 500);
+
+        if (rawDown) setIsDownloading(true);
+        else downTimer = setTimeout(() => setIsDownloading(false), 500);
+
+        return () => {
+            clearTimeout(upTimer);
+            clearTimeout(downTimer);
+        };
+    }, [status]);
 
     useEffect(() => {
         let timer: NodeJS.Timeout;
@@ -82,7 +93,8 @@ export const SyncIndicator = () => {
     const getStatusText = () => {
         if (anyError) return 'Sync Error';
         if (isConnecting) return 'Connecting...';
-        if (isSyncing) return 'Syncing...';
+        if (isUploading) return 'Uploading...';
+        if (isDownloading) return 'Downloading...';
         return 'Online';
     };
 
@@ -90,7 +102,8 @@ export const SyncIndicator = () => {
         if (anyError) return 'danger';
         if (isOffline) return 'danger';
         if (isConnecting) return 'warning';
-        if (isSyncing) return 'primary';
+        if (isUploading) return 'danger'; // Red for upload
+        if (isDownloading) return 'primary'; // Blue for download
         return 'success';
     };
 
@@ -105,7 +118,8 @@ export const SyncIndicator = () => {
                         "transition-all",
                         (isOffline || anyError) ? "text-red-500" : 
                         isConnecting ? "text-orange-500" :
-                        isSyncing ? "text-blue-500" :
+                        isUploading ? "text-red-500" :
+                        isDownloading ? "text-blue-500" :
                         "text-default-500"
                     )}
                 >
@@ -114,7 +128,9 @@ export const SyncIndicator = () => {
                         <AlertTriangle size={18} className="text-red-600 animate-pulse" />
                     ) : isConnecting ? (
                         <RefreshCw size={18} className="animate-spin text-orange-500" />
-                    ) : isSyncing ? (
+                    ) : isUploading ? (
+                        <RefreshCw size={18} className="animate-spin text-red-500" />
+                    ) : isDownloading ? (
                         <RefreshCw size={18} className="animate-spin text-blue-500" />
                     ) : isOffline ? (
                         <CloudOff size={18} className="text-red-500" />
