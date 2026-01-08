@@ -5,12 +5,18 @@ import { PowerSyncDatabase, PowerSyncBackendConnector, AbstractPowerSyncDatabase
 import { PowerSyncContext } from '@powersync/react';
 import { useAuth } from '@clerk/nextjs';
 import { getPowerSync } from './client';
+import { useSupabase } from '@/utils/supabase/useSupabase';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 const POWERSYNC_URL = process.env.NEXT_PUBLIC_POWERSYNC_URL || 'https://foo.powersync.io';
 
 class ClerkConnector implements PowerSyncBackendConnector {
-    // ... (без изменений)
-    constructor(private getToken: () => Promise<string | null>) {}
+    readonly client = getPowerSync();
+
+    constructor(
+        private getToken: () => Promise<string | null>,
+        private supabase: SupabaseClient
+    ) {}
 
     async fetchCredentials() {
         try {
@@ -31,7 +37,72 @@ class ClerkConnector implements PowerSyncBackendConnector {
     }
 
     async uploadData(database: AbstractPowerSyncDatabase) {
-        return;
+        const transaction = await database.getNextCrudTransaction();
+
+        if (!transaction) return;
+
+        try {
+            if (!this.supabase) {
+                throw new Error('Supabase client is not initialized in connector');
+            }
+
+            for (const op of transaction.crud) {
+                // Cast to any to safely access properties that might differ between SDK versions
+                const opAny = op as any;
+                const table = opAny.table || opAny.type;
+                const id = opAny.id;
+                
+                // Try direct access first, fallback to JSON parsing if property is hidden/proxy
+                let data = opAny.data;
+                if (!data) {
+                    try {
+                        const json = JSON.parse(JSON.stringify(opAny));
+                        data = json.data;
+                    } catch (e) {
+                        console.warn('[PowerSync] Failed to parse operation JSON', e);
+                    }
+                }
+
+                console.log(`[PowerSync] Uploading ${opAny.op} to ${table}`, data);
+
+                if (!table) {
+                    console.warn('[PowerSync] No table specified for operation', opAny);
+                    continue;
+                }
+
+                if (op.op === 'PUT') {
+                    // Upsert (INSERT or UPDATE)
+                    const { error } = await this.supabase
+                        .from(table)
+                        .upsert(data || {});
+                    
+                    if (error) throw new Error(`Supabase Upsert Error: ${error.message} (${error.code})`);
+                } else if (op.op === 'PATCH') {
+                    // UPDATE specific fields
+                    const { error } = await this.supabase
+                        .from(table)
+                        .update(data)
+                        .eq('id', id);
+
+                    if (error) throw new Error(`Supabase Patch Error: ${error.message} (${error.code})`);
+                } else if (op.op === 'DELETE') {
+                    // DELETE
+                    const { error } = await this.supabase
+                        .from(table)
+                        .delete()
+                        .eq('id', id);
+
+                    if (error) throw new Error(`Supabase Delete Error: ${error.message} (${error.code})`);
+                }
+            }
+
+            await transaction.complete();
+            console.log('[PowerSync] Transaction completed successfully');
+        } catch (e: any) {
+            console.error('[PowerSync] UploadData Failed:', e);
+            // Re-throw to notify PowerSync about the failure
+            throw e;
+        }
     }
 }
 
@@ -47,6 +118,7 @@ export const usePowerSync = () => {
 export const PowerSyncProvider = ({ children }: { children: React.ReactNode }) => {
     const [db, setDb] = useState<PowerSyncDatabase | null>(null);
     const { getToken, isLoaded } = useAuth();
+    const { supabase } = useSupabase();
     const connectingRef = useRef(false);
 
     // Инициализация базы (только на клиенте)
@@ -79,7 +151,7 @@ export const PowerSyncProvider = ({ children }: { children: React.ReactNode }) =
                      // Get fresh token
                      const token = await getToken({ template: 'supabase_daysync_new' });
                      return token || '';
-                });
+                }, supabase);
                 await db.connect(connector);
             } catch (e) {
                 console.error('[PowerSync] Connection failed:', e);
