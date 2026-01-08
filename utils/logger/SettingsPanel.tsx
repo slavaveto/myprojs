@@ -82,7 +82,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
                const reg = registered.find(r => r.name === name);
                if (reg) {
                   color = reg.color;
-                  // @ts-ignore
                   createdAt = reg.createdAt;
                }
             }

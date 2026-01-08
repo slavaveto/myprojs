@@ -57,8 +57,7 @@ export const Header = ({ activeProject, activeSystemTab }: HeaderProps) => {
              }
         } else {
             // Regular Projects
-            // @ts-ignore
-            const color = activeProject.proj_color || activeProject.color || '#333';
+            const color = activeProject.proj_color || '#333';
             colorStyle = { backgroundColor: color };
         }
     } else if (activeSystemTab) {

@@ -7,7 +7,7 @@ import { usePowerSync } from '@/app/_services/powerSync/SyncProvider';
 import { useSupabase } from '@/utils/supabase/useSupabase';
 
 export const SyncIndicator = () => {
-    const status = useStatus();
+    const status = useStatus() as any;
     const db = usePowerSync();
     const { supabase } = useSupabase();
 
@@ -46,7 +46,6 @@ export const SyncIndicator = () => {
                 });
 
                 localIds.forEach(id => {
-                    // @ts-ignore
                     if (!remoteIds.has(id)) missingRemote++;
                 });
 
@@ -64,13 +63,12 @@ export const SyncIndicator = () => {
                 details: reportDetails
             });
 
-        } catch (e) {
+        } catch (e: any) {
             console.error('Integrity check failed:', e);
             setIntegrityReport({
                 missingInLocal: 0,
                 missingInRemote: 0,
-                // @ts-ignore
-                details: [`Error: ${e.message}`]
+                details: [`Error: ${e?.message || 'Unknown error'}`]
             });
         } finally {
             setIsChecking(false);
@@ -79,16 +77,12 @@ export const SyncIndicator = () => {
 
 
     // Determine state
-    // @ts-ignore
     const rawIsSyncing = status.dataFlow?.downloading || status.dataFlow?.uploading || status.downloading || status.uploading;
-    // @ts-ignore
     const rawIsConnecting = status.connecting;
 
     // Debug status changes
     useEffect(() => {
-        // @ts-ignore
         const up = status.dataFlow?.uploading || status.uploading;
-        // @ts-ignore
         const down = status.dataFlow?.downloading || status.downloading;
         
         if (up || down) {
@@ -106,7 +100,6 @@ export const SyncIndicator = () => {
         const handleUploadStart = () => setIsUploading(true);
         const handleUploadEnd = () => {
             setTimeout(() => {
-                 // @ts-ignore
                  const stillUploading = status.dataFlow?.uploading || status.uploading;
                  if (!stillUploading) setIsUploading(false);
             }, 500);
@@ -122,9 +115,7 @@ export const SyncIndicator = () => {
     }, [status]);
 
     useEffect(() => {
-        // @ts-ignore
         const rawUp = status.dataFlow?.uploading || status.uploading;
-        // @ts-ignore
         const rawDown = status.dataFlow?.downloading || status.downloading;
 
         let upTimer: NodeJS.Timeout;
@@ -153,11 +144,8 @@ export const SyncIndicator = () => {
     }, [rawIsConnecting]);
 
     const isOffline = !status.connected && !status.connecting;
-    // @ts-ignore
     const uploadError = status.dataFlow?.uploadError;
-    // @ts-ignore
     const downloadError = status.dataFlow?.downloadError;
-    // @ts-ignore
     const anyError = status.anyError || uploadError || downloadError;
     
     // Status Text logic
@@ -254,7 +242,6 @@ export const SyncIndicator = () => {
                         </div>
 
                         {/* Uploading */}
-                        {/* @ts-ignore */}
                         {status.dataFlow?.uploading && (
                             <div className="flex justify-between text-orange-600 bg-orange-50 p-1 rounded">
                                 <span className="flex items-center gap-1"><UploadCloud size={12}/> Uploading</span>
@@ -263,7 +250,6 @@ export const SyncIndicator = () => {
                         )}
 
                         {/* Downloading */}
-                        {/* @ts-ignore */}
                         {status.dataFlow?.downloading && (
                             <div className="flex justify-between text-blue-600 bg-blue-50 p-1 rounded">
                                 <span className="flex items-center gap-1"><DownloadCloud size={12}/> Downloading</span>
