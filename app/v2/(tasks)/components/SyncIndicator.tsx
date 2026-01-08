@@ -1,11 +1,82 @@
 import React, { useState, useEffect } from 'react';
 import { useStatus } from '@powersync/react';
-import { RefreshCw, CloudOff, Cloud, UploadCloud, DownloadCloud, AlertTriangle } from 'lucide-react';
+import { RefreshCw, CloudOff, Cloud, UploadCloud, DownloadCloud, AlertTriangle, Database } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent, Button, Chip } from '@heroui/react';
 import { clsx } from 'clsx';
+import { usePowerSync } from '@/app/_services/powerSync/PowerSyncProvider';
+import { useSupabase } from '@/utils/supabase/useSupabase';
 
 export const SyncIndicator = () => {
     const status = useStatus();
+    const db = usePowerSync();
+    const { supabase } = useSupabase();
+
+    const [isChecking, setIsChecking] = useState(false);
+    const [integrityReport, setIntegrityReport] = useState<null | {
+        missingInLocal: number;
+        missingInRemote: number;
+        details: string[];
+    }>(null);
+
+    const checkIntegrity = async () => {
+        setIsChecking(true);
+        setIntegrityReport(null);
+        try {
+            const tables = ['projects', 'folders', 'tasks'];
+            let missingLocalTotal = 0;
+            let missingRemoteTotal = 0;
+            const reportDetails: string[] = [];
+
+            for (const table of tables) {
+                // Local
+                const localRes = await db.getAll(`SELECT id FROM ${table}`);
+                const localIds = new Set(localRes.map(r => r.id));
+
+                // Remote
+                const { data: remoteRes, error } = await supabase.from(table).select('id');
+                if (error) throw error;
+                const remoteIds = new Set(remoteRes?.map(r => r.id));
+
+                // Diff
+                let missingLocal = 0;
+                let missingRemote = 0;
+
+                remoteIds.forEach(id => {
+                    if (!localIds.has(id)) missingLocal++;
+                });
+
+                localIds.forEach(id => {
+                    // @ts-ignore
+                    if (!remoteIds.has(id)) missingRemote++;
+                });
+
+                if (missingLocal > 0 || missingRemote > 0) {
+                    reportDetails.push(`${table}: -${missingLocal} local, -${missingRemote} remote`);
+                }
+
+                missingLocalTotal += missingLocal;
+                missingRemoteTotal += missingRemote;
+            }
+
+            setIntegrityReport({
+                missingInLocal: missingLocalTotal,
+                missingInRemote: missingRemoteTotal,
+                details: reportDetails
+            });
+
+        } catch (e) {
+            console.error('Integrity check failed:', e);
+            setIntegrityReport({
+                missingInLocal: 0,
+                missingInRemote: 0,
+                // @ts-ignore
+                details: [`Error: ${e.message}`]
+            });
+        } finally {
+            setIsChecking(false);
+        }
+    };
+
 
     // Determine state
     // @ts-ignore
@@ -203,6 +274,41 @@ export const SyncIndicator = () => {
                                 )}
                             </div>
                         )}
+
+                        <div className="pt-2 border-t border-default-200">
+                             <Button 
+                                size="sm" 
+                                variant="flat" 
+                                color="primary" 
+                                className="w-full text-xs" 
+                                isLoading={isChecking}
+                                startContent={!isChecking && <Database size={12}/>}
+                                onPress={checkIntegrity}
+                             >
+                                Проверить базу
+                             </Button>
+
+                             {integrityReport && (
+                                 <div className="mt-2 text-[10px] p-2 bg-default-50 rounded border border-default-200">
+                                     {integrityReport.missingInLocal === 0 && integrityReport.missingInRemote === 0 ? (
+                                         <div className="text-green-600 font-bold">Все записи на месте! ✅</div>
+                                     ) : (
+                                         <div className="text-red-600 font-bold mb-1">Найдено расхождений! ⚠️</div>
+                                     )}
+                                     
+                                     {integrityReport.details.map((line, i) => (
+                                         <div key={i}>{line}</div>
+                                     ))}
+                                     
+                                     {(integrityReport.missingInLocal > 0 || integrityReport.missingInRemote > 0) && (
+                                         <div className="mt-1 text-default-500">
+                                             Local missing: {integrityReport.missingInLocal}<br/>
+                                             Remote missing: {integrityReport.missingInRemote}
+                                         </div>
+                                     )}
+                                 </div>
+                             )}
+                        </div>
                     </div>
                 </div>
             </PopoverContent>
