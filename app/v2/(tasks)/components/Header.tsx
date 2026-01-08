@@ -1,7 +1,7 @@
 import React from 'react';
 import { EllipsisVertical, Search, Bell, Inbox, Star, Target, CheckCircle2, FileText } from 'lucide-react';
 import { Button, Avatar } from '@heroui/react';
-import { SyncIndicator } from './SyncIndicator';
+import { SyncIndicator } from './misc/SyncIndicator';
 import { Project } from '@/app/types';
 
 // Mock Search Component (Placeholder)

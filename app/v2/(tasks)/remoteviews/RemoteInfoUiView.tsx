@@ -5,7 +5,7 @@ import { DetailsPanel } from '../components/DetailsPanel';
 import { usePanelResize } from '../hooks/usePanelResize';
 import { Button } from '@heroui/react';
 import { Plus } from 'lucide-react';
-import { FolderFormPopover } from '../components/FolderFormPopover';
+import { FolderFormPopover } from '../components/misc/FolderFormPopover';
 
 interface RemoteInfoUiViewProps {
     title?: string; // 'Remote UI' or 'Info'

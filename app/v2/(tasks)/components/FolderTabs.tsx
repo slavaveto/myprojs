@@ -4,7 +4,7 @@ import { Button, Chip } from '@heroui/react';
 import { Plus, EllipsisVertical, Info } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion } from 'framer-motion';
-import { FolderFormPopover } from './FolderFormPopover';
+import { FolderFormPopover } from './misc/FolderFormPopover';
 // import { useDroppable } from '@dnd-kit/core'; // DnD later
 // import { CreateItemPopover } from '@/app/(main)/components/CreateItem'; // TODO: Move to v2
 // import { EditFolderPopover } from '@/app/(main)/components/EditFolder'; // TODO: Move to v2
