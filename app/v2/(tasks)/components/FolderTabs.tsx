@@ -150,11 +150,11 @@ export const FolderTab = ({
 interface FolderTabsProps {
     folders: Folder[];
     folderCounts?: Record<string, number>;
-    hasRemoteUi?: boolean;
+    hasRemote?: boolean;
     activeFolderId: string | null;
     onSelectFolder: (folderId: string) => void;
-    onToggleRemote?: (type: 'ui' | 'users' | 'logs' | 'tables') => void;
-    activeRemoteTab?: 'ui' | 'users' | 'logs' | 'tables' | null;
+    onToggleRemote?: (type: 'ui' | 'users' | 'logs' | 'tables' | 'info') => void;
+    activeRemoteTab?: 'ui' | 'users' | 'logs' | 'tables' | 'info' | null;
     // Local Props
     onCreateFolder?: (title: string) => void;
     onUpdateFolder?: (folderId: string, title: string) => void;
@@ -162,7 +162,7 @@ interface FolderTabsProps {
     
     orientation?: 'horizontal' | 'vertical';
     layoutIdPrefix: string; 
-    // Remote Props
+    // Remote Props (UI)
     remoteFolders?: Folder[];
     remoteFolderCounts?: Record<string, number>;
     activeRemoteFolderId?: string | null;
@@ -170,6 +170,15 @@ interface FolderTabsProps {
     onCreateRemoteFolder?: (title: string) => void;
     onUpdateRemoteFolder?: (folderId: string, title: string) => void;
     onDeleteRemoteFolder?: (folderId: string) => void;
+
+    // Info Props (Satellite)
+    infoFolders?: Folder[];
+    infoFolderCounts?: Record<string, number>;
+    activeInfoFolderId?: string | null;
+    onSelectInfoFolder?: (folderId: string) => void;
+    onCreateInfoFolder?: (title: string) => void;
+    onUpdateInfoFolder?: (folderId: string, title: string) => void;
+    onDeleteInfoFolder?: (folderId: string) => void;
 }
 
 export const FolderTabs = ({ 
@@ -180,7 +189,7 @@ export const FolderTabs = ({
     onCreateFolder,
     orientation = 'horizontal',
     layoutIdPrefix,
-    hasRemoteUi,
+    hasRemote,
     onToggleRemote,
     activeRemoteTab,
     // Destructure new props
@@ -191,17 +200,38 @@ export const FolderTabs = ({
     onCreateRemoteFolder,
     onUpdateRemoteFolder,
     onDeleteRemoteFolder,
+    
+    // Info Destructure
+    infoFolders = [],
+    infoFolderCounts = {},
+    activeInfoFolderId,
+    onSelectInfoFolder,
+    onCreateInfoFolder,
+    onUpdateInfoFolder,
+    onDeleteInfoFolder,
+
     onUpdateFolder,
     onDeleteFolder
 }: FolderTabsProps) => {
 
     const RemoteProjsZone = () => {
-        if (!hasRemoteUi) return null;
+        if (!hasRemote) return null;
 
         return (
             <div className="flex items-center gap-2 ml-4 pl-4 border-l border-default-200">
-                {hasRemoteUi && (
+                {hasRemote && (
                     <>
+                        <button
+                            onClick={() => onToggleRemote?.('info')}
+                            className={clsx(
+                                'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border border-transparent cursor-pointer',
+                                activeRemoteTab === 'info'
+                                    ? 'bg-blue-100 text-blue-700 border-blue-200'
+                                    : 'text-default-500 hover:text-default-700 hover:bg-default-100'
+                            )}
+                        >
+                            <span>Info</span>
+                        </button>
                         <button
                             onClick={() => onToggleRemote?.('ui')}
                             className={clsx(
@@ -254,7 +284,7 @@ export const FolderTabs = ({
 
     // Simple horizontal layout for now matching v1 horizontal
     return (
-        <div className="flex items-center w-full px-6 pl-2 py-2 bg-background/50 flex-none z-10 border-b border-default-200 backdrop-blur-sm sticky top-0 justify-between">
+        <div className="flex items-center w-full px-6 pl-2 py-1 bg-background/50 flex-none z-10 border-b border-default-200 backdrop-blur-sm sticky top-0 justify-between">
            {/* LEFT SIDE: Project Folders (Scrollable) */}
            <div className="flex-1 overflow-hidden flex items-center min-w-0 mr-4">
                <div className="flex-grow overflow-x-auto scrollbar-hide flex items-center gap-2 no-scrollbar pl-4">
@@ -327,6 +357,43 @@ export const FolderTabs = ({
                                    size="sm" 
                                    color="secondary" // Purple for UI
                                    className="bg-transparent hover:bg-secondary/20 text-secondary"
+                               >
+                                   <Plus size={20} />
+                               </Button>
+                           }
+                       />
+                   </div>
+                )}
+
+                {/* Show Info Folders ONLY if Info tab is active */}
+                {activeRemoteTab === 'info' && infoFolders.map(folder => (
+                    <FolderTab
+                        key={folder.id}
+                        folder={folder}
+                        count={infoFolderCounts[folder.id] || 0} 
+                        isActive={activeInfoFolderId === folder.id}
+                        layoutIdPrefix={`${layoutIdPrefix}-info-${folder.id}`}
+                        onClick={() => onSelectInfoFolder?.(folder.id)}
+                        orientation={orientation}
+                        showZeroCount={true}
+                        onUpdate={onUpdateInfoFolder ? (title) => onUpdateInfoFolder(folder.id, title) : undefined} 
+                        onDelete={onDeleteInfoFolder ? () => onDeleteInfoFolder(folder.id) : undefined}
+                    />
+                ))}
+
+                {/* Create Info Folder Button */}
+                {activeRemoteTab === 'info' && onCreateInfoFolder && (
+                   <div className="flex-shrink-0 ml-1">
+                       <FolderFormPopover
+                           mode="create"
+                           onSubmit={onCreateInfoFolder}
+                           trigger={
+                               <Button 
+                                   isIconOnly 
+                                   variant="flat" 
+                                   size="sm" 
+                                   color="primary" // Blue for Info
+                                   className="bg-transparent hover:bg-primary/20 text-primary"
                                >
                                    <Plus size={20} />
                                </Button>

@@ -7,9 +7,11 @@ import { RemoteUiView } from '../remoteviews/RemoteUiView';
 import { RemoteUsersView } from '../remoteviews/RemoteUsersView';
 import { RemoteLogsView } from '../remoteviews/RemoteLogsView';
 import { RemoteTablesView } from '../remoteviews/RemoteTablesView';
+import { RemoteInfoView } from '../remoteviews/RemoteInfoView';
 import { clsx } from 'clsx';
 import { useProjectView } from '../hooks/useProjectView';
 import { useRemoteUiData } from '../hooks/useRemoteUiData';
+import { useInfoSatellite } from '../hooks/useInfoSatellite';
 import { usePanelResize } from '../hooks/usePanelResize';
 
 interface ProjectViewProps {
@@ -20,12 +22,21 @@ interface ProjectViewProps {
 const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
     const { 
         folders, folderCounts, tasks, activeFolderId, handleSelectFolder,
-        hasRemoteUi, activeRemoteTab, handleToggleRemote, createFolder,
+        hasRemote, activeRemoteTab, handleToggleRemote, createFolder,
         updateFolder, deleteFolder
     } = useProjectView(project, isActive);
     
+    // DEBUG: Check hasRemote
+    if (isActive) {
+        console.log('[ProjectView] Project:', project.title);
+        console.log('hasRemote (hook):', hasRemote);
+        console.log('project.has_remote:', project.has_remote);
+        console.log('Full Project:', JSON.stringify(project));
+    }
+
     // Remote UI Data (Always fetched if project active, but lightweight)
     const remoteUi = useRemoteUiData(project.id);
+    const infoData = useInfoSatellite(project.id);
     
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
     const { width: panelWidth, containerRef, startResizing } = usePanelResize(400);
@@ -47,7 +58,7 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
                     onSelectFolder={handleSelectFolder}
                     onCreateFolder={createFolder}
                     layoutIdPrefix={`project-${project.id}`}
-                    hasRemoteUi={hasRemoteUi}
+                    hasRemote={hasRemote}
                     
                     // Local Edit/Delete
                     onUpdateFolder={updateFolder}
@@ -63,6 +74,15 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
                     onCreateRemoteFolder={(title) => remoteUi.createFolder(title)}
                     onUpdateRemoteFolder={(id, title) => remoteUi.updateFolder(id, title)}
                     onDeleteRemoteFolder={(id) => remoteUi.deleteFolder(id)}
+
+                    // Info Props
+                    infoFolders={infoData.folders}
+                    infoFolderCounts={infoData.folderCounts}
+                    activeInfoFolderId={infoData.activeFolderId}
+                    onSelectInfoFolder={infoData.handleSelectFolder}
+                    onCreateInfoFolder={(title) => infoData.createFolder(title)}
+                    onUpdateInfoFolder={(id, title) => infoData.updateFolder(id, title)}
+                    onDeleteInfoFolder={(id) => infoData.deleteFolder(id)}
                 />
             )}
 
@@ -77,6 +97,13 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
                         tasks={remoteUi.tasks}
                         activeFolderId={remoteUi.activeFolderId}
                         updateTask={remoteUi.updateTask}
+                    />
+                ) : activeRemoteTab === 'info' ? (
+                    <RemoteInfoView 
+                        tasks={infoData.tasks}
+                        activeFolderId={infoData.activeFolderId}
+                        // @ts-ignore
+                        updateTask={(id, updates) => infoData.updateTask(id, updates)}
                     />
                 ) : activeRemoteTab === 'users' ? (
                     <RemoteUsersView projectId={project.id} satelliteId={project.id} />

@@ -11,10 +11,10 @@ export interface Project {
    is_highlighted?: boolean; // Special styling for important projects
    is_hidden?: boolean; // New: Hide from sidebar but keep active
 
-   has_remote_ui?: boolean; // Toggle for showing Remote UI tabs
+   has_remote?: boolean; // Toggle for showing Remote UI tabs
+   parent_proj_id?: string; // ID of the parent project for satellites
 
    remote_proj_slug?: string; // Slug for remote projects (e.g. 'psyhelp') to find keys in .env
-   parent_proj_id?: string; // ID of the parent project for satellites
    is_disabled?: boolean; // Toggled state for satellites
 }
 

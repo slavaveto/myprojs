@@ -12,7 +12,8 @@ export const AppSchema = new Schema({
     is_deleted: column.integer, // boolean as 0 or 1
     is_highlighted: column.integer,
     is_hidden: column.integer, // boolean as 0 or 1
-    has_remote_ui: column.integer,
+    has_remote: column.integer,
+    parent_proj_id: column.text,
   }),
   folders: new Table({
     project_id: column.text,

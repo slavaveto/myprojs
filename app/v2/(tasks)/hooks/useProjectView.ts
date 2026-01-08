@@ -10,7 +10,7 @@ const REMOTE_TAB_KEY_PREFIX = 'v2_active_remote_tab_';
 export const useProjectView = (project: Project, isActive: boolean) => {
     // 1. Local State
     const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
-    const [activeRemoteTab, setActiveRemoteTab] = useState<'ui' | 'users' | 'logs' | 'tables' | null>(null);
+    const [activeRemoteTab, setActiveRemoteTab] = useState<'ui' | 'users' | 'logs' | 'tables' | 'info' | null>(null);
     const powerSync = usePowerSync();
     const { userId } = useAuth();
     
@@ -111,9 +111,9 @@ export const useProjectView = (project: Project, isActive: boolean) => {
     }, [folders, activeFolderId, project.id, activeRemoteTab]);
 
     // ... (satellites) ...
-    const hasRemoteUi = !!project.has_remote_ui;
+    const hasRemote = !!project.has_remote;
 
-    const handleToggleRemote = (tab: 'ui' | 'users' | 'logs' | 'tables') => {
+    const handleToggleRemote = (tab: 'ui' | 'users' | 'logs' | 'tables' | 'info') => {
         if (activeRemoteTab === tab) return;
         
         setActiveRemoteTab(tab);
@@ -182,7 +182,7 @@ export const useProjectView = (project: Project, isActive: boolean) => {
         tasks,
         activeFolderId,
         handleSelectFolder,
-        hasRemoteUi,
+        hasRemote,
         activeRemoteTab,
         handleToggleRemote,
         createFolder,
