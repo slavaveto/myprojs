@@ -6,17 +6,33 @@ import { PowerSyncContext } from '@powersync/react';
 import { useAuth } from '@clerk/nextjs';
 import { getPowerSync } from './client';
 import { useSupabase } from '@/utils/supabase/useSupabase';
-import { SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient, createClient } from '@supabase/supabase-js';
 
 const POWERSYNC_URL = process.env.NEXT_PUBLIC_POWERSYNC_URL || 'https://foo.powersync.io';
 
+// Priority: Project Specific -> Generic NEXT_PUBLIC -> Fallback
+const SUPABASE_URL = process.env.NEXT_PUBLIC_DAYSYNC_SUPABASE_URL || 
+                     process.env.DAYSYNC_SUPABASE_URL || 
+                     process.env.NEXT_PUBLIC_SUPABASE_URL!;
+
+const SERVICE_KEY = process.env.NEXT_PUBLIC_DAYSYNC_SERVICE_KEY || 
+                    process.env.DAYSYNC_SERVICE_KEY || 
+                    process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
+
 class ClerkConnector implements PowerSyncBackendConnector {
     readonly client = getPowerSync();
+    private adminClient: SupabaseClient | null = null;
 
     constructor(
         private getToken: () => Promise<string | null>,
         private supabase: SupabaseClient
-    ) {}
+    ) {
+        if (SERVICE_KEY) {
+            this.adminClient = createClient(SUPABASE_URL, SERVICE_KEY, {
+                auth: { persistSession: false }
+            });
+        }
+    }
 
     async fetchCredentials() {
         try {
@@ -68,7 +84,20 @@ class ClerkConnector implements PowerSyncBackendConnector {
                     }
                 }
 
-                console.log(`[PowerSync] Uploading ${opAny.op} to ${table}`, data);
+                // SELECT CLIENT based on table name
+                // If table starts with '_', use Admin Client (Service Key)
+                // Otherwise use User Client (RLS)
+                let targetClient = this.supabase;
+                if (table.startsWith('_')) {
+                    if (this.adminClient) {
+                        targetClient = this.adminClient;
+                        console.log(`[PowerSync] Using ADMIN client for restricted table: ${table}`);
+                    } else {
+                        console.warn(`[PowerSync] Table ${table} requires Service Key but none found! Write may fail.`);
+                    }
+                }
+
+                console.log(`[PowerSync] Uploading ${opAny.op} to ${table} via ${targetClient === this.adminClient ? 'ADMIN' : 'USER'}`, data);
 
                 if (!table) {
                     console.warn('[PowerSync] No table specified for operation', opAny);
@@ -77,14 +106,14 @@ class ClerkConnector implements PowerSyncBackendConnector {
 
                 if (op.op === 'PUT') {
                     // Upsert (INSERT or UPDATE)
-                    const { error } = await this.supabase
+                    const { error } = await targetClient
                         .from(table)
                         .upsert(data || {});
                     
                     if (error) throw new Error(`Supabase Upsert Error: ${error.message} (${error.code})`);
                 } else if (op.op === 'PATCH') {
                     // UPDATE specific fields
-                    const { error } = await this.supabase
+                    const { error } = await targetClient
                         .from(table)
                         .update(data)
                         .eq('id', id);
@@ -92,7 +121,7 @@ class ClerkConnector implements PowerSyncBackendConnector {
                     if (error) throw new Error(`Supabase Patch Error: ${error.message} (${error.code})`);
                 } else if (op.op === 'DELETE') {
                     // DELETE
-                    const { error } = await this.supabase
+                    const { error } = await targetClient
                         .from(table)
                         .delete()
                         .eq('id', id);

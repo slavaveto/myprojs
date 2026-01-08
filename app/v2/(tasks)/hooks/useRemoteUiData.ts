@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery, usePowerSync } from '@powersync/react';
+import { useAuth } from '@clerk/nextjs';
 import { Folder, Task } from '@/app/types';
 import { globalStorage } from '@/utils/storage';
 
@@ -8,6 +9,7 @@ const REMOTE_STORAGE_KEY_PREFIX = 'v2_remote_ui_folder_';
 export const useRemoteUiData = (projectId: string) => {
     // 1. Local State for active folder in remote view
     const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
+    const { userId } = useAuth();
     
     // Access CURRENT PowerSync instance
     const powerSync = usePowerSync();
@@ -100,21 +102,49 @@ export const useRemoteUiData = (projectId: string) => {
         const id = crypto.randomUUID();
 
         await powerSync.execute(
-            `INSERT INTO _ui_folders (id, project_id, title, sort_order, created_at, updated_at) 
-             VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))`,
-            [id, projectId, title, newSort]
+            `INSERT INTO _ui_folders (id, project_id, title, sort_order, created_at, updated_at, user_id) 
+             VALUES (?, ?, ?, ?, datetime('now'), datetime('now'), ?)`,
+            [id, projectId, title, newSort, userId]
         );
     };
 
     const createTask = async (content: string, folderId: string) => {
-        // TODO: Implement using powerSync.execute
-        // INSERT INTO "-ui_items" ...
-        console.log("Create remote task", content, folderId);
+        if (!content.trim()) return;
+        const id = crypto.randomUUID();
+        // Calculate sort order (end of list)
+        const folderTasks = activeTasks; // Memoized list for current folder
+        const maxSort = folderTasks.reduce((max, t) => Math.max(max, t.sort_order || 0), 0);
+        const newSort = maxSort + 1000;
+
+        await powerSync.execute(
+            `INSERT INTO _ui_items (id, folder_id, content, sort_order, created_at, updated_at, is_completed, is_deleted, user_id) 
+             VALUES (?, ?, ?, ?, datetime('now'), datetime('now'), 0, 0, ?)`,
+            [id, folderId, content, newSort, userId]
+        );
     };
 
     const updateTask = async (taskId: string, updates: Partial<Task>) => {
-        // TODO: Implement
-        console.log("Update remote task", taskId, updates);
+        const setParts: string[] = [];
+        const args: any[] = [];
+
+        if (updates.content !== undefined) {
+            setParts.push('content = ?');
+            args.push(updates.content);
+        }
+        if (updates.is_completed !== undefined) {
+            setParts.push('is_completed = ?');
+            args.push(updates.is_completed ? 1 : 0);
+        }
+        
+        if (setParts.length === 0) return;
+
+        setParts.push("updated_at = datetime('now')");
+        args.push(taskId);
+
+        await powerSync.execute(
+            `UPDATE _ui_items SET ${setParts.join(', ')} WHERE id = ?`,
+            args
+        );
     };
 
     const updateFolder = async (folderId: string, title: string) => {
@@ -133,8 +163,10 @@ export const useRemoteUiData = (projectId: string) => {
     };
 
     const deleteTask = async (taskId: string) => {
-        // TODO: Implement
-        console.log("Delete remote task", taskId);
+        await powerSync.execute(
+            `UPDATE _ui_items SET is_deleted = 1, updated_at = datetime('now') WHERE id = ?`,
+            [taskId]
+        );
     };
 
     return {

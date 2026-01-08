@@ -1,11 +1,29 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { PowerSyncContext, usePowerSync } from "@powersync/react";
-import { PowerSyncDatabase, WASQLitePowerSyncDatabaseOpenFactory } from "@powersync/web";
+import { PowerSyncDatabase, WASQLitePowerSyncDatabaseOpenFactory, PowerSyncBackendConnector, AbstractPowerSyncDatabase } from "@powersync/web";
 import { RemoteAppSchema } from '@/app/_services/powerSync/RemoteAppSchema';
 import { getRemoteConfig } from '@/utils/remoteConfig';
 
-// A context to provide the CURRENTLY ACTIVE database instance (Main or Remote)
-// Actually, PowerSyncContext already does this. We just need to nest it.
+// Simple connector for static token
+class StaticRemoteConnector implements PowerSyncBackendConnector {
+    constructor(private url: string, private token: string) {}
+
+    async fetchCredentials() {
+        return {
+            endpoint: this.url,
+            token: this.token
+        };
+    }
+
+    async uploadData(database: AbstractPowerSyncDatabase) {
+        // Read-only for now, or implement upload logic later
+        const transaction = await database.getNextCrudTransaction();
+        if (!transaction) return;
+        
+        console.warn('[RemoteConnector] Upload requested but not implemented. Completing transaction to clear queue.');
+        await transaction.complete(); 
+    }
+}
 
 interface RemotePowerSyncProviderProps {
     projectId: string;
@@ -40,26 +58,32 @@ export const RemotePowerSyncProvider = ({ projectId, children }: RemotePowerSync
             const factory = new WASQLitePowerSyncDatabaseOpenFactory({
                 schema: RemoteAppSchema,
                 dbFilename: `remote_${projectId}.sqlite`,
+                // @ts-ignore
                 worker: workerUrl
             } as any);
 
             const db = factory.getInstance() as unknown as PowerSyncDatabase;
 
-            // Connect using static connector (simplified)
-            // In production, you'd use a proper Connector class
-            // db.connect(new RemoteConnector(config.url, config.token));
-            
-            // For now, we just create the DB instance. Connection logic TBD.
-            // Assuming we just need the DB instance for queries if it was connected.
-            // But we need to connect it!
-            
-            // TODO: Implement RemoteConnector using url/token
+            // Connect using static connector
+            try {
+                console.log(`[RemotePowerSync] Connecting to ${projectId}...`);
+                const connector = new StaticRemoteConnector(config.url, config.token);
+                db.connect(connector);
+            } catch (e) {
+                console.error(`[RemotePowerSync] Connection failed for ${projectId}`, e);
+            }
             
             setRemoteDb(db);
             setIsLoading(false);
         };
 
         initRemote();
+
+        return () => {
+             // Cleanup if needed, but usually we keep DB open
+             // If we want to disconnect on unmount:
+             // remoteDb?.disconnect();
+        };
 
     }, [projectId, config.type, config.url, config.token]);
 
