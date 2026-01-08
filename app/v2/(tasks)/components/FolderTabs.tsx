@@ -162,14 +162,14 @@ interface FolderTabsProps {
     
     orientation?: 'horizontal' | 'vertical';
     layoutIdPrefix: string; 
-    // Remote Props (UI)
-    remoteFolders?: Folder[];
-    remoteFolderCounts?: Record<string, number>;
-    activeRemoteFolderId?: string | null;
-    onSelectRemoteFolder?: (folderId: string) => void;
-    onCreateRemoteFolder?: (title: string) => void;
-    onUpdateRemoteFolder?: (folderId: string, title: string) => void;
-    onDeleteRemoteFolder?: (folderId: string) => void;
+    // UI Props (was Remote)
+    uiFolders?: Folder[];
+    uiFolderCounts?: Record<string, number>;
+    activeUiFolderId?: string | null;
+    onSelectUiFolder?: (folderId: string) => void;
+    onCreateUiFolder?: (title: string) => void;
+    onUpdateUiFolder?: (folderId: string, title: string) => void;
+    onDeleteUiFolder?: (folderId: string) => void;
 
     // Info Props (Satellite)
     infoFolders?: Folder[];
@@ -193,13 +193,13 @@ export const FolderTabs = ({
     onToggleRemote,
     activeRemoteTab,
     // Destructure new props
-    remoteFolders = [],
-    remoteFolderCounts = {},
-    activeRemoteFolderId,
-    onSelectRemoteFolder,
-    onCreateRemoteFolder,
-    onUpdateRemoteFolder,
-    onDeleteRemoteFolder,
+    uiFolders = [],
+    uiFolderCounts = {},
+    activeUiFolderId,
+    onSelectUiFolder,
+    onCreateUiFolder,
+    onUpdateUiFolder,
+    onDeleteUiFolder,
     
     // Info Destructure
     infoFolders = [],
@@ -226,7 +226,7 @@ export const FolderTabs = ({
                             className={clsx(
                                 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border border-transparent cursor-pointer',
                                 activeRemoteTab === 'info'
-                                    ? 'bg-blue-100 text-blue-700 border-blue-200'
+                                    ? 'bg-orange-100 text-orange-700 border-orange-200'
                                     : 'text-default-500 hover:text-default-700 hover:bg-default-100'
                             )}
                         >
@@ -248,7 +248,7 @@ export const FolderTabs = ({
                             className={clsx(
                                 'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border border-transparent cursor-pointer',
                                 activeRemoteTab === 'users'
-                                    ? 'bg-orange-100 text-orange-700 border-orange-200'
+                                    ? 'bg-blue-100 text-blue-700 border-blue-200'
                                     : 'text-default-500 hover:text-default-700 hover:bg-default-100'
                             )}
                         >
@@ -289,7 +289,7 @@ export const FolderTabs = ({
            <div className="flex-1 overflow-hidden flex items-center min-w-0 mr-2">
                <div 
                    className="flex-grow overflow-x-auto scrollbar-hide flex items-center gap-2 no-scrollbar pl-4"
-                   style={{ maskImage: 'linear-gradient(to right, black calc(100% - 30px), transparent 100%)', WebkitMaskImage: 'linear-gradient(to right, black calc(100% - 30px), transparent 100%)' }}
+                   style={{ maskImage: 'linear-gradient(to right, black calc(100% - 50px), transparent 100%)', WebkitMaskImage: 'linear-gradient(to right, black calc(100% - 50px), transparent 100%)' }}
                >
                    {folders.map((folder, index) => (
                          <FolderTab 
@@ -330,33 +330,37 @@ export const FolderTabs = ({
            </div>
            
            {/* RIGHT SIDE: Remote Folders & Toggles */}
-           <div className="flex-none flex items-center gap-2 pl-2 ml-2">
+           <div className="flex-none flex items-center gap-2 ml-2">
                 
                 {/* 1. Remote Folders Container (With Background) */}
                 {(activeRemoteTab === 'ui' || activeRemoteTab === 'info') && (
-                    <div className="flex items-center gap-2 bg-default-100 rounded-lg px-2 pl-4">
-                        {/* Show Remote Folders ONLY if UI tab is active */}
-                        {activeRemoteTab === 'ui' && remoteFolders.map(folder => (
+                    <div className={clsx(
+                        "flex items-center gap-2 rounded-lg px-2 pl-4 transition-colors",
+                        activeRemoteTab === 'ui' ? "bg-purple-100/50" : 
+                        activeRemoteTab === 'info' ? "bg-orange-100/50" : "bg-default-100/50"
+                    )}>
+                        {/* Show UI Folders ONLY if UI tab is active */}
+                        {activeRemoteTab === 'ui' && uiFolders.map(folder => (
                             <FolderTab
                                 key={folder.id}
                                 folder={folder}
-                                count={remoteFolderCounts[folder.id] || 0} 
-                                isActive={activeRemoteFolderId === folder.id}
-                                layoutIdPrefix={`${layoutIdPrefix}-remote-${folder.id}`} 
-                                onClick={() => onSelectRemoteFolder?.(folder.id)}
+                                count={uiFolderCounts[folder.id] || 0} 
+                                isActive={activeUiFolderId === folder.id}
+                                layoutIdPrefix={`${layoutIdPrefix}-ui-${folder.id}`} 
+                                onClick={() => onSelectUiFolder?.(folder.id)}
                                 orientation={orientation}
                                 showZeroCount={true} 
-                                onUpdate={onUpdateRemoteFolder ? (title) => onUpdateRemoteFolder(folder.id, title) : undefined} 
-                                onDelete={onDeleteRemoteFolder ? () => onDeleteRemoteFolder(folder.id) : undefined}
+                                onUpdate={onUpdateUiFolder ? (title) => onUpdateUiFolder(folder.id, title) : undefined} 
+                                onDelete={onDeleteUiFolder ? () => onDeleteUiFolder(folder.id) : undefined}
                             />
                         ))}
                         
-                        {/* Create Remote Folder Button */}
-                        {activeRemoteTab === 'ui' && onCreateRemoteFolder && (
+                        {/* Create UI Folder Button */}
+                        {activeRemoteTab === 'ui' && onCreateUiFolder && (
                         <div className="flex-shrink-0 ml-1">
                             <FolderFormPopover
                                 mode="create"
-                                onSubmit={onCreateRemoteFolder}
+                                onSubmit={onCreateUiFolder}
                                 trigger={
                                     <Button 
                                         isIconOnly 
@@ -399,8 +403,8 @@ export const FolderTabs = ({
                                         isIconOnly 
                                         variant="flat" 
                                         size="sm" 
-                                        color="primary" 
-                                        className="bg-transparent hover:bg-primary/20 text-primary"
+                                        color="warning" 
+                                        className="bg-transparent hover:bg-warning/20 text-orange-700"
                                     >
                                         <Plus size={20} />
                                     </Button>

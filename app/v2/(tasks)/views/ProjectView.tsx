@@ -66,14 +66,14 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
                     activeRemoteTab={activeRemoteTab}
                     onToggleRemote={handleToggleRemote}
                     
-                    // Remote Props
-                    remoteFolders={remoteUi.folders}
-                    remoteFolderCounts={remoteUi.folderCounts}
-                    activeRemoteFolderId={remoteUi.activeFolderId}
-                    onSelectRemoteFolder={remoteUi.handleSelectFolder}
-                    onCreateRemoteFolder={(title) => remoteUi.createFolder(title)}
-                    onUpdateRemoteFolder={(id, title) => remoteUi.updateFolder(id, title)}
-                    onDeleteRemoteFolder={(id) => remoteUi.deleteFolder(id)}
+                    // UI Props
+                    uiFolders={remoteUi.folders}
+                    uiFolderCounts={remoteUi.folderCounts}
+                    activeUiFolderId={remoteUi.activeFolderId}
+                    onSelectUiFolder={remoteUi.handleSelectFolder}
+                    onCreateUiFolder={(title) => remoteUi.createFolder(title)}
+                    onUpdateUiFolder={(id, title) => remoteUi.updateFolder(id, title)}
+                    onDeleteUiFolder={(id) => remoteUi.deleteFolder(id)}
 
                     // Info Props
                     infoFolders={infoData.folders}
