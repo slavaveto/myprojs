@@ -61,7 +61,6 @@ export const AppSchema = new Schema({
     updated_at: column.text,
     is_deleted: column.integer,
     is_hidden: column.integer,
-    user_id: column.text,
   }),
   _ui_items: new Table({
     folder_id: column.text,
@@ -83,7 +82,6 @@ export const AppSchema = new Schema({
     ru: column.text,
     en: column.text,
     uk: column.text,
-    user_id: column.text,
   }),
   _users: new Table({
      // define columns... placeholder

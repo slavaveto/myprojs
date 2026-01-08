@@ -14,6 +14,19 @@ const ConnectionStatus = ({ title }: { title: string }) => {
     const config = getRemoteConfig(title);
     const isRemote = config.type === 'remote';
 
+    useEffect(() => {
+        console.log(`[ConnectionStatus] Status update for ${title}:`, {
+            connected: status.connected,
+            lastSyncedAt: status.lastSyncedAt,
+            hasError: !!(status as any).lastConnectError,
+            error: (status as any).lastConnectError
+        });
+
+        if (!status.connected && (status as any).lastConnectError) {
+             console.error(`[ConnectionStatus] CONNECTION ERROR:`, (status as any).lastConnectError);
+        }
+    }, [status, title]);
+
     return (
         <div className="flex flex-col gap-2 border-b border-default-200 pb-3 mb-3">
             <div className="flex items-center gap-4 text-xs font-medium">
