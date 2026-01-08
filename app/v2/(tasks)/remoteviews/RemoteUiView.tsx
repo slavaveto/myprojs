@@ -13,6 +13,9 @@ export const RemoteUiView = ({ tasks, activeFolderId, updateTask }: RemoteUiView
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
     const { width: panelWidth, containerRef, startResizing } = usePanelResize(400);
 
+    // Fallback if width is invalid
+    const safePanelWidth = isNaN(panelWidth) ? 400 : panelWidth;
+
     return (
         <div className="flex flex-col h-full w-full bg-background overflow-hidden">
             <div 
@@ -48,7 +51,7 @@ export const RemoteUiView = ({ tasks, activeFolderId, updateTask }: RemoteUiView
 
                 {/* Right: Details Panel Placeholder */}
                 <div 
-                    style={{ width: panelWidth }}
+                    style={{ width: safePanelWidth }}
                     className="flex-shrink-0 border-l border-default-200 bg-content2/50 p-6 overflow-y-auto z-20"
                 >
                      {selectedTaskId ? (
