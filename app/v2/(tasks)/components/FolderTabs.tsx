@@ -50,7 +50,7 @@ export const FolderTab = ({
          className={clsx(
             'group/tab relative flex items-center gap-2 select-none transition-colors outline-none rounded-lg border-2 border-transparent',
             orientation === 'horizontal'
-               ? 'px-1 h-[40px] min-w-fit'
+               ? 'px-1 h-[40px] min-w-fit pr-1'
                : 'w-full min-h-[40px] px-3 py-2  justify-between',
             // 1. Dragging state (highest priority for cursor/bg)
             isDragging && 'cursor-grabbing bg-default-100 ring-1 ring-primary/30',
