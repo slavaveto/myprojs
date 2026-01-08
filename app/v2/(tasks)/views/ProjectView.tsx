@@ -102,7 +102,6 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
                     <RemoteInfoView 
                         tasks={infoData.tasks}
                         activeFolderId={infoData.activeFolderId}
-                        // @ts-ignore
                         updateTask={(id, updates) => infoData.updateTask(id, updates)}
                     />
                 ) : activeRemoteTab === 'users' ? (

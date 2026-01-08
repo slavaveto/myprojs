@@ -28,7 +28,7 @@ export default function TasksPage() {
     SELECT * FROM projects 
     WHERE (is_deleted IS NULL OR is_deleted = 0) 
       AND (is_hidden IS NULL OR is_hidden = 0)
-      AND (proj_type IS NULL OR proj_type NOT IN ('ui', 'docs'))
+      AND (proj_type IS NULL OR proj_type NOT IN ('info'))
     ORDER BY sort_order ASC
   `);
   const projects: Project[] = projectsData || [];
