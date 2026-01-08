@@ -289,7 +289,7 @@ export const FolderTabs = ({
            <div className="flex-1 overflow-hidden flex items-center min-w-0 mr-2">
                <div 
                    className="flex-grow overflow-x-auto scrollbar-hide flex items-center gap-2 no-scrollbar pl-4"
-                   style={{ maskImage: 'linear-gradient(to right, black 95%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to right, black 95%, transparent 100%)' }}
+                   style={{ maskImage: 'linear-gradient(to right, black calc(100% - 30px), transparent 100%)', WebkitMaskImage: 'linear-gradient(to right, black calc(100% - 30px), transparent 100%)' }}
                >
                    {folders.map((folder, index) => (
                          <FolderTab 
@@ -334,7 +334,7 @@ export const FolderTabs = ({
                 
                 {/* 1. Remote Folders Container (With Background) */}
                 {(activeRemoteTab === 'ui' || activeRemoteTab === 'info') && (
-                    <div className="flex items-center gap-2 bg-default-100 rounded-lg px-2 pl-3">
+                    <div className="flex items-center gap-2 bg-default-100 rounded-lg px-2 pl-4">
                         {/* Show Remote Folders ONLY if UI tab is active */}
                         {activeRemoteTab === 'ui' && remoteFolders.map(folder => (
                             <FolderTab
