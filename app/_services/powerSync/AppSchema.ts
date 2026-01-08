@@ -43,6 +43,15 @@ export const AppSchema = new Schema({
     user_id: column.text,
     // item_id, ru, en, uk - можно добавить потом если нужно для UI
   }),
+  logs: new Table({
+    created_at: column.text,
+    action: column.text,
+    entity_type: column.text,
+    entity_id: column.text,
+    details: column.text,
+    project_id: column.text,
+    user_id: column.text,
+  }),
   _ui_folders: new Table({
     project_id: column.text,
     title: column.text,
