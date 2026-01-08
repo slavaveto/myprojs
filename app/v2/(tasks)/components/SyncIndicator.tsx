@@ -179,7 +179,15 @@ export const SyncIndicator = () => {
     };
 
     return (
-        <Popover placement="bottom-end">
+        <Popover 
+            placement="bottom-end" 
+            onOpenChange={(isOpen) => {
+                if (!isOpen) {
+                    setIntegrityReport(null);
+                    setIsChecking(false);
+                }
+            }}
+        >
             <PopoverTrigger>
                 <Button 
                     isIconOnly 
