@@ -3,14 +3,25 @@ import { Task } from '@/app/types';
 import { TaskList } from '../components/TaskList';
 import { DetailsPanel } from '../components/DetailsPanel';
 import { usePanelResize } from '../hooks/usePanelResize';
+import { Button } from '@heroui/react';
+import { Plus } from 'lucide-react';
+import { FolderFormPopover } from '../components/FolderFormPopover';
 
-interface RemoteInfoViewProps {
+interface RemoteInfoUiViewProps {
+    title?: string; // 'Remote UI' or 'Info'
     tasks: Task[];
     activeFolderId: string | null;
     updateTask: (id: string, updates: Partial<Task>) => void;
+    onCreateFolder?: (title: string) => void;
 }
 
-export const RemoteInfoView = ({ tasks, activeFolderId, updateTask }: RemoteInfoViewProps) => {
+export const RemoteInfoUiView = ({ 
+    title = 'Remote View',
+    tasks, 
+    activeFolderId, 
+    updateTask,
+    onCreateFolder
+}: RemoteInfoUiViewProps) => {
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
     const { width: panelWidth, containerRef, startResizing } = usePanelResize(400);
     const safePanelWidth = isNaN(panelWidth) ? 400 : panelWidth;
@@ -32,9 +43,27 @@ export const RemoteInfoView = ({ tasks, activeFolderId, updateTask }: RemoteInfo
                         />
                     ) : (
                         <div className="border-2 border-dashed border-default-200 rounded-xl h-full flex items-center justify-center text-default-400">
-                            <div className="text-center">
-                                <h2 className="text-xl font-bold text-foreground mb-2">Info</h2>
-                                <p>Select a folder to view info items</p>
+                            <div className="text-center flex flex-col items-center gap-4">
+                                <div>
+                                    <h2 className="text-xl font-bold text-foreground mb-2">{title}</h2>
+                                    <p>Select a folder to view items</p>
+                                </div>
+
+                                {onCreateFolder && (
+                                    <FolderFormPopover
+                                        mode="create"
+                                        onSubmit={onCreateFolder}
+                                        trigger={
+                                            <Button 
+                                                color="primary" 
+                                                variant="flat"
+                                                startContent={<Plus size={20} />}
+                                            >
+                                                Create First Folder
+                                            </Button>
+                                        }
+                                    />
+                                )}
                             </div>
                         </div>
                     )}
@@ -65,3 +94,4 @@ export const RemoteInfoView = ({ tasks, activeFolderId, updateTask }: RemoteInfo
         </div>
     );
 };
+

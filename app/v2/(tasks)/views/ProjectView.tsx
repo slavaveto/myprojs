@@ -3,11 +3,11 @@ import { Project } from '@/app/types';
 import { FolderTabs } from '../components/FolderTabs';
 import { TaskList } from '../components/TaskList';
 import { DetailsPanel } from '../components/DetailsPanel';
-import { RemoteUiView } from '../remoteviews/RemoteUiView';
+import { RemoteInfoUiView } from '../remoteviews/RemoteInfoUiView';
 import { RemoteUsersView } from '../remoteviews/RemoteUsersView';
 import { RemoteLogsView } from '../remoteviews/RemoteLogsView';
 import { RemoteTablesView } from '../remoteviews/RemoteTablesView';
-import { RemoteInfoView } from '../remoteviews/RemoteInfoView';
+// import { RemoteInfoView } from '../remoteviews/RemoteInfoView';
 import { clsx } from 'clsx';
 import { useProjectView } from '../hooks/useProjectView';
 import { useRemoteUiData } from '../hooks/useRemoteUiData';
@@ -93,16 +93,20 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
             >
                 
                 {activeRemoteTab === 'ui' ? (
-                    <RemoteUiView 
+                    <RemoteInfoUiView 
+                        title="Remote UI"
                         tasks={remoteUi.tasks}
                         activeFolderId={remoteUi.activeFolderId}
                         updateTask={remoteUi.updateTask}
+                        onCreateFolder={remoteUi.createFolder}
                     />
                 ) : activeRemoteTab === 'info' ? (
-                    <RemoteInfoView 
+                    <RemoteInfoUiView 
+                        title="Info"
                         tasks={infoData.tasks}
                         activeFolderId={infoData.activeFolderId}
                         updateTask={(id, updates) => infoData.updateTask(id, updates)}
+                        onCreateFolder={infoData.createFolder}
                     />
                 ) : activeRemoteTab === 'users' ? (
                     <RemoteUsersView projectId={project.id} satelliteId={project.id} />
