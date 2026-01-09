@@ -46,7 +46,7 @@ export default function LoginForm() {
 
       if (result.status === 'complete') {
         await setActive({ session: result.createdSessionId });
-        router.push('/'); // Редирект в корень приложения
+        router.push('/v2'); // Редирект в корень приложения
       } else {
         setError('Требуется дополнительный шаг (MFA не поддерживается в этой форме)');
       }
