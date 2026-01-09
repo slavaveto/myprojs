@@ -86,7 +86,12 @@ export const TablesView = ({ projectId, projectTitle }: TablesViewProps) => {
                 }
             } else {
                 // Sort tables: underscores first, then alphabetical
-                const sortedTables = (data as TableInfo[]).sort((a, b) => {
+                const sortedTables = (data as TableInfo[]).map(t => ({
+                    ...t,
+                    policies: t.policies || [],
+                    columns: t.columns || [],
+                    triggers: t.triggers || []
+                })).sort((a, b) => {
                     return a.table_name.localeCompare(b.table_name);
                 });
                 
@@ -191,7 +196,7 @@ $$;
     if (loading) return <div className="p-10 text-center text-default-400">Loading schema for {projectTitle}...</div>;
 
     if (sqlNeeded) {
-        return (
+    return (
             <div className="flex-1 p-6 bg-background overflow-y-auto">
                 <div className="max-w-4xl mx-auto">
                     <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 mb-6">
@@ -273,7 +278,7 @@ $$;
                                         <tr>
                                             <th className="px-6 py-3">Table</th>
                                             <th className="px-6 py-3 text-center">RLS</th>
-                                            <th className="px-6 py-3 text-center">Policies</th>
+                                            <th className="px-6 py-3 w-1/3">Policies</th>
                                             <th className="px-6 py-3">Triggers</th>
                                             <th className="px-6 py-3">Publication</th>
                                             <th className="px-6 py-3 text-right">Cols</th>
@@ -301,10 +306,33 @@ $$;
                                                         </span>
                                                     )}
                                                 </td>
-                                                <td className="px-6 py-4 text-center">
-                                                    <span className={clsx("font-mono font-bold", t.policies.length === 0 ? "text-default-300" : "text-default-700")}>
-                                                        {t.policies.length}
-                                                    </span>
+                                                <td className="px-6 py-4">
+                                                    {t.policies.length > 0 ? (
+                                                        <div className="space-y-1">
+                                                            {t.policies.map((p, idx) => (
+                                                                <div key={idx} className="text-xs flex items-center gap-2">
+                                                                    <span className={clsx("w-1.5 h-1.5 rounded-full shrink-0", 
+                                                                        p.command === 'SELECT' ? 'bg-blue-400' :
+                                                                        p.command === 'INSERT' ? 'bg-green-400' :
+                                                                        p.command === 'UPDATE' ? 'bg-orange-400' :
+                                                                        p.command === 'DELETE' ? 'bg-red-400' :
+                                                                        'bg-gray-400'
+                                                                    )} />
+                                                                    <span className="font-mono font-medium text-default-700 truncate max-w-[150px]" title={p.name}>
+                                                                        {p.name}
+                                                                    </span>
+                                                                    <span className="text-[10px] text-default-400 uppercase tracking-wider bg-default-100 px-1 rounded">
+                                                                        {p.command}
+                                                                    </span>
+                                                                    <span className="text-[10px] text-default-400">
+                                                                        → {p.roles.join(', ')}
+                                                                    </span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-default-300 text-xs italic">No policies</span>
+                                                    )}
                                                 </td>
                                                 <td className="px-6 py-4 text-xs text-default-500 max-w-[200px] truncate">
                                                     {t.triggers && t.triggers.length > 0 
