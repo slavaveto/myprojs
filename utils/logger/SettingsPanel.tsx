@@ -5,7 +5,7 @@ import { globalStorage } from '@/utils/storage';
 import { LOGGER_NEXT_CONFIG_KEY, getAllLoggers } from './Logger';
 // Import updated from LoggerNext
 import { Button, Input, Switch, ScrollShadow, Popover, PopoverTrigger, PopoverContent } from '@heroui/react';
-import { Search, RotateCw, Trash2, SlidersHorizontal, ArrowUpDown, ArrowDownAz, ListChecks, Pin, PinOff, Eye, EyeOff, Clock, Scan } from 'lucide-react';
+import { Search, RotateCw, Trash2, SlidersHorizontal, ArrowUpDown, ArrowDownAz, ListChecks, Pin, PinOff, Eye, EyeOff, Clock, Scan, Check, X } from 'lucide-react';
 import { AVAILABLE_COLORS, COLOR_MAP } from '@/utils/logger/loggerColors';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -33,6 +33,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
    const [configs, setConfigs] = useState<ConfigItem[]>([]);
    const [search, setSearch] = useState('');
    const [showHidden, setShowHidden] = useState(false);
+   const [scanStatus, setScanStatus] = useState<'idle' | 'scanning' | 'success' | 'error'>('idle'); // Added scanStatus
+
    const [sortMode, setSortMode] = useState<'enabled' | 'name' | 'created'>(() => {
       if (typeof window !== 'undefined') {
          const saved = globalStorage.getItem(SORT_MODE_KEY);
@@ -229,6 +231,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
    }, [configs, search, sortMode]);
 
    const handleScan = async () => {
+      setScanStatus('scanning');
       try {
          const res = await fetch('/api/logger/scan');
          if (!res.ok) throw new Error('Scan failed');
@@ -264,12 +267,15 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
          } else {
             if (message) {
                alert(message);
-            } else {
-               alert('All clean! No duplicates or unused configs.');
             }
+            // Success animation only if no blocking alerts or after alerts closed
+            setScanStatus('success');
+            setTimeout(() => setScanStatus('idle'), 2000);
          }
 
       } catch (e) {
+         setScanStatus('error');
+         setTimeout(() => setScanStatus('idle'), 2000);
          alert('Scan failed check console');
       }
    };
@@ -428,11 +434,21 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
                isIconOnly
                size="sm"
                variant="light"
-               className="min-w-6 w-6 h-[28px] text-default-400 hover:text-primary"
+               className={`min-w-6 w-6 h-[28px] ${
+                  scanStatus === 'success' ? 'text-success' : 
+                  scanStatus === 'error' ? 'text-danger' : 
+                  scanStatus === 'scanning' ? 'text-primary' : 
+                  'text-default-400 hover:text-primary'
+               }`}
                onPress={handleScan}
                title="Scan Codebase"
+               isDisabled={scanStatus === 'scanning'}
             >
-               <Scan size={14} />
+               {scanStatus === 'success' ? <Check size={16} /> :
+                scanStatus === 'error' ? <X size={16} /> :
+                scanStatus === 'scanning' ? <RotateCw size={14} className="animate-spin" /> :
+                <Scan size={14} />
+               }
             </Button>
 
             <Button
