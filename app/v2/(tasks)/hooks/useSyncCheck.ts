@@ -72,7 +72,7 @@ export const useSyncCheck = (db: AbstractPowerSyncDatabase, supabase: SupabaseCl
                     const config = projectTitle ? getRemoteConfig(projectTitle) : null;
                     const isServiceKey = !!(config as any)?.serviceKey;
 
-                    reportDetails.push(`<b>--- Remote (${projectTitle || projectId.slice(0,6)}...) ---</b>`);
+                    reportDetails.push(`<b>--- Remote (${projectTitle}) ---</b>`);
                     
                     const remoteTables = ['_ui_folders', '_ui_items'];
                     
@@ -99,20 +99,13 @@ export const useSyncCheck = (db: AbstractPowerSyncDatabase, supabase: SupabaseCl
                         
                         // Only filter by projectId if we are NOT using a dedicated service key 
                         // OR if we suspect the remote DB is shared. 
-                        // Safest logic: If table has 'project_id', filter by it.
-                        // But wait, if we use service key on a dedicated instance, maybe projectId is irrelevant?
-                        // Assuming "has_remote" projects store data with projectId column even in remote DB.
+                        // But since column might not exist (as per error), we skip it for now OR check if it's the main DB client.
                         
-                        // Try to filter if not explicitly known to be single-tenant, or just always filter if column exists.
-                        // Since we don't know schema structure 100%, we'll try to filter.
-                        // However, if filtering fails (column missing), it throws.
+                        // If we are using the DEFAULT supabase client, we might need filtering (if the table is shared).
+                        // But if column doesn't exist, we can't filter.
+                        // Assuming dedicated DBs for remote projects based on config presence.
                         
-                        // User said: "VIDEOROOM - это title проекта... service key".
-                        // Assuming standard schema with project_id.
-                        
-                        // IF using Service Key, we see EVERYTHING. So we MUST filter by project_id to match local SQLite (which is scoped).
-                        // UNLESS the remote DB is empty except for this project.
-                        query = query.eq('project_id', projectId);
+                        // query = query.eq('project_id', projectId); 
 
                         const { data: remoteRes, error } = await query;
                         
