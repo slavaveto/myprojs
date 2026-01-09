@@ -76,7 +76,7 @@ interface RemoteSyncProviderProps {
 }
 
 // Global cache to prevent multiple connections to the same DB file
-const dbCache = new Map<string, PowerSyncDatabase>();
+export const dbCache = new Map<string, PowerSyncDatabase>();
 
 export const RemoteSyncProvider = ({ projectId, projectTitle, children }: RemoteSyncProviderProps) => {
     const mainPowerSync = usePowerSync(); 
