@@ -20,9 +20,7 @@ class ClerkConnector implements PowerSyncBackendConnector {
 
     async fetchCredentials() {
         try {
-            // console.log('[ClerkConnector] Requesting credentials...');
             const token = await this.getToken();
-            // console.log('[ClerkConnector] Token result:', token ? 'YES' : 'NO');
             
             if (!token) return null;
             
@@ -141,9 +139,7 @@ export const SyncProvider = ({ children }: { children: React.ReactNode }) => {
     useEffect(() => {
         if (typeof window !== 'undefined') {
             try {
-                // console.log('[PowerSync] Init started...');
                 const _db = getPowerSync();
-                // console.log('[PowerSync] DB created:', _db);
                 setDb(_db);
 
                 // DEBUG: Check row counts
@@ -214,17 +210,13 @@ export const SyncProvider = ({ children }: { children: React.ReactNode }) => {
                         console.error('[PowerSync] Connection Error Detail:', anyError);
                     }
                 } else if (connected) {
-                    // console.log('[PowerSync] Connected');
                 }
             }
         });
 
         // Periodic check
         const interval = setInterval(() => {
-            // console.log('[PowerSync] Heartbeat Status:', {
-            //     connected: db.connected,
-            //     hasError: !!db.currentStatus?.anyError
-            // });
+
         }, 5000);
 
         return () => {

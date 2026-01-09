@@ -79,7 +79,6 @@ export const useSyncCheck = (db: AbstractPowerSyncDatabase, supabase: SupabaseCl
                     // Create dedicated client if config available
                     let remoteClient = supabase;
                     if ((config as any)?.supabaseUrl && (config as any)?.serviceKey) {
-                         // console.log('[SyncCheck] Using dedicated Service Client for', projectTitle);
                          remoteClient = createClient((config as any).supabaseUrl, (config as any).serviceKey);
                     }
 

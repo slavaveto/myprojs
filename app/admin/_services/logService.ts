@@ -29,7 +29,7 @@ export interface LogParams {
 export const logService = {
   async logAction(supabase: SupabaseClient, params: LogParams) {
     if (!params.userId) {
-      logger.warning('Attempted to log audit without user', params);
+      logger.warn('Attempted to log audit without user', params);
       return;
     }
 

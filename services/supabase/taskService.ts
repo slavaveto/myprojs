@@ -479,7 +479,7 @@ export const createTaskService = (supabase: SupabaseClient) => {
       
       if (fetchError) throw fetchError;
       if (!beforeState) {
-          logger.warning('Task not found for deletion', { id });
+          logger.warn('Task not found for deletion', { id });
           return;
       }
 

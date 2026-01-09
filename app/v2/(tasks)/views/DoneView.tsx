@@ -25,7 +25,6 @@ const DoneViewComponent = ({ isActive }: DoneViewProps) => {
     // Handler to restore task (uncomplete)
     const handleRestore = async (taskId: string) => {
         if (!powerSync) return;
-        console.log('Restoring task...', taskId);
         await powerSync.execute(
             `UPDATE tasks SET is_completed = 0, updated_at = datetime('now') WHERE id = ?`,
             [taskId]

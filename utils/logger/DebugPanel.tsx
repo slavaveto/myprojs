@@ -578,7 +578,7 @@ const ConsoleLogItem = React.memo(function ConsoleLogItem({ log, showData }: { l
       end: CheckCircle,
       success: CheckCircle,
       error: AlertCircle,
-      warning: AlertTriangle,
+      warn: AlertTriangle,
    };
 
    const methodColors = {
@@ -587,7 +587,7 @@ const ConsoleLogItem = React.memo(function ConsoleLogItem({ log, showData }: { l
       end: 'text-green-600',
       success: 'text-green-600',
       error: 'text-red-500',
-      warning: 'text-yellow-500',
+      warn: 'text-yellow-500',
    };
 
    const Icon = methodIcons[log.level] || Info;

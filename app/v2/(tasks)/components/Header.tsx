@@ -42,7 +42,6 @@ export const Header = ({ activeProject, activeSystemTab }: HeaderProps) => {
     const config = activeProject ? getRemoteConfig(activeProject.title) : { type: 'local' };
     const isRemote = config.type === 'remote';
     
-    // console.log('[Header] ActiveProject:', activeProject?.title, 'IsRemote:', isRemote);
 
     // Determine title based on context
     let title = "DaySync";

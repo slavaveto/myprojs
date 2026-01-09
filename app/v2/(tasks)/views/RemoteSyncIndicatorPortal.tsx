@@ -29,7 +29,6 @@ export const RemoteSyncIndicatorPortal = () => {
         return () => setMounted(false);
     }, []);
 
-    // console.log('[RemotePortal] Rendering?', { mounted, target: !!target });
 
     if (!mounted || !target) return null;
 

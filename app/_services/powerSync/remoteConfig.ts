@@ -13,8 +13,7 @@ export const getRemoteConfig = (projectTitle: string): RemoteConfig => {
     // Normalize title: "PsyHelp" -> "PSYHELP"
     const normalizedTitle = projectTitle.trim().toUpperCase().replace(/\s+/g, '');
     
-    // DEBUG LOG
-    // console.log(`[RemoteConfig] Checking config for title="${projectTitle}" (norm="${normalizedTitle}")`);
+ 
 
     // Explicitly mapping env vars to ensure Webpack replacement works on client-side
     switch (normalizedTitle) {
@@ -53,7 +52,6 @@ export const getRemoteConfig = (projectTitle: string): RemoteConfig => {
         // Add new remote projects here as manual cases
         
         default:
-            // console.log(`[RemoteConfig] No switch case match for ${normalizedTitle}`);
             break;
     }
     

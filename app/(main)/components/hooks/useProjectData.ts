@@ -117,7 +117,7 @@ export const useProjectData = ({ project, isActive, onReady, canLoad = true, onU
                
                // DEBUG: Why empty?
                if (allTasks.length > 0 && projectTasks.length === 0) {
-                   logger.warning('RxDB DEBUG: Filter mismatch?');
+                   logger.warn('RxDB DEBUG: Filter mismatch?');
                    logger.info('Total DB Tasks:', allTasks.length);
                    logger.info('Project Folder IDs:', Array.from(folderIds));
                    

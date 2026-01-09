@@ -37,7 +37,7 @@ export function useUIElements() {
             if (typeof window !== 'undefined') {
                globalStorage.removeItem(cacheKey);
             }
-            logger.warning('FORCE_LOAD_FROM_DB включён - игнорируем кэш');
+            logger.warn('FORCE_LOAD_FROM_DB включён - игнорируем кэш');
             shouldLoadFromDB = true;
          } else if (cached) {
             const cachedData: CachedData<UIElement> = JSON.parse(cached);
@@ -65,7 +65,7 @@ export function useUIElements() {
                   shouldLoadFromDB = false;
                } else if (outdatedItems.length < dbTimestamps.length) {
                   // Загружаем только устаревшие
-                  logger.warning('UI частично из кэша, обновляем устаревшие', {
+                  logger.warn('UI частично из кэша, обновляем устаревшие', {
                      outdated: outdatedItems.length,
                      total: dbTimestamps.length,
                   });

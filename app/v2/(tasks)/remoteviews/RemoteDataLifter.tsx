@@ -14,7 +14,6 @@ export const RemoteDataLifter = ({ projectId, onFoldersLoaded, onActionsReady }:
 
     // 1. Lift Data
     useEffect(() => {
-        // console.log('[RemoteDataLifter] Lifting folders:', folders.length);
         onFoldersLoaded(folders, folderCounts);
     }, [folders, folderCounts, onFoldersLoaded]);
 

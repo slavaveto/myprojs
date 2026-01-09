@@ -222,7 +222,7 @@ export const startReplication = async (db: MyDatabase, supabase: SupabaseClient,
                         .select();
                     
                     if (upserted && upserted.length === 0) {
-                        logger.warning(`Push ${tableName}: Upsert returned 0 rows! Check RLS or data mismatch.`);
+                        logger.warn(`Push ${tableName}: Upsert returned 0 rows! Check RLS or data mismatch.`);
                     }
 
                     if (error) {

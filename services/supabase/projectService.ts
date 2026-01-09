@@ -138,7 +138,7 @@ export const createProjectService = (supabase: SupabaseClient) => {
                 if (restoreError) throw restoreError;
                 return restored as Project;
             } else {
-                logger.warning('Active satellite already exists, returning it', { id: existing.id });
+                logger.warn('Active satellite already exists, returning it', { id: existing.id });
                 return existing as Project;
             }
         }

@@ -57,7 +57,7 @@ export const useNotificationSound = () => {
             if (audioRef.current) {
                audioRef.current.currentTime = 0;
                audioRef.current.play().catch((e) => {
-                  logger.warning('⚠️ Не удалось воспроизвести звук (возможно, нет файла)', {
+                  logger.warn('⚠️ Не удалось воспроизвести звук (возможно, нет файла)', {
                      name,
                      error: e,
                   });
@@ -69,7 +69,7 @@ export const useNotificationSound = () => {
                audio.volume = 0.5;
                audio
                   .play()
-                  .catch((e) => logger.warning('⚠️ Fallback play error', { name, error: e }));
+                  .catch((e) => logger.warn('⚠️ Fallback play error', { name, error: e }));
             }
          } catch (error) {
             logger.error('❌ Ошибка воспроизведения', { name, error });

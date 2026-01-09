@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 
 // --- Types ---
 
-export type LogLevel = 'info' | 'start' | 'end' | 'success' | 'error' | 'warning';
+export type LogLevel = 'info' | 'start' | 'end' | 'success' | 'error' | 'warn';
 
 export interface LogItem {
    level: LogLevel;
@@ -109,7 +109,7 @@ class Logger {
 
    info(message: string, data?: any) { this.emit('info', message, data); }
    success(message: string, data?: any) { this.emit('success', message, data); }
-   warning(message: string, data?: any) { this.emit('warning', message, data); }
+   warn(message: string, data?: any) { this.emit('warn', message, data); }
    error(message: string | Error, data?: any) { 
        const msg = message instanceof Error ? message.message : message;
        this.emit('error', msg, data); 

@@ -24,7 +24,6 @@ class StaticRemoteConnector implements PowerSyncBackendConnector {
     }
 
     async uploadData(database: AbstractPowerSyncDatabase) {
-        // console.log('[RemoteConnector] Upload requested');
         const transaction = await database.getNextCrudTransaction();
         if (!transaction) return;
         
@@ -72,7 +71,6 @@ class StaticRemoteConnector implements PowerSyncBackendConnector {
                 }
             }
             await transaction.complete();
-            // console.log('[RemoteConnector] Upload transaction completed');
         } catch (e: any) {
             console.error('[RemoteConnector] Upload failed RAW:', e);
             if (e && typeof e === 'object') {
@@ -150,7 +148,6 @@ export const RemoteSyncProvider = ({ projectId, projectTitle, children }: Remote
             db.registerListener({
                 statusChanged: (status) => {
                     const s = status as any;
-                    // console.log('[RemoteBridge] Update:', { up: s.uploading, down: s.downloading, flow: s.dataFlow });
                     syncBridge.updateStatus({
                         connected: status.connected,
                         connecting: status.connecting,
@@ -174,7 +171,6 @@ export const RemoteSyncProvider = ({ projectId, projectTitle, children }: Remote
                 const configAny = config as any; // Bypass TS check for serviceKey
                 
                 if (config.supabaseUrl && configAny.serviceKey) {
-                    // console.log('[RemotePowerSync] Creating dedicated Supabase client with Service Key');
                     remoteSupabase = createClient(config.supabaseUrl, configAny.serviceKey, {
                         auth: {
                             persistSession: false, // Do not persist service key session
@@ -197,7 +193,6 @@ export const RemoteSyncProvider = ({ projectId, projectTitle, children }: Remote
                             const res = await db.getAll<{ c: number }>(`SELECT count(*) as c FROM ${t} WHERE is_deleted = 0 OR is_deleted IS NULL`);
                             console.log(`${t} (active):`, res[0]?.c);
                         } catch (e) {
-                            // console.log(`${t}: table missing?`);
                         }
                     }
                     console.groupEnd();
