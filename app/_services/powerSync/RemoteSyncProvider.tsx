@@ -129,6 +129,24 @@ export const RemoteSyncProvider = ({ projectId, projectTitle, children }: Remote
                 
                 await db.connect(connector);
                 console.log(`[RemotePowerSync] Connected to ${projectTitle}`);
+
+                // --- DEBUG DB COUNTS ---
+                try {
+                    const tables = ['_ui_folders', '_ui_items'];
+                    console.group(`--- Remote DB Counts (${projectTitle}) ---`);
+                    for (const t of tables) {
+                        try {
+                            const res = await db.getAll<{ c: number }>(`SELECT count(*) as c FROM ${t} WHERE is_deleted = 0 OR is_deleted IS NULL`);
+                            console.log(`${t} (active):`, res[0]?.c);
+                        } catch (e) {
+                            // console.log(`${t}: table missing?`);
+                        }
+                    }
+                    console.groupEnd();
+                } catch (e) {
+                    console.error('Error logging counts', e);
+                }
+                // -----------------------
                 
                 // SAVE TO CACHE
                 dbCache.set(projectId, db);

@@ -141,9 +141,9 @@ export const SyncProvider = ({ children }: { children: React.ReactNode }) => {
     useEffect(() => {
         if (typeof window !== 'undefined') {
             try {
-                console.log('[PowerSync] Init started...');
+                // console.log('[PowerSync] Init started...');
                 const _db = getPowerSync();
-                console.log('[PowerSync] DB created:', _db);
+                // console.log('[PowerSync] DB created:', _db);
                 setDb(_db);
 
                 // DEBUG: Check row counts
