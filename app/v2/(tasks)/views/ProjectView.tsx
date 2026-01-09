@@ -10,9 +10,12 @@ import { InfoView } from './InfoView';
 import { RemoteUiView } from '../remoteviews/UiView';
 import { clsx } from 'clsx';
 import { useProjectView } from '../hooks/useProjectView';
-import { useRemoteUiData } from '../hooks/useRemoteUiData';
 import { useInfoData } from '../hooks/useInfoData';
 import { usePanelResize } from '../hooks/usePanelResize';
+import { getRemoteConfig } from '@/utils/remoteConfig';
+import { RemoteSyncProvider } from '@/app/_services/powerSync/RemoteSyncProvider';
+import { RemoteDataLifter } from '../remoteviews/RemoteDataLifter';
+import { Folder } from '@/app/types';
 
 interface ProjectViewProps {
     project: Project;
@@ -29,13 +32,42 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
     // DEBUG: Check hasRemote
     if (isActive) {
         console.log('[ProjectView] Project:', project.title);
-        console.log('hasRemote (hook):', hasRemote);
-        console.log('project.has_remote:', project.has_remote);
-        console.log('Full Project:', JSON.stringify(project));
     }
 
-    // Remote UI Data (Always fetched if project active, but lightweight)
-    const remoteUi = useRemoteUiData(project.id);
+    // Remote Logic (Lifted)
+    const [uiFolders, setUiFolders] = useState<Folder[]>([]);
+    const [uiFolderCounts, setUiFolderCounts] = useState<Record<string, number>>({});
+    const [activeUiFolderId, setActiveUiFolderId] = useState<string | null>(null);
+    const remoteActionsRef = React.useRef<any>(null);
+
+    const onFoldersLoaded = React.useCallback((folders: Folder[], counts: Record<string, number>) => {
+        setUiFolders(folders);
+        setUiFolderCounts(counts);
+    }, []);
+
+    const onActionsReady = React.useCallback((actions: any) => {
+        remoteActionsRef.current = actions;
+    }, []);
+
+    // Handlers for Remote UI
+    const handleSelectUiFolder = (id: string) => {
+        setActiveUiFolderId(id);
+        remoteActionsRef.current?.handleSelectFolder(id); // If hook exposes this
+    };
+
+    const handleCreateUiFolder = (title: string) => {
+        console.log('[ProjectView] handleCreateUiFolder', title, !!remoteActionsRef.current);
+        remoteActionsRef.current?.createFolder(title);
+    };
+
+    const handleUpdateUiFolder = (id: string, title: string) => {
+        remoteActionsRef.current?.updateFolder(id, title);
+    };
+
+    const handleDeleteUiFolder = (id: string) => {
+        remoteActionsRef.current?.deleteFolder(id);
+    };
+
     const infoData = useInfoData(project.id);
     
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -45,6 +77,7 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
     const safePanelWidth = isNaN(panelWidth) ? 400 : panelWidth;
 
     const SYSTEM_PROJECT_TITLES = ['Inbox', 'Today', 'Doing Now', 'Logs', 'Done', 'Logbook'];
+    const isRemoteProject = getRemoteConfig(project.title).type === 'remote';
 
     return (
         <div className={clsx("flex flex-col h-full w-full", !isActive && "hidden")}>
@@ -66,14 +99,14 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
                     activeRemoteTab={activeRemoteTab}
                     onToggleRemote={handleToggleRemote}
                     
-                    // UI Props
-                    uiFolders={remoteUi.folders}
-                    uiFolderCounts={remoteUi.folderCounts}
-                    activeUiFolderId={remoteUi.activeFolderId}
-                    onSelectUiFolder={remoteUi.handleSelectFolder}
-                    onCreateUiFolder={(title) => remoteUi.createFolder(title)}
-                    onUpdateUiFolder={(id, title) => remoteUi.updateFolder(id, title)}
-                    onDeleteUiFolder={(id) => remoteUi.deleteFolder(id)}
+                    // UI Props (LIFTED)
+                    uiFolders={uiFolders}
+                    uiFolderCounts={uiFolderCounts}
+                    activeUiFolderId={activeUiFolderId}
+                    onSelectUiFolder={handleSelectUiFolder}
+                    onCreateUiFolder={handleCreateUiFolder}
+                    onUpdateUiFolder={handleUpdateUiFolder}
+                    onDeleteUiFolder={handleDeleteUiFolder}
 
                     // Info Props
                     infoFolders={infoData.folders}
@@ -92,37 +125,58 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
                 className="flex-1 flex min-h-0 overflow-hidden relative"
             >
                 
-                {activeRemoteTab === 'ui' ? (
-                    <RemoteUiView 
-                        projectId={project.id}
-                        projectTitle={project.title}
-                    />
-                ) : activeRemoteTab === 'info' ? (
-                    <InfoView 
-                        projectId={project.id}
-                    />
+                {/* Remote UI View + Lifter (Always mounted if remote project) */}
+                {hasRemote && isRemoteProject && (
+                    <div className={clsx("absolute inset-0 w-full h-full bg-background z-20", activeRemoteTab !== 'ui' && "hidden")}>
+                         <RemoteSyncProvider projectId={project.id} projectTitle={project.title}>
+                             <RemoteDataLifter 
+                                 projectId={project.id} 
+                                 onFoldersLoaded={onFoldersLoaded}
+                                 onActionsReady={onActionsReady}
+                             />
+                             <RemoteUiView 
+                                projectId={project.id}
+                                projectTitle={project.title}
+                             />
+                         </RemoteSyncProvider>
+                    </div>
+                )}
+
+                {activeRemoteTab === 'info' ? (
+                    <div className="absolute inset-0 w-full h-full bg-background z-20">
+                        <InfoView projectId={project.id} />
+                    </div>
                 ) : activeRemoteTab === 'users' ? (
-                    <UsersView projectId={project.id} satelliteId={project.id} />
+                    <div className="absolute inset-0 w-full h-full bg-background z-20">
+                        <UsersView projectId={project.id} satelliteId={project.id} />
+                    </div>
                 ) : activeRemoteTab === 'logs' ? (
-                    <LogsView projectId={project.id} satelliteId={project.id} />
+                    <div className="absolute inset-0 w-full h-full bg-background z-20">
+                        <LogsView projectId={project.id} satelliteId={project.id} />
+                    </div>
                 ) : activeRemoteTab === 'tables' ? (
-                    <TablesView projectId={project.id} satelliteId={project.id} />
-                ) : (
+                    <div className="absolute inset-0 w-full h-full bg-background z-20">
+                        <TablesView projectId={project.id} satelliteId={project.id} />
+                    </div>
+                ) : null}
+
+                {/* Local Task List - Only show if NO remote tab is active */}
+                {!activeRemoteTab && (
                     <>
-                {/* Left: Task List */}
-                <div className="flex-1 overflow-y-scroll p-6 bg-background">
-                    {activeFolderId ? (
-                        <TaskList 
-                                    tasks={tasks}
-                            onSelectTask={setSelectedTaskId}
-                            selectedTaskId={selectedTaskId}
-                        />
-                    ) : (
-                        <div className="border-2 border-dashed border-default-200 rounded-xl h-full flex items-center justify-center text-default-400">
-                            
+                        {/* Left: Task List */}
+                        <div className="flex-1 overflow-y-scroll p-6 bg-background">
+                            {activeFolderId ? (
+                                <TaskList 
+                                            tasks={tasks}
+                                    onSelectTask={setSelectedTaskId}
+                                    selectedTaskId={selectedTaskId}
+                                />
+                            ) : (
+                                <div className="border-2 border-dashed border-default-200 rounded-xl h-full flex items-center justify-center text-default-400">
+                                    
+                                </div>
+                            )}
                         </div>
-                    )}
-                </div>
 
                         {/* Resize Handle */}
                         <div
@@ -136,14 +190,12 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
                             <div className="absolute inset-y-0 -left-1 -right-1 z-10 bg-transparent" />
                         </div>
 
-                {/* Right: Details Panel */}
+                        {/* Right: Details Panel */}
                         <div 
                             style={{ width: safePanelWidth }}
                             className="flex-shrink-0 bg-content2/50 overflow-y-auto z-10"
                         >
-                <DetailsPanel 
-                    taskId={selectedTaskId} 
-                />
+                            <DetailsPanel taskId={selectedTaskId} />
                         </div>
                     </>
                 )}

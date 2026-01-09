@@ -71,12 +71,10 @@ const RemoteUiContent = ({ projectId, ignoreProjectId }: { projectId: string; ig
 
 export const RemoteUiView = ({ projectId, projectTitle }: RemoteUiViewProps) => {
     const config = getRemoteConfig(projectTitle);
-    // If it's a REMOTE DB (isolated), we should ignore project_id mismatch
     const isIsolatedRemote = config.type === 'remote';
 
+    // Provider is now LIFTED to ProjectView to share context with DataLifter
     return (
-        <RemoteSyncProvider projectId={projectId} projectTitle={projectTitle}>
-            <RemoteUiContent projectId={projectId} ignoreProjectId={isIsolatedRemote} />
-        </RemoteSyncProvider>
+        <RemoteUiContent projectId={projectId} ignoreProjectId={isIsolatedRemote} />
     );
 };

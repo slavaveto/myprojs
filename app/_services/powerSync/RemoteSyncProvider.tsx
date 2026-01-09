@@ -47,6 +47,9 @@ interface RemoteSyncProviderProps {
     children: React.ReactNode;
 }
 
+// Global cache to prevent multiple connections to the same DB file
+const dbCache = new Map<string, PowerSyncDatabase>();
+
 export const RemoteSyncProvider = ({ projectId, projectTitle, children }: RemoteSyncProviderProps) => {
     const mainPowerSync = usePowerSync(); // Access main DB context (unused here but available)
     const [remoteDb, setRemoteDb] = useState<PowerSyncDatabase | null>(null);
@@ -63,18 +66,24 @@ export const RemoteSyncProvider = ({ projectId, projectTitle, children }: Remote
             return;
         }
 
+        // 1. CHECK CACHE
+        if (dbCache.has(projectId)) {
+            console.log(`[RemoteSyncProvider] Using cached DB for ${projectTitle}`);
+            setRemoteDb(dbCache.get(projectId)!);
+            setIsLoading(false);
+            return;
+        }
+
         // Remote Logic
         const initRemote = async () => {
             if (!config.url || !config.token) {
                 console.error("Missing remote config for project:", projectTitle);
-                // Fallback to local to avoid crash, but log error
                 setRemoteDb(null);
                 setIsLoading(false);
                 return;
             }
 
             // Create new DB instance for this project
-            // Note: We need unique DB filename
             const workerUrl = new URL('/worker/powersync-worker.js', window.location.origin).href;
             const factory = new WASQLitePowerSyncDatabaseOpenFactory({
                 schema: RemoteAppSchema, // Use the REMOTE schema for remote projects
@@ -85,35 +94,15 @@ export const RemoteSyncProvider = ({ projectId, projectTitle, children }: Remote
 
             // Connect using static connector
             try {
-                console.log(`[RemotePowerSync] Connecting to ${projectTitle}... Config:`, { 
-                    url: config.url, 
-                    hasToken: !!config.token,
-                    dbFilename: `remote_${projectId}.sqlite`
-                });
-                
+                console.log(`[RemotePowerSync] Connecting to ${projectTitle}...`);
                 const connector = new StaticRemoteConnector(config.url, config.token);
                 
-                // Ensure clean state
-                if (db.connected) {
-                    console.log('[RemotePowerSync] Force disconnecting before reconnect...');
-                    await db.disconnect();
-                }
-
-                // Debug listener
-                db.registerListener({
-                    statusChanged: (status) => {
-                        console.log(`[RemotePowerSync] DIRECT STATUS for ${projectTitle}:`, 
-                            JSON.stringify({
-                                connected: status.connected,
-                                lastSyncedAt: status.lastSyncedAt,
-                                error: (status as any).lastConnectError
-                            }, null, 2)
-                        );
-                    }
-                });
-
                 await db.connect(connector);
-                console.log(`[RemotePowerSync] Connection initiated for ${projectTitle}`);
+                console.log(`[RemotePowerSync] Connected to ${projectTitle}`);
+                
+                // SAVE TO CACHE
+                dbCache.set(projectId, db);
+
             } catch (e) {
                 console.error(`[RemotePowerSync] Connection failed for ${projectTitle}`, e);
             }
@@ -125,10 +114,7 @@ export const RemoteSyncProvider = ({ projectId, projectTitle, children }: Remote
         initRemote();
 
         return () => {
-             // Cleanup if needed
-             // Note: We can't easily access 'db' here because it's local to initRemote closure or state
-             // But React state 'remoteDb' might not be updated yet in cleanup of the very first run.
-             // For a proper cleanup, we need a ref or effect cleanup logic that accesses the created instance.
+             // DO NOT DISCONNECT. Keep connection alive.
         };
 
     }, [projectId, projectTitle, config.type, config.url, config.token]);
