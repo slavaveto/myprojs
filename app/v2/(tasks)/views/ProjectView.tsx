@@ -3,15 +3,15 @@ import { Project } from '@/app/types';
 import { FolderTabs } from '../components/FolderTabs';
 import { TaskList } from '../components/TaskList';
 import { DetailsPanel } from '../components/DetailsPanel';
-import { InfoUiView } from '../remoteviews/InfoUiView';
 import { UsersView } from '../remoteviews/UsersView';
 import { LogsView } from '../remoteviews/LogsView';
 import { TablesView } from '../remoteviews/TablesView';
-// import { RemoteInfoView } from '../remoteviews/RemoteInfoView';
+import { InfoView } from './InfoView';
+import { RemoteUiView } from '../remoteviews/UiView';
 import { clsx } from 'clsx';
 import { useProjectView } from '../hooks/useProjectView';
 import { useRemoteUiData } from '../hooks/useRemoteUiData';
-import { useRemoteInfoData } from '../hooks/useRemoteInfoData';
+import { useInfoData } from '../hooks/useInfoData';
 import { usePanelResize } from '../hooks/usePanelResize';
 
 interface ProjectViewProps {
@@ -36,7 +36,7 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
 
     // Remote UI Data (Always fetched if project active, but lightweight)
     const remoteUi = useRemoteUiData(project.id);
-    const infoData = useRemoteInfoData(project.id);
+    const infoData = useInfoData(project.id);
     
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
     const { width: panelWidth, containerRef, startResizing } = usePanelResize(400);
@@ -93,18 +93,13 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
             >
                 
                 {activeRemoteTab === 'ui' ? (
-                    <InfoUiView 
-                        title="Remote UI"
-                        tasks={remoteUi.tasks}
-                        activeFolderId={remoteUi.activeFolderId}
-                        updateTask={remoteUi.updateTask}
+                    <RemoteUiView 
+                        projectId={project.id}
+                        projectTitle={project.title}
                     />
                 ) : activeRemoteTab === 'info' ? (
-                    <InfoUiView 
-                        title="Info"
-                        tasks={infoData.tasks}
-                        activeFolderId={infoData.activeFolderId}
-                        updateTask={(id, updates) => infoData.updateTask(id, updates)}
+                    <InfoView 
+                        projectId={project.id}
                     />
                 ) : activeRemoteTab === 'users' ? (
                     <UsersView projectId={project.id} satelliteId={project.id} />

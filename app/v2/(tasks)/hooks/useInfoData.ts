@@ -6,7 +6,8 @@ import { useAuth } from '@clerk/nextjs';
 
 const INFO_STORAGE_KEY_PREFIX = 'v2_info_folder_';
 
-export const useRemoteInfoData = (parentProjectId: string) => {
+// Renamed from useRemoteInfoData to reflect it uses LOCAL DB
+export const useInfoData = (parentProjectId: string) => {
     // 1. Find the Info Project
     const { data: projectsData } = useQuery(
         `SELECT * FROM projects WHERE parent_proj_id = ? AND title = 'Info' LIMIT 1`,
