@@ -6,12 +6,45 @@ import { clsx } from 'clsx';
 import { usePowerSync } from '@/app/_services/powerSync/SyncProvider';
 import { useSupabase } from '@/utils/supabase/useSupabase';
 import { useSyncCheck } from '@/app/v2/(tasks)/hooks/useSyncCheck';
+import { syncBridge, SimpleSyncStatus } from '@/app/_services/powerSync/syncStatusBridge';
 
-export const SyncIndicator = () => {
-    const status = useStatus() as any;
+export interface SyncIndicatorProps {
+    isRemote?: boolean;
+}
+
+export const SyncIndicator = ({ isRemote }: SyncIndicatorProps) => {
+    // 1. Get default status (Main DB)
+    const mainStatus = useStatus() as any;
+    
+    // 2. Get bridge status (Remote DB)
+    const [bridgeStatus, setBridgeStatus] = useState<SimpleSyncStatus | null>(syncBridge.getStatus());
+
+    useEffect(() => {
+        if (!isRemote) return;
+        
+        const handler = (s: SimpleSyncStatus | null) => setBridgeStatus(s);
+        syncBridge.on('change', handler);
+        // Sync initial value in case we missed event
+        setBridgeStatus(syncBridge.getStatus());
+        
+        return () => {
+            syncBridge.off('change', handler);
+        };
+    }, [isRemote]);
+
+    // 3. Select active status
+    // If isRemote is true, we use bridgeStatus (if available). 
+    // If bridgeStatus is null (not yet connected), we might fallback or show "Connecting..."
+    // NOTE: If isRemote is false, we strictly use mainStatus.
+    const status = isRemote ? (bridgeStatus || { connected: false, connecting: true }) : mainStatus;
+
     const db = usePowerSync();
     const { supabase } = useSupabase();
 
+    // SyncCheck is strictly for MAIN DB for now (or passed DB).
+    // If we are in remote mode, we should ideally disable integrity check button or pass remote DB.
+    // But since `db` here comes from global context, it will check Main DB integrity.
+    // Let's hide integrity check if isRemote for now.
     const { checkIntegrity, isChecking, integrityReport, clearReport } = useSyncCheck(db, supabase);
 
 
@@ -210,19 +243,21 @@ export const SyncIndicator = () => {
                         )}
 
                         <div className="pt-2 border-t border-default-200">
-                             <Button 
-                                size="sm" 
-                                variant="flat" 
-                                color="primary" 
-                                className="w-full text-xs" 
-                                isLoading={isChecking}
-                                startContent={!isChecking && <Database size={12}/>}
-                                onPress={checkIntegrity}
-                             >
-                                Проверить базу
-                             </Button>
+                             {!isRemote && (
+                                <Button 
+                                    size="sm" 
+                                    variant="flat" 
+                                    color="primary" 
+                                    className="w-full text-xs" 
+                                    isLoading={isChecking}
+                                    startContent={!isChecking && <Database size={12}/>}
+                                    onPress={checkIntegrity}
+                                >
+                                    Проверить базу
+                                </Button>
+                             )}
 
-                             {integrityReport && (
+                             {integrityReport && !isRemote && (
                                  <div className="mt-2 text-[10px] p-2 bg-default-50 rounded border border-default-200">
                                      {integrityReport.missingInLocal === 0 && integrityReport.missingInRemote === 0 ? (
                                          <div className="text-green-600 font-bold">Все записи на месте! ✅</div>

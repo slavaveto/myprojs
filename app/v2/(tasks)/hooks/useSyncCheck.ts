@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { AbstractPowerSyncDatabase } from '@powersync/web';
 import { SupabaseClient, createClient } from '@supabase/supabase-js';
 import { dbCache } from '@/app/_services/powerSync/RemoteSyncProvider';
-import { getRemoteConfig } from '@/utils/remoteConfig';
+import { getRemoteConfig } from '@/app/_services/powerSync/remoteConfig';
 
 export interface IntegrityReport {
     missingInLocal: number;

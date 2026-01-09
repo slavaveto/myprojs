@@ -4,7 +4,7 @@ import { RemoteSyncProvider } from '@/app/_services/powerSync/RemoteSyncProvider
 import { TaskList } from '../components/TaskList';
 import { DetailsPanel } from '../components/DetailsPanel';
 import { usePanelResize } from '../hooks/usePanelResize';
-import { getRemoteConfig } from '@/utils/remoteConfig';
+import { getRemoteConfig } from '@/app/_services/powerSync/remoteConfig';
 
 interface RemoteUiViewProps {
     projectId: string;

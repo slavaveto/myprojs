@@ -3,9 +3,10 @@ import { PowerSyncContext, usePowerSync } from "@powersync/react";
 import { PowerSyncDatabase, WASQLitePowerSyncDatabaseOpenFactory, PowerSyncBackendConnector, AbstractPowerSyncDatabase } from "@powersync/web";
 import { AppSchema } from '@/app/_services/powerSync/AppSchema';
 import { RemoteAppSchema } from '@/app/_services/powerSync/RemoteAppSchema';
-import { getRemoteConfig } from '@/utils/remoteConfig';
+import { getRemoteConfig } from '@/app/_services/powerSync/remoteConfig';
 import { useSupabase } from '@/utils/supabase/useSupabase';
 import { SupabaseClient, createClient } from '@supabase/supabase-js';
+import { syncBridge } from './syncStatusBridge';
 
 // Connector with Write-Back to Supabase
 class StaticRemoteConnector implements PowerSyncBackendConnector {
@@ -27,6 +28,15 @@ class StaticRemoteConnector implements PowerSyncBackendConnector {
         const transaction = await database.getNextCrudTransaction();
         if (!transaction) return;
         
+        // MANUALLY NOTIFY BRIDGE ABOUT UPLOAD START
+        syncBridge.updateStatus({
+            connected: true, // Assuming connected if uploading
+            connecting: false,
+            downloading: false,
+            uploading: true,
+            dataFlow: { uploading: true, downloading: false }
+        });
+
         try {
             if (!this.supabase) throw new Error('Supabase client missing');
 
@@ -71,6 +81,15 @@ class StaticRemoteConnector implements PowerSyncBackendConnector {
                 if (e.details) console.error('[RemoteConnector] Error Details:', e.details);
                 if (e.hint) console.error('[RemoteConnector] Error Hint:', e.hint);
             }
+        } finally {
+            // MANUALLY NOTIFY BRIDGE ABOUT UPLOAD END
+            syncBridge.updateStatus({
+                connected: true,
+                connecting: false,
+                downloading: false,
+                uploading: false,
+                dataFlow: { uploading: false, downloading: false }
+            });
         }
     }
 }
@@ -126,6 +145,23 @@ export const RemoteSyncProvider = ({ projectId, projectTitle, children }: Remote
             });
 
             const db = factory.getInstance() as unknown as PowerSyncDatabase;
+
+            // BRIDGE STATUS UPDATES
+            db.registerListener({
+                statusChanged: (status) => {
+                    const s = status as any;
+                    // console.log('[RemoteBridge] Update:', { up: s.uploading, down: s.downloading, flow: s.dataFlow });
+                    syncBridge.updateStatus({
+                        connected: status.connected,
+                        connecting: status.connecting,
+                        downloading: s.dataFlow?.downloading || !!s.downloading,
+                        uploading: s.dataFlow?.uploading || !!s.uploading,
+                        lastSyncedAt: status.lastSyncedAt,
+                        anyError: s.anyError,
+                        dataFlow: s.dataFlow
+                    });
+                }
+            });
 
             // Connect using static connector
             try {
@@ -185,6 +221,8 @@ export const RemoteSyncProvider = ({ projectId, projectTitle, children }: Remote
 
         return () => {
              // DO NOT DISCONNECT. Keep connection alive.
+             // Clear bridge on unmount (optional, but good for cleanup if switching tabs)
+             syncBridge.clear();
         };
 
     }, [projectId, projectTitle, config.type, config.url, config.token, supabase]);

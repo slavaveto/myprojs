@@ -13,7 +13,7 @@ import { useProjectView } from '../hooks/useProjectView';
 import { useRemoteUiData } from '../hooks/useRemoteUiData';
 import { useInfoData } from '../hooks/useInfoData';
 import { usePanelResize } from '../hooks/usePanelResize';
-import { getRemoteConfig } from '@/utils/remoteConfig';
+import { getRemoteConfig } from '@/app/_services/powerSync/remoteConfig';
 import { RemoteSyncProvider } from '@/app/_services/powerSync/RemoteSyncProvider';
 import { RemoteDataLifter } from '../remoteviews/RemoteDataLifter';
 import { Folder } from '@/app/types';

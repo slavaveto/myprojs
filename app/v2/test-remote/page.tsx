@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { RemoteSyncProvider } from '@/app/_services/powerSync/RemoteSyncProvider';
 import { usePowerSync, useQuery, useStatus } from '@powersync/react';
-import { getRemoteConfig } from '@/utils/remoteConfig';
+import { getRemoteConfig } from '@/app/_services/powerSync/remoteConfig';
 import { clsx } from 'clsx';
 import { Folder, HardDrive, Server, Wifi, WifiOff, Plus, Database, AlertCircle } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
