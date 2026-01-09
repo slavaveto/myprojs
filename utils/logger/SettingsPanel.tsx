@@ -368,7 +368,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ width, isDragging 
          {/* Header & Search */}
          <div className="px-2 py-0 border-b border-default-200 flex items-center gap-2 bg-content2 shrink-0 h-[36px]">
             <SlidersHorizontal size={14} className="text-default-500 shrink-0" />
-            <span className="font-medium text-sm shrink-0 mr-1">Settings</span>
             <Input
                placeholder="Search..."
                size="sm"

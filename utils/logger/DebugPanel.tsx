@@ -47,8 +47,8 @@ interface WindowState {
 }
 
 const DEFAULT_STATE: WindowState = {
-   x: 150,
-   y: 100,
+   x: 30,
+   y: 80,
    width: 350,
    height: 450,
    isMinimized: false,
@@ -96,9 +96,29 @@ export function DebugPanel({ isLocal = false }: { isLocal?: boolean }) {
       // Восстанавливаем позицию из session Storage
       try {
          const saved = storage.getItem('debug-next-state');
-         if (saved) {
-            // Force isMinimized to false
-            setWindowState({ ...DEFAULT_STATE, ...JSON.parse(saved), isMinimized: false });
+         let parsedState = saved ? JSON.parse(saved) : null;
+
+         // Если сохранения нет ИЛИ оно "пустое" (0,0) -> используем DEFAULT_STATE
+         if (!parsedState || (parsedState.y === 0 && parsedState.x === 0)) {
+            // Используем DEFAULT_STATE.y как отступ СНИЗУ
+            const bottomOffset = DEFAULT_STATE.y; 
+            const height = parsedState?.height || DEFAULT_STATE.height;
+            
+            const calculatedY = typeof window !== 'undefined' 
+               ? window.innerHeight - height - bottomOffset 
+               : 0;
+
+            setWindowState({ 
+               ...DEFAULT_STATE,
+               // X берется напрямую из DEFAULT_STATE (или сохраненного, если частичное)
+               ...(parsedState || {}),
+               // Y вычисляем от низа
+               y: calculatedY,
+               isMinimized: false
+            });
+         } else {
+            // Обычное восстановление, если есть корректные сохраненные данные
+            setWindowState({ ...DEFAULT_STATE, ...parsedState, isMinimized: false });
          }
       } catch (e) {
          // ignore

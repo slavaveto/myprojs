@@ -28,7 +28,7 @@ function scanDirectory(dir: string, fileList: string[] = []) {
 export async function GET() {
     try {
         const rootDir = process.cwd();
-        const scanDirs = ['app', 'utils']; // Основные папки для сканирования
+        const scanDirs = ['app', 'utils', 'services']; // Основные папки для сканирования
         const allFiles: string[] = [];
 
         scanDirs.forEach(d => {
