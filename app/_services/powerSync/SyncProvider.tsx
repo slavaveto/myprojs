@@ -20,9 +20,9 @@ class ClerkConnector implements PowerSyncBackendConnector {
 
     async fetchCredentials() {
         try {
-            console.log('[ClerkConnector] Requesting credentials...');
+            // console.log('[ClerkConnector] Requesting credentials...');
             const token = await this.getToken();
-            console.log('[ClerkConnector] Token result:', token ? 'YES' : 'NO');
+            // console.log('[ClerkConnector] Token result:', token ? 'YES' : 'NO');
             
             if (!token) return null;
             

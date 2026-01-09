@@ -9,12 +9,13 @@ import { getRemoteConfig } from '@/utils/remoteConfig';
 interface RemoteUiViewProps {
     projectId: string;
     projectTitle: string;
+    activeFolderId?: string | null;
 }
 
-const RemoteUiContent = ({ projectId, ignoreProjectId }: { projectId: string; ignoreProjectId: boolean }) => {
+const RemoteUiContent = ({ projectId, ignoreProjectId, activeFolderId }: { projectId: string; ignoreProjectId: boolean; activeFolderId?: string | null }) => {
     // Uses REMOTE DB (from RemoteSyncProvider)
-    // Pass ignoreProjectId flag
-    const remoteUi = useRemoteUiData(projectId, ignoreProjectId);
+    // Pass ignoreProjectId flag and controlled folder ID
+    const remoteUi = useRemoteUiData(projectId, ignoreProjectId, activeFolderId);
     
     // UI State
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -69,12 +70,16 @@ const RemoteUiContent = ({ projectId, ignoreProjectId }: { projectId: string; ig
     );
 };
 
-export const RemoteUiView = ({ projectId, projectTitle }: RemoteUiViewProps) => {
+export const RemoteUiView = ({ projectId, projectTitle, activeFolderId }: RemoteUiViewProps) => {
     const config = getRemoteConfig(projectTitle);
     const isIsolatedRemote = config.type === 'remote';
 
     // Provider is now LIFTED to ProjectView to share context with DataLifter
     return (
-        <RemoteUiContent projectId={projectId} ignoreProjectId={isIsolatedRemote} />
+        <RemoteUiContent 
+            projectId={projectId} 
+            ignoreProjectId={isIsolatedRemote} 
+            activeFolderId={activeFolderId}
+        />
     );
 };

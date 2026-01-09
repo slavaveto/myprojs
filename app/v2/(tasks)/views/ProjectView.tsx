@@ -160,8 +160,20 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
                              <RemoteUiView 
                                 projectId={project.id}
                                 projectTitle={project.title}
+                                activeFolderId={activeUiFolderId}
                              />
                          </RemoteSyncProvider>
+                    </div>
+                )}
+
+                {/* Remote UI View for LOCAL projects (DaySync) - Mounted only when active */}
+                {activeRemoteTab === 'ui' && !isRemoteProject && (
+                    <div className="absolute inset-0 w-full h-full bg-background z-20">
+                        <RemoteUiView 
+                            projectId={project.id}
+                            projectTitle={project.title}
+                            activeFolderId={activeUiFolderId}
+                        />
                     </div>
                 )}
 

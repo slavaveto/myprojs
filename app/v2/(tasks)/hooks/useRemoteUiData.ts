@@ -6,13 +6,16 @@ import { globalStorage } from '@/utils/storage';
 
 const REMOTE_STORAGE_KEY_PREFIX = 'v2_remote_ui_folder_';
 
-export const useRemoteUiData = (projectId: string, ignoreProjectId = false) => {
+export const useRemoteUiData = (projectId: string, ignoreProjectId = false, controlledFolderId?: string | null) => {
     // 1. Local State for active folder in remote view
-    const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
+    const [internalActiveId, setInternalActiveId] = useState<string | null>(null);
     const { userId } = useAuth();
     
     // Access CURRENT PowerSync instance
     const powerSync = usePowerSync();
+
+    // Use controlled ID if provided, otherwise internal
+    const activeFolderId = controlledFolderId !== undefined ? controlledFolderId : internalActiveId;
 
     // 2. Load folders from "_ui_folders"
     const { data: foldersData } = useQuery(
@@ -74,7 +77,7 @@ export const useRemoteUiData = (projectId: string, ignoreProjectId = false) => {
         const savedId = globalStorage.getItem(key);
         
         if (savedId && savedId !== 'null') {
-            setActiveFolderId(savedId);
+            setInternalActiveId(savedId);
         }
     }, [projectId]);
 
@@ -89,10 +92,10 @@ export const useRemoteUiData = (projectId: string, ignoreProjectId = false) => {
                  
                  // Check against folders array, which is now stable thanks to useMemo
                  if (savedId && folders.find(f => f.id === savedId)) {
-                     setActiveFolderId(savedId);
+                     setInternalActiveId(savedId);
                  } else {
                      const firstId = folders[0].id;
-                     setActiveFolderId(firstId);
+                     setInternalActiveId(firstId);
                      globalStorage.setItem(key, firstId);
                  }
             }
@@ -101,7 +104,7 @@ export const useRemoteUiData = (projectId: string, ignoreProjectId = false) => {
 
 
     const handleSelectFolder = (id: string) => {
-        setActiveFolderId(id);
+        setInternalActiveId(id);
         globalStorage.setItem(`${REMOTE_STORAGE_KEY_PREFIX}${projectId}`, id);
     };
 
