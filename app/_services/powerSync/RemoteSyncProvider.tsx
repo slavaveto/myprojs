@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { PowerSyncContext, usePowerSync } from "@powersync/react";
 import { PowerSyncDatabase, WASQLitePowerSyncDatabaseOpenFactory, PowerSyncBackendConnector, AbstractPowerSyncDatabase } from "@powersync/web";
-import { AppSchema } from '@/app/_services/powerSync/AppSchema';
 import { RemoteAppSchema } from '@/app/_services/powerSync/RemoteAppSchema';
 import { getRemoteConfig } from '@/app/_services/powerSync/remoteConfig';
 import { useSupabase } from '@/utils/supabase/useSupabase';
 import { SupabaseClient, createClient } from '@supabase/supabase-js';
 import { syncBridge } from './syncStatusBridge';
+import { useConnectionHealth } from '@/app/v2/(tasks)/hooks/useConnectionHealth';
 
 import { createLogger } from '@/utils/logger/Logger';
 const logger = createLogger('RemoteSyncProvider');
@@ -113,6 +113,32 @@ export const RemoteSyncProvider = ({ projectId, projectTitle, children }: Remote
     // Look up config by TITLE
     const config = getRemoteConfig(projectTitle);
 
+    // MONITOR HEALTH
+    const health = useConnectionHealth(remoteDb, projectTitle);
+    const healthRef = useRef(health);
+    
+    // Update ref when health changes
+    useEffect(() => {
+        healthRef.current = health;
+        
+        // Also force update bridge if DB exists
+        if (remoteDb) {
+             const status = remoteDb.currentStatus;
+             const s = status as any;
+             syncBridge.updateStatus({
+                connected: status.connected,
+                connecting: status.connecting,
+                downloading: s.dataFlow?.downloading || !!s.downloading,
+                uploading: s.dataFlow?.uploading || !!s.uploading,
+                lastSyncedAt: status.lastSyncedAt,
+                anyError: s.anyError,
+                dataFlow: s.dataFlow,
+                isHealthy: health.isHealthy,
+                consecutiveFailures: health.consecutiveFailures
+            } as any);
+        }
+    }, [health, remoteDb]);
+
     useEffect(() => {
         // If config is local, we don't need to create a DB
         if (config.type === 'local') {
@@ -158,8 +184,11 @@ export const RemoteSyncProvider = ({ projectId, projectTitle, children }: Remote
                         uploading: s.dataFlow?.uploading || !!s.uploading,
                         lastSyncedAt: status.lastSyncedAt,
                         anyError: s.anyError,
-                        dataFlow: s.dataFlow
-                    });
+                        dataFlow: s.dataFlow,
+                        // Inject current health from ref
+                        isHealthy: healthRef.current.isHealthy,
+                        consecutiveFailures: healthRef.current.consecutiveFailures
+                    } as any);
                 }
             });
 

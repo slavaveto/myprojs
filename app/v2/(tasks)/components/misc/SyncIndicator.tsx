@@ -7,6 +7,7 @@ import { usePowerSync } from '@/app/_services/powerSync/SyncProvider';
 import { useSupabase } from '@/utils/supabase/useSupabase';
 import { useSyncCheck } from '@/app/v2/(tasks)/hooks/useSyncCheck';
 import { syncBridge, SimpleSyncStatus } from '@/app/_services/powerSync/syncStatusBridge';
+import { useConnectionHealth } from '@/app/v2/(tasks)/hooks/useConnectionHealth';
 
 import { createLogger } from '@/utils/logger/Logger';
 const logger = createLogger('SyncIndicator');
@@ -36,22 +37,25 @@ export const SyncIndicator = ({ isRemote }: SyncIndicatorProps) => {
     }, [isRemote]);
 
     // 3. Select active status
-    // If isRemote is true, we use bridgeStatus (if available). 
-    // If bridgeStatus is null (not yet connected), we might fallback or show "Connecting..."
-    // NOTE: If isRemote is false, we strictly use mainStatus.
     const status = isRemote ? (bridgeStatus || { connected: false, connecting: true }) : mainStatus;
 
     const db = usePowerSync();
     const { supabase } = useSupabase();
 
+    // 4. HEALTH CHECK
+    // Only check Main DB health here. Remote DB health comes via bridge.
+    const mainHealth = useConnectionHealth(isRemote ? null : db, 'MainDB');
+    
+    const isHealthy = isRemote 
+        ? (bridgeStatus?.isHealthy !== false) // Default to true if undefined
+        : mainHealth.isHealthy;
+        
+    const failures = isRemote
+        ? (bridgeStatus?.consecutiveFailures || 0)
+        : mainHealth.consecutiveFailures;
+
     // SyncCheck is strictly for MAIN DB for now (or passed DB).
-    // If we are in remote mode, we should ideally disable integrity check button or pass remote DB.
-    // But since `db` here comes from global context, it will check Main DB integrity.
-    // Let's hide integrity check if isRemote for now.
     const { checkIntegrity, isChecking, integrityReport, clearReport } = useSyncCheck(db, supabase);
-
-
-
 
     // Determine state
     const rawIsSyncing = status.dataFlow?.downloading || status.dataFlow?.uploading || status.downloading || status.uploading;
@@ -67,7 +71,7 @@ export const SyncIndicator = ({ isRemote }: SyncIndicatorProps) => {
         }
     }, [status]);
     
-    // UI States with min duration (500ms debounce on trailing edge)
+    // UI States with min duration
     const [isUploading, setIsUploading] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
     const [isConnecting, setIsConnecting] = useState(false);
@@ -127,6 +131,7 @@ export const SyncIndicator = ({ isRemote }: SyncIndicatorProps) => {
     
     // Status Text logic
     const getStatusText = () => {
+        if (!isHealthy) return `Unhealthy (${failures})`;
         if (anyError) return 'Sync Error';
         if (isConnecting) return 'Connecting...';
         if (isUploading) return 'Uploading...';
@@ -135,6 +140,7 @@ export const SyncIndicator = ({ isRemote }: SyncIndicatorProps) => {
     };
 
     const getStatusColor = () => {
+        if (!isHealthy) return 'danger';
         if (anyError) return 'danger';
         if (isOffline) return 'danger';
         if (isConnecting) return 'warning';
@@ -159,7 +165,7 @@ export const SyncIndicator = ({ isRemote }: SyncIndicatorProps) => {
                     size="sm" 
                     className={clsx(
                         "transition-all",
-                        (isOffline || anyError) ? "text-red-500" : 
+                        (!isHealthy || isOffline || anyError) ? "text-red-500" : 
                         isConnecting ? "text-orange-500" :
                         isUploading ? "text-red-500" :
                         isDownloading ? "text-blue-500" :
@@ -167,7 +173,9 @@ export const SyncIndicator = ({ isRemote }: SyncIndicatorProps) => {
                     )}
                 >
                     {/* ICON LOGIC */}
-                    {anyError ? (
+                    {(!isHealthy && failures >= 3) ? (
+                         <AlertTriangle size={18} className="text-red-600 animate-pulse" />
+                    ) : anyError ? (
                         <AlertTriangle size={18} className="text-red-600 animate-pulse" />
                     ) : isConnecting ? (
                         <RefreshCw size={18} className="animate-spin text-orange-500" />
@@ -199,6 +207,13 @@ export const SyncIndicator = ({ isRemote }: SyncIndicatorProps) => {
                     </div>
 
                     <div className="space-y-2 text-xs text-default-600">
+                        {/* Health */}
+                        {!isHealthy && (
+                            <div className="bg-red-50 text-red-600 p-2 rounded border border-red-200 font-bold">
+                                Connection unstable! {failures} consecutive failures.
+                            </div>
+                        )}
+
                         {/* Connection */}
                         <div className="flex justify-between">
                             <span>Connection</span>
@@ -212,7 +227,7 @@ export const SyncIndicator = ({ isRemote }: SyncIndicatorProps) => {
                             <span>Last Synced</span>
                             <span className="font-mono">
                                 {status.lastSyncedAt 
-                                    ? status.lastSyncedAt.toLocaleTimeString() 
+                                    ? new Date(status.lastSyncedAt).toLocaleTimeString()
                                     : "Never"}
                             </span>
                         </div>
@@ -257,7 +272,8 @@ export const SyncIndicator = ({ isRemote }: SyncIndicatorProps) => {
                              >
                                 Проверить базу
                              </Button>
-
+                             
+                             {/* Integrity Report Rendering */}
                              {integrityReport && (
                                  <div className="mt-2 text-[10px] p-2 bg-default-50 rounded border border-default-200">
                                      {integrityReport.missingInLocal === 0 && integrityReport.missingInRemote === 0 ? (
@@ -285,4 +301,3 @@ export const SyncIndicator = ({ isRemote }: SyncIndicatorProps) => {
         </Popover>
     );
 };
-

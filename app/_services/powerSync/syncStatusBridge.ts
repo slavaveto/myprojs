@@ -11,7 +11,11 @@ export interface SimpleSyncStatus {
     dataFlow?: {
         uploading: boolean;
         downloading: boolean;
+        uploadError?: any;
+        downloadError?: any;
     };
+    isHealthy?: boolean; // New: Connection health check
+    consecutiveFailures?: number;
 }
 
 class SyncStatusBridge extends EventEmitter {
