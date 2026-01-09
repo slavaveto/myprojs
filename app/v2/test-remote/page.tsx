@@ -7,6 +7,7 @@ import { getRemoteConfig } from '@/utils/remoteConfig';
 import { clsx } from 'clsx';
 import { Folder, HardDrive, Server, Wifi, WifiOff, Plus, Database, AlertCircle } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
+import { globalStorage } from '@/utils/storage';
 
 // --- DEBUG INFO COMPONENT ---
 const ConnectionStatus = ({ title }: { title: string }) => {
@@ -72,8 +73,8 @@ const SupabaseDirectTest = ({ title }: { title: string }) => {
     const [rows, setRows] = useState<any[]>([]);
 
     useEffect(() => {
-        // We need EITHER token (old way) OR serviceKey (new way)
-        const keyToUse = config.serviceKey || config.token;
+        const configAny = config as any;
+        const keyToUse = configAny.serviceKey || config.token;
 
         if (config.type !== 'remote' || !config.supabaseUrl || !keyToUse) {
             return;
@@ -153,9 +154,9 @@ const RemoteDataDisplay = ({ title }: { title: string }) => {
         try {
             const id = crypto.randomUUID();
             await powerSync.execute(
-                `INSERT INTO _ui_folders (id, title, sort_order, created_at, updated_at) 
+                `INSERT INTO _ui_folders (id, project_id, title, sort_order, created_at, updated_at) 
                  VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))`,
-                [id, newItemTitle, 100]
+                [id, title, newItemTitle, 100]
             );
             setNewItemTitle('');
         } catch (e: any) {
@@ -233,6 +234,22 @@ export default function TestRemotePage() {
 
     const [selectedProject, setSelectedProject] = useState<any>(null);
 
+    // Load saved selection on mount
+    useEffect(() => {
+        if (remoteProjects?.length) {
+            const savedId = globalStorage.getItem('test-remote-selected-project');
+            if (savedId) {
+                const found = remoteProjects.find((p: any) => p.id === savedId);
+                if (found) setSelectedProject(found);
+            }
+        }
+    }, [remoteProjects]);
+
+    const handleSelect = (proj: any) => {
+        setSelectedProject(proj);
+        globalStorage.setItem('test-remote-selected-project', proj.id);
+    };
+
     return (
         <div className="h-screen w-full bg-[#f6f6f6] p-4 flex gap-4 text-default-800 font-sans">
             {/* LEFT: Sidebar */}
@@ -245,7 +262,7 @@ export default function TestRemotePage() {
                     {remoteProjects?.map((proj: any) => (
                         <button
                             key={proj.id}
-                            onClick={() => setSelectedProject(proj)}
+                            onClick={() => handleSelect(proj)}
                             className={clsx(
                                 "w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2",
                                 selectedProject?.id === proj.id 

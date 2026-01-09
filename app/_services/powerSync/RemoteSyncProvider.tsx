@@ -5,7 +5,7 @@ import { AppSchema } from '@/app/_services/powerSync/AppSchema';
 import { RemoteAppSchema } from '@/app/_services/powerSync/RemoteAppSchema';
 import { getRemoteConfig } from '@/utils/remoteConfig';
 import { useSupabase } from '@/utils/supabase/useSupabase';
-import { SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient, createClient } from '@supabase/supabase-js';
 
 // Connector with Write-Back to Supabase
 class StaticRemoteConnector implements PowerSyncBackendConnector {
@@ -63,8 +63,14 @@ class StaticRemoteConnector implements PowerSyncBackendConnector {
             }
             await transaction.complete();
             // console.log('[RemoteConnector] Upload transaction completed');
-        } catch (e) {
-            console.error('[RemoteConnector] Upload failed', e);
+        } catch (e: any) {
+            console.error('[RemoteConnector] Upload failed RAW:', e);
+            if (e && typeof e === 'object') {
+                console.error('[RemoteConnector] Upload failed JSON:', JSON.stringify(e, null, 2));
+                if (e.message) console.error('[RemoteConnector] Error Message:', e.message);
+                if (e.details) console.error('[RemoteConnector] Error Details:', e.details);
+                if (e.hint) console.error('[RemoteConnector] Error Hint:', e.hint);
+            }
         }
     }
 }
@@ -124,8 +130,24 @@ export const RemoteSyncProvider = ({ projectId, projectTitle, children }: Remote
             // Connect using static connector
             try {
                 console.log(`[RemotePowerSync] Connecting to ${projectTitle}...`);
-                // Pass supabase to connector
-                const connector = new StaticRemoteConnector(config.url, config.token, supabase);
+                
+                // CREATE DEDICATED SUPABASE CLIENT FOR REMOTE
+                // Use Service Key if available (for write access), otherwise global supabase
+                // NOTE: config.supabaseUrl must be present for remote projects
+                let remoteSupabase = supabase;
+                const configAny = config as any; // Bypass TS check for serviceKey
+                
+                if (config.supabaseUrl && configAny.serviceKey) {
+                    // console.log('[RemotePowerSync] Creating dedicated Supabase client with Service Key');
+                    remoteSupabase = createClient(config.supabaseUrl, configAny.serviceKey, {
+                        auth: {
+                            persistSession: false, // Do not persist service key session
+                            autoRefreshToken: false,
+                        }
+                    });
+                }
+
+                const connector = new StaticRemoteConnector(config.url, config.token, remoteSupabase);
                 
                 await db.connect(connector);
                 console.log(`[RemotePowerSync] Connected to ${projectTitle}`);
