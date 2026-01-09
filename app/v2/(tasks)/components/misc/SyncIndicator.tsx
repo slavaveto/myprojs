@@ -5,75 +5,16 @@ import { Popover, PopoverTrigger, PopoverContent, Button, Chip } from '@heroui/r
 import { clsx } from 'clsx';
 import { usePowerSync } from '@/app/_services/powerSync/SyncProvider';
 import { useSupabase } from '@/utils/supabase/useSupabase';
+import { useSyncCheck } from '@/app/v2/(tasks)/hooks/useSyncCheck';
 
 export const SyncIndicator = () => {
     const status = useStatus() as any;
     const db = usePowerSync();
     const { supabase } = useSupabase();
 
-    const [isChecking, setIsChecking] = useState(false);
-    const [integrityReport, setIntegrityReport] = useState<null | {
-        missingInLocal: number;
-        missingInRemote: number;
-        details: string[];
-    }>(null);
+    const { checkIntegrity, isChecking, integrityReport, clearReport } = useSyncCheck(db, supabase);
 
-    const checkIntegrity = async () => {
-        setIsChecking(true);
-        setIntegrityReport(null);
-        try {
-            const tables = ['projects', 'folders', 'tasks'];
-            let missingLocalTotal = 0;
-            let missingRemoteTotal = 0;
-            const reportDetails: string[] = [];
 
-            for (const table of tables) {
-                // Local
-                const localRes = await db.getAll<{ id: string }>(`SELECT id FROM ${table}`);
-                const localIds = new Set(localRes.map(r => r.id));
-
-                // Remote
-                const { data: remoteRes, error } = await supabase.from(table).select('id');
-                if (error) throw error;
-                const remoteIds = new Set(remoteRes?.map(r => r.id));
-
-                // Diff
-                let missingLocal = 0;
-                let missingRemote = 0;
-
-                remoteIds.forEach(id => {
-                    if (!localIds.has(id)) missingLocal++;
-                });
-
-                localIds.forEach(id => {
-                    if (!remoteIds.has(id)) missingRemote++;
-                });
-
-                if (missingLocal > 0 || missingRemote > 0) {
-                    reportDetails.push(`${table}: -${missingLocal} local, -${missingRemote} remote`);
-                }
-
-                missingLocalTotal += missingLocal;
-                missingRemoteTotal += missingRemote;
-            }
-
-            setIntegrityReport({
-                missingInLocal: missingLocalTotal,
-                missingInRemote: missingRemoteTotal,
-                details: reportDetails
-            });
-
-        } catch (e: any) {
-            console.error('Integrity check failed:', e);
-            setIntegrityReport({
-                missingInLocal: 0,
-                missingInRemote: 0,
-                details: [`Error: ${e?.message || 'Unknown error'}`]
-            });
-        } finally {
-            setIsChecking(false);
-        }
-    };
 
 
     // Determine state
@@ -171,8 +112,7 @@ export const SyncIndicator = () => {
             placement="bottom-end" 
             onOpenChange={(isOpen) => {
                 if (!isOpen) {
-                    setIntegrityReport(null);
-                    setIsChecking(false);
+                    clearReport();
                 }
             }}
         >
@@ -290,7 +230,7 @@ export const SyncIndicator = () => {
                                          <div className="text-red-600 font-bold mb-1">Найдено расхождений! ⚠️</div>
                                      )}
                                      
-                                     {integrityReport.details.map((line, i) => (
+                                     {integrityReport.details.map((line: string, i: number) => (
                                          <div key={i}>{line}</div>
                                      ))}
                                      
