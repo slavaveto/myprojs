@@ -198,7 +198,7 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
                     </div>
                 ) : activeRemoteTab === 'tables' ? (
                     <div className="absolute inset-0 w-full h-full bg-background z-20">
-                        <TablesView projectId={project.id} satelliteId={project.id} />
+                        <TablesView projectId={project.id} satelliteId={project.id} projectTitle={project.title} />
                     </div>
                 ) : null}
 
