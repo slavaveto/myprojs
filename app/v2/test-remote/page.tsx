@@ -72,15 +72,18 @@ const SupabaseDirectTest = ({ title }: { title: string }) => {
     const [rows, setRows] = useState<any[]>([]);
 
     useEffect(() => {
-        if (config.type !== 'remote' || !config.supabaseUrl || !config.token) {
+        // We need EITHER token (old way) OR serviceKey (new way)
+        const keyToUse = config.serviceKey || config.token;
+
+        if (config.type !== 'remote' || !config.supabaseUrl || !keyToUse) {
             return;
         }
 
         const testSupabase = async () => {
             setStatus('loading');
             try {
-                // Create direct client using Service Key
-                const supabase = createClient(config.supabaseUrl!, config.token!);
+                // Create direct client using Service Key (preferred) or Token
+                const supabase = createClient(config.supabaseUrl!, keyToUse!);
                 
                 // Try to SELECT data
                 const { data, error } = await supabase

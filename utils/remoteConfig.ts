@@ -2,7 +2,8 @@
 export interface RemoteConfig {
     type: 'local' | 'remote';
     url?: string;
-    token?: string;
+    token?: string;        // Token for PowerSync (Dev Token or Custom JWT with sub)
+    serviceKey?: string;   // Original Supabase Service Key (for Direct access & Upload)
     supabaseUrl?: string;
 }
 
@@ -19,15 +20,15 @@ export const getRemoteConfig = (projectTitle: string): RemoteConfig => {
     switch (normalizedTitle) {
         case 'PSYHELP':
             const psyUrl = process.env.NEXT_PUBLIC_PSYHELP_POWERSYNC_URL;
-            const psyToken = process.env.NEXT_PUBLIC_PSYHELP_SERVICE_KEY;
+            const psyServiceKey = process.env.NEXT_PUBLIC_PSYHELP_SERVICE_KEY;
+            const psyPowerSyncToken = process.env.NEXT_PUBLIC_PSYHELP_POWERSYNC_TOKEN; // New token
             
-            // console.log(`[RemoteConfig] Found PSYHELP envs:`, { url: !!psyUrl, token: !!psyToken });
-            
-            if (psyUrl && psyToken) {
+            if (psyUrl && (psyPowerSyncToken || psyServiceKey)) {
                 return {
                     type: 'remote',
                     url: psyUrl,
-                    token: psyToken,
+                    token: psyPowerSyncToken || psyServiceKey, // Prefer specific PS token
+                    serviceKey: psyServiceKey,
                     supabaseUrl: process.env.NEXT_PUBLIC_PSYHELP_SUPABASE_URL
                 };
             }
@@ -35,13 +36,15 @@ export const getRemoteConfig = (projectTitle: string): RemoteConfig => {
 
         case 'VIDEOROOM':
              const videoUrl = process.env.NEXT_PUBLIC_VIDEOROOM_POWERSYNC_URL;
-             const videoToken = process.env.NEXT_PUBLIC_VIDEOROOM_SERVICE_KEY;
+             const videoServiceKey = process.env.NEXT_PUBLIC_VIDEOROOM_SERVICE_KEY;
+             const videoPowerSyncToken = process.env.NEXT_PUBLIC_VIDEOROOM_POWERSYNC_TOKEN; // New token
 
-             if (videoUrl && videoToken) {
+             if (videoUrl && (videoPowerSyncToken || videoServiceKey)) {
                 return {
                     type: 'remote',
                     url: videoUrl,
-                    token: videoToken,
+                    token: videoPowerSyncToken || videoServiceKey, // Prefer specific PS token
+                    serviceKey: videoServiceKey,
                     supabaseUrl: process.env.NEXT_PUBLIC_VIDEOROOM_SUPABASE_URL
                 };
              }
