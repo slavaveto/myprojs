@@ -78,16 +78,6 @@ export const useRemoteUiData = (projectId: string, ignoreProjectId = false, cont
         ? allTasks.filter(t => t.folder_id === activeFolderId).sort((a, b) => a.sort_order - b.sort_order)
         : [], [activeFolderId, allTasks]);
 
-    // 6. Restore active folder state
-    useEffect(() => {
-        const key = `${REMOTE_STORAGE_KEY_PREFIX}${projectId}`;
-        const savedId = globalStorage.getItem(key);
-        
-        if (savedId && savedId !== 'null') {
-            setInternalActiveId(savedId);
-        }
-    }, [projectId]);
-
     // 7. Auto-select folder logic
     useEffect(() => {
         if (shouldSkip) return; // SKIP LOGIC
@@ -99,26 +89,11 @@ export const useRemoteUiData = (projectId: string, ignoreProjectId = false, cont
                  const key = `${REMOTE_STORAGE_KEY_PREFIX}${projectId}`;
                  const savedId = globalStorage.getItem(key);
                  
-                 const savedFolder = folders.find(f => f.id === savedId);
-                 const savedTitle = savedFolder ? savedFolder.title : `UNKNOWN_ID(${savedId?.slice(0, 6)}...)`;
-
-                 logger.info(`Auto-select logic [${projectTitle || '?'}]`, { 
-                    project: projectTitle, 
-                    saved: savedTitle, 
-                    count: folders.length 
-                 });
-                 logger.info(`Available folders [${projectTitle || '?'}]`, folders.map(f => f.title));
-
                  // Check against folders array, which is now stable thanks to useMemo
                  if (savedId && folders.find(f => f.id === savedId)) {
-                     logger.info(`Restoring saved folder [${projectTitle || '?'}]`, savedTitle);
                      setInternalActiveId(savedId);
                  } else {
                      const firstFolder = folders[0];
-                     logger.warn(`Fallback to first folder [${projectTitle || '?'}]`, { 
-                        wanted: savedTitle, 
-                        got: firstFolder?.title 
-                     });
                      const firstId = firstFolder?.id;
                      if (firstId) {
                         setInternalActiveId(firstId);
@@ -127,7 +102,7 @@ export const useRemoteUiData = (projectId: string, ignoreProjectId = false, cont
                  }
             }
         }
-    }, [folders, activeFolderId, projectId]);
+    }, [folders, activeFolderId, projectId, shouldSkip]);
 
 
     const handleSelectFolder = (id: string) => {

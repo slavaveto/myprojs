@@ -163,46 +163,39 @@ export const RemoteSyncProvider = ({ projectId, projectTitle, children }: Remote
                 }
             });
 
-            // Connect using static connector
-            try {
-                logger.info(`[RemotePowerSync] Connecting to ${projectTitle}...`);
-                
-                // CREATE DEDICATED SUPABASE CLIENT FOR REMOTE
-                // Use Service Key if available (for write access), otherwise global supabase
-                // NOTE: config.supabaseUrl must be present for remote projects
-                let remoteSupabase = supabase;
-                const configAny = config as any; // Bypass TS check for serviceKey
-                
-                if (config.supabaseUrl && configAny.serviceKey) {
-                    remoteSupabase = createClient(config.supabaseUrl, configAny.serviceKey, {
-                        auth: {
-                            persistSession: false, // Do not persist service key session
-                            autoRefreshToken: false,
-                        }
-                    });
-                }
-
-                const connector = new StaticRemoteConnector(config.url, config.token, remoteSupabase);
-                
-                await db.connect(connector);
-                logger.info(`[RemotePowerSync] Connected to ${projectTitle}`);
-
-                // --- DEBUG DB COUNTS ---
+            // 5. Connect to Backend (NON-BLOCKING)
+            // We do NOT await this before rendering. UI should load from local DB immediately.
+            const connectBackground = async () => {
                 try {
-                    const tables = ['_ui_folders', '_ui_items'];
-            
-                } catch (e) {
-                    logger.error('Error logging counts', e);
-                }
-                // -----------------------
-                
-                // SAVE TO CACHE
-                dbCache.set(projectId, db);
+                    logger.info(`[RemotePowerSync] Connecting to ${projectTitle}...`);
+                    
+                    // CREATE DEDICATED SUPABASE CLIENT FOR REMOTE
+                    let remoteSupabase = supabase;
+                    const configAny = config as any; 
+                    
+                    if (config.supabaseUrl && configAny.serviceKey) {
+                        remoteSupabase = createClient(config.supabaseUrl, configAny.serviceKey, {
+                            auth: {
+                                persistSession: false,
+                                autoRefreshToken: false,
+                            }
+                        });
+                    }
 
-            } catch (e) {
-                logger.error(`[RemotePowerSync] Connection failed for ${projectTitle}`, e);
-            }
+                    const connector = new StaticRemoteConnector(config.url!, config.token!, remoteSupabase);
+                    
+                    await db.connect(connector);
+                    logger.info(`[RemotePowerSync] Connected to ${projectTitle}`);
+                } catch (e) {
+                    logger.error(`[RemotePowerSync] Connection failed for ${projectTitle}`, e);
+                }
+            };
+
+            // Start connection in background
+            connectBackground();
             
+            // Render UI immediately
+            dbCache.set(projectId, db);
             setRemoteDb(db);
             setIsLoading(false);
         };
