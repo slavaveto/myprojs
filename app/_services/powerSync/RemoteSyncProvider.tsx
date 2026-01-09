@@ -4,21 +4,18 @@ import { PowerSyncDatabase, WASQLitePowerSyncDatabaseOpenFactory, PowerSyncBacke
 import { AppSchema } from '@/app/_services/powerSync/AppSchema';
 import { RemoteAppSchema } from '@/app/_services/powerSync/RemoteAppSchema';
 import { getRemoteConfig } from '@/utils/remoteConfig';
+import { useSupabase } from '@/utils/supabase/useSupabase';
+import { SupabaseClient } from '@supabase/supabase-js';
 
-// Simple connector for static token
+// Connector with Write-Back to Supabase
 class StaticRemoteConnector implements PowerSyncBackendConnector {
-    constructor(private url: string, private token: string) {}
+    constructor(
+        private url: string, 
+        private token: string,
+        private supabase: SupabaseClient
+    ) {}
 
     async fetchCredentials() {
-        console.log(`[RemoteConnector] Fetching credentials for ${this.url}`);
-        try {
-            const payload = JSON.parse(atob(this.token.split('.')[1]));
-            console.log('[RemoteConnector] Token Payload:', payload);
-        } catch (e) {
-            console.error('[RemoteConnector] Failed to decode token payload', e);
-        }
-        
-        console.log(`[RemoteConnector] Token exists: ${!!this.token}, length: ${this.token?.length}`);
         return {
             endpoint: this.url,
             token: this.token
@@ -26,17 +23,48 @@ class StaticRemoteConnector implements PowerSyncBackendConnector {
     }
 
     async uploadData(database: AbstractPowerSyncDatabase) {
-        console.log('[RemoteConnector] Upload requested');
-        // Implement simple upload or read-only
+        // console.log('[RemoteConnector] Upload requested');
         const transaction = await database.getNextCrudTransaction();
         if (!transaction) return;
         
         try {
+            if (!this.supabase) throw new Error('Supabase client missing');
+
+            for (const op of transaction.crud) {
+                const opAny = op as any;
+                const table = opAny.table || opAny.type;
+                const id = opAny.id;
+                let data = opAny.data;
+
+                // Handle PowerSync JSON wrapping
+                if (!data) {
+                    try {
+                        const json = JSON.parse(JSON.stringify(opAny));
+                        data = json.data;
+                    } catch (e) {
+                        // ignore
+                    }
+                }
+
+                console.log(`[RemotePowerSync] Uploading ${opAny.op} to ${table}`, data);
+
+                if (!table) continue;
+
+                if (op.op === 'PUT') {
+                    const { error } = await this.supabase.from(table).upsert(data || {});
+                    if (error) throw error;
+                } else if (op.op === 'PATCH') {
+                    const { error } = await this.supabase.from(table).update(data).eq('id', id);
+                    if (error) throw error;
+                } else if (op.op === 'DELETE') {
+                    const { error } = await this.supabase.from(table).delete().eq('id', id);
+                    if (error) throw error;
+                }
+            }
             await transaction.complete();
-            console.log('[RemoteConnector] Upload transaction completed (no-op)');
+            // console.log('[RemoteConnector] Upload transaction completed');
         } catch (e) {
             console.error('[RemoteConnector] Upload failed', e);
-            // In a real implementation, we would send data to the remote Supabase via REST API or similar
         }
     }
 }
@@ -51,7 +79,8 @@ interface RemoteSyncProviderProps {
 const dbCache = new Map<string, PowerSyncDatabase>();
 
 export const RemoteSyncProvider = ({ projectId, projectTitle, children }: RemoteSyncProviderProps) => {
-    const mainPowerSync = usePowerSync(); // Access main DB context (unused here but available)
+    const mainPowerSync = usePowerSync(); 
+    const { supabase } = useSupabase(); // Use app Supabase client
     const [remoteDb, setRemoteDb] = useState<PowerSyncDatabase | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     
@@ -95,7 +124,8 @@ export const RemoteSyncProvider = ({ projectId, projectTitle, children }: Remote
             // Connect using static connector
             try {
                 console.log(`[RemotePowerSync] Connecting to ${projectTitle}...`);
-                const connector = new StaticRemoteConnector(config.url, config.token);
+                // Pass supabase to connector
+                const connector = new StaticRemoteConnector(config.url, config.token, supabase);
                 
                 await db.connect(connector);
                 console.log(`[RemotePowerSync] Connected to ${projectTitle}`);
@@ -117,7 +147,7 @@ export const RemoteSyncProvider = ({ projectId, projectTitle, children }: Remote
              // DO NOT DISCONNECT. Keep connection alive.
         };
 
-    }, [projectId, projectTitle, config.type, config.url, config.token]);
+    }, [projectId, projectTitle, config.type, config.url, config.token, supabase]);
 
     if (isLoading) return <div>Connecting to remote {projectTitle}...</div>;
 

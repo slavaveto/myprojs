@@ -10,6 +10,7 @@ import { InfoView } from './InfoView';
 import { RemoteUiView } from '../remoteviews/UiView';
 import { clsx } from 'clsx';
 import { useProjectView } from '../hooks/useProjectView';
+import { useRemoteUiData } from '../hooks/useRemoteUiData';
 import { useInfoData } from '../hooks/useInfoData';
 import { usePanelResize } from '../hooks/usePanelResize';
 import { getRemoteConfig } from '@/utils/remoteConfig';
@@ -29,43 +30,65 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
         updateFolder, deleteFolder
     } = useProjectView(project, isActive);
     
-    // DEBUG: Check hasRemote
-    if (isActive) {
-        console.log('[ProjectView] Project:', project.title);
-    }
+    const config = getRemoteConfig(project.title);
+    const isRemoteProject = config.type === 'remote';
 
-    // Remote Logic (Lifted)
-    const [uiFolders, setUiFolders] = useState<Folder[]>([]);
-    const [uiFolderCounts, setUiFolderCounts] = useState<Record<string, number>>({});
-    const [activeUiFolderId, setActiveUiFolderId] = useState<string | null>(null);
+    // 1. REMOTE PROJECT LOGIC (Lifted via Callback)
+    const [remoteUiFolders, setRemoteUiFolders] = useState<Folder[]>([]);
+    const [remoteUiFolderCounts, setRemoteUiFolderCounts] = useState<Record<string, number>>({});
+    const [activeRemoteUiFolderId, setActiveRemoteUiFolderId] = useState<string | null>(null);
     const remoteActionsRef = React.useRef<any>(null);
 
     const onFoldersLoaded = React.useCallback((folders: Folder[], counts: Record<string, number>) => {
-        setUiFolders(folders);
-        setUiFolderCounts(counts);
+        setRemoteUiFolders(folders);
+        setRemoteUiFolderCounts(counts);
     }, []);
 
     const onActionsReady = React.useCallback((actions: any) => {
         remoteActionsRef.current = actions;
     }, []);
 
-    // Handlers for Remote UI
+    // 2. LOCAL PROJECT LOGIC (Direct Hook)
+    // Only fetch if NOT a remote project (to avoid double fetch or context errors)
+    const localUiData = useRemoteUiData(project.id, isRemoteProject); 
+
+    // 3. MERGE / SELECT DATA SOURCE
+    const uiFolders = isRemoteProject ? remoteUiFolders : localUiData.folders;
+    const uiFolderCounts = isRemoteProject ? remoteUiFolderCounts : localUiData.folderCounts;
+    const activeUiFolderId = isRemoteProject ? activeRemoteUiFolderId : localUiData.activeFolderId;
+
+    // Handlers
     const handleSelectUiFolder = (id: string) => {
-        setActiveUiFolderId(id);
-        remoteActionsRef.current?.handleSelectFolder(id); // If hook exposes this
+        if (isRemoteProject) {
+            setActiveRemoteUiFolderId(id);
+            remoteActionsRef.current?.handleSelectFolder(id);
+        } else {
+            localUiData.handleSelectFolder(id);
+        }
     };
 
     const handleCreateUiFolder = (title: string) => {
-        console.log('[ProjectView] handleCreateUiFolder', title, !!remoteActionsRef.current);
-        remoteActionsRef.current?.createFolder(title);
+        if (isRemoteProject) {
+            remoteActionsRef.current?.createFolder(title);
+        } else {
+            localUiData.createFolder(title);
+        }
     };
 
     const handleUpdateUiFolder = (id: string, title: string) => {
-        remoteActionsRef.current?.updateFolder(id, title);
+        if (isRemoteProject) {
+            remoteActionsRef.current?.updateFolder(id, title);
+        } else {
+            localUiData.updateFolder(id, title);
+        }
     };
 
     const handleDeleteUiFolder = (id: string) => {
-        remoteActionsRef.current?.deleteFolder(id);
+        if (isRemoteProject) {
+            remoteActionsRef.current?.deleteFolder(id);
+        } else {
+            localUiData.deleteFolder(id);
+        }
     };
 
     const infoData = useInfoData(project.id);
@@ -77,7 +100,7 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
     const safePanelWidth = isNaN(panelWidth) ? 400 : panelWidth;
 
     const SYSTEM_PROJECT_TITLES = ['Inbox', 'Today', 'Doing Now', 'Logs', 'Done', 'Logbook'];
-    const isRemoteProject = getRemoteConfig(project.title).type === 'remote';
+    // const isRemoteProject = getRemoteConfig(project.title).type === 'remote'; // Removed duplicate declaration
 
     return (
         <div className={clsx("flex flex-col h-full w-full", !isActive && "hidden")}>
