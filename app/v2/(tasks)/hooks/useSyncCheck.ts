@@ -16,7 +16,7 @@ export const useSyncCheck = (db: AbstractPowerSyncDatabase, supabase: SupabaseCl
         setIsChecking(true);
         setIntegrityReport(null);
         try {
-            const tables = ['projects', 'folders', 'tasks'];
+            const tables = ['projects', 'folders', 'tasks', '_ui_folders', '_ui_items'];
             let missingLocalTotal = 0;
             let missingRemoteTotal = 0;
             const reportDetails: string[] = [];
