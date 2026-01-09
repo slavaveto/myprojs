@@ -6,7 +6,7 @@ import { globalStorage } from '@/utils/storage';
 
 const REMOTE_STORAGE_KEY_PREFIX = 'v2_remote_ui_folder_';
 
-export const useRemoteUiData = (projectId: string) => {
+export const useRemoteUiData = (projectId: string, ignoreProjectId = false) => {
     // 1. Local State for active folder in remote view
     const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
     const { userId } = useAuth();
@@ -16,12 +16,17 @@ export const useRemoteUiData = (projectId: string) => {
 
     // 2. Load folders from "_ui_folders"
     const { data: foldersData } = useQuery(
-        `SELECT * FROM _ui_folders
-         WHERE project_id = ? 
-           AND (is_deleted IS NULL OR is_deleted = 0) 
-           AND (is_hidden IS NULL OR is_hidden = 0) 
-         ORDER BY sort_order ASC`,
-        [projectId]
+        ignoreProjectId 
+            ? `SELECT * FROM _ui_folders
+               WHERE (is_deleted IS NULL OR is_deleted = 0) 
+                 AND (is_hidden IS NULL OR is_hidden = 0) 
+               ORDER BY sort_order ASC`
+            : `SELECT * FROM _ui_folders
+               WHERE project_id = ? 
+                 AND (is_deleted IS NULL OR is_deleted = 0) 
+                 AND (is_hidden IS NULL OR is_hidden = 0) 
+               ORDER BY sort_order ASC`,
+        ignoreProjectId ? [] : [projectId]
     );
 
     // MEMOIZE folders to prevent effect loops
@@ -32,11 +37,16 @@ export const useRemoteUiData = (projectId: string) => {
 
     // 3. Load items from "_ui_items"
     const { data: itemsData } = useQuery(
-        `SELECT * FROM _ui_items
-         WHERE (is_completed IS NULL OR is_completed = 0) 
-           AND (is_deleted IS NULL OR is_deleted = 0)
-           AND folder_id IN (SELECT id FROM _ui_folders WHERE project_id = ?)`,
-        [projectId]
+        ignoreProjectId
+            ? `SELECT * FROM _ui_items
+               WHERE (is_completed IS NULL OR is_completed = 0) 
+                 AND (is_deleted IS NULL OR is_deleted = 0)
+                 AND folder_id IN (SELECT id FROM _ui_folders)`
+            : `SELECT * FROM _ui_items
+               WHERE (is_completed IS NULL OR is_completed = 0) 
+                 AND (is_deleted IS NULL OR is_deleted = 0)
+                 AND folder_id IN (SELECT id FROM _ui_folders WHERE project_id = ?)`,
+        ignoreProjectId ? [] : [projectId]
     );
     
     // MEMOIZE tasks

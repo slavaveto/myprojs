@@ -4,15 +4,17 @@ import { RemoteSyncProvider } from '@/app/_services/powerSync/RemoteSyncProvider
 import { TaskList } from '../components/TaskList';
 import { DetailsPanel } from '../components/DetailsPanel';
 import { usePanelResize } from '../hooks/usePanelResize';
+import { getRemoteConfig } from '@/utils/remoteConfig';
 
 interface RemoteUiViewProps {
     projectId: string;
     projectTitle: string;
 }
 
-const RemoteUiContent = ({ projectId }: { projectId: string }) => {
+const RemoteUiContent = ({ projectId, ignoreProjectId }: { projectId: string; ignoreProjectId: boolean }) => {
     // Uses REMOTE DB (from RemoteSyncProvider)
-    const remoteUi = useRemoteUiData(projectId);
+    // Pass ignoreProjectId flag
+    const remoteUi = useRemoteUiData(projectId, ignoreProjectId);
     
     // UI State
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -68,9 +70,13 @@ const RemoteUiContent = ({ projectId }: { projectId: string }) => {
 };
 
 export const RemoteUiView = ({ projectId, projectTitle }: RemoteUiViewProps) => {
+    const config = getRemoteConfig(projectTitle);
+    // If it's a REMOTE DB (isolated), we should ignore project_id mismatch
+    const isIsolatedRemote = config.type === 'remote';
+
     return (
         <RemoteSyncProvider projectId={projectId} projectTitle={projectTitle}>
-            <RemoteUiContent projectId={projectId} />
+            <RemoteUiContent projectId={projectId} ignoreProjectId={isIsolatedRemote} />
         </RemoteSyncProvider>
     );
 };
