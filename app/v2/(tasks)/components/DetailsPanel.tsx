@@ -39,7 +39,6 @@ export const DetailsPanel = ({ taskId }: DetailsPanelProps) => {
         if (!task || !powerSync || !taskId) return;
         
         if (title !== task.content || notes !== task.task_notes) {
-            console.log('Saving task details...', { title, notes });
             await powerSync.execute(
                 `UPDATE tasks SET content = ?, task_notes = ?, updated_at = datetime('now') WHERE id = ?`,
                 [title, notes, taskId]

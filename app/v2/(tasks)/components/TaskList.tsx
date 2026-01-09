@@ -39,7 +39,6 @@ export const TaskList = ({ tasks, onSelectTask, selectedTaskId, onUpdateTask }: 
                             radius="sm"
                             size="md"
                             // Mock toggle for now
-                            onValueChange={() => console.log('Toggle task', task.id)}
                         />
                     </div>
 

@@ -9,6 +9,10 @@ import { Folder, HardDrive, Server, Wifi, WifiOff, Plus, Database, AlertCircle }
 import { createClient } from '@supabase/supabase-js';
 import { globalStorage } from '@/utils/storage';
 
+import { createLogger } from '@/utils/logger/Logger';
+const logger = createLogger('TestRemotePage');
+
+
 // --- DEBUG INFO COMPONENT ---
 const ConnectionStatus = ({ title }: { title: string }) => {
     const status = useStatus();
@@ -16,7 +20,7 @@ const ConnectionStatus = ({ title }: { title: string }) => {
     const isRemote = config.type === 'remote';
 
     useEffect(() => {
-        console.log(`[ConnectionStatus] Status update for ${title}:`, {
+        logger.info(`[ConnectionStatus] Status update for ${title}:`, {
             connected: status.connected,
             lastSyncedAt: status.lastSyncedAt,
             hasError: !!(status as any).lastConnectError,
@@ -24,7 +28,7 @@ const ConnectionStatus = ({ title }: { title: string }) => {
         });
 
         if (!status.connected && (status as any).lastConnectError) {
-             console.error(`[ConnectionStatus] CONNECTION ERROR:`, (status as any).lastConnectError);
+             logger.error(`[ConnectionStatus] CONNECTION ERROR:`, (status as any).lastConnectError);
         }
     }, [status, title]);
 
@@ -97,7 +101,7 @@ const SupabaseDirectTest = ({ title }: { title: string }) => {
                 setRows(data || []);
                 setStatus('success');
             } catch (e: any) {
-                console.error('Supabase Direct Error:', e);
+                logger.error('Supabase Direct Error:', e);
                 setErrorMsg(e.message);
                 setStatus('error');
             }

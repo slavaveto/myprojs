@@ -8,6 +8,9 @@ import { useSupabase } from '@/utils/supabase/useSupabase';
 import { useSyncCheck } from '@/app/v2/(tasks)/hooks/useSyncCheck';
 import { syncBridge, SimpleSyncStatus } from '@/app/_services/powerSync/syncStatusBridge';
 
+import { createLogger } from '@/utils/logger/Logger';
+const logger = createLogger('SyncIndicator');
+
 export interface SyncIndicatorProps {
     isRemote?: boolean;
 }
@@ -60,7 +63,7 @@ export const SyncIndicator = ({ isRemote }: SyncIndicatorProps) => {
         const down = status.dataFlow?.downloading || status.downloading;
         
         if (up || down) {
-             console.log('SyncIndicator: Activity detected!', { uploading: up, downloading: down });
+            logger.info('SyncIndicator: Activity detected!', { uploading: up, downloading: down });
         }
     }, [status]);
     

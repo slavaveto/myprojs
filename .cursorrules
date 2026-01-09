@@ -5,7 +5,10 @@
 - import { createLogger } from '@/utils/logger/Logger';
 - API: const logger = createLogger('ComponentName');
 - Log usage: `logger.info('message', data)`
-- Methods: logger.info(), .error(), .success(), .warning(), .start(), .end().
+- Methods: logger.info(), .error(), .success(), .warn(), .start(), .end().
+
+#import { createLogger } from '@/utils/logger/Logger';
+#const logger = createLogger('ConfTitle');
 
 - Use `clsx()` for class merging.
 - DO NOT TOUCH GIT state (read-only allowed: status/diff/log). NO commits/checkouts.

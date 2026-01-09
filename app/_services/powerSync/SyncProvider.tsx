@@ -8,6 +8,9 @@ import { getPowerSync } from './client';
 import { useSupabase } from '@/utils/supabase/useSupabase';
 import { SupabaseClient } from '@supabase/supabase-js';
 
+import { createLogger } from '@/utils/logger/Logger';
+const logger = createLogger('SyncProvider');
+
 const POWERSYNC_URL = process.env.NEXT_PUBLIC_POWERSYNC_URL || 'https://foo.powersync.io';
 
 class ClerkConnector implements PowerSyncBackendConnector {
@@ -29,7 +32,7 @@ class ClerkConnector implements PowerSyncBackendConnector {
                 token: token
             };
         } catch (e) {
-            console.error('ClerkConnector: Error fetching token', e);
+            logger.error('ClerkConnector: Error fetching token', e);
             return null;
         }
     }
@@ -62,14 +65,14 @@ class ClerkConnector implements PowerSyncBackendConnector {
                         const json = JSON.parse(JSON.stringify(opAny));
                         data = json.data;
                     } catch (e) {
-                        console.warn('[PowerSync] Failed to parse operation JSON', e);
+                        logger.warn('[PowerSync] Failed to parse operation JSON', e);
                     }
                 }
 
-                console.log(`[PowerSync] Uploading ${opAny.op} to ${table}`, data);
+                logger.info(`[PowerSync] Uploading ${opAny.op} to ${table}`, data);
 
                 if (!table) {
-                    console.warn('[PowerSync] No table specified for operation', opAny);
+                    logger.warn('[PowerSync] No table specified for operation', opAny);
                     continue;
                 }
 
@@ -100,9 +103,9 @@ class ClerkConnector implements PowerSyncBackendConnector {
             }
 
             await transaction.complete();
-            console.log('[PowerSync] Transaction completed successfully');
+            logger.info('[PowerSync] Transaction completed successfully');
         } catch (e: any) {
-            console.error('[PowerSync] UploadData Failed:', e);
+            logger.error('[PowerSync] UploadData Failed:', e);
             // Re-throw to notify PowerSync about the failure
             throw e;
         } finally {
@@ -145,20 +148,11 @@ export const SyncProvider = ({ children }: { children: React.ReactNode }) => {
                 // DEBUG: Check row counts
                 setTimeout(async () => {
                     const tables = ['projects', 'folders', 'tasks', 'logs', '_ui_folders', '_ui_items'];
-                    console.group('--- Local DB Counts ---');
-                    for (const t of tables) {
-                        try {
-                            const res = await _db.getAll<{ c: number }>(`SELECT count(*) as c FROM ${t}`);
-                            console.log(`${t}:`, res[0]?.c);
-                        } catch (e) {
-                            console.log(`${t}: error`, e);
-                        }
-                    }
-                    console.groupEnd();
+           
                 }, 2000);
 
             } catch (e) {
-                console.error("[PowerSync] Error init:", e);
+                logger.error("[PowerSync] Error init:", e);
             }
         }
     }, []);
@@ -173,7 +167,7 @@ export const SyncProvider = ({ children }: { children: React.ReactNode }) => {
         const connect = async () => {
             try {
                 connectingRef.current = true;
-                console.log('[PowerSync] Connecting to:', POWERSYNC_URL);
+                logger.info('[PowerSync] Connecting to:', POWERSYNC_URL);
                 const connector = new ClerkConnector(async () => {
                      // Get fresh token using ref
                      const token = await getTokenRef.current({ template: 'supabase_daysync_new' });
@@ -181,7 +175,7 @@ export const SyncProvider = ({ children }: { children: React.ReactNode }) => {
                 }, supabase);
                 await db.connect(connector);
             } catch (e) {
-                console.error('[PowerSync] Connection failed:', e);
+                logger.error('[PowerSync] Connection failed:', e);
             } finally {
                 connectingRef.current = false;
             }
@@ -204,10 +198,10 @@ export const SyncProvider = ({ children }: { children: React.ReactNode }) => {
                 const connecting = status.connecting;
                 
                 if (!connected && !connecting) {
-                    console.warn('[PowerSync] DISCONNECTED! Status:', status);
+                    logger.warn('[PowerSync] DISCONNECTED! Status:', status);
                     const anyError = (status as any).anyError;
                     if (anyError) {
-                        console.error('[PowerSync] Connection Error Detail:', anyError);
+                        logger.error('[PowerSync] Connection Error Detail:', anyError);
                     }
                 } else if (connected) {
                 }

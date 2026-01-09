@@ -4,6 +4,9 @@ import { SupabaseClient, createClient } from '@supabase/supabase-js';
 import { dbCache } from '@/app/_services/powerSync/RemoteSyncProvider';
 import { getRemoteConfig } from '@/app/_services/powerSync/remoteConfig';
 
+import { createLogger } from '@/utils/logger/Logger';
+const logger = createLogger('useSyncCheck');
+
 export interface IntegrityReport {
     missingInLocal: number;
     missingInRemote: number;
@@ -62,7 +65,7 @@ export const useSyncCheck = (db: AbstractPowerSyncDatabase, supabase: SupabaseCl
             }
 
             // 2. Check Remote DBs from Cache
-            console.log('[SyncCheck] Checking remote DBs. Cache size:', dbCache.size);
+            logger.info('[SyncCheck] Checking remote DBs. Cache size:', dbCache.size);
             if (dbCache.size > 0) {
                 for (const [projectId, remoteDb] of dbCache.entries()) {
                     
@@ -153,7 +156,7 @@ export const useSyncCheck = (db: AbstractPowerSyncDatabase, supabase: SupabaseCl
             });
 
         } catch (e: any) {
-            console.error('Integrity check failed:', e);
+            logger.error('Integrity check failed:', e);
             setIntegrityReport({
                 missingInLocal: 0,
                 missingInRemote: 0,

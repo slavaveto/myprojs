@@ -4,8 +4,13 @@ import { Project, Folder, Task } from '@/app/types';
 import { globalStorage } from '@/utils/storage';
 import { useAuth } from '@clerk/nextjs';
 
+import { createLogger } from '@/utils/logger/Logger';
+const logger = createLogger('useProjectView');
+
 const STORAGE_KEY_PREFIX = 'v2_active_folder_';
 const REMOTE_TAB_KEY_PREFIX = 'v2_active_remote_tab_';
+
+
 
 export const useProjectView = (project: Project, isActive: boolean) => {
     // 1. Local State
@@ -131,10 +136,10 @@ export const useProjectView = (project: Project, isActive: boolean) => {
     const createFolder = async (title: string) => {
         try {
             if (!userId) {
-                console.error('No userId found');
+                logger.error('No userId found');
                 return;
             }
-            console.log('Creating local folder:', { title, projectId: project.id, userId });
+            logger.info('Creating local folder:', { title, projectId: project.id, userId });
             const maxSort = folders.reduce((max, f) => Math.max(max, f.sort_order), 0);
             const newSort = maxSort + 100;
             const id = crypto.randomUUID();
@@ -144,35 +149,35 @@ export const useProjectView = (project: Project, isActive: boolean) => {
                  VALUES (?, ?, ?, ?, datetime('now'), datetime('now'), ?)`,
                 [id, project.id, title, newSort, userId]
             );
-            console.log('Local folder created successfully');
+            logger.info('Local folder created successfully');
         } catch (error) {
-            console.error('FAILED to create local folder:', error);
+            logger.error('FAILED to create local folder:', error);
         }
     };
 
     const updateFolder = async (folderId: string, title: string) => {
         try {
-            console.log('Updating local folder:', { folderId, title });
+            logger.info('Updating local folder:', { folderId, title });
             await powerSync.execute(
                 `UPDATE folders SET title = ?, updated_at = datetime('now') WHERE id = ?`,
                 [title, folderId]
             );
-            console.log('Local folder updated successfully');
+            logger.info('Local folder updated successfully');
         } catch (error) {
-            console.error('FAILED to update local folder:', error);
+            logger.error('FAILED to update local folder:', error);
         }
     };
 
     const deleteFolder = async (folderId: string) => {
         try {
-            console.log('Deleting local folder:', folderId);
+            logger.info('Deleting local folder:', folderId);
             await powerSync.execute(
                 `UPDATE folders SET is_deleted = 1, updated_at = datetime('now') WHERE id = ?`,
                 [folderId]
             );
-            console.log('Local folder deleted successfully');
+            logger.info('Local folder deleted successfully');
         } catch (error) {
-            console.error('FAILED to delete local folder:', error);
+            logger.error('FAILED to delete local folder:', error);
         }
     };
 

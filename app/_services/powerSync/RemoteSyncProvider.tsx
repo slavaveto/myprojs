@@ -8,6 +8,9 @@ import { useSupabase } from '@/utils/supabase/useSupabase';
 import { SupabaseClient, createClient } from '@supabase/supabase-js';
 import { syncBridge } from './syncStatusBridge';
 
+import { createLogger } from '@/utils/logger/Logger';
+const logger = createLogger('RemoteSyncProvider');
+
 // Connector with Write-Back to Supabase
 class StaticRemoteConnector implements PowerSyncBackendConnector {
     constructor(
@@ -55,7 +58,7 @@ class StaticRemoteConnector implements PowerSyncBackendConnector {
                     }
                 }
 
-                console.log(`[RemotePowerSync] Uploading ${opAny.op} to ${table}`, data);
+                logger.info(`[RemotePowerSync] Uploading ${opAny.op} to ${table}`, data);
 
                 if (!table) continue;
 
@@ -72,12 +75,12 @@ class StaticRemoteConnector implements PowerSyncBackendConnector {
             }
             await transaction.complete();
         } catch (e: any) {
-            console.error('[RemoteConnector] Upload failed RAW:', e);
+            logger.error('[RemoteConnector] Upload failed RAW:', e);
             if (e && typeof e === 'object') {
-                console.error('[RemoteConnector] Upload failed JSON:', JSON.stringify(e, null, 2));
-                if (e.message) console.error('[RemoteConnector] Error Message:', e.message);
-                if (e.details) console.error('[RemoteConnector] Error Details:', e.details);
-                if (e.hint) console.error('[RemoteConnector] Error Hint:', e.hint);
+                logger.error('[RemoteConnector] Upload failed JSON:', JSON.stringify(e, null, 2));
+                if (e.message) logger.error('[RemoteConnector] Error Message:', e.message);
+                if (e.details) logger.error('[RemoteConnector] Error Details:', e.details);
+                if (e.hint) logger.error('[RemoteConnector] Error Hint:', e.hint);
             }
         } finally {
             // MANUALLY NOTIFY BRIDGE ABOUT UPLOAD END
@@ -120,7 +123,7 @@ export const RemoteSyncProvider = ({ projectId, projectTitle, children }: Remote
 
         // 1. CHECK CACHE
         if (dbCache.has(projectId)) {
-            console.log(`[RemoteSyncProvider] Using cached DB for ${projectTitle}`);
+            logger.info(`[RemoteSyncProvider] Using cached DB for ${projectTitle}`);
             setRemoteDb(dbCache.get(projectId)!);
             setIsLoading(false);
             return;
@@ -129,7 +132,7 @@ export const RemoteSyncProvider = ({ projectId, projectTitle, children }: Remote
         // Remote Logic
         const initRemote = async () => {
             if (!config.url || !config.token) {
-                console.error("Missing remote config for project:", projectTitle);
+                logger.error("Missing remote config for project:", projectTitle);
                 setRemoteDb(null);
                 setIsLoading(false);
                 return;
@@ -162,7 +165,7 @@ export const RemoteSyncProvider = ({ projectId, projectTitle, children }: Remote
 
             // Connect using static connector
             try {
-                console.log(`[RemotePowerSync] Connecting to ${projectTitle}...`);
+                logger.info(`[RemotePowerSync] Connecting to ${projectTitle}...`);
                 
                 // CREATE DEDICATED SUPABASE CLIENT FOR REMOTE
                 // Use Service Key if available (for write access), otherwise global supabase
@@ -182,22 +185,14 @@ export const RemoteSyncProvider = ({ projectId, projectTitle, children }: Remote
                 const connector = new StaticRemoteConnector(config.url, config.token, remoteSupabase);
                 
                 await db.connect(connector);
-                console.log(`[RemotePowerSync] Connected to ${projectTitle}`);
+                logger.info(`[RemotePowerSync] Connected to ${projectTitle}`);
 
                 // --- DEBUG DB COUNTS ---
                 try {
                     const tables = ['_ui_folders', '_ui_items'];
-                    console.group(`--- Remote DB Counts (${projectTitle}) ---`);
-                    for (const t of tables) {
-                        try {
-                            const res = await db.getAll<{ c: number }>(`SELECT count(*) as c FROM ${t} WHERE is_deleted = 0 OR is_deleted IS NULL`);
-                            console.log(`${t} (active):`, res[0]?.c);
-                        } catch (e) {
-                        }
-                    }
-                    console.groupEnd();
+            
                 } catch (e) {
-                    console.error('Error logging counts', e);
+                    logger.error('Error logging counts', e);
                 }
                 // -----------------------
                 
@@ -205,7 +200,7 @@ export const RemoteSyncProvider = ({ projectId, projectTitle, children }: Remote
                 dbCache.set(projectId, db);
 
             } catch (e) {
-                console.error(`[RemotePowerSync] Connection failed for ${projectTitle}`, e);
+                logger.error(`[RemotePowerSync] Connection failed for ${projectTitle}`, e);
             }
             
             setRemoteDb(db);

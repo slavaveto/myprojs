@@ -167,7 +167,6 @@ export default function TasksPage() {
                     activeSystemTab={activeSystemTab}
                     onSelectProject={handleSelectProject}
                     onSelectSystemTab={handleSelectSystemTab}
-                    onCreateProject={() => console.log('Create Project Clicked')}
                 />
 
                 {/* MAIN CONTENT AREA */}
