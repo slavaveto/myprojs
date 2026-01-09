@@ -235,5 +235,6 @@ export const RemoteSyncProvider = ({ projectId, projectTitle, children }: Remote
     }
 
     // 3. Fallback (should not happen if logic is correct, but safer to render children)
-    return <>{children}</>;
+    // PREVENT RENDERING CHILDREN IF REMOTE DB IS MISSING (to avoid leaking to Main DB)
+    return null;
 };

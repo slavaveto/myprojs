@@ -3,10 +3,13 @@ import { useQuery, usePowerSync } from '@powersync/react';
 import { useAuth } from '@clerk/nextjs';
 import { Folder, Task } from '@/app/types';
 import { globalStorage } from '@/utils/storage';
+import { createLogger } from '@/utils/logger/Logger';
+
+const logger = createLogger('useRemoteUiData');
 
 const REMOTE_STORAGE_KEY_PREFIX = 'v2_remote_ui_folder_';
 
-export const useRemoteUiData = (projectId: string, ignoreProjectId = false, controlledFolderId?: string | null) => {
+export const useRemoteUiData = (projectId: string, ignoreProjectId = false, controlledFolderId?: string | null, projectTitle?: string, shouldSkip = false) => {
     // 1. Local State for active folder in remote view
     const [internalActiveId, setInternalActiveId] = useState<string | null>(null);
     const { userId } = useAuth();
@@ -19,17 +22,19 @@ export const useRemoteUiData = (projectId: string, ignoreProjectId = false, cont
 
     // 2. Load folders from "_ui_folders"
     const { data: foldersData } = useQuery(
-        ignoreProjectId 
+        (ignoreProjectId && !shouldSkip)
             ? `SELECT * FROM _ui_folders
                WHERE (is_deleted IS NULL OR is_deleted = 0) 
-                 AND (is_hidden IS NULL OR is_hidden = 0) 
+               AND (is_hidden IS NULL OR is_hidden = 0) 
                ORDER BY sort_order ASC`
-            : `SELECT * FROM _ui_folders
-               WHERE project_id = ? 
-                 AND (is_deleted IS NULL OR is_deleted = 0) 
-                 AND (is_hidden IS NULL OR is_hidden = 0) 
-               ORDER BY sort_order ASC`,
-        ignoreProjectId ? [] : [projectId]
+            : (!shouldSkip) 
+                ? `SELECT * FROM _ui_folders
+                   WHERE project_id = ? 
+                   AND (is_deleted IS NULL OR is_deleted = 0) 
+                   AND (is_hidden IS NULL OR is_hidden = 0) 
+                   ORDER BY sort_order ASC`
+                : '', // Skip query if shouldSkip
+        (shouldSkip || ignoreProjectId) ? [] : [projectId]
     );
 
     // MEMOIZE folders to prevent effect loops
@@ -40,16 +45,18 @@ export const useRemoteUiData = (projectId: string, ignoreProjectId = false, cont
 
     // 3. Load items from "_ui_items"
     const { data: itemsData } = useQuery(
-        ignoreProjectId
+        (ignoreProjectId && !shouldSkip)
             ? `SELECT * FROM _ui_items
                WHERE (is_completed IS NULL OR is_completed = 0) 
                  AND (is_deleted IS NULL OR is_deleted = 0)
                  AND folder_id IN (SELECT id FROM _ui_folders)`
-            : `SELECT * FROM _ui_items
-               WHERE (is_completed IS NULL OR is_completed = 0) 
-                 AND (is_deleted IS NULL OR is_deleted = 0)
-                 AND folder_id IN (SELECT id FROM _ui_folders WHERE project_id = ?)`,
-        ignoreProjectId ? [] : [projectId]
+            : (!shouldSkip)
+                ? `SELECT * FROM _ui_items
+                   WHERE (is_completed IS NULL OR is_completed = 0) 
+                     AND (is_deleted IS NULL OR is_deleted = 0)
+                     AND folder_id IN (SELECT id FROM _ui_folders WHERE project_id = ?) `
+                : '', // Skip query if shouldSkip
+        (shouldSkip || ignoreProjectId) ? [] : [projectId]
     );
     
     // MEMOIZE tasks
@@ -83,6 +90,8 @@ export const useRemoteUiData = (projectId: string, ignoreProjectId = false, cont
 
     // 7. Auto-select folder logic
     useEffect(() => {
+        if (shouldSkip) return; // SKIP LOGIC
+
         if (folders.length > 0) {
             const isValid = activeFolderId && folders.find(f => f.id === activeFolderId);
             
@@ -90,13 +99,31 @@ export const useRemoteUiData = (projectId: string, ignoreProjectId = false, cont
                  const key = `${REMOTE_STORAGE_KEY_PREFIX}${projectId}`;
                  const savedId = globalStorage.getItem(key);
                  
+                 const savedFolder = folders.find(f => f.id === savedId);
+                 const savedTitle = savedFolder ? savedFolder.title : `UNKNOWN_ID(${savedId?.slice(0, 6)}...)`;
+
+                 logger.info(`Auto-select logic [${projectTitle || '?'}]`, { 
+                    project: projectTitle, 
+                    saved: savedTitle, 
+                    count: folders.length 
+                 });
+                 logger.info(`Available folders [${projectTitle || '?'}]`, folders.map(f => f.title));
+
                  // Check against folders array, which is now stable thanks to useMemo
                  if (savedId && folders.find(f => f.id === savedId)) {
+                     logger.info(`Restoring saved folder [${projectTitle || '?'}]`, savedTitle);
                      setInternalActiveId(savedId);
                  } else {
-                     const firstId = folders[0].id;
-                     setInternalActiveId(firstId);
-                     globalStorage.setItem(key, firstId);
+                     const firstFolder = folders[0];
+                     logger.warn(`Fallback to first folder [${projectTitle || '?'}]`, { 
+                        wanted: savedTitle, 
+                        got: firstFolder?.title 
+                     });
+                     const firstId = firstFolder?.id;
+                     if (firstId) {
+                        setInternalActiveId(firstId);
+                        globalStorage.setItem(key, firstId);
+                     }
                  }
             }
         }

@@ -44,13 +44,18 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
         setRemoteUiFolderCounts(counts);
     }, []);
 
+    const onActiveIdLoaded = React.useCallback((id: string | null) => {
+        setActiveRemoteUiFolderId(id);
+    }, []);
+
     const onActionsReady = React.useCallback((actions: any) => {
         remoteActionsRef.current = actions;
     }, []);
 
     // 2. LOCAL PROJECT LOGIC (Direct Hook)
     // Only fetch if NOT a remote project (to avoid double fetch or context errors)
-    const localUiData = useRemoteUiData(project.id, isRemoteProject); 
+    // WE PASS shouldSkip=isRemoteProject to prevent it from running against Main DB for remote projects
+    const localUiData = useRemoteUiData(project.id, isRemoteProject, undefined, project.title, isRemoteProject); 
 
     // 3. MERGE / SELECT DATA SOURCE
     const uiFolders = isRemoteProject ? remoteUiFolders : localUiData.folders;
@@ -154,7 +159,9 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
                          <RemoteSyncProvider projectId={project.id} projectTitle={project.title}>
                              <RemoteDataLifter 
                                  projectId={project.id} 
+                                 projectTitle={project.title}
                                  onFoldersLoaded={onFoldersLoaded}
+                                 onActiveIdLoaded={onActiveIdLoaded}
                                  onActionsReady={onActionsReady}
                              />
                              <RemoteUiView 
