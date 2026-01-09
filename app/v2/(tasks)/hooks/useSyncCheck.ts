@@ -43,9 +43,14 @@ export const useSyncCheck = (db: AbstractPowerSyncDatabase, supabase: SupabaseCl
                     if (!remoteIds.has(id)) missingRemote++;
                 });
 
-                if (missingLocal > 0 || missingRemote > 0) {
-                    reportDetails.push(`${table}: -${missingLocal} local, -${missingRemote} remote`);
-                }
+                const status = (missingLocal === 0 && missingRemote === 0) ? '✅' : '🔴';
+                const diffInfo = (missingLocal > 0 || missingRemote > 0) 
+                    ? ` (Missing: ${missingLocal} in Local, ${missingRemote} in Remote)` 
+                    : '';
+
+                reportDetails.push(
+                    `${status} ${table}: SQLite(${localIds.size}) / Supabase(${remoteIds.size})${diffInfo}`
+                );
 
                 missingLocalTotal += missingLocal;
                 missingRemoteTotal += missingRemote;
