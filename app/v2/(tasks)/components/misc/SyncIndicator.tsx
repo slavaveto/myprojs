@@ -230,9 +230,9 @@ export const SyncIndicator = () => {
                                          <div className="text-red-600 font-bold mb-1">Найдено расхождений! ⚠️</div>
                                      )}
                                      
-                                     {integrityReport.details.map((line: string, i: number) => (
-                                         <div key={i}>{line}</div>
-                                     ))}
+                                    {integrityReport.details.map((line: string, i: number) => (
+                                        <div key={i} dangerouslySetInnerHTML={{ __html: line }} />
+                                    ))}
                                      
                                      {(integrityReport.missingInLocal > 0 || integrityReport.missingInRemote > 0) && (
                                          <div className="mt-1 text-default-500">

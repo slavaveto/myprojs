@@ -49,7 +49,7 @@ export const useSyncCheck = (db: AbstractPowerSyncDatabase, supabase: SupabaseCl
                     : '';
 
                 reportDetails.push(
-                    `${status} ${table}: SQLite(${localIds.size}) / Supabase(${remoteIds.size})${diffInfo}`
+                    `${status} <b>${table}</b>: SQLite(${localIds.size}) / Supabase(${remoteIds.size})${diffInfo}`
                 );
 
                 missingLocalTotal += missingLocal;
