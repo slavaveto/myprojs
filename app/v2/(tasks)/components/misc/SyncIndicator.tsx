@@ -243,21 +243,19 @@ export const SyncIndicator = ({ isRemote }: SyncIndicatorProps) => {
                         )}
 
                         <div className="pt-2 border-t border-default-200">
-                             {!isRemote && (
-                                <Button 
-                                    size="sm" 
-                                    variant="flat" 
-                                    color="primary" 
-                                    className="w-full text-xs" 
-                                    isLoading={isChecking}
-                                    startContent={!isChecking && <Database size={12}/>}
-                                    onPress={checkIntegrity}
-                                >
-                                    Проверить базу
-                                </Button>
-                             )}
+                             <Button 
+                                size="sm" 
+                                variant="flat" 
+                                color="primary" 
+                                className="w-full text-xs" 
+                                isLoading={isChecking}
+                                startContent={!isChecking && <Database size={12}/>}
+                                onPress={checkIntegrity}
+                             >
+                                Проверить базу
+                             </Button>
 
-                             {integrityReport && !isRemote && (
+                             {integrityReport && (
                                  <div className="mt-2 text-[10px] p-2 bg-default-50 rounded border border-default-200">
                                      {integrityReport.missingInLocal === 0 && integrityReport.missingInRemote === 0 ? (
                                          <div className="text-green-600 font-bold">Все записи на месте! ✅</div>
