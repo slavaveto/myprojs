@@ -135,7 +135,7 @@ export const Header = ({ activeProject, activeSystemTab }: HeaderProps) => {
                 {/* Right: Actions & Sync */}
                 <div className="flex items-center gap-3 justify-self-end">
                     <div className="flex items-center gap-2 pr-2 border-r border-default-200">
-                        <SyncIndicator isRemote={isRemote} />
+                        <SyncIndicator isRemote={isRemote} projectTitle={activeProject?.title} />
                     </div>
                     <UserMenu />
                 </div>

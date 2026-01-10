@@ -16,7 +16,9 @@ class StaticRemoteConnector implements PowerSyncBackendConnector {
     constructor(
         private url: string, 
         private token: string,
-        private supabase: SupabaseClient
+        private supabase: SupabaseClient,
+        private projectId: string, // Need projectId to update bridge
+        private projectTitle: string
     ) {}
 
     async fetchCredentials() {
@@ -31,12 +33,13 @@ class StaticRemoteConnector implements PowerSyncBackendConnector {
         if (!transaction) return;
         
         // MANUALLY NOTIFY BRIDGE ABOUT UPLOAD START
-        syncBridge.updateStatus({
+        syncBridge.updateStatus(this.projectId, {
             connected: true, // Assuming connected if uploading
             connecting: false,
             downloading: false,
             uploading: true,
-            dataFlow: { uploading: true, downloading: false }
+            dataFlow: { uploading: true, downloading: false },
+            projectTitle: this.projectTitle
         });
 
         try {
@@ -84,12 +87,13 @@ class StaticRemoteConnector implements PowerSyncBackendConnector {
             }
         } finally {
             // MANUALLY NOTIFY BRIDGE ABOUT UPLOAD END
-            syncBridge.updateStatus({
+            syncBridge.updateStatus(this.projectId, {
                 connected: true,
                 connecting: false,
                 downloading: false,
                 uploading: false,
-                dataFlow: { uploading: false, downloading: false }
+                dataFlow: { uploading: false, downloading: false },
+                projectTitle: this.projectTitle
             });
         }
     }
@@ -125,7 +129,7 @@ export const RemoteSyncProvider = ({ projectId, projectTitle, children }: Remote
         if (remoteDb) {
              const status = remoteDb.currentStatus;
              const s = status as any;
-             syncBridge.updateStatus({
+             syncBridge.updateStatus(projectId, {
                 connected: status.connected,
                 connecting: status.connecting,
                 downloading: s.dataFlow?.downloading || !!s.downloading,
@@ -134,7 +138,8 @@ export const RemoteSyncProvider = ({ projectId, projectTitle, children }: Remote
                 anyError: s.anyError || (s as any).lastConnectError,
                 dataFlow: s.dataFlow,
                 isHealthy: health.isHealthy,
-                consecutiveFailures: health.consecutiveFailures
+                consecutiveFailures: health.consecutiveFailures,
+                projectTitle: projectTitle
             } as any);
         }
     }, [health, remoteDb]);
@@ -177,7 +182,7 @@ export const RemoteSyncProvider = ({ projectId, projectTitle, children }: Remote
             db.registerListener({
                 statusChanged: (status) => {
                     const s = status as any;
-                    syncBridge.updateStatus({
+                    syncBridge.updateStatus(projectId, {
                         connected: status.connected,
                         connecting: status.connecting,
                         downloading: s.dataFlow?.downloading || !!s.downloading,
@@ -187,7 +192,8 @@ export const RemoteSyncProvider = ({ projectId, projectTitle, children }: Remote
                         dataFlow: s.dataFlow,
                         // Inject current health from ref
                         isHealthy: healthRef.current.isHealthy,
-                        consecutiveFailures: healthRef.current.consecutiveFailures
+                        consecutiveFailures: healthRef.current.consecutiveFailures,
+                        projectTitle: projectTitle
                     } as any);
                 }
             });
@@ -211,7 +217,7 @@ export const RemoteSyncProvider = ({ projectId, projectTitle, children }: Remote
                         });
                     }
 
-                    const connector = new StaticRemoteConnector(config.url!, config.token!, remoteSupabase);
+                    const connector = new StaticRemoteConnector(config.url!, config.token!, remoteSupabase, projectId, projectTitle);
                     
                     await db.connect(connector);
                     logger.info(`[RemotePowerSync] Connected to ${projectTitle}`);
@@ -234,7 +240,7 @@ export const RemoteSyncProvider = ({ projectId, projectTitle, children }: Remote
         return () => {
              // DO NOT DISCONNECT. Keep connection alive.
              // Clear bridge on unmount (optional, but good for cleanup if switching tabs)
-             syncBridge.clear();
+             syncBridge.clear(projectId);
         };
 
     }, [projectId, projectTitle, config.type, config.url, config.token, supabase]);

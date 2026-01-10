@@ -16,23 +16,32 @@ export interface SimpleSyncStatus {
     };
     isHealthy?: boolean; // New: Connection health check
     consecutiveFailures?: number;
+    projectTitle?: string;
 }
 
 class SyncStatusBridge extends EventEmitter {
-    private currentStatus: SimpleSyncStatus | null = null;
+    private statuses = new Map<string, SimpleSyncStatus>();
 
-    updateStatus(status: SimpleSyncStatus) {
-        this.currentStatus = status;
-        this.emit('change', status);
+    updateStatus(projectId: string, status: SimpleSyncStatus) {
+        this.statuses.set(projectId, status);
+        this.emit('change', this.statuses);
     }
 
-    getStatus() {
-        return this.currentStatus;
+    getStatuses() {
+        return this.statuses;
+    }
+    
+    getStatus(projectId: string) {
+        return this.statuses.get(projectId);
     }
 
-    clear() {
-        this.currentStatus = null;
-        this.emit('change', null);
+    clear(projectId?: string) {
+        if (projectId) {
+            this.statuses.delete(projectId);
+        } else {
+            this.statuses.clear();
+        }
+        this.emit('change', this.statuses);
     }
 }
 

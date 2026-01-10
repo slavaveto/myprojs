@@ -14,98 +14,103 @@ const logger = createLogger('SyncIndicator');
 
 export interface SyncIndicatorProps {
     isRemote?: boolean;
+    projectTitle?: string;
 }
 
-export const SyncIndicator = ({ isRemote }: SyncIndicatorProps) => {
+export const SyncIndicator = ({ isRemote, projectTitle }: SyncIndicatorProps) => {
     // 1. Get default status (Main DB)
     const mainStatus = useStatus() as any;
     
-    // 2. Get bridge status (Remote DB)
-    const [bridgeStatus, setBridgeStatus] = useState<SimpleSyncStatus | null>(syncBridge.getStatus());
+    // 2. Get ALL remote statuses (Map)
+    const [remoteStatuses, setRemoteStatuses] = useState<Map<string, SimpleSyncStatus>>(new Map());
 
     useEffect(() => {
-        if (!isRemote) return;
-        
-        const handler = (s: SimpleSyncStatus | null) => {
-            setBridgeStatus(s);
-            if (s) {
-                 logger.info('SyncIndicator received bridge status:', { 
-                     healthy: s.isHealthy, 
-                     failures: s.consecutiveFailures 
-                 });
-            }
+        const handler = (statuses: Map<string, SimpleSyncStatus>) => {
+            setRemoteStatuses(new Map(statuses)); // Clone
         };
         syncBridge.on('change', handler);
-        // Sync initial value in case we missed event
-        setBridgeStatus(syncBridge.getStatus());
+        // Initial sync
+        setRemoteStatuses(new Map(syncBridge.getStatuses()));
         
         return () => {
             syncBridge.off('change', handler);
         };
-    }, [isRemote]);
+    }, []);
 
-    // 3. Select active status
-    const status = isRemote ? (bridgeStatus || { connected: false, connecting: true }) : mainStatus;
+    // 3. Determine ACTIVE status (for current view)
+    // If remote, find the status for THIS project (we don't have ID here easily, unless passed? 
+    // Wait, syncBridge keys are project IDs. We only have projectTitle passed.
+    // We should ideally pass projectId too. But let's find by title or assume single active remote if isRemote is true?
+    // Actually, syncBridge stores by ID.
+    // Let's iterate values to find one matching title? Or just use "Any Active Remote Status"?
+    // Ideally Header should pass ID.
+    
+    // Fallback: If isRemote, we try to find a matching status in map, or use the last updated one?
+    // Let's assume for now we use the map values.
+    
+    let activeRemoteStatus: SimpleSyncStatus | null = null;
+    if (isRemote && projectTitle) {
+        // Try to find by title
+        for (const s of Array.from(remoteStatuses.values())) {
+            if (s.projectTitle === projectTitle) {
+                activeRemoteStatus = s;
+                break;
+            }
+        }
+    }
+
+    const currentViewStatus = isRemote 
+        ? (activeRemoteStatus || { connected: false, connecting: true }) 
+        : mainStatus;
 
     const db = usePowerSync();
     const { supabase } = useSupabase();
 
-    // 4. HEALTH CHECK
-    // Only check Main DB health here. Remote DB health comes via bridge.
-    const mainHealth = useConnectionHealth(isRemote ? null : db, 'MainDB');
+    // 4. HEALTH CHECK (GLOBAL)
     
-    const isHealthy = isRemote 
-        ? (bridgeStatus?.isHealthy === undefined ? true : bridgeStatus.isHealthy) 
-        : mainHealth.isHealthy;
-        
-    const failures = isRemote
-        ? (bridgeStatus?.consecutiveFailures || 0)
-        : mainHealth.consecutiveFailures;
+    // Main DB Health
+    const mainHealth = useConnectionHealth(db, 'MainDB'); // Always check Main DB
+    const isMainUnhealthy = !mainHealth.isHealthy;
 
-    // SyncCheck is strictly for MAIN DB for now (or passed DB).
+    // Collect Unhealthy Remotes
+    const unhealthyRemotes: { name: string, failures: number }[] = [];
+    remoteStatuses.forEach((s, pid) => {
+        if (s.isHealthy === false) {
+            unhealthyRemotes.push({ 
+                name: s.projectTitle || `Remote ${pid.slice(0,4)}`, 
+                failures: s.consecutiveFailures || 0 
+            });
+        }
+    });
+
+    const isGlobalUnhealthy = isMainUnhealthy || unhealthyRemotes.length > 0;
+    
+    // Active Health (for current view color logic if we want to be specific, but Global Red is better)
+    
+    // SyncCheck is strictly for MAIN DB for now
     const { checkIntegrity, isChecking, integrityReport, clearReport } = useSyncCheck(db, supabase);
 
-    // Determine state
-    const rawIsSyncing = status.dataFlow?.downloading || status.dataFlow?.uploading || status.downloading || status.uploading;
-    const rawIsConnecting = status.connecting;
+    // Determine state (Current View)
+    const rawIsSyncing = currentViewStatus.dataFlow?.downloading || currentViewStatus.dataFlow?.uploading || currentViewStatus.downloading || currentViewStatus.uploading;
+    const rawIsConnecting = currentViewStatus.connecting;
 
     // Debug status changes
     useEffect(() => {
-        const up = status.dataFlow?.uploading || status.uploading;
-        const down = status.dataFlow?.downloading || status.downloading;
-        
+        const up = currentViewStatus.dataFlow?.uploading || currentViewStatus.uploading;
+        const down = currentViewStatus.dataFlow?.downloading || currentViewStatus.downloading;
         if (up || down) {
             logger.info('SyncIndicator: Activity detected!', { uploading: up, downloading: down });
         }
-    }, [status]);
+    }, [currentViewStatus]);
     
-    // UI States with min duration
+    // UI States
     const [isUploading, setIsUploading] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
     const [isConnecting, setIsConnecting] = useState(false);
 
-    // Custom Event Listener for Upload (Manual Override)
     useEffect(() => {
-        const handleUploadStart = () => setIsUploading(true);
-        const handleUploadEnd = () => {
-            setTimeout(() => {
-                 const stillUploading = status.dataFlow?.uploading || status.uploading;
-                 if (!stillUploading) setIsUploading(false);
-            }, 500);
-        };
-
-        window.addEventListener('powersync-upload-start', handleUploadStart);
-        window.addEventListener('powersync-upload-end', handleUploadEnd);
-
-        return () => {
-            window.removeEventListener('powersync-upload-start', handleUploadStart);
-            window.removeEventListener('powersync-upload-end', handleUploadEnd);
-        };
-    }, [status]);
-
-    useEffect(() => {
-        const rawUp = status.dataFlow?.uploading || status.uploading;
-        const rawDown = status.dataFlow?.downloading || status.downloading;
+        const rawUp = currentViewStatus.dataFlow?.uploading || currentViewStatus.uploading;
+        const rawDown = currentViewStatus.dataFlow?.downloading || currentViewStatus.downloading;
 
         let upTimer: NodeJS.Timeout;
         let downTimer: NodeJS.Timeout;
@@ -116,11 +121,8 @@ export const SyncIndicator = ({ isRemote }: SyncIndicatorProps) => {
         if (rawDown) setIsDownloading(true);
         else downTimer = setTimeout(() => setIsDownloading(false), 500);
 
-        return () => {
-            clearTimeout(upTimer);
-            clearTimeout(downTimer);
-        };
-    }, [status]);
+        return () => { clearTimeout(upTimer); clearTimeout(downTimer); };
+    }, [currentViewStatus]);
 
     useEffect(() => {
         let timer: NodeJS.Timeout;
@@ -132,14 +134,12 @@ export const SyncIndicator = ({ isRemote }: SyncIndicatorProps) => {
         return () => clearTimeout(timer);
     }, [rawIsConnecting]);
 
-    const isOffline = !status.connected && !status.connecting;
-    const uploadError = status.dataFlow?.uploadError;
-    const downloadError = status.dataFlow?.downloadError;
-    const anyError = status.anyError || uploadError || downloadError;
+    const isOffline = !currentViewStatus.connected && !currentViewStatus.connecting;
+    const anyError = currentViewStatus.anyError || currentViewStatus.dataFlow?.uploadError || currentViewStatus.dataFlow?.downloadError;
     
     // Status Text logic
     const getStatusText = () => {
-        if (!isHealthy) return `Unhealthy (${failures})`;
+        if (isGlobalUnhealthy) return `Unstable (${unhealthyRemotes.length + (isMainUnhealthy ? 1 : 0)})`;
         if (anyError) return 'Sync Error';
         if (isConnecting) return 'Connecting...';
         if (isUploading) return 'Uploading...';
@@ -148,12 +148,12 @@ export const SyncIndicator = ({ isRemote }: SyncIndicatorProps) => {
     };
 
     const getStatusColor = () => {
-        if (!isHealthy) return 'danger';
+        if (isGlobalUnhealthy) return 'danger';
         if (anyError) return 'danger';
         if (isOffline) return 'danger';
         if (isConnecting) return 'warning';
-        if (isUploading) return 'danger'; // Red for upload
-        if (isDownloading) return 'primary'; // Blue for download
+        if (isUploading) return 'danger'; 
+        if (isDownloading) return 'primary';
         return 'success';
     };
 
@@ -173,7 +173,7 @@ export const SyncIndicator = ({ isRemote }: SyncIndicatorProps) => {
                     size="sm" 
                     className={clsx(
                         "transition-all",
-                        (!isHealthy || isOffline || anyError) ? "text-red-500" : 
+                        (isGlobalUnhealthy || isOffline || anyError) ? "text-red-500" : 
                         isConnecting ? "text-orange-500" :
                         isUploading ? "text-red-500" :
                         isDownloading ? "text-blue-500" :
@@ -181,7 +181,7 @@ export const SyncIndicator = ({ isRemote }: SyncIndicatorProps) => {
                     )}
                 >
                     {/* ICON LOGIC */}
-                    {(!isHealthy && failures >= 3) ? (
+                    {isGlobalUnhealthy ? (
                          <AlertTriangle size={18} className="text-red-600 animate-pulse" />
                     ) : anyError ? (
                         <AlertTriangle size={18} className="text-red-600 animate-pulse" />
@@ -196,7 +196,6 @@ export const SyncIndicator = ({ isRemote }: SyncIndicatorProps) => {
                     ) : (
                         <div className="relative">
                             <Cloud size={18} className="text-green-600" />
-                            {/* Small ping animation if connected */}
                             <span className="absolute top-0 right-0 -mt-0.5 -mr-0.5 flex h-2 w-2">
                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                             </span>
@@ -206,7 +205,7 @@ export const SyncIndicator = ({ isRemote }: SyncIndicatorProps) => {
             </PopoverTrigger>
             
             <PopoverContent>
-                <div className="px-1 py-2 w-[240px] flex flex-col gap-3">
+                <div className="px-1 py-2 w-[260px] flex flex-col gap-3">
                     <div className="flex items-center justify-between border-b border-default-200 pb-2">
                         <span className="text-sm font-bold">Sync Status</span>
                         <Chip size="sm" color={getStatusColor()} variant="flat">
@@ -215,18 +214,27 @@ export const SyncIndicator = ({ isRemote }: SyncIndicatorProps) => {
                     </div>
 
                     <div className="space-y-2 text-xs text-default-600">
-                        {/* Health */}
-                        {!isHealthy && (
-                            <div className="bg-red-50 text-red-600 p-2 rounded border border-red-200 font-bold">
-                                Connection unstable! {failures} consecutive failures.
+                        {/* GLOBAL HEALTH ISSUES */}
+                        {isGlobalUnhealthy && (
+                            <div className="flex flex-col gap-1 mb-2">
+                                {isMainUnhealthy && (
+                                    <div className="bg-red-50 text-red-600 p-2 rounded border border-red-200 font-bold">
+                                        Main DB Unstable! ({mainHealth.consecutiveFailures} fails)
+                                    </div>
+                                )}
+                                {unhealthyRemotes.map((r, i) => (
+                                    <div key={i} className="bg-red-50 text-red-600 p-2 rounded border border-red-200 font-bold">
+                                        {r.name} Unstable! ({r.failures} fails)
+                                    </div>
+                                ))}
                             </div>
                         )}
 
-                        {/* Connection */}
+                        {/* Connection (Current View) */}
                         <div className="flex justify-between">
-                            <span>Connection</span>
-                            <span className={status.connected ? "text-green-600" : "text-red-500"}>
-                                {status.connected ? "Online" : "Disconnected"}
+                            <span>Connection ({isRemote ? (projectTitle || 'Remote') : 'Main'})</span>
+                            <span className={currentViewStatus.connected ? "text-green-600" : "text-red-500"}>
+                                {currentViewStatus.connected ? "Online" : "Disconnected"}
                             </span>
                         </div>
 
@@ -234,37 +242,31 @@ export const SyncIndicator = ({ isRemote }: SyncIndicatorProps) => {
                         <div className="flex justify-between">
                             <span>Last Synced</span>
                             <span className="font-mono">
-                                {status.lastSyncedAt 
-                                    ? new Date(status.lastSyncedAt).toLocaleTimeString()
+                                {currentViewStatus.lastSyncedAt 
+                                    ? new Date(currentViewStatus.lastSyncedAt).toLocaleTimeString()
                                     : "Never"}
                             </span>
                         </div>
 
-                        {/* Uploading */}
-                        {status.dataFlow?.uploading && (
+                        {/* Activity */}
+                        {currentViewStatus.dataFlow?.uploading && (
                             <div className="flex justify-between text-orange-600 bg-orange-50 p-1 rounded">
                                 <span className="flex items-center gap-1"><UploadCloud size={12}/> Uploading</span>
                                 <span>Processing...</span>
                             </div>
                         )}
-
-                        {/* Downloading */}
-                        {status.dataFlow?.downloading && (
+                        {currentViewStatus.dataFlow?.downloading && (
                             <div className="flex justify-between text-blue-600 bg-blue-50 p-1 rounded">
                                 <span className="flex items-center gap-1"><DownloadCloud size={12}/> Downloading</span>
                                 <span>Processing...</span>
                             </div>
                         )}
                         
-                        {/* Error */}
+                        {/* Errors */}
                         {anyError && (
                             <div className="bg-red-50 text-red-600 p-2 rounded text-[10px] break-words border border-red-200">
                                 <div className="font-bold mb-1">Sync Error:</div>
-                                {uploadError && <div>Upload: {uploadError.message || JSON.stringify(uploadError)}</div>}
-                                {downloadError && <div>Download: {downloadError.message || JSON.stringify(downloadError)}</div>}
-                                {!uploadError && !downloadError && (
-                                    <div>{anyError.message || JSON.stringify(anyError)}</div>
-                                )}
+                                <div>{anyError.message || JSON.stringify(anyError)}</div>
                             </div>
                         )}
 
@@ -278,7 +280,7 @@ export const SyncIndicator = ({ isRemote }: SyncIndicatorProps) => {
                                 startContent={!isChecking && <Database size={12}/>}
                                 onPress={checkIntegrity}
                              >
-                                Проверить базу
+                                Проверить базу (Main)
                              </Button>
                              
                              {/* Integrity Report Rendering */}
@@ -293,13 +295,6 @@ export const SyncIndicator = ({ isRemote }: SyncIndicatorProps) => {
                                     {integrityReport.details.map((line: string, i: number) => (
                                         <div key={i} dangerouslySetInnerHTML={{ __html: line }} />
                                     ))}
-                                     
-                                     {(integrityReport.missingInLocal > 0 || integrityReport.missingInRemote > 0) && (
-                                         <div className="mt-1 text-default-500">
-                                             Local missing: {integrityReport.missingInLocal}<br/>
-                                             Remote missing: {integrityReport.missingInRemote}
-                                         </div>
-                                     )}
                                  </div>
                              )}
                         </div>
