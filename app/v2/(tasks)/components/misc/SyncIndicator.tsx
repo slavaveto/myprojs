@@ -218,13 +218,19 @@ export const SyncIndicator = ({ isRemote, projectTitle }: SyncIndicatorProps) =>
                         {isGlobalUnhealthy && (
                             <div className="flex flex-col gap-1 mb-2">
                                 {isMainUnhealthy && (
-                                    <div className="bg-red-50 text-red-600 p-2 rounded border border-red-200 font-bold">
-                                        Main DB Unstable! ({mainHealth.consecutiveFailures} fails)
+                                    <div className="flex items-start items-center gap-2 bg-red-50 text-red-700 p-2 rounded text-[12px] border border-red-100">
+                                        <AlertTriangle size={12} className="mt-[2px] shrink-0" />
+                                        <div>
+                                            <span className="font-semibold">Main DB:</span> Unstable ({mainHealth.consecutiveFailures} fails)
+                                        </div>
                                     </div>
                                 )}
                                 {unhealthyRemotes.map((r, i) => (
-                                    <div key={i} className="bg-red-50 text-red-600 p-2 rounded border border-red-200 font-bold">
-                                        {r.name} Unstable! ({r.failures} fails)
+                                    <div key={i} className="flex items-start items-center gap-2 bg-red-50 text-red-700 p-2 rounded text-[12px] border border-red-100">
+                                        <AlertTriangle size={12} className="mt-[2px] shrink-0" />
+                                        <div>
+                                            <span className="font-semibold">{r.name}:</span> Unstable ({r.failures} fails)
+                                        </div>
                                     </div>
                                 ))}
                             </div>
