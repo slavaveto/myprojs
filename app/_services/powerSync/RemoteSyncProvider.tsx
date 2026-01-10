@@ -131,7 +131,7 @@ export const RemoteSyncProvider = ({ projectId, projectTitle, children }: Remote
                 downloading: s.dataFlow?.downloading || !!s.downloading,
                 uploading: s.dataFlow?.uploading || !!s.uploading,
                 lastSyncedAt: status.lastSyncedAt,
-                anyError: s.anyError,
+                anyError: s.anyError || (s as any).lastConnectError,
                 dataFlow: s.dataFlow,
                 isHealthy: health.isHealthy,
                 consecutiveFailures: health.consecutiveFailures
@@ -183,7 +183,7 @@ export const RemoteSyncProvider = ({ projectId, projectTitle, children }: Remote
                         downloading: s.dataFlow?.downloading || !!s.downloading,
                         uploading: s.dataFlow?.uploading || !!s.uploading,
                         lastSyncedAt: status.lastSyncedAt,
-                        anyError: s.anyError,
+                        anyError: s.anyError || (s as any).lastConnectError,
                         dataFlow: s.dataFlow,
                         // Inject current health from ref
                         isHealthy: healthRef.current.isHealthy,

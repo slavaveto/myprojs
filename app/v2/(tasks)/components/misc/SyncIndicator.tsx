@@ -26,7 +26,15 @@ export const SyncIndicator = ({ isRemote }: SyncIndicatorProps) => {
     useEffect(() => {
         if (!isRemote) return;
         
-        const handler = (s: SimpleSyncStatus | null) => setBridgeStatus(s);
+        const handler = (s: SimpleSyncStatus | null) => {
+            setBridgeStatus(s);
+            if (s) {
+                 logger.info('SyncIndicator received bridge status:', { 
+                     healthy: s.isHealthy, 
+                     failures: s.consecutiveFailures 
+                 });
+            }
+        };
         syncBridge.on('change', handler);
         // Sync initial value in case we missed event
         setBridgeStatus(syncBridge.getStatus());
@@ -47,7 +55,7 @@ export const SyncIndicator = ({ isRemote }: SyncIndicatorProps) => {
     const mainHealth = useConnectionHealth(isRemote ? null : db, 'MainDB');
     
     const isHealthy = isRemote 
-        ? (bridgeStatus?.isHealthy !== false) // Default to true if undefined
+        ? (bridgeStatus?.isHealthy === undefined ? true : bridgeStatus.isHealthy) 
         : mainHealth.isHealthy;
         
     const failures = isRemote

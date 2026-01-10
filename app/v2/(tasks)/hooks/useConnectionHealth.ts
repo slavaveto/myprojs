@@ -38,7 +38,9 @@ export const useConnectionHealth = (db: AbstractPowerSyncDatabase | null, dbName
                 const isHealthy = newFailures < 3; // Unhealthy if 3 or more consecutive failures
 
                 if (!isHealthy) {
-                    logger.warn(`[${dbName}] Connection unhealthy! Failures: ${newFailures}`);
+                    setTimeout(() => {
+                        logger.warn(`[${dbName}] Connection unhealthy! Failures: ${newFailures}`);
+                    }, 0);
                 }
 
                 return {
@@ -49,11 +51,8 @@ export const useConnectionHealth = (db: AbstractPowerSyncDatabase | null, dbName
             });
         };
 
-        // Run immediately
-        checkHealth();
-
-        // Run every 60 seconds
-        const interval = setInterval(checkHealth, 60000);
+        // Run every 3 seconds (DEBUG)
+        const interval = setInterval(checkHealth, 3000);
 
         return () => clearInterval(interval);
     }, [db, dbName]);
