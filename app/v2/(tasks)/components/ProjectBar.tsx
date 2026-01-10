@@ -6,11 +6,13 @@ import {
     Inbox, 
     Star, 
     Target, 
-    CheckCircle2, 
-    FileText 
+    CheckCircle2, CircleCheckBig,
+    FileText,
+    AlertTriangle
 } from 'lucide-react';
 import { Button, Chip } from '@heroui/react';
 import { Project } from '@/app/types';
+import { syncBridge, SimpleSyncStatus } from '@/app/_services/powerSync/syncStatusBridge';
 
 // --- Components Types ---
 
@@ -79,13 +81,24 @@ export const ProjectBar = ({
     onSelectSystemTab,
     onCreateProject
 }: ProjectBarProps) => {
+    // Subscribe to remote statuses
+    const [remoteStatuses, setRemoteStatuses] = React.useState<Map<string, SimpleSyncStatus>>(new Map());
+
+    React.useEffect(() => {
+        const handler = (s: Map<string, SimpleSyncStatus>) => setRemoteStatuses(new Map(s));
+        syncBridge.on('change', handler);
+        // Initial sync
+        setRemoteStatuses(new Map(syncBridge.getStatuses()));
+        return () => { syncBridge.off('change', handler); };
+    }, []);
+
     return (
         <aside className="w-[250px] flex-shrink-0 border-r border-default-200 bg-default-50 flex flex-col z-20 h-full">
             {/* Header */}
             <div className="p-4 border-b border-default-200/50 flex items-center justify-between bg-yellow-100/10">
                 <div className="flex items-center gap-2 font-bold text-lg min-w-0 text-default-700">
-                    <LayoutGrid size={24} className="text-primary flex-shrink-0" />
-                    <span className="truncate">DaySync v2</span>
+                    <CircleCheckBig size={24} className="text-orange-500 flex-shrink-0" />
+                    <span className="truncate">DaySync</span>
                 </div>
                 
                 <Button 
@@ -128,11 +141,16 @@ export const ProjectBar = ({
                 {/* Projects List */}
                 <div>
                     <div className="px-2 pb-2 text-xs font-semibold text-default-400 uppercase tracking-wider">
-                        My Projects ({projects.length})
+                        {/* My Projects ({projects.length}) */}
+                        My Projects
                     </div>
                     
                     <div className="space-y-0.5">
-                        {projects.map(project => (
+                        {projects.map(project => {
+                            const status = remoteStatuses.get(project.id);
+                            const isUnhealthy = status?.isHealthy === false;
+                            
+                            return (
                             <div 
                                 key={project.id}
                                 onClick={() => onSelectProject(project.id)}
@@ -150,8 +168,11 @@ export const ProjectBar = ({
                                 />
                                 </div>
                                 <span className="flex-1 truncate">{project.title}</span>
+                                {isUnhealthy && (
+                                    <AlertTriangle size={14} className="text-red-500 animate-pulse ml-auto flex-shrink-0" />
+                                )}
                             </div>
-                        ))}
+                        )})}
                         
                         {projects.length === 0 && (
                             <div className="px-4 py-4 text-xs text-default-400 text-center">

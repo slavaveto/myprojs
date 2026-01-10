@@ -1,6 +1,13 @@
 import React from 'react';
 import { SyncProvider } from '@/app/_services/powerSync/SyncProvider';
 
+
+
+
+
+
+
+
 export default function V2Layout({
   children,
 }: {

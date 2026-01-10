@@ -286,7 +286,7 @@ export const SyncIndicator = ({ isRemote, projectTitle }: SyncIndicatorProps) =>
                                 startContent={!isChecking && <Database size={12}/>}
                                 onPress={checkIntegrity}
                              >
-                                Проверить базу (Main)
+                                Проверить базы
                              </Button>
                              
                              {/* Integrity Report Rendering */}
