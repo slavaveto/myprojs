@@ -4,8 +4,8 @@ import React, { useState } from 'react';
 import { useQuery } from '@powersync/react';
 import { Spinner } from '@heroui/react';
 import { ProjectBar, ProjectV3 } from './components/ProjectBar';
-import { ProjectView } from './components/ProjectView';
-import { FilterView } from './filters/FilterView';
+import { ProjectView } from './views/ProjectView';
+import { FilterView } from './views/FilterView';
 
 export default function TasksPageV3() {
     const { data: projects, isLoading } = useQuery(`
