@@ -63,42 +63,42 @@ export default function TasksPageV3() {
             />
             <main className="flex-grow flex flex-col h-full overflow-hidden bg-white relative">
                 
-                {/* System Views (Always mounted, hidden via CSS) */}
-                <div className={activeProjectId === 'filter_inbox' ? 'contents' : 'hidden'}>
-                    <FilterView filterId="filter_inbox" isActive={activeProjectId === 'filter_inbox'} />
-                </div>
-                <div className={activeProjectId === 'filter_today' ? 'contents' : 'hidden'}>
-                    <FilterView filterId="filter_today" isActive={activeProjectId === 'filter_today'} />
-                </div>
-                <div className={activeProjectId === 'filter_doing' ? 'contents' : 'hidden'}>
-                    <FilterView filterId="filter_doing" isActive={activeProjectId === 'filter_doing'} />
-                </div>
-                <div className={activeProjectId === 'filter_done' ? 'contents' : 'hidden'}>
-                    <FilterView filterId="filter_done" isActive={activeProjectId === 'filter_done'} />
-                </div>
-                <div className={activeProjectId === 'filter_logs' ? 'contents' : 'hidden'}>
-                    <FilterView filterId="filter_logs" isActive={activeProjectId === 'filter_logs'} />
-                </div>
+            {/* System Views (Always mounted, hidden via CSS) */}
+            <div className={activeProjectId === 'filter_inbox' ? 'contents' : 'hidden'}>
+                <FilterView filterId="filter_inbox" isActive={activeProjectId === 'filter_inbox'} />
+            </div>
+            <div className={activeProjectId === 'filter_today' ? 'contents' : 'hidden'}>
+                <FilterView filterId="filter_today" isActive={activeProjectId === 'filter_today'} />
+            </div>
+            <div className={activeProjectId === 'filter_doing' ? 'contents' : 'hidden'}>
+                <FilterView filterId="filter_doing" isActive={activeProjectId === 'filter_doing'} />
+            </div>
+            <div className={activeProjectId === 'filter_done' ? 'contents' : 'hidden'}>
+                <FilterView filterId="filter_done" isActive={activeProjectId === 'filter_done'} />
+            </div>
+            <div className={activeProjectId === 'filter_logs' ? 'contents' : 'hidden'}>
+                <FilterView filterId="filter_logs" isActive={activeProjectId === 'filter_logs'} />
+            </div>
 
-                {/* Project View (Single instance, switches props, hides if system active) */}
-                {activeProject && (
-                    <div className={!isSystemProject ? 'contents' : 'hidden'}>
-                        <ProjectView 
-                            project={activeProject} 
-                            isActive={!isSystemProject} 
-                        />
-                    </div>
-                )}
+            {/* Project Views (All mounted, hidden via CSS) */}
+            {projects?.map(project => (
+                <div key={project.id} className={activeProjectId === project.id ? 'contents' : 'hidden'}>
+                    <ProjectView 
+                        project={project} 
+                        isActive={activeProjectId === project.id} 
+                    />
+                </div>
+            ))}
 
-                {/* Fallback (if nothing selected) */}
-                {!activeProjectId && (
-                    <div className="flex items-center justify-center h-full text-gray-400">
-                        <div className="text-center">
-                            <h2 className="text-xl font-semibold mb-2">Welcome to DaySync V3</h2>
-                            <p className="text-sm">Select a project from the sidebar to get started.</p>
-                        </div>
+            {/* Fallback (if nothing selected) */}
+            {!activeProjectId && (
+                <div className="flex items-center justify-center h-full text-gray-400">
+                    <div className="text-center">
+                        <h2 className="text-xl font-semibold mb-2">Welcome to DaySync V3</h2>
+                        <p className="text-sm">Select a project from the sidebar to get started.</p>
                     </div>
-                )}
+                </div>
+            )}
             </main>
         </div>
     );
