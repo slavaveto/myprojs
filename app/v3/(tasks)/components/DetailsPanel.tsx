@@ -54,7 +54,7 @@ export const DetailsPanel = ({ taskId }: DetailsPanelProps) => {
 
     if (!taskId) {
         return (
-            <div className="w-full h-full flex flex-col items-center justify-center text-default-400 z-20 border-l border-default-200">
+            <div className="w-full h-full flex flex-col items-center justify-center text-default-400 z-20">
                 <span className="text-sm">Select a task to view details</span>
             </div>
         );
@@ -62,14 +62,14 @@ export const DetailsPanel = ({ taskId }: DetailsPanelProps) => {
 
     if (!task) {
         return (
-            <div className="w-full h-full flex flex-col items-center justify-center text-default-400 z-20 border-l border-default-200">
+            <div className="w-full h-full flex flex-col items-center justify-center text-default-400 z-20">
                 <span className="text-sm">Loading...</span>
             </div>
         );
     }
 
     return (
-        <div className="w-full h-full flex flex-col z-20 border-l border-default-200 bg-white">
+        <div className="w-full h-full flex flex-col z-20">
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-default-200/50">
                 <span className="text-xs font-bold text-default-400 uppercase tracking-wider">Details</span>
