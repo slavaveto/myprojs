@@ -4,6 +4,7 @@ import { ProjectV3 } from '../components/ProjectBar';
 import { Header } from '../components/Header';
 import { FolderTabs, FolderV3 } from '../components/FolderTabs';
 import { TaskList, TaskV3 } from '../components/TaskList';
+import { DetailsPanel } from '../components/DetailsPanel';
 
 interface ProjectViewProps {
     project: ProjectV3;
@@ -52,21 +53,29 @@ export const ProjectView = ({ project }: ProjectViewProps) => {
                 onCreateFolder={handleCreateFolder}
             />
 
-            <div className="flex-1 p-6 md:p-8 bg-default-50 overflow-y-auto">
-                {activeFolderId ? (
-                    <TaskList 
-                        tasks={tasks} 
-                        selectedTaskId={selectedTaskId}
-                        onSelectTask={setSelectedTaskId}
-                        onToggleTask={handleToggleTask}
-                    />
-                ) : (
-                    <div className="h-full flex items-center justify-center text-default-400">
-                        {folders.length === 0 
-                            ? "This project has no folders yet." 
-                            : "Select a folder to view tasks."}
-                    </div>
-                )}
+            <div className="flex-1 flex overflow-hidden">
+                {/* Left: Task List */}
+                <div className="flex-1 p-6 md:p-8 bg-default-50 overflow-y-auto">
+                    {activeFolderId ? (
+                        <TaskList 
+                            tasks={tasks} 
+                            selectedTaskId={selectedTaskId}
+                            onSelectTask={setSelectedTaskId}
+                            onToggleTask={handleToggleTask}
+                        />
+                    ) : (
+                        <div className="h-full flex items-center justify-center text-default-400">
+                            {folders.length === 0 
+                                ? "This project has no folders yet." 
+                                : "Select a folder to view tasks."}
+                        </div>
+                    )}
+                </div>
+
+                {/* Right: Details Panel */}
+                <div className="w-[400px] flex-shrink-0 bg-background z-10">
+                    <DetailsPanel taskId={selectedTaskId} />
+                </div>
             </div>
         </div>
     );
