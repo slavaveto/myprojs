@@ -75,22 +75,22 @@ export const ProjectBar = ({
                     <SidebarItem 
                         icon={Inbox} 
                         label="Inbox" 
-                        isActive={activeProjectId === 'sys_inbox'} 
-                        onClick={() => onSelectProject('sys_inbox')}
+                        isActive={activeProjectId === 'filter_inbox'} 
+                        onClick={() => onSelectProject('filter_inbox')}
                         colorClass="text-blue-500"
                     />
                     <SidebarItem 
                         icon={Star} 
                         label="Сегодня" 
-                        isActive={activeProjectId === 'sys_today'} 
-                        onClick={() => onSelectProject('sys_today')}
+                        isActive={activeProjectId === 'filter_today'} 
+                        onClick={() => onSelectProject('filter_today')}
                         colorClass="text-yellow-500"
                     />
                     <SidebarItem 
                         icon={Target} 
                         label="В работе" 
-                        isActive={activeProjectId === 'sys_doing'} 
-                        onClick={() => onSelectProject('sys_doing')}
+                        isActive={activeProjectId === 'filter_doing'} 
+                        onClick={() => onSelectProject('filter_doing')}
                         colorClass="text-red-500"
                     />
                 </div>
@@ -139,14 +139,14 @@ export const ProjectBar = ({
                         <SidebarItem 
                             icon={CheckCircle2} 
                             label="Выполнено" 
-                            isActive={activeProjectId === 'sys_done'} 
-                            onClick={() => onSelectProject('sys_done')}
+                            isActive={activeProjectId === 'filter_done'} 
+                            onClick={() => onSelectProject('filter_done')}
                         />
                         <SidebarItem 
                             icon={FileText} 
                             label="Лог" 
-                            isActive={activeProjectId === 'sys_logs'} 
-                            onClick={() => onSelectProject('sys_logs')}
+                            isActive={activeProjectId === 'filter_logs'} 
+                            onClick={() => onSelectProject('filter_logs')}
                         />
                     </div>
                 </div>

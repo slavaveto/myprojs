@@ -1,21 +1,21 @@
 import React from 'react';
 import { Checkbox } from '@heroui/react';
 import { clsx } from 'clsx';
-import { TaskV3 } from './TaskList';
+import { TaskV3 } from '../components/TaskList';
 
-export interface SysTaskV3 extends TaskV3 {
+export interface FilterItemV3 extends TaskV3 {
     project_title?: string;
     proj_color?: string;
 }
 
-interface SysTaskListProps {
-    tasks: SysTaskV3[];
+interface FilterListProps {
+    tasks: FilterItemV3[];
     onSelectTask: (id: string) => void;
     selectedTaskId: string | null;
     onToggleTask: (id: string, isCompleted: boolean) => void;
 }
 
-export const SysTaskList = ({ tasks, onSelectTask, selectedTaskId, onToggleTask }: SysTaskListProps) => {
+export const FilterList = ({ tasks, onSelectTask, selectedTaskId, onToggleTask }: FilterListProps) => {
 
     if (tasks.length === 0) {
         return (

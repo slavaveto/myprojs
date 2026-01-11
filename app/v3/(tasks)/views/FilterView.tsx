@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@powersync/react';
 import { ProjectV3 } from '../components/ProjectBar';
 import { Header } from '../components/Header';
-import { SysTaskList, SysTaskV3 } from '../components/SysTaskList';
+import { FilterList, FilterItemV3 } from './FilterList';
 import { DetailsPanel } from '../components/DetailsPanel';
 import { usePanelResize } from '../hooks/usePanelResize';
 import { 
@@ -13,13 +13,13 @@ import {
     FileText 
 } from 'lucide-react';
 
-interface SysProjectViewProps {
-    systemId: string;
+interface FilterViewProps {
+    filterId: string;
 }
 
-const getSystemQuery = (systemId: string) => {
-    switch (systemId) {
-        case 'sys_inbox':
+const getFilterQuery = (filterId: string) => {
+    switch (filterId) {
+        case 'filter_inbox':
             // Inbox: Tasks in 'Inbox' project, not completed
             return `
                 SELECT t.*, p.title as project_title, p.proj_color 
@@ -30,7 +30,7 @@ const getSystemQuery = (systemId: string) => {
                 AND (t.is_deleted = 0 OR t.is_deleted IS NULL)
                 ORDER BY t.sort_order
             `;
-        case 'sys_today':
+        case 'filter_today':
             // Today: Due date is today, not completed
             return `
                 SELECT t.*, p.title as project_title, p.proj_color 
@@ -41,7 +41,7 @@ const getSystemQuery = (systemId: string) => {
                 AND (t.is_deleted = 0 OR t.is_deleted IS NULL)
                 ORDER BY t.sort_order
             `;
-        case 'sys_doing':
+        case 'filter_doing':
             // Doing Now: Status is 'doing'
             return `
                 SELECT t.*, p.title as project_title, p.proj_color 
@@ -52,7 +52,7 @@ const getSystemQuery = (systemId: string) => {
                 AND (t.is_deleted = 0 OR t.is_deleted IS NULL)
                 ORDER BY t.sort_order
             `;
-        case 'sys_done':
+        case 'filter_done':
             // Done: Completed tasks
             return `
                 SELECT t.*, p.title as project_title, p.proj_color 
@@ -63,7 +63,7 @@ const getSystemQuery = (systemId: string) => {
                 ORDER BY t.completed_at DESC, t.updated_at DESC
                 LIMIT 100
             `;
-        case 'sys_logs':
+        case 'filter_logs':
             // Logs
              return `
                 SELECT t.*, p.title as project_title, p.proj_color 
@@ -79,32 +79,32 @@ const getSystemQuery = (systemId: string) => {
     }
 };
 
-const getSystemTitle = (systemId: string) => {
-    switch (systemId) {
-        case 'sys_inbox': return 'Inbox';
-        case 'sys_today': return 'Сегодня';
-        case 'sys_doing': return 'В работе (Doing)';
-        case 'sys_done': return 'Выполнено';
-        case 'sys_logs': return 'Лог';
-        default: return 'System View';
+const getFilterTitle = (filterId: string) => {
+    switch (filterId) {
+        case 'filter_inbox': return 'Inbox';
+        case 'filter_today': return 'Сегодня';
+        case 'filter_doing': return 'В работе (Doing)';
+        case 'filter_done': return 'Выполнено';
+        case 'filter_logs': return 'Лог';
+        default: return 'Filter View';
     }
 };
 
-const getSystemIcon = (systemId: string) => {
-    switch (systemId) {
-        case 'sys_inbox': return <Inbox className="text-blue-500" />;
-        case 'sys_today': return <Star className="text-yellow-500" />;
-        case 'sys_doing': return <Target className="text-red-500" />;
-        case 'sys_done': return <CheckCircle2 className="text-green-500" />;
-        case 'sys_logs': return <FileText className="text-gray-500" />;
+const getFilterIcon = (filterId: string) => {
+    switch (filterId) {
+        case 'filter_inbox': return <Inbox className="text-blue-500" />;
+        case 'filter_today': return <Star className="text-yellow-500" />;
+        case 'filter_doing': return <Target className="text-red-500" />;
+        case 'filter_done': return <CheckCircle2 className="text-green-500" />;
+        case 'filter_logs': return <FileText className="text-gray-500" />;
         default: return undefined;
     }
 };
 
-export const SysProjectView = ({ systemId }: SysProjectViewProps) => {
-    const query = getSystemQuery(systemId);
+export const FilterView = ({ filterId }: FilterViewProps) => {
+    const query = getFilterQuery(filterId);
     const { data: tasksData } = useQuery(query);
-    const tasks: SysTaskV3[] = tasksData || [];
+    const tasks: FilterItemV3[] = tasksData || [];
     
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
@@ -116,16 +116,16 @@ export const SysProjectView = ({ systemId }: SysProjectViewProps) => {
     const handleToggleTask = (id: string, isCompleted: boolean) => { console.log('Toggle task', id, isCompleted); };
 
     // Fake Project object for Header
-    const sysProject: ProjectV3 = {
-        id: systemId,
-        title: getSystemTitle(systemId),
+    const filterProject: ProjectV3 = {
+        id: filterId,
+        title: getFilterTitle(filterId),
         proj_color: '#666',
-        icon: getSystemIcon(systemId)
+        icon: getFilterIcon(filterId)
     };
 
     return (
         <div className="flex flex-col h-full w-full bg-background">
-            <Header activeProject={sysProject} />
+            <Header activeProject={filterProject} />
             
             {/* Split Content Area - No Tabs, No Folders */}
             <div 
@@ -134,7 +134,7 @@ export const SysProjectView = ({ systemId }: SysProjectViewProps) => {
             >
                 {/* Left: Task List */}
                 <div className="flex-1 overflow-y-auto p-6 md:p-8 bg-background">
-                    <SysTaskList 
+                    <FilterList 
                         tasks={tasks} 
                         selectedTaskId={selectedTaskId}
                         onSelectTask={setSelectedTaskId}

@@ -5,7 +5,7 @@ import { useQuery } from '@powersync/react';
 import { Spinner } from '@heroui/react';
 import { ProjectBar, ProjectV3 } from './components/ProjectBar';
 import { ProjectView } from './views/ProjectView';
-import { SysProjectView } from './views/SysProjectView';
+import { FilterView } from './views/FilterView';
 
 export default function TasksPageV3() {
     const { data: projects, isLoading } = useQuery(`
@@ -41,7 +41,7 @@ export default function TasksPageV3() {
             />
             <main className="flex-grow flex flex-col h-full overflow-hidden bg-white">
                 {isSystemProject && activeProjectId ? (
-                    <SysProjectView systemId={activeProjectId} />
+                    <FilterView filterId={activeProjectId} />
                 ) : activeProject ? (
                     <ProjectView project={activeProject} />
                 ) : (
