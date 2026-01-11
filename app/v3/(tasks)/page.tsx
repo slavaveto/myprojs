@@ -16,8 +16,8 @@ export default function TasksPageV3() {
         ORDER BY sort_order
     `);
     
-    // Default to Inbox or first project? Let's default to sys_inbox if no state
-    const [activeProjectId, setActiveProjectId] = useState<string | null>('sys_inbox');
+    // Default to Inbox or first project? Let's default to filter_inbox if no state
+    const [activeProjectId, setActiveProjectId] = useState<string | null>('filter_inbox');
 
     if (isLoading) {
         return (
@@ -30,7 +30,7 @@ export default function TasksPageV3() {
     // Fallback
     const safeProjects: ProjectV3[] = projects || [];
     const activeProject = safeProjects.find(p => p.id === activeProjectId);
-    const isSystemProject = activeProjectId?.startsWith('sys_');
+    const isSystemProject = activeProjectId?.startsWith('filter_');
 
     return (
         <div className="flex h-screen overflow-hidden bg-white text-black">

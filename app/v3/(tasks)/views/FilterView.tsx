@@ -20,60 +20,15 @@ interface FilterViewProps {
 const getFilterQuery = (filterId: string) => {
     switch (filterId) {
         case 'filter_inbox':
-            // Inbox: Tasks in 'Inbox' project, not completed
-            return `
-                SELECT t.*, p.title as project_title, p.proj_color 
-                FROM tasks t 
-                LEFT JOIN projects p ON t.project_id = p.id 
-                WHERE p.title = 'Inbox' 
-                AND (t.is_completed = 0 OR t.is_completed IS NULL)
-                AND (t.is_deleted = 0 OR t.is_deleted IS NULL)
-                ORDER BY t.sort_order
-            `;
+            return `SELECT * FROM tasks WHERE (is_completed = 0 OR is_completed IS NULL) LIMIT 50`;
         case 'filter_today':
-            // Today: Due date is today, not completed
-            return `
-                SELECT t.*, p.title as project_title, p.proj_color 
-                FROM tasks t 
-                LEFT JOIN projects p ON t.project_id = p.id 
-                WHERE date(t.due_date) = date('now') 
-                AND (t.is_completed = 0 OR t.is_completed IS NULL)
-                AND (t.is_deleted = 0 OR t.is_deleted IS NULL)
-                ORDER BY t.sort_order
-            `;
+            return `SELECT * FROM tasks WHERE (is_completed = 0 OR is_completed IS NULL) LIMIT 50`;
         case 'filter_doing':
-            // Doing Now: Status is 'doing'
-            return `
-                SELECT t.*, p.title as project_title, p.proj_color 
-                FROM tasks t 
-                LEFT JOIN projects p ON t.project_id = p.id 
-                WHERE t.status = 'doing'
-                AND (t.is_completed = 0 OR t.is_completed IS NULL)
-                AND (t.is_deleted = 0 OR t.is_deleted IS NULL)
-                ORDER BY t.sort_order
-            `;
+            return `SELECT * FROM tasks WHERE (is_completed = 0 OR is_completed IS NULL) LIMIT 50`;
         case 'filter_done':
-            // Done: Completed tasks
-            return `
-                SELECT t.*, p.title as project_title, p.proj_color 
-                FROM tasks t 
-                LEFT JOIN projects p ON t.project_id = p.id 
-                WHERE t.is_completed = 1 
-                AND (t.is_deleted = 0 OR t.is_deleted IS NULL)
-                ORDER BY t.completed_at DESC, t.updated_at DESC
-                LIMIT 100
-            `;
+             return `SELECT * FROM tasks WHERE is_completed = 1 LIMIT 50`;
         case 'filter_logs':
-            // Logs
-             return `
-                SELECT t.*, p.title as project_title, p.proj_color 
-                FROM tasks t 
-                LEFT JOIN projects p ON t.project_id = p.id 
-                WHERE t.is_completed = 1 
-                AND (t.is_deleted = 0 OR t.is_deleted IS NULL)
-                ORDER BY t.completed_at DESC
-                LIMIT 200
-            `;
+             return `SELECT * FROM tasks WHERE is_completed = 1 LIMIT 50`;
         default:
             return '';
     }
