@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useQuery } from '@powersync/react';
 import { ProjectV3 } from '../components/ProjectBar';
 import { Header } from '../components/Header';
-import { FilterList, FilterItemV3 } from './FilterList';
-import { FilterTaskDetails } from '../components/FilterTaskDetails';
+import { FilterList, FilterItemV3 } from '../filters/FilterList';
+import { FilterDetails } from '../filters/FilterDetails';
 import { usePanelResize } from '../hooks/usePanelResize';
 import { 
     Inbox, 
@@ -154,7 +154,7 @@ export const FilterView = ({ filterId }: FilterViewProps) => {
                     style={{ width: safePanelWidth }}
                     className="flex-shrink-0 bg-content2/50 overflow-y-auto z-10"
                 >
-                    <FilterTaskDetails taskId={selectedTaskId} />
+                    <FilterDetails taskId={selectedTaskId} />
                 </div>
             </div>
         </div>

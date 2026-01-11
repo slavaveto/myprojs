@@ -3,28 +3,28 @@ import { useQuery } from '@powersync/react';
 import { Textarea } from '@heroui/react';
 import { usePowerSyncV3 } from '@/app/_services_v3/Provider';
 
-// Minimal Task Type for Details (Can be extended for Filter specifics like Project Selector)
-interface FilterTaskDetailsData {
+// Minimal Type for Details
+interface FilterDetailsData {
     id: string;
     content: string;
     task_notes: string;
     updated_at: string;
-    project_id?: string; // Potential future use
+    project_id?: string;
 }
 
-interface FilterTaskDetailsProps {
+interface FilterDetailsProps {
     taskId: string | null;
 }
 
-export const FilterTaskDetails = ({ taskId }: FilterTaskDetailsProps) => {
+export const FilterDetails = ({ taskId }: FilterDetailsProps) => {
     const powerSync = usePowerSyncV3();
     
-    // 1. Load Task Data (only if ID exists)
+    // 1. Load Data
     const { data: taskData } = useQuery(
         taskId ? `SELECT * FROM tasks WHERE id = ?` : '',
         taskId ? [taskId] : []
     );
-    const task: FilterTaskDetailsData | undefined = taskData?.[0];
+    const task: FilterDetailsData | undefined = taskData?.[0];
 
     // Local state for editing
     const [title, setTitle] = useState('');
