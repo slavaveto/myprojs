@@ -4,9 +4,16 @@ import React, { useState } from 'react';
 import { useQuery } from '@powersync/react';
 import { Spinner } from '@heroui/react';
 import { ProjectBar, ProjectV3 } from './components/ProjectBar';
+import { ProjectView } from './views/ProjectView';
 
 export default function TasksPageV3() {
-    const { data: projects, isLoading } = useQuery('SELECT * FROM projects ORDER BY sort_order');
+    const { data: projects, isLoading } = useQuery(`
+        SELECT * FROM projects 
+        WHERE (is_deleted = 0 OR is_deleted IS NULL)
+        AND (is_hidden = 0 OR is_hidden IS NULL)
+        AND (parent_proj_id IS NULL OR parent_proj_id = '')
+        ORDER BY sort_order
+    `);
     const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
 
     if (isLoading) {
@@ -19,6 +26,7 @@ export default function TasksPageV3() {
 
     // Fallback
     const safeProjects: ProjectV3[] = projects || [];
+    const activeProject = safeProjects.find(p => p.id === activeProjectId);
 
     return (
         <div className="flex h-screen overflow-hidden bg-white text-black">
@@ -27,21 +35,17 @@ export default function TasksPageV3() {
                 activeProjectId={activeProjectId}
                 onSelectProject={setActiveProjectId}
             />
-            <main className="flex-grow p-8 bg-gray-50 flex flex-col">
-                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                    <h1 className="text-2xl font-bold mb-4">V3 Content Area</h1>
-                    <div className="text-sm text-gray-500">
-                        Selected Project ID: <span className="font-mono bg-gray-100 px-1 rounded">{activeProjectId || 'None'}</span>
-                    </div>
-                    {activeProjectId && (
-                        <div className="mt-4">
-                            <h2 className="text-lg font-semibold">Active Project Data:</h2>
-                            <pre className="mt-2 p-4 bg-gray-100 rounded text-xs overflow-auto max-h-[300px]">
-                                {JSON.stringify(safeProjects.find(p => p.id === activeProjectId), null, 2)}
-                            </pre>
+            <main className="flex-grow flex flex-col h-full overflow-hidden bg-white">
+                {activeProject ? (
+                    <ProjectView project={activeProject} />
+                ) : (
+                    <div className="flex items-center justify-center h-full text-gray-400">
+                        <div className="text-center">
+                            <h2 className="text-xl font-semibold mb-2">Welcome to DaySync V3</h2>
+                            <p className="text-sm">Select a project from the sidebar to get started.</p>
                         </div>
-                    )}
-                </div>
+                    </div>
+                )}
             </main>
         </div>
     );
