@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useQuery } from '@powersync/react';
 import { clsx } from 'clsx';
 import { ProjectV3 } from '../components/ProjectBar';
-import { Header } from '../components/Header';
 import { FolderTabs, FolderV3 } from '../components/FolderTabs';
 import { TaskList, TaskV3 } from '../components/TaskList';
 import { TaskDetails } from '../components/TaskDetails';
@@ -71,8 +70,6 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
 
     return (
         <div className={clsx("flex flex-col h-full w-full bg-background", !isActive && "hidden")}>
-            <Header activeProject={project} />
-            
             {/* Folders Navigation */}
             <FolderTabs 
                 folders={folders}

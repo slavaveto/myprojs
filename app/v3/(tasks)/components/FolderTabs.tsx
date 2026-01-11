@@ -54,7 +54,7 @@ export const FolderTabs = ({
                                 data-folder-id={folder.id}
                                 onClick={() => onSelectFolder(folder.id)}
                                 className={clsx(
-                                    "relative flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap rounded-t-lg select-none",
+                                    "relative cursor-pointer flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap rounded-t-lg select-none",
                                     isActive 
                                         ? "text-primary bg-content2 border-b-2 border-primary" 
                                         : "text-default-500 hover:text-default-700 hover:bg-default-100 border-b-2 border-transparent"

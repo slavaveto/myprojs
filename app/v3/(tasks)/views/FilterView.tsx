@@ -17,6 +17,9 @@ import {
 
 import { clsx } from 'clsx';
 
+import { createLogger } from '@/utils/logger/Logger';
+const logger = createLogger('FilterView');
+
 interface FilterViewProps {
     filterId: string;
     isActive: boolean;
@@ -112,19 +115,10 @@ export const FilterViewComponent = ({ filterId, isActive }: FilterViewProps) => 
     const safePanelWidth = isNaN(panelWidth) ? 400 : panelWidth;
 
     // Handlers (Placeholders)
-    const handleToggleTask = (id: string, isCompleted: boolean) => { console.log('Toggle task', id, isCompleted); };
-
-    // Fake Project object for Header
-    const filterProject: ProjectV3 = {
-        id: filterId,
-        title: getFilterTitle(filterId),
-        proj_color: '#666',
-        icon: getFilterIcon(filterId)
-    };
+    const handleToggleTask = (id: string, isCompleted: boolean) => { logger.info('Toggle task', { id, isCompleted }); };
 
     return (
         <div className={clsx("flex flex-col h-full w-full bg-background", !isActive && "hidden")}>
-            <Header activeProject={filterProject} />
             
             {/* Split Content Area - No Tabs, No Folders */}
             <div 
