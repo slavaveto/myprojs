@@ -42,12 +42,16 @@ export const Header = ({ activeProject }: HeaderProps) => {
                 
                 {/* Left: Title & Context */}
                 <div className="flex items-center gap-3 justify-self-start pl-1">
-                    {activeProject && (
+                    {activeProject?.icon ? (
+                        <div className="text-default-500">
+                            {activeProject.icon}
+                        </div>
+                    ) : activeProject ? (
                         <div 
                             className="w-4 h-4 rounded-full flex-shrink-0 shadow-sm border border-white/10 transition-colors duration-300" 
                             style={colorStyle}
                         />
-                    )}
+                    ) : null}
                     
                     <h1 className="text-xl font-bold text-foreground truncate max-w-[300px]">
                         {title}

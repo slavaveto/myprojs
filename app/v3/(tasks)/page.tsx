@@ -5,6 +5,7 @@ import { useQuery } from '@powersync/react';
 import { Spinner } from '@heroui/react';
 import { ProjectBar, ProjectV3 } from './components/ProjectBar';
 import { ProjectView } from './views/ProjectView';
+import { SysProjectView } from './views/SysProjectView';
 
 export default function TasksPageV3() {
     const { data: projects, isLoading } = useQuery(`
@@ -14,7 +15,9 @@ export default function TasksPageV3() {
         AND (parent_proj_id IS NULL OR parent_proj_id = '')
         ORDER BY sort_order
     `);
-    const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+    
+    // Default to Inbox or first project? Let's default to sys_inbox if no state
+    const [activeProjectId, setActiveProjectId] = useState<string | null>('sys_inbox');
 
     if (isLoading) {
         return (
@@ -27,6 +30,7 @@ export default function TasksPageV3() {
     // Fallback
     const safeProjects: ProjectV3[] = projects || [];
     const activeProject = safeProjects.find(p => p.id === activeProjectId);
+    const isSystemProject = activeProjectId?.startsWith('sys_');
 
     return (
         <div className="flex h-screen overflow-hidden bg-white text-black">
@@ -36,7 +40,9 @@ export default function TasksPageV3() {
                 onSelectProject={setActiveProjectId}
             />
             <main className="flex-grow flex flex-col h-full overflow-hidden bg-white">
-                {activeProject ? (
+                {isSystemProject && activeProjectId ? (
+                    <SysProjectView systemId={activeProjectId} />
+                ) : activeProject ? (
                     <ProjectView project={activeProject} />
                 ) : (
                     <div className="flex items-center justify-center h-full text-gray-400">
