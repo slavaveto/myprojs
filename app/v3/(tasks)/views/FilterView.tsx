@@ -15,8 +15,11 @@ import {
     FileText 
 } from 'lucide-react';
 
+import { clsx } from 'clsx';
+
 interface FilterViewProps {
     filterId: string;
+    isActive: boolean;
 }
 
 const getFilterQuery = (filterId: string) => {
@@ -92,7 +95,7 @@ const getFilterIcon = (filterId: string) => {
     }
 };
 
-export const FilterView = ({ filterId }: FilterViewProps) => {
+export const FilterViewComponent = ({ filterId, isActive }: FilterViewProps) => {
     const query = getFilterQuery(filterId);
     const { data: queryData } = useQuery(query);
     
@@ -120,7 +123,7 @@ export const FilterView = ({ filterId }: FilterViewProps) => {
     };
 
     return (
-        <div className="flex flex-col h-full w-full bg-background">
+        <div className={clsx("flex flex-col h-full w-full bg-background", !isActive && "hidden")}>
             <Header activeProject={filterProject} />
             
             {/* Split Content Area - No Tabs, No Folders */}
@@ -170,3 +173,11 @@ export const FilterView = ({ filterId }: FilterViewProps) => {
         </div>
     );
 };
+
+export const FilterView = React.memo(FilterViewComponent, (prev, next) => {
+    // Only re-render if visibility changes
+    if (prev.isActive !== next.isActive) return false;
+    // If hidden, don't re-render on data changes (optional optimization)
+    if (!next.isActive) return true;
+    return prev.filterId === next.filterId;
+});

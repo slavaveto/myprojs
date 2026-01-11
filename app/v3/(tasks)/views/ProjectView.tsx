@@ -1,17 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@powersync/react';
+import { clsx } from 'clsx';
 import { ProjectV3 } from '../components/ProjectBar';
 import { Header } from '../components/Header';
 import { FolderTabs, FolderV3 } from '../components/FolderTabs';
 import { TaskList, TaskV3 } from '../components/TaskList';
 import { TaskDetails } from '../components/TaskDetails';
 import { usePanelResize } from '../hooks/usePanelResize';
+import { createLogger } from '@/utils/logger/Logger';
+import { globalStorage } from '@/utils/storage';
+
+const logger = createLogger('ProjectView');
 
 interface ProjectViewProps {
     project: ProjectV3;
+    isActive: boolean;
 }
 
-export const ProjectView = ({ project }: ProjectViewProps) => {
+const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
     // Fetch folders for this project
     const { data: foldersData } = useQuery(
         'SELECT * FROM folders WHERE project_id = ? AND (is_deleted = 0 OR is_deleted IS NULL) ORDER BY sort_order', 
@@ -20,15 +26,32 @@ export const ProjectView = ({ project }: ProjectViewProps) => {
 
     const folders: FolderV3[] = foldersData || [];
     const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
+    const storageKey = `v3_project_active_folder_${project.id}`;
 
-    // Auto-select first folder if none selected
+    // Restore/Sync Active Folder
     useEffect(() => {
-        if (folders.length > 0 && !activeFolderId) {
-             setActiveFolderId(folders[0].id);
-        } else if (folders.length === 0) {
-             setActiveFolderId(null);
+        // Only run if we have folders
+        if (folders.length > 0) {
+            const savedId = globalStorage.getItem(storageKey);
+            // Verify saved ID still exists in current folders
+            const folderExists = savedId && folders.some(f => f.id === savedId);
+            
+            if (folderExists) {
+                setActiveFolderId(savedId);
+            } else if (!activeFolderId) {
+                // Default to first folder if no saved/valid ID
+                setActiveFolderId(folders[0].id);
+            }
+        } else {
+            setActiveFolderId(null);
         }
     }, [foldersData, project.id]);
+
+    // Save Active Folder on change
+    const handleSelectFolder = (id: string) => {
+        setActiveFolderId(id);
+        globalStorage.setItem(storageKey, id);
+    };
 
     // Fetch tasks for active folder
     const { data: tasksData } = useQuery(
@@ -40,22 +63,21 @@ export const ProjectView = ({ project }: ProjectViewProps) => {
 
     // Resize Hook (V2 Logic)
     const { width: panelWidth, containerRef, startResizing } = usePanelResize(400);
-    // Fallback if width is invalid (prevents NaN error)
     const safePanelWidth = isNaN(panelWidth) ? 400 : panelWidth;
 
-    // Handlers (Placeholders)
-    const handleCreateFolder = () => { console.log('Create folder'); };
-    const handleToggleTask = (id: string, isCompleted: boolean) => { console.log('Toggle task', id, isCompleted); };
+    // Handlers
+    const handleCreateFolder = () => { logger.info('Create folder'); };
+    const handleToggleTask = (id: string, isCompleted: boolean) => { logger.info('Toggle task', { id, isCompleted }); };
 
     return (
-        <div className="flex flex-col h-full w-full bg-background">
+        <div className={clsx("flex flex-col h-full w-full bg-background", !isActive && "hidden")}>
             <Header activeProject={project} />
             
             {/* Folders Navigation */}
             <FolderTabs 
                 folders={folders}
                 activeFolderId={activeFolderId}
-                onSelectFolder={setActiveFolderId}
+                onSelectFolder={handleSelectFolder}
                 onCreateFolder={handleCreateFolder}
             />
 
@@ -87,7 +109,6 @@ export const ProjectView = ({ project }: ProjectViewProps) => {
                     className="w-[1px] relative z-30 cursor-col-resize group select-none"
                     onMouseDown={startResizing}
                 >
-                    {/* Visual Line: expands symmetrically from center */}
                     <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[1px] bg-default-200 group-hover:w-[3px] group-hover:bg-primary transition-all duration-300 delay-200 ease-out" />
                     
                     {/* Invisible hit area */}
@@ -105,3 +126,13 @@ export const ProjectView = ({ project }: ProjectViewProps) => {
         </div>
     );
 };
+
+export const ProjectView = React.memo(ProjectViewComponent, (prev, next) => {
+    // Only re-render if visibility changes
+    if (prev.isActive !== next.isActive) return false;
+    // If hidden, don't re-render on data changes
+    if (!next.isActive) return true;
+    
+    // Simple prop check
+    return prev.project.id === next.project.id && prev.project.title === next.project.title;
+});
