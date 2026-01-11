@@ -4,7 +4,7 @@ import { ProjectV3 } from '../components/ProjectBar';
 import { Header } from '../components/Header';
 import { FolderTabs, FolderV3 } from '../components/FolderTabs';
 import { TaskList, TaskV3 } from '../components/TaskList';
-import { DetailsPanel } from '../components/DetailsPanel';
+import { TaskDetails } from '../components/TaskDetails';
 import { usePanelResize } from '../hooks/usePanelResize';
 
 interface ProjectViewProps {
@@ -94,12 +94,12 @@ export const ProjectView = ({ project }: ProjectViewProps) => {
                     <div className="absolute inset-y-0 -left-1 -right-1 z-10 bg-transparent" />
                 </div>
 
-                {/* Right: Details Panel */}
+                {/* Right: Task Details */}
                 <div 
                     style={{ width: safePanelWidth }}
                     className="flex-shrink-0 bg-content2/50 overflow-y-auto z-10"
                 >
-                    <DetailsPanel taskId={selectedTaskId} />
+                    <TaskDetails taskId={selectedTaskId} />
                 </div>
             </div>
         </div>

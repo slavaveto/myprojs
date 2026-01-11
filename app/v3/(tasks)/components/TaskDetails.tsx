@@ -11,11 +11,11 @@ interface TaskDetailsV3 {
     updated_at: string;
 }
 
-interface DetailsPanelProps {
+interface TaskDetailsProps {
     taskId: string | null;
 }
 
-export const DetailsPanel = ({ taskId }: DetailsPanelProps) => {
+export const TaskDetails = ({ taskId }: TaskDetailsProps) => {
     const powerSync = usePowerSyncV3();
     
     // 1. Load Task Data (only if ID exists)

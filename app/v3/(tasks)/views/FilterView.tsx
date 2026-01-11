@@ -3,7 +3,7 @@ import { useQuery } from '@powersync/react';
 import { ProjectV3 } from '../components/ProjectBar';
 import { Header } from '../components/Header';
 import { FilterList, FilterItemV3 } from './FilterList';
-import { DetailsPanel } from '../components/DetailsPanel';
+import { TaskDetails } from '../components/TaskDetails';
 import { usePanelResize } from '../hooks/usePanelResize';
 import { 
     Inbox, 
@@ -20,15 +20,58 @@ interface FilterViewProps {
 const getFilterQuery = (filterId: string) => {
     switch (filterId) {
         case 'filter_inbox':
-            return `SELECT * FROM tasks WHERE (is_completed = 0 OR is_completed IS NULL) LIMIT 50`;
+            return `
+                SELECT t.*, NULL as project_title, NULL as proj_color 
+                FROM tasks t 
+                WHERE (t.folder_id IS NULL OR t.folder_id = '' OR t.folder_id = 'inbox')
+                AND (t.is_completed = 0 OR t.is_completed IS NULL)
+                AND (t.is_deleted = 0 OR t.is_deleted IS NULL)
+                ORDER BY t.sort_order
+            `;
         case 'filter_today':
-            return `SELECT * FROM tasks WHERE (is_completed = 0 OR is_completed IS NULL) LIMIT 50`;
+            return `
+                SELECT t.*, p.title as project_title, p.proj_color 
+                FROM tasks t 
+                LEFT JOIN folders f ON t.folder_id = f.id
+                LEFT JOIN projects p ON f.project_id = p.id 
+                WHERE t.is_today = 1
+                AND (t.is_completed = 0 OR t.is_completed IS NULL)
+                AND (t.is_deleted = 0 OR t.is_deleted IS NULL)
+                ORDER BY t.sort_order
+            `;
         case 'filter_doing':
-            return `SELECT * FROM tasks WHERE (is_completed = 0 OR is_completed IS NULL) LIMIT 50`;
+            return `
+                SELECT t.*, p.title as project_title, p.proj_color 
+                FROM tasks t 
+                LEFT JOIN folders f ON t.folder_id = f.id
+                LEFT JOIN projects p ON f.project_id = p.id 
+                WHERE t.status = 'doing'
+                AND (t.is_completed = 0 OR t.is_completed IS NULL)
+                AND (t.is_deleted = 0 OR t.is_deleted IS NULL)
+                ORDER BY t.sort_order
+            `;
         case 'filter_done':
-             return `SELECT * FROM tasks WHERE is_completed = 1 LIMIT 50`;
+             return `
+                SELECT t.*, p.title as project_title, p.proj_color 
+                FROM tasks t 
+                LEFT JOIN folders f ON t.folder_id = f.id
+                LEFT JOIN projects p ON f.project_id = p.id 
+                WHERE t.is_completed = 1 
+                AND (t.is_deleted = 0 OR t.is_deleted IS NULL)
+                ORDER BY t.completed_at DESC
+                LIMIT 100
+            `;
         case 'filter_logs':
-             return `SELECT * FROM tasks WHERE is_completed = 1 LIMIT 50`;
+             return `
+                SELECT t.*, p.title as project_title, p.proj_color 
+                FROM tasks t 
+                LEFT JOIN folders f ON t.folder_id = f.id
+                LEFT JOIN projects p ON f.project_id = p.id 
+                WHERE t.is_completed = 1 
+                AND (t.is_deleted = 0 OR t.is_deleted IS NULL)
+                ORDER BY t.completed_at DESC
+                LIMIT 200
+            `;
         default:
             return '';
     }
@@ -106,12 +149,12 @@ export const FilterView = ({ filterId }: FilterViewProps) => {
                     <div className="absolute inset-y-0 -left-1 -right-1 z-10 bg-transparent" />
                 </div>
 
-                {/* Right: Details Panel */}
+                {/* Right: Task Details */}
                 <div 
                     style={{ width: safePanelWidth }}
                     className="flex-shrink-0 bg-content2/50 overflow-y-auto z-10"
                 >
-                    <DetailsPanel taskId={selectedTaskId} />
+                    <TaskDetails taskId={selectedTaskId} />
                 </div>
             </div>
         </div>
