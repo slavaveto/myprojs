@@ -4,6 +4,8 @@ import { ProjectV3 } from '../components/ProjectBar';
 import { Header } from '../components/Header';
 import { FilterList, FilterItemV3 } from '../filters/FilterList';
 import { FilterDetails } from '../filters/FilterDetails';
+import { LogsList, LogV3 } from '../components/LogsList';
+import { LogDetails } from '../components/LogDetails';
 import { usePanelResize } from '../hooks/usePanelResize';
 import { 
     Inbox, 
@@ -58,20 +60,11 @@ const getFilterQuery = (filterId: string) => {
                 LEFT JOIN projects p ON f.project_id = p.id 
                 WHERE t.is_completed = 1 
                 AND (t.is_deleted = 0 OR t.is_deleted IS NULL)
-                ORDER BY t.completed_at DESC
+                ORDER BY t.updated_at DESC
                 LIMIT 100
             `;
         case 'filter_logs':
-             return `
-                SELECT t.*, p.title as project_title, p.proj_color 
-                FROM tasks t 
-                LEFT JOIN folders f ON t.folder_id = f.id
-                LEFT JOIN projects p ON f.project_id = p.id 
-                WHERE t.is_completed = 1 
-                AND (t.is_deleted = 0 OR t.is_deleted IS NULL)
-                ORDER BY t.completed_at DESC
-                LIMIT 200
-            `;
+             return `SELECT * FROM logs ORDER BY created_at DESC LIMIT 100`;
         default:
             return '';
     }
@@ -101,10 +94,15 @@ const getFilterIcon = (filterId: string) => {
 
 export const FilterView = ({ filterId }: FilterViewProps) => {
     const query = getFilterQuery(filterId);
-    const { data: tasksData } = useQuery(query);
-    const tasks: FilterItemV3[] = tasksData || [];
+    const { data: queryData } = useQuery(query);
+    
+    // Cast data based on filter type
+    const isLogs = filterId === 'filter_logs';
+    const tasks: FilterItemV3[] = isLogs ? [] : (queryData || []);
+    const logs: LogV3[] = isLogs ? (queryData || []) : [];
     
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+    const [selectedLogId, setSelectedLogId] = useState<string | null>(null);
 
     // Resize Hook (V2 Logic)
     const { width: panelWidth, containerRef, startResizing } = usePanelResize(400);
@@ -130,14 +128,22 @@ export const FilterView = ({ filterId }: FilterViewProps) => {
                 ref={containerRef}
                 className="flex-1 flex min-h-0 overflow-hidden relative"
             >
-                {/* Left: Task List */}
+                {/* Left: Content (Tasks or Logs) */}
                 <div className="flex-1 overflow-y-auto p-6 md:p-8 bg-background">
-                    <FilterList 
-                        tasks={tasks} 
-                        selectedTaskId={selectedTaskId}
-                        onSelectTask={setSelectedTaskId}
-                        onToggleTask={handleToggleTask}
-                    />
+                    {isLogs ? (
+                        <LogsList 
+                            logs={logs} 
+                            selectedLogId={selectedLogId}
+                            onSelectLog={setSelectedLogId}
+                        />
+                    ) : (
+                        <FilterList 
+                            tasks={tasks} 
+                            selectedTaskId={selectedTaskId}
+                            onSelectTask={setSelectedTaskId}
+                            onToggleTask={handleToggleTask}
+                        />
+                    )}
                 </div>
 
                 {/* Resize Handle (V2 Exact Copy) */}
@@ -149,12 +155,16 @@ export const FilterView = ({ filterId }: FilterViewProps) => {
                     <div className="absolute inset-y-0 -left-1 -right-1 z-10 bg-transparent" />
                 </div>
 
-                {/* Right: Task Details */}
+                {/* Right: Task Details or Log Details */}
                 <div 
                     style={{ width: safePanelWidth }}
                     className="flex-shrink-0 bg-content2/50 overflow-y-auto z-10"
                 >
-                    <FilterDetails taskId={selectedTaskId} />
+                    {isLogs ? (
+                        <LogDetails logId={selectedLogId} />
+                    ) : (
+                        <FilterDetails taskId={selectedTaskId} />
+                    )}
                 </div>
             </div>
         </div>
