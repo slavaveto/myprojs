@@ -3,6 +3,7 @@ import { useQuery } from '@powersync/react';
 import { ProjectV3 } from '../components/ProjectBar';
 import { Header } from '../components/Header';
 import { FolderTabs, FolderV3 } from '../components/FolderTabs';
+import { TaskList, TaskV3 } from '../components/TaskList';
 
 interface ProjectViewProps {
     project: ProjectV3;
@@ -25,12 +26,19 @@ export const ProjectView = ({ project }: ProjectViewProps) => {
         } else if (folders.length === 0) {
              setActiveFolderId(null);
         }
-    }, [foldersData, project.id]); // React to data load or project switch
+    }, [foldersData, project.id]);
 
-    // Handler to create folder (placeholder for now)
-    const handleCreateFolder = () => {
-        console.log('Create folder logic here');
-    };
+    // Fetch tasks for active folder
+    const { data: tasksData } = useQuery(
+        'SELECT * FROM tasks WHERE folder_id = ? AND (is_deleted = 0 OR is_deleted IS NULL) ORDER BY sort_order', 
+        [activeFolderId || 'NO_FOLDER'] // Safety check
+    );
+    const tasks: TaskV3[] = tasksData || [];
+    const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+
+    // Handlers (Placeholders)
+    const handleCreateFolder = () => { console.log('Create folder'); };
+    const handleToggleTask = (id: string, isCompleted: boolean) => { console.log('Toggle task', id, isCompleted); };
 
     return (
         <div className="flex flex-col h-full w-full bg-background">
@@ -44,13 +52,21 @@ export const ProjectView = ({ project }: ProjectViewProps) => {
                 onCreateFolder={handleCreateFolder}
             />
 
-            <div className="flex-1 p-8 bg-default-50">
-                {/* TaskList placeholder */}
-                <div className="border-2 border-dashed border-gray-200 rounded-lg p-8 flex items-center justify-center text-gray-400">
-                    {activeFolderId 
-                        ? `Tasks for folder: ${folders.find(f => f.id === activeFolderId)?.title || activeFolderId}` 
-                        : 'No folder selected'}
-                </div>
+            <div className="flex-1 p-6 md:p-8 bg-default-50 overflow-y-auto">
+                {activeFolderId ? (
+                    <TaskList 
+                        tasks={tasks} 
+                        selectedTaskId={selectedTaskId}
+                        onSelectTask={setSelectedTaskId}
+                        onToggleTask={handleToggleTask}
+                    />
+                ) : (
+                    <div className="h-full flex items-center justify-center text-default-400">
+                        {folders.length === 0 
+                            ? "This project has no folders yet." 
+                            : "Select a folder to view tasks."}
+                    </div>
+                )}
             </div>
         </div>
     );
