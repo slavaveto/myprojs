@@ -38,7 +38,7 @@ const ProjectViewComponent = ({ project, isActive }: ProjectViewProps) => {
             
             if (folderExists) {
                 setActiveFolderId(savedId);
-            } else if (!activeFolderId) {
+            } else {
                 // Default to first folder if no saved/valid ID
                 setActiveFolderId(folders[0].id);
             }
