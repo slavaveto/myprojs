@@ -55,7 +55,7 @@ export const DetailsPanel = ({ taskId }: DetailsPanelProps) => {
     if (!taskId) {
         return (
             <div className="w-full h-full flex flex-col items-center justify-center text-default-400 z-20">
-                <span className="text-sm">Select a task to view details</span>
+                <span className="text-sm">Выберите задачу для просмотра</span>
             </div>
         );
     }
@@ -63,7 +63,7 @@ export const DetailsPanel = ({ taskId }: DetailsPanelProps) => {
     if (!task) {
         return (
             <div className="w-full h-full flex flex-col items-center justify-center text-default-400 z-20">
-                <span className="text-sm">Loading...</span>
+                <span className="text-sm">Загрузка...</span>
             </div>
         );
     }
@@ -72,7 +72,7 @@ export const DetailsPanel = ({ taskId }: DetailsPanelProps) => {
         <div className="w-full h-full flex flex-col z-20">
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-default-200/50">
-                <span className="text-xs font-bold text-default-400 uppercase tracking-wider">Details</span>
+                <span className="text-xs font-bold text-default-400 uppercase tracking-wider">Детали</span>
             </div>
 
             {/* Content Form */}
@@ -80,7 +80,7 @@ export const DetailsPanel = ({ taskId }: DetailsPanelProps) => {
                 
                 {/* Title Editor */}
                 <div className="space-y-2">
-                    <label className="text-xs font-medium text-default-500">Task</label>
+                    <label className="text-xs font-medium text-default-500">Задача</label>
                     <Textarea
                         minRows={1}
                         maxRows={4}
@@ -92,20 +92,20 @@ export const DetailsPanel = ({ taskId }: DetailsPanelProps) => {
                         classNames={{
                             input: "text-lg font-bold"
                         }}
-                        placeholder="Task title"
+                        placeholder="Заголовок задачи"
                     />
                 </div>
 
                 {/* Notes Editor */}
                 <div className="space-y-2 flex-1 flex flex-col">
-                    <label className="text-xs font-medium text-default-500">Notes</label>
+                    <label className="text-xs font-medium text-default-500">Заметки</label>
                     <Textarea
                         minRows={10}
                         variant="bordered"
                         value={notes}
                         onValueChange={setNotes}
                         onBlur={handleSave}
-                        placeholder="Add details, notes, links..."
+                        placeholder="Добавить детали, заметки, ссылки..."
                         className="flex-1"
                     />
                 </div>
